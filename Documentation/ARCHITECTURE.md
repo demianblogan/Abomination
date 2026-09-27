@@ -46,11 +46,15 @@ Abomination/
 | Target             | Type           | Content                                              |
 |--------------------|----------------|------------------------------------------------------|
 | `AbominationCore`  | static library | All modules from `SourceCode/` except `Main.cpp`     |
-| `Abomination`      | executable     | `Main.cpp` only: creates and runs the application    |
+| `Abomination`      | executable     | `Main.cpp` only: creates and runs the application; a Windows application (no console window) |
 | `AbominationTests` | executable     | Tests from `Tests/`, linked against `AbominationCore`|
 
 All code lives in the static library so that the tests link exactly the same
-code the game runs. The executable is just an entry point.
+code the game runs. The executable is just an entry point. It is built as a Windows
+application (`WIN32_EXECUTABLE`), so Windows opens no console window for it;
+`/ENTRY:mainCRTStartup` keeps the ordinary `main()` as the entry point
+(without it a Windows application starts in `WinMain()`). The log is read in
+the in-game console and in `Abomination.log`.
 
 **Build pipeline**
 
@@ -152,8 +156,8 @@ A module may depend only on modules **below** it in this diagram.
   (drawing), and `UI::DebugOverlay` combines them and describes the windows.
   ImGui is used only for developer tools, never for the game interface.
 - **The debug overlay** has a main menu bar (F1): *View* opens and closes
-  debug windows (now *Performance*, *Assets*, *Entities*, *Renderer* and
-  *Collision*; all
+  debug windows (now *Performance*, *Assets*, *Entities*, *Renderer*,
+  *Collision* and *Console*; all
   closed at the first start), *Settings*
   changes settings grouped like the future options menu (now *Display*:
   screen mode, V-Sync, FPS limit, UI scale). The font size is one constant next to the font
@@ -189,10 +193,21 @@ A module may depend only on modules **below** it in this diagram.
   size and position, so leaving fullscreen restores them. The mode is chosen
   in *Settings > Display > Screen mode*, or with Alt+Enter (windowed ↔
   borderless), and is not saved between runs until the Config module (0.8).
+- **In-game console** (`UI::ConsoleWindow`, the <kbd>~</kbd> key or View > Console): the
+  log as a strip along the bottom of the screen, like the console of Quake;
+  it stays open while the rest of the overlay is hidden. A third spdlog sink
+  keeps every message in `Core::LogHistory` (the last 2000, in parts: time,
+  level, category, text; guarded by a mutex, because the log may be written
+  from any thread). The console filters by levels and modules (drop-down
+  lists of check boxes with *All*), colors the level (and the whole message
+  for warnings and worse), scrolls to new messages, and has opacity and
+  height sliders. `ImGuiListClipper` draws only the lines that are visible.
 
 **Startup order** (`Main.cpp` → `Application::Create`)
 
-1. Logging starts; the log file is written next to the executable.
+1. Logging starts: the log file is written next to the executable, and the
+   last 2000 messages are kept in memory (`Core::LogHistory`, owned by
+   `main()`) for the in-game console.
 2. `Platform::SDLLibrary` initializes SDL.
 3. `Platform::Window` creates the window and the OpenGL 4.6 Core context
    (a debug context in Debug builds). The window is created hidden at its
@@ -405,7 +420,7 @@ OS → [Platform] SDL events
           ▼
      [Input] ActionStates: actions calculated through InputBindings
           MoveForward ← W, LookAroundMode ← right mouse button, ToggleDebugOverlay ← F1,
-          Quit ← Escape, ToggleScreenMode ← Alt+Enter (left or right Alt)
+          Quit ← Escape, ToggleScreenMode ← Alt+Enter (left or right Alt), ToggleConsole ← `
           active / started this frame / stopped this frame
           ▼
      Code asks for actions, never for keys:

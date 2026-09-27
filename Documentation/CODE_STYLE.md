@@ -66,7 +66,7 @@ found during review.
   | Meaning                         | Pattern                                                              | Examples                                   |
   |---------------------------------|----------------------------------------------------------------------|--------------------------------------------|
   | Describes a state of something  | `is`/`are`/`was`/`were`/`have`/`had` + *noun (optional)* + **adjective** | `isGrounded`, `isDoorOpen`, `areEnemiesAlerted`, `wasLevelCompleted` |
-  | An action that has to be done   | `needTo` + **verb**                                                  | `needToWriteToConsole`, `NeedToTruncateFile` |
+  | An action that has to be done   | `needTo` + **verb**                                                  | `needToSaveSettings`, `NeedToTruncateFile` |
   | An action that has been done    | **noun** + **verb in the past tense**                                | `levelLoaded`, `playerJumped`, `buttonPressed` |
 - **Functions and methods start with a verb**: `CreateWindow()`,
   `ApplyDamage()`, `GetLogger()`, `ConvertToString()` — not `LoggerFor()` or

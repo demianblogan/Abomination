@@ -71,7 +71,7 @@ seen (collision, map geometry) get debug visualizations in the overlay.
 | 6 | `feat/screen-mode`              | ✅     | Escape quits the game; key combinations in input bindings; windowed size calculated from the monitor (75% of the usable area, 16:9) instead of a fixed size; screen modes Windowed, Borderless (default) and exclusive Fullscreen in Settings > Display and with Alt+Enter |
 | 7 | `feat/brush-textures`           | ✅     | Art direction (4 episodes, palettes, texture rules) and a texture generator; Episode 1 wall, floor, planks and crate textures; texture coordinates from the Valve 220 axes; the level drawn in one part per texture with texture and direction shading; crates as brushes of the test map, demo crates removed; asset lifetime groups (Global, Level), level unloading and a Reload button |
 | 8 | `feat/collision`                | ✅     | `World::Level` class; collision brushes (planes, bounding boxes, bevel planes); box trace through the brushes (Quake 2 style); debug lines (wide, depth-tested or on top, boxes and arrows) and world axes; Collision window: brush bounds, a trace from the camera, a colliding free-fly camera |
-| 9 | `feat/log-console`              | ⏳     | The log in the game: recent messages kept in memory (a third log sink) and shown in a console at the bottom of the screen with an opacity slider and filters; the separate console window is no longer needed |
+| 9 | `feat/log-console`              | ✅     | Recent log messages kept in memory (a third spdlog sink); an in-game console at the bottom of the screen (the ~ key): level and module filters, colors, auto-scroll, opacity and height; the game runs without a console window |
 | 10 | `feat/player-movement`          | ⏳     | Quake movement: acceleration, friction, jumping, gravity, sliding along walls, stepping up stairs; noclip toggle; speedometer |
 
 **Done when:** a level made in TrenchBroom loads with textures, the player
@@ -119,7 +119,8 @@ Ideas that are not assigned to a milestone yet.
 - **Developer tools window** (ImGui): buttons and checkboxes instead of typing —
   list of levels to load, god mode, fly through walls, give weapons. Useful once
   levels and gameplay exist (around 0.6).
-- **Developer console** in the style of Half-Life: readable long command names
+- **Developer commands** typed into the in-game console (branch 9), in the
+  style of Half-Life: readable long command names
   (`load_level`, `toggle_god_mode`) with autocompletion while typing and
   history. Only if the tools window is not enough.
   Both would call the same **command registry**, so a button and a typed

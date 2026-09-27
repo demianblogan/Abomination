@@ -113,13 +113,13 @@ A module may depend only on modules **below** it in this diagram.
 
 | Module        | Responsibility                                                  | Status  |
 |---------------|-----------------------------------------------------------------|---------|
-| `Core`        | Time (clock, frame timer, fixed timestep, FPS limit), frame statistics, logging, files, image decoding, asset handles, cache and lifetime groups, `Transform`, `Name`, transform interpolation, planes and convex polygon clipping | 0.1 |
+| `Core`        | Time (clock, frame timer, fixed timestep, FPS limit), frame statistics, logging, files, image decoding, asset handles, cache and lifetime groups, bounding boxes, `Transform`, `Name`, transform interpolation, planes and convex polygon clipping | 0.1 |
 | `Input`       | Keyboard and mouse state, actions and bindings (see section 7)  | 0.1     |
 | `Platform`    | SDL3 window (size from the monitor, screen modes), OpenGL context creation, OS events → `Input` | 0.1     |
 | `Renderer`    | Everything OpenGL. Exposes a high-level API (see section 6)     | 0.1     |
 | `Config`      | Loading JSON data and settings                                  | Planned |
-| `World`       | `.map` parsing, brush geometry, level loading and spawning (see section 11); level compiler later | 0.2 |
-| `Physics`     | Quake-style movement, collision against the level               | Planned |
+| `World`       | `.map` parsing, brush geometry, the level, collision brushes and box traces (see section 11); level compiler later | 0.2 |
+| `Physics`     | Quake-style movement on top of the box traces of `World`         | Planned |
 | `AI`          | Enemy behaviour, pathfinding                                    | Planned |
 | `Audio`       | Sounds and music (miniaudio)                                    | Planned |
 | `Gameplay`    | Game rules: free-fly camera, spin (0.1–0.2); player, weapons, enemies | 0.1 |
@@ -152,7 +152,8 @@ A module may depend only on modules **below** it in this diagram.
   (drawing), and `UI::DebugOverlay` combines them and describes the windows.
   ImGui is used only for developer tools, never for the game interface.
 - **The debug overlay** has a main menu bar (F1): *View* opens and closes
-  debug windows (now *Performance*, *Assets*, *Entities* and *Renderer*; all
+  debug windows (now *Performance*, *Assets*, *Entities*, *Renderer* and
+  *Collision*; all
   closed at the first start), *Settings*
   changes settings grouped like the future options menu (now *Display*:
   screen mode, V-Sync, FPS limit, UI scale). The font size is one constant next to the font
@@ -213,7 +214,7 @@ A module may depend only on modules **below** it in this diagram.
    folder of the executable.
 9. The `Application` constructor loads the system shaders of the renderer
    (`Renderer::LoadSystemShaders`) and creates the entities: the level
-   (`World::SpawnLevel`) and the camera at the player start of the map
+   (`World::Level::Create`) and the camera at the player start of the map
    (`Gameplay::SpawnFreeFlyCamera`). It happens there and not in `Create()`,
    because the registry is a member of `Application`; the asset handles in
    the components stay valid when `Application` is moved, because they are
@@ -324,8 +325,9 @@ Inside the renderer:
   `std::uint32_t` so headers do not need GLAD:
   - `GLShaderProgram` — compiles and links a vertex and a fragment shader
     (from source or files), returns the compiler log on failure, labels the
-    program for debuggers (`glObjectLabel`), sets `mat4` uniforms;
-  - `GLBuffer` — immutable storage (`glNamedBufferStorage`);
+    program for debuggers (`glObjectLabel`), sets `mat4`, `vec2` and `float` uniforms;
+  - `GLBuffer` — immutable storage (`glNamedBufferStorage`): static (uploaded
+    once) or dynamic (fixed size, contents replaced with `Update`);
   - `GLVertexArray` — vertex buffer bindings, float attributes, index buffer
     (separate attribute format: attributes are connected to buffers through
     binding slots);
@@ -363,8 +365,20 @@ Inside the renderer:
   wide that takes its color from a texture shows whatever texel it crosses.
   `SystemShaders` are the shaders the render system uses on its own, loaded
   once by `LoadSystemShaders`.
+- **Debug lines** (`DebugLines`, `DebugLineRenderer`): any code adds lines,
+  boxes and arrows during a frame to a plain list (no OpenGL, testable);
+  after the scene all of them are drawn in two draw calls and the list is
+  cleared. Lines are `Tested` (hidden behind walls) or `OnTop` (always
+  visible). OpenGL Core only has to draw lines 1 pixel wide, so every line is
+  a strip of two triangles that the vertex shader (`DebugLines.vert`) widens
+  across the line on the screen: 2.5 pixels at 100% display scale, whatever
+  the distance. An end behind the camera is moved along the line to just in
+  front of it. The vertices go into a dynamic buffer
+  (`GLBuffer::CreateDynamic` + `Update`: fixed size, contents replaced every
+  frame), replaced by one twice as big when a frame has more lines.
 - **Renderer window** of the debug overlay (View > Renderer): Solid /
-  Wireframe, draw calls and triangles of the last frame, brushes, faces and
+  Wireframe, world axes (arrows along X, Y, Z from the origin, over
+  everything), draw calls and triangles of the last frame, brushes, faces and
   triangles of the level, and *Reload*, which loads the map next to the
   executable again (build the `CopyAssets` target first to copy a map saved
   in TrenchBroom; the game does not have to be closed).
@@ -557,7 +571,7 @@ Renderer::RenderAssets                     all graphics stores, owned by Applica
 - **Lifetime groups** (`Core::AssetLifetime`): every asset is **Global**
   (the whole game: shaders, later weapons and the HUD) or **Level** (the
   textures and meshes of the loaded level). A whole group is removed at once
-  (`RenderAssets::RemoveAll`, called by `World::UnloadLevel`), so nobody has
+  (`RenderAssets::RemoveAll`, called by `World::Level::Unload`), so nobody has
   to track which object used which asset; the generations of the slots make
   the handles of the removed level invalid. An asset asked for with both
   lifetimes keeps the longer one. Texture and mesh stores take the lifetime
@@ -592,7 +606,7 @@ Library: **EnTT 4.0.0** (`ThirdParty/EnTT`, see section 3).
   parameters it needs. `const entt::registry&` marks a system that only reads.
 - **The registry** (`entt::registry`) is owned by `Application` and passed to
   systems as a parameter; there is no global access. Unloading a level
-  (`World::UnloadLevel`) destroys its entities and removes its asset group.
+  (`World::Level::Unload`) destroys its entities and removes its asset group.
 - **Entity numbers** are used where one entity refers to another (an enemy's
   target, a rocket's owner, a button's door), to add, remove or destroy
   components of a specific entity, and for events between entities. Systems
@@ -625,20 +639,21 @@ components of the selected one; section headers are colored by module.
 A new component type gets a small drawing function there.
 
 The static geometry of a level is **one entity per texture**, not one entity
-per brush (see section 11). Collision data for it will be owned by the `World` module in
-structures made for collision, not stored in components.
+per brush (see section 11). Its collision data is owned by `World::Level` in
+structures made for collision (collision brushes), not stored in components.
 
 ## 11. World
 
 The `World` module turns a TrenchBroom `.map` file into what the game draws
-(and later collides with). How maps are made: `LEVEL_EDITING.md`.
+and collides with. How maps are made: `LEVEL_EDITING.md`.
 
 ```
-Test.map ─► ParseMap ─► MapData ─► BuildBrushPolygons ─► BuildLevelMesh ─► SpawnLevel
-  text       tokens,     entities,    planes → polygons    polygons →         meshes and entities
-             recursive   brushes,     (per brush)          triangles, UVs,     "World geometry: <texture>",
-             descent     faces                             one part per        player start
-                                                           texture
+Test.map ─► ParseMap ─► MapData ─┬─► BuildBrushPolygons ─► BuildLevelMesh ──────► Level::Create
+  text       tokens,     entities,│   planes → polygons     triangles, UVs,        meshes and entities
+             recursive   brushes, │   (per brush)           one part per texture   "World geometry: <texture>",
+             descent     faces    │                                                player start
+                                  └─► BuildCollisionBrushes ─────────────────────► collision brushes
+                                      planes, bounds, bevels                       (TraceBox)
 ```
 
 - **Parsing** (`MapParser`, `MapData`): a tokenizer and a recursive descent
@@ -672,25 +687,58 @@ Test.map ─► ParseMap ─► MapData ─► BuildBrushPolygons ─► BuildLe
   meter, the game has Y up and meters: a map position `(x, y, z)` becomes
   `(x, z, −y) / 32`. A map angle (0° looks along +X, counter-clockwise from
   above) becomes a yaw of the game: angle − 90°.
-- **Spawning** (`LevelLoader`): `SpawnLevel` loads the textures of the level
-  and stores one mesh per texture, both in the **Level** lifetime group, and
-  creates one entity per texture, *World geometry: Episode1/Wall_MossyBrick*
-  (`Name`, `Transform`, `MeshRenderer` with the `TexturedShaded` program);
-  together they play the part of entity 0, the world, in Quake. The level
-  costs one draw call per texture. `info_player_start` does not become an
-  entity: its origin (+22 units, the eye height of the Quake player) and angle
-  are returned as `PlayerStart`, and the camera is created there.
-- **Unloading** (`UnloadLevel`): destroys the entities of the level, then
-  removes the Level asset group. `Application` keeps the `LoadedLevel` and
-  reloads it from the Renderer window; the new map is read first, so a map
-  with an error leaves the current level in place.
+- **The level** (`World::Level`): created from a parsed map by
+  `Level::Create`, which loads the textures of the level and stores one mesh
+  per texture, both in the **Level** lifetime group, and creates one entity
+  per texture, *World geometry: Episode1/Wall_MossyBrick* (`Name`,
+  `Transform`, `MeshRenderer` with the `TexturedShaded` program); together
+  they play the part of entity 0, the world, in Quake. The level costs one
+  draw call per texture. `info_player_start` does not become an entity: its
+  origin (+22 units, the eye height of the Quake player) and angle are kept as
+  `PlayerStart`, and the camera is created there. The level also keeps its
+  collision brushes and its statistics; its data is private.
+- **Unloading** (`Level::Unload`): destroys the entities of the level, then
+  removes the Level asset group. It is called explicitly, not by the
+  destructor: the registry and the stores belong to `Application`, and may be
+  gone when the level is destroyed. `Application` reloads the level from the
+  Renderer window; the new map is read first, so a map with an error leaves
+  the current level in place.
 - Map geometry is converted once, at loading. The level stays where the map
   puts it: the world entities have an identity transform.
 
-**Planned:** a class for the level (for example `World::Level`) that owns its
-entities, its collision data and its player start and loads and unloads
-itself, created with the collision data (collision branch), so `Application`
-does not collect level state; entities from the map (enemies, pickups, doors,
+**Collision**
+
+- **Collision brushes** (`CollisionBrush`, `BuildCollisionBrushes`): for
+  collision a brush is not triangles but its planes (a point is inside when it
+  is behind all of them) and its bounding box (`Core::BoundingBox`, a quick
+  test before the planes), in game meters and in doubles. Every brush also
+  gets **bevel planes**: the sides of its bounding box that it does not have
+  as faces yet. They cut nothing off the brush, but when the planes are moved
+  out for a box, moved planes meet far beyond sharp edges (a "spike" — an
+  invisible wall); the moved bevels cut it off.
+- **Box trace** (`TraceBox`, the algorithm of `CM_ClipBoxToBrush` of
+  Quake 2): moves a box from a start to an end position through the brushes
+  and returns the part of the way it moved (`fraction`), where it stopped,
+  the normal of what it hit, and whether it started inside a brush or is
+  stuck. The box becomes a point: every plane is moved out by as much as the
+  box reaches along its normal (`dot(abs(normal), halfExtents)`). For every
+  plane the line crosses, the crossing is an entry or an exit; there is a hit
+  when the latest entry comes before the earliest exit. The box stops
+  `SurfaceEpsilon` (1/32 unit, ~1 mm) before the surface, so the next trace
+  does not start inside it. Brushes whose bounding box the way does not touch
+  are skipped. The player box is `PlayerHalfExtents` (1 × 1.75 × 1 m, like
+  32 × 56 × 32 units in Quake).
+- **Collision tools** (`CollisionDebug`, View > Collision): brush bounds, a
+  box traced from the camera straight ahead (point, small box or player box;
+  the stopping box and the normal are drawn as debug lines, the numbers are
+  shown in the window) and a colliding free-fly camera (it stops at walls; a
+  camera that starts inside a brush moves freely to get out). Sliding along
+  walls comes with the movement of the player.
+
+**Planned:** sliding along walls, stepping up stairs and standing on the
+ground (player movement branch); a tree of brushes (BVH) when large maps make
+checking every brush measurably slow — with 17 brushes the bounding box test
+takes microseconds; entities from the map (enemies, pickups, doors,
 0.4–0.6); a level compiler with lightmaps and visibility (0.5), which needs
 closed maps (a hole to the outside is a *leak*).
 

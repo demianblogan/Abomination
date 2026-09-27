@@ -9,10 +9,13 @@
 #include "Platform/SDLLibrary.h"
 #include "Platform/Window.h"
 #include "Renderer/RenderAssets.h"
+#include "Renderer/DebugLineRenderer.h"
+#include "Renderer/DebugLines.h"
 #include "Renderer/RenderSettings.h"
 #include "Renderer/RenderSystem.h"
 #include "UI/DebugOverlay.h"
-#include "World/LevelLoader.h"
+#include "World/CollisionDebug.h"
+#include "World/Level.h"
 
 #include <entt/entt.hpp>
 
@@ -81,15 +84,23 @@ namespace Abomination
         Renderer::RenderSettings m_renderSettings;
         Renderer::RenderStatistics m_renderStatistics;
 
+        // Lines any code can add during a frame for debugging; drawn over the scene and cleared at the end of Render().
+        Renderer::DebugLines m_debugLines;
+        Renderer::DebugLineRenderer m_debugLineRenderer;
+
         // The folder with the game files, for loading maps after startup.
         std::filesystem::path m_assetsDirectory;
 
-        // The loaded level: its entities, where the player starts and its statistics (shown in the Renderer window).
-        World::LoadedLevel m_level;
+        // The loaded level (its statistics are shown in the Renderer window).
+        World::Level m_level;
 
         // Set by the Reload button of the Renderer window; the level is reloaded at the start of the next frame, not in the
         // middle of drawing the overlay.
         bool m_isLevelReloadRequested = false;
+
+        // The collision tools of the debug overlay (View > Collision) and the camera trace of the last frame.
+        World::CollisionDebugSettings m_collisionSettings;
+        World::CameraTrace m_cameraTrace;
 
         // All entities of the game and their components. Components hold only handles to assets, never pointers, so they
         // stay valid when Application (and with it m_renderAssets) is moved out of Create().

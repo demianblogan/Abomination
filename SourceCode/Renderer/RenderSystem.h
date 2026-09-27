@@ -23,6 +23,9 @@ namespace Abomination::Renderer
     {
         // Draws every mesh in one color when the wireframe is on (see RenderSettings).
         ShaderHandle wireframe;
+
+        // Draws DebugLines (see DebugLineRenderer).
+        ShaderHandle debugLines;
     };
 
     // Loads the system shaders. Called once at startup, after the stores are created.

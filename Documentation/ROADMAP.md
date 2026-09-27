@@ -70,8 +70,9 @@ seen (collision, map geometry) get debug visualizations in the overlay.
 | 5 | `feat/map-geometry`             | ✅     | TrenchBroom game configuration and a test map; `.map` parser (Valve 220); brushes → polygons by clipping with planes; the level as one mesh and one entity, Z-up → Y-up, camera at the player start; solid shaded and wireframe render modes; Renderer window with frame and level statistics; demo crates moved into the test room |
 | 6 | `feat/screen-mode`              | ✅     | Escape quits the game; key combinations in input bindings; windowed size calculated from the monitor (75% of the usable area, 16:9) instead of a fixed size; screen modes Windowed, Borderless (default) and exclusive Fullscreen in Settings > Display and with Alt+Enter |
 | 7 | `feat/brush-textures`           | ✅     | Art direction (4 episodes, palettes, texture rules) and a texture generator; Episode 1 wall, floor, planks and crate textures; texture coordinates from the Valve 220 axes; the level drawn in one part per texture with texture and direction shading; crates as brushes of the test map, demo crates removed; asset lifetime groups (Global, Level), level unloading and a Reload button |
-| 8 | `feat/collision`                | ⏳     | Axis-aligned box traced against brushes (Quake-style), debug drawing of boxes and traces |
-| 9 | `feat/player-movement`          | ⏳     | Quake movement: acceleration, friction, jumping, gravity, sliding along walls, stepping up stairs; noclip toggle; speedometer |
+| 8 | `feat/collision`                | ✅     | `World::Level` class; collision brushes (planes, bounding boxes, bevel planes); box trace through the brushes (Quake 2 style); debug lines (wide, depth-tested or on top, boxes and arrows) and world axes; Collision window: brush bounds, a trace from the camera, a colliding free-fly camera |
+| 9 | `feat/log-console`              | ⏳     | The log in the game: recent messages kept in memory (a third log sink) and shown in a console at the bottom of the screen with an opacity slider and filters; the separate console window is no longer needed |
+| 10 | `feat/player-movement`          | ⏳     | Quake movement: acceleration, friction, jumping, gravity, sliding along walls, stepping up stairs; noclip toggle; speedometer |
 
 **Done when:** a level made in TrenchBroom loads with textures, the player
 walks, runs and jumps on it and collides with its walls, movement behaves the
@@ -82,15 +83,12 @@ same at any frame rate.
 Detailed branch plans are written when a milestone starts. Notes collected so
 far:
 
-- **0.2** — decide collision approach: own AABB-vs-brush collision with a BVH;
-  Jolt Physics only for queries if it becomes necessary. Learn TrenchBroom:
-  game configuration, entity definitions, `.map` format, Z-up → Y-up.
-  A class for the level (for example `World::Level`: its entities, collision
-  data and player start, loading and unloading itself) comes with the
-  collision data (branch 8), so `Application` stops collecting level state.
+- **0.2** — collision is our own box trace against brushes (Quake 2 style);
+  a tree of brushes (BVH) only when large maps make checking every brush
+  measurably slow. Jolt Physics only for queries if it becomes necessary.
   The free-fly camera becomes a debug noclip mode next to the player camera
-  (branch 9). A search field above the entity list of the inspector once a map
-  brings hundreds of entities.
+  (branch 10). A search field above the entity list of the inspector once a
+  map brings hundreds of entities.
 - **0.3** — asset pipeline decision: where models come from (generated,
   downloaded, bought) and how they are imported. Audio via miniaudio.
 - **0.4** — navmesh via Recast/Detour for ground enemies; flying enemies need
@@ -126,9 +124,6 @@ Ideas that are not assigned to a milestone yet.
   history. Only if the tools window is not enough.
   Both would call the same **command registry**, so a button and a typed
   command run the same code.
-- **In-game log viewer**: a third log sink keeping recent messages in memory,
-  shown in the debug overlay with filters by level and category (useful in
-  Release builds without a console window).
 - **Entity inspector growth**: filter the list by component ("only enemies"),
   a hierarchy once entities have parents (a weapon attached to the player),
   and a "save values to file" button once parameters live in JSON (0.6), so

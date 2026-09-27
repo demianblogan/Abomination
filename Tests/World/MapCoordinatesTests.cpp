@@ -16,9 +16,10 @@ namespace Abomination::World
 
     TEST(MapCoordinates, MapUpBecomesGameUp)
     {
-        EXPECT_EQ(ConvertMapDirection({0.0, 0.0, 1.0}), glm::vec3(0.0f, 1.0f, 0.0f));  // up stays up
-        EXPECT_EQ(ConvertMapDirection({0.0, 1.0, 0.0}), glm::vec3(0.0f, 0.0f, -1.0f)); // map +Y is game forward (-Z)
-        EXPECT_EQ(ConvertMapDirection({1.0, 0.0, 0.0}), glm::vec3(1.0f, 0.0f, 0.0f));  // X stays X
+        // One meter (32 units) along every map axis.
+        EXPECT_EQ(ConvertMapPositionPrecise({0.0, 0.0, 32.0}), glm::dvec3(0.0, 1.0, 0.0));  // up stays up
+        EXPECT_EQ(ConvertMapPositionPrecise({0.0, 32.0, 0.0}), glm::dvec3(0.0, 0.0, -1.0)); // map +Y is game forward (-Z)
+        EXPECT_EQ(ConvertMapPositionPrecise({32.0, 0.0, 0.0}), glm::dvec3(1.0, 0.0, 0.0));  // X stays X
     }
 
     TEST(MapCoordinates, AngleBecomesYaw)
@@ -36,5 +37,21 @@ namespace Abomination::World
         EXPECT_EQ(*origin, glm::dvec3(-48.0, -176.0, 88.0));
         EXPECT_FALSE(ParseVectorProperty("1 2").has_value());
         EXPECT_FALSE(ParseVectorProperty("one two three").has_value());
+    }
+
+    TEST(MapCoordinates, PlaneTurnsNormalAndScalesDistance)
+    {
+        // The map plane z = 64 facing up becomes the game plane y = 2 facing up.
+        const Core::Plane plane = ConvertMapPlane({.normal = {0.0, 0.0, 1.0}, .distance = 64.0});
+
+        EXPECT_EQ(plane.normal, glm::dvec3(0.0, 1.0, 0.0));
+        EXPECT_DOUBLE_EQ(plane.distance, 2.0);
+    }
+
+    TEST(MapCoordinates, PreciseAndFloatPositionsAgree)
+    {
+        const glm::dvec3 precise = ConvertMapPositionPrecise({32.0, 64.0, 96.0});
+
+        EXPECT_EQ(glm::vec3(precise), ConvertMapPosition({32.0, 64.0, 96.0}));
     }
 }

@@ -20,6 +20,8 @@ set(LIBRARY_SOURCES
     Core/AssetCache.h
     Core/AssetHandle.h
     Core/AssetLifetime.h
+    Core/BoundingBox.h
+    Core/BoundingBox.cpp
     Core/BuildConfiguration.h
     Core/Clock.h
     Core/ConvexPolygon.h
@@ -78,6 +80,10 @@ set(LIBRARY_SOURCES
     Platform/WindowSizing.cpp
 
     Renderer/CameraLens.h
+    Renderer/DebugLineRenderer.h
+    Renderer/DebugLineRenderer.cpp
+    Renderer/DebugLines.h
+    Renderer/DebugLines.cpp
     Renderer/DebugOutput.h
     Renderer/DebugOutput.cpp
     Renderer/GLBuffer.h
@@ -124,8 +130,14 @@ set(LIBRARY_SOURCES
 
     World/BrushGeometry.h
     World/BrushGeometry.cpp
-    World/LevelLoader.h
-    World/LevelLoader.cpp
+    World/CollisionBrush.h
+    World/CollisionBrush.cpp
+    World/CollisionDebug.h
+    World/CollisionDebug.cpp
+    World/CollisionTrace.h
+    World/CollisionTrace.cpp
+    World/Level.h
+    World/Level.cpp
     World/LevelMesh.h
     World/LevelMesh.cpp
     World/MapCoordinates.h

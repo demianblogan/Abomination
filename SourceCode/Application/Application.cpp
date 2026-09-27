@@ -14,9 +14,11 @@
 #include "Renderer/RenderCommands.h"
 #include "Renderer/RenderSystem.h"
 #include "Renderer/View.h"
-#include "World/LevelLoader.h"
+#include "World/Level.h"
 #include "World/MapParser.h"
 
+#include <glm/vec2.hpp>
+#include <glm/vec3.hpp>
 #include <glm/vec4.hpp>
 
 #include <utility>
@@ -34,6 +36,9 @@ namespace Abomination
         // The map loaded at start, relative to the assets folder. Its meshes are named after it in the mesh store
         // ("Maps/Test.map#Episode1/Wall_MossyBrick").
         const std::string StartMapPath = "Maps/Test.map";
+
+        // The width of debug lines in pixels at 100% display scale.
+        constexpr float DebugLineWidth = 2.5f;
     }
 
     std::expected<Application, std::string> Application::Create(const std::filesystem::path& assetsDirectory)
@@ -92,10 +97,11 @@ namespace Abomination
 
         // Entities are created here, not in Create(): the registry is a member, and the handles the components get from
         // m_renderAssets stay valid because they are numbers, not pointers.
-        m_level = World::SpawnLevel(m_registry, m_renderAssets, map, StartMapPath);
+        m_level = World::Level::Create(m_registry, m_renderAssets, map, StartMapPath);
 
         // The camera starts where the map puts the player, at the height of the player's eyes.
-        m_camera = Gameplay::SpawnFreeFlyCamera(m_registry, m_level.playerStart.eyePosition, m_level.playerStart.yaw);
+        const World::PlayerStart& playerStart = m_level.GetPlayerStart();
+        m_camera = Gameplay::SpawnFreeFlyCamera(m_registry, playerStart.eyePosition, playerStart.yaw);
     }
 
     int Application::Run()
@@ -193,7 +199,21 @@ namespace Abomination
         // First of all: remember where every interpolated entity is before this tick moves anything.
         Core::StorePreviousTransforms(m_registry);
 
-        m_cameraController.UpdateMovement(m_registry.get<Core::Transform>(m_camera), m_actionStates, tickDuration);
+        Core::Transform& cameraTransform = m_registry.get<Core::Transform>(m_camera);
+        const glm::vec3 cameraPositionBefore = cameraTransform.position;
+        m_cameraController.UpdateMovement(cameraTransform, m_actionStates, tickDuration);
+
+        // A colliding camera moves only as far as its box gets. It stops at walls instead of sliding along them (sliding
+        // comes with the movement of the player). A camera that starts inside a brush (the tool was switched on in a
+        // wall) moves freely, so it can get out.
+        if (m_collisionSettings.doesCameraCollide)
+        {
+            const World::TraceResult trace =
+                World::TraceBox(m_level.GetCollisionBrushes(), glm::dvec3(cameraPositionBefore),
+                                glm::dvec3(cameraTransform.position), World::CameraHalfExtents);
+            if (!trace.startsInSolid)
+                cameraTransform.position = glm::vec3(trace.endPosition);
+        }
 
         Gameplay::UpdateSpinningEntities(m_registry, tickDuration);
     }
@@ -210,8 +230,8 @@ namespace Abomination
             return;
         }
 
-        World::UnloadLevel(m_registry, m_renderAssets, m_level);
-        m_level = World::SpawnLevel(m_registry, m_renderAssets, *map, StartMapPath);
+        m_level.Unload(m_registry, m_renderAssets);
+        m_level = World::Level::Create(m_registry, m_renderAssets, *map, StartMapPath);
     }
 
     void Application::Render(const Core::FrameStatistics& frameStatistics)
@@ -240,7 +260,27 @@ namespace Abomination
 
             m_renderStatistics = Renderer::DrawMeshes(m_registry, view, interpolationFactor, m_renderAssets,
                                                       m_systemShaders, m_renderSettings);
+
+            m_cameraTrace = World::UpdateCollisionDebug(m_level.GetCollisionBrushes(), m_collisionSettings,
+                                                        cameraTransform, m_debugLines);
+
+            if (m_renderSettings.areWorldAxesVisible)
+            {
+                constexpr glm::vec3 Origin{0.0f};
+                constexpr auto OnTop = Renderer::DebugLineDepth::OnTop;
+                m_debugLines.AddArrow(Origin, {1.0f, 0.0f, 0.0f}, {1.0f, 0.2f, 0.2f}, OnTop);
+                m_debugLines.AddArrow(Origin, {0.0f, 1.0f, 0.0f}, {0.2f, 1.0f, 0.2f}, OnTop);
+                m_debugLines.AddArrow(Origin, {0.0f, 0.0f, 1.0f}, {0.3f, 0.5f, 1.0f}, OnTop);
+            }
+
+            // The line width is given at 100% display scale, like the debug overlay: on a 4K monitor at 200% it doubles.
+            const glm::vec2 viewportSize(static_cast<float>(widthInPixels), static_cast<float>(heightInPixels));
+            m_debugLineRenderer.Draw(m_debugLines, view, m_renderAssets.shaders.Get(m_systemShaders.debugLines), viewportSize,
+                                     DebugLineWidth * m_window.GetDisplayScale());
         }
+
+        // The lines of this frame are drawn (or, in a minimized window, dropped); the next frame adds its own.
+        m_debugLines.Clear();
 
         // The overlay is drawn last, on top of the game.
         m_debugOverlay.Draw({
@@ -252,8 +292,11 @@ namespace Abomination
             .registry = m_registry,
             .renderSettings = m_renderSettings,
             .renderStatistics = m_renderStatistics,
-            .levelStatistics = m_level.statistics,
+            .levelStatistics = m_level.GetStatistics(),
             .isLevelReloadRequested = m_isLevelReloadRequested,
+            .collisionSettings = m_collisionSettings,
+            .cameraTrace = m_cameraTrace,
+            .collisionBrushCount = m_level.GetCollisionBrushes().size(),
         });
 
         m_window.SwapBuffers();

@@ -170,4 +170,14 @@ namespace Abomination::Renderer
         // glm::value_ptr - a pointer to the 16 floats of the matrix.
         glProgramUniformMatrix4fv(m_programID, static_cast<GLint>(location), 1, GL_FALSE, glm::value_ptr(value));
     }
+
+    void GLShaderProgram::SetUniform(std::uint32_t location, const glm::vec2& value) const
+    {
+        glProgramUniform2f(m_programID, static_cast<GLint>(location), value.x, value.y);
+    }
+
+    void GLShaderProgram::SetUniform(std::uint32_t location, float value) const
+    {
+        glProgramUniform1f(m_programID, static_cast<GLint>(location), value);
+    }
 }

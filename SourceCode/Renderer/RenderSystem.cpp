@@ -23,7 +23,10 @@ namespace Abomination::Renderer
 
     SystemShaders LoadSystemShaders(ShaderStore& shaders)
     {
-        return SystemShaders{.wireframe = shaders.Load("Shaders/Wireframe")};
+        return SystemShaders{
+            .wireframe = shaders.Load("Shaders/Wireframe"),
+            .debugLines = shaders.Load("Shaders/DebugLines"),
+        };
     }
 
     RenderStatistics DrawMeshes(const entt::registry& registry, const View& view, float interpolationFactor,

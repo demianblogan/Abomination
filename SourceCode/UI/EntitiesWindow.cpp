@@ -4,7 +4,9 @@
 #include "Core/Transform.h"
 #include "Core/TransformInterpolation.h"
 #include "Gameplay/MouseLook.h"
+#include "Gameplay/Player.h"
 #include "Gameplay/Spin.h"
+#include "Physics/CharacterBody.h"
 #include "Renderer/CameraLens.h"
 #include "Renderer/MeshRenderer.h"
 #include "Renderer/RenderAssets.h"
@@ -42,10 +44,14 @@ namespace Abomination::UI
         constexpr float SmallestScale = 0.01f;       // a scale of 0 would squash the mesh to nothing
 
         // Header colors of the component sections, one per module (see ComponentModule below). Muted colors keep the white
-        // header text readable: steel for the basics, teal for drawing, amber for game rules.
+        // header text readable: steel for the basics, teal for drawing, violet for physics, amber for game rules.
         constexpr ImVec4 CoreModuleColor(0.33f, 0.38f, 0.46f, 1.0f);
         constexpr ImVec4 RendererModuleColor(0.10f, 0.42f, 0.42f, 1.0f);
+        constexpr ImVec4 PhysicsModuleColor(0.40f, 0.25f, 0.52f, 1.0f);
         constexpr ImVec4 GameplayModuleColor(0.55f, 0.37f, 0.10f, 1.0f);
+
+        // How much the velocity of a character changes per pixel of mouse movement when it is dragged, in m/s.
+        constexpr float VelocityDragSpeed = 0.05f;
 
         // How much brighter a header gets under the mouse and while it is being clicked.
         constexpr float HoveredHeaderBrightness = 1.25f;
@@ -77,15 +83,18 @@ namespace Abomination::UI
         // --- Section headers, colored by the module the component belongs to ---
 
         // The modules components come from. Every module has its own header color, so the inspector of an entity shows at
-        // a glance which parts of the engine it is made of (later Physics and AI get colors too).
+        // a glance which parts of the engine it is made of (later AI gets a color too). In the order of the dependencies
+        // of the modules, from the bottom up.
         enum class ComponentModule
         {
             Core,
             Renderer,
+            Physics,
             Gameplay,
         };
 
-        constexpr std::array AllComponentModules{ComponentModule::Core, ComponentModule::Renderer, ComponentModule::Gameplay};
+        constexpr std::array AllComponentModules{ComponentModule::Core, ComponentModule::Renderer, ComponentModule::Physics,
+                                                 ComponentModule::Gameplay};
 
         const char* GetModuleName(ComponentModule module)
         {
@@ -95,6 +104,8 @@ namespace Abomination::UI
                     return "Core";
                 case ComponentModule::Renderer:
                     return "Renderer";
+                case ComponentModule::Physics:
+                    return "Physics";
                 case ComponentModule::Gameplay:
                     return "Gameplay";
             }
@@ -110,6 +121,8 @@ namespace Abomination::UI
                     return CoreModuleColor;
                 case ComponentModule::Renderer:
                     return RendererModuleColor;
+                case ComponentModule::Physics:
+                    return PhysicsModuleColor;
                 case ComponentModule::Gameplay:
                     return GameplayModuleColor;
             }
@@ -219,6 +232,24 @@ namespace Abomination::UI
             ImGui::Text("Yaw:   %.1f deg", glm::degrees(look.yaw));
             ImGui::Text("Pitch: %.1f deg", glm::degrees(look.pitch));
         }
+
+        void DrawCharacterBody(Physics::CharacterBody& body)
+        {
+            // The size is read-only: a box grown here could end up inside a wall, and the movement code would then have to
+            // push it out. The velocity can be changed, to throw the character around and watch how the movement reacts.
+            ImGui::Text("Box:     %.3f x %.3f x %.3f m", 2.0 * body.halfExtents.x, 2.0 * body.halfExtents.y,
+                        2.0 * body.halfExtents.z);
+            ImGui::DragFloat3("Velocity", &body.velocity.x, VelocityDragSpeed, 0.0f, 0.0f, "%.2f m/s");
+            ImGui::Text("On ground: %s", body.isOnGround ? "yes" : "no");
+            ImGui::Text("Stepped up last tick: %.3f m", body.steppedUpHeight);
+            ImGui::Text("In solid: %s", body.isInSolid ? "YES (see the log)" : "no");
+        }
+
+        void DrawPlayerStepSmoothing(const Gameplay::PlayerStepSmoothing& smoothing)
+        {
+            // Read-only: changed every tick. Negative while the eyes are still catching up with the body after a step.
+            ImGui::Text("Eyes behind the body: %.3f m (last tick %.3f m)", smoothing.offset, smoothing.previousOffset);
+        }
     }
 
     void EntitiesWindow::Draw(bool* isOpen, entt::registry& registry, const Renderer::RenderAssets& assets)
@@ -274,6 +305,11 @@ namespace Abomination::UI
                                         "which mesh, texture and program draw the entity."))
                     DrawMeshRenderer(*meshRenderer, assets);
 
+            if (Physics::CharacterBody* body = registry.try_get<Physics::CharacterBody>(entity); body != nullptr)
+                if (DrawComponentHeader("Character Body", ComponentModule::Physics,
+                                        "the box the character walks through the level with, and its velocity."))
+                    DrawCharacterBody(*body);
+
             if (Gameplay::Spin* spin = registry.try_get<Gameplay::Spin>(entity); spin != nullptr)
                 if (DrawComponentHeader("Spin", ComponentModule::Gameplay, "keeps turning the entity around an axis."))
                     DrawSpin(*spin);
@@ -287,6 +323,11 @@ namespace Abomination::UI
                 if (DrawComponentHeader("Look Angles", ComponentModule::Gameplay,
                                         "yaw and pitch of the view, turned with the mouse."))
                     DrawLookAngles(*look);
+
+            if (const auto* smoothing = registry.try_get<Gameplay::PlayerStepSmoothing>(entity); smoothing != nullptr)
+                if (DrawComponentHeader("Player Step Smoothing", ComponentModule::Gameplay,
+                                        "lets the eyes glide up stairs after the body."))
+                    DrawPlayerStepSmoothing(*smoothing);
         }
         ImGui::EndChild();
 

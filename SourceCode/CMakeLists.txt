@@ -131,6 +131,10 @@ set(LIBRARY_SOURCES
     Renderer/View.h
     Renderer/View.cpp
 
+    UI/AssetsWindow.h
+    UI/AssetsWindow.cpp
+    UI/CollisionWindow.h
+    UI/CollisionWindow.cpp
     UI/ConsoleWindow.h
     UI/ConsoleWindow.cpp
     UI/DebugOverlay.h
@@ -141,6 +145,10 @@ set(LIBRARY_SOURCES
     UI/ImGuiLibrary.cpp
     UI/MovementWindow.h
     UI/MovementWindow.cpp
+    UI/PerformanceWindow.h
+    UI/PerformanceWindow.cpp
+    UI/RendererWindow.h
+    UI/RendererWindow.cpp
     UI/UIScale.h
     UI/UIScale.cpp
 

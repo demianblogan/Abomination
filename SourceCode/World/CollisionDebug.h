@@ -29,7 +29,7 @@ namespace Abomination::World
 
     [[nodiscard]] glm::dvec3 GetHalfExtents(TraceShape shape);
 
-    // What the collision tools of the debug overlay (View > Collision) show. Changed from the overlay.
+    // What the collision tools of the debug overlay (View > Physics > Collision) show. Changed from the overlay.
     struct CollisionDebugSettings
     {
         // The bounding box of every collision brush.

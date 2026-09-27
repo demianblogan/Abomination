@@ -51,8 +51,7 @@ namespace Abomination::World
                 // The map stores the origin of the entity; the player is placed by the center of their box, which is a
                 // little higher (see PlayerStart.h). Z is up in the map, so the offset goes along map Z.
                 if (const std::optional<glm::dvec3> position = ParseVectorProperty(*origin); position.has_value())
-                    playerStart.boxCenter =
-                        ConvertMapPosition(*position + glm::dvec3(0.0, 0.0, PlayerBoxCenterAboveOrigin));
+                    playerStart.boxCenter = ConvertMapPosition(*position + glm::dvec3(0.0, 0.0, PlayerBoxCenterAboveOrigin));
             }
 
             if (const std::string* angle = FindProperty(*entity, "angle"); angle != nullptr)

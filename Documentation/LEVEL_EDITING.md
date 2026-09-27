@@ -75,7 +75,7 @@ Quake). F2 switches to the free-fly camera to look at the map from anywhere.
   they face, so walls, floor and ceiling stay apart until real lighting (0.5).
   A texture that is missing shows as a magenta and black checkerboard, with a
   warning in the log.
-- *View > Renderer* in the debug overlay (<kbd>F1</kbd>) switches to
+- *View > Rendering > Renderer* in the debug overlay (<kbd>F1</kbd>) switches to
   *Wireframe* to show how faces are split into triangles, and shows how many
   brushes, faces and triangles the level has.
 - **Without restarting the game:** save the map, build only the

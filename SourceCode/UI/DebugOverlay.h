@@ -105,20 +105,9 @@ namespace Abomination::UI
         DebugOverlay(ImGuiLibrary library, Platform::ImGuiPlatformBackend platformBackend,
                      Renderer::ImGuiRendererBackend rendererBackend, std::string GPUName) noexcept;
 
-        // The bar along the top edge of the game window: the View menu opens and closes debug windows,
-        // the Settings menu changes settings of the game.
+        // The bar along the top edge of the game window: the View menu opens and closes debug windows (each of them is
+        // in a file of its own: PerformanceWindow, AssetsWindow, ...), the Settings menu changes settings of the game.
         void DrawMainMenuBar(const DebugOverlayContext& context);
-
-        // The small window in the top-left corner: version, GPU, FPS, frame time and its graph.
-        void DrawPerformanceWindow(const DebugOverlayContext& context);
-
-        // Every loaded texture and shader program: size, video memory, and whether a fallback replaced the file.
-        void DrawAssetsWindow(const DebugOverlayContext& context);
-
-        // How the scene is drawn (solid or wireframe) and how much: draw calls and triangles of the last frame, and the
-        // numbers of the loaded level.
-        void DrawRendererWindow(const DebugOverlayContext& context);
-        void DrawCollisionWindow(const DebugOverlayContext& context);
 
         // Members are destroyed in reverse order of declaration: both backends first, then the ImGui context they use.
         ImGuiLibrary m_library;

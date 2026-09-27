@@ -33,11 +33,10 @@ namespace Abomination::Renderer
     {
         m_vertexCapacity = InitialVertexCapacity;
         m_vertexArray.SetVertexBuffer(VertexBufferBinding, m_vertexBuffer, sizeof(StripVertex));
-        GLVertexArray& vertexArray = m_vertexArray;
-        vertexArray.SetFloatAttribute(DebugLineStartAttribute, VertexBufferBinding, 3, offsetof(StripVertex, lineStart));
-        vertexArray.SetFloatAttribute(DebugLineEndAttribute, VertexBufferBinding, 3, offsetof(StripVertex, lineEnd));
-        vertexArray.SetFloatAttribute(DebugLineColorAttribute, VertexBufferBinding, 3, offsetof(StripVertex, color));
-        vertexArray.SetFloatAttribute(DebugLineCornerAttribute, VertexBufferBinding, 2, offsetof(StripVertex, corner));
+        m_vertexArray.SetFloatAttribute(DebugLineStartAttribute, VertexBufferBinding, 3, offsetof(StripVertex, lineStart));
+        m_vertexArray.SetFloatAttribute(DebugLineEndAttribute, VertexBufferBinding, 3, offsetof(StripVertex, lineEnd));
+        m_vertexArray.SetFloatAttribute(DebugLineColorAttribute, VertexBufferBinding, 3, offsetof(StripVertex, color));
+        m_vertexArray.SetFloatAttribute(DebugLineCornerAttribute, VertexBufferBinding, 2, offsetof(StripVertex, corner));
     }
 
     void DebugLineRenderer::Draw(const DebugLines& lines, const View& view, const GLShaderProgram& program,

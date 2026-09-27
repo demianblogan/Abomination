@@ -158,8 +158,9 @@ A module may depend only on modules **below** it in this diagram.
   (drawing), and `UI::DebugOverlay` combines them and describes the windows.
   ImGui is used only for developer tools, never for the game interface.
 - **The debug overlay** has a main menu bar (F1): *View* opens and closes
-  debug windows (now *Performance*, *Assets*, *Entities*, *Renderer*,
-  *Collision*, *Movement* and *Console*; all
+  debug windows (now *Performance* and *Console* at the top, then submenus by
+  part of the engine: *Engine* — *Entities*, *Assets*; *Rendering* —
+  *Renderer*; *Physics* — *Collision*, *Movement*; one file per window; all
   closed at the first start), *Settings*
   changes settings grouped like the future options menu (now *Display*:
   screen mode, V-Sync, FPS limit, UI scale). The font size is one constant next to the font
@@ -393,7 +394,7 @@ Inside the renderer:
   front of it. The vertices go into a dynamic buffer
   (`GLBuffer::CreateDynamic` + `Update`: fixed size, contents replaced every
   frame), replaced by one twice as big when a frame has more lines.
-- **Renderer window** of the debug overlay (View > Renderer): Solid /
+- **Renderer window** of the debug overlay (View > Rendering > Renderer): Solid /
   Wireframe, world axes (arrows along X, Y, Z from the origin, over
   everything), draw calls and triangles of the last frame, brushes, faces and
   triangles of the level, and *Reload*, which loads the map next to the
@@ -625,7 +626,7 @@ Renderer::RenderAssets                     all graphics stores, owned by Applica
   the handles of the removed level invalid. An asset asked for with both
   lifetimes keeps the longer one. Texture and mesh stores take the lifetime
   in every `Load`/`Add`; shader programs are always global.
-- **Assets window** of the debug overlay (View > Assets): every loaded
+- **Assets window** of the debug overlay (View > Engine > Assets): every loaded
   texture with its size, video memory (all mipmap levels) and lifetime, every
   mesh and shader program, fallbacks marked in magenta.
 
@@ -684,7 +685,7 @@ by several gets its own header. When a module grows, it is split into topic
 folders that hold components and systems together (`Gameplay/Weapons/`,
 `Gameplay/Enemies/`), keeping the namespace of the module.
 
-**Tools.** The entity inspector of the debug overlay (View > Entities) lists
+**Tools.** The entity inspector of the debug overlay (View > Engine > Entities) lists
 all entities (`registry.view<entt::entity>()`) and shows and edits the
 components of the selected one; section headers are colored by module.
 A new component type gets a small drawing function there.
@@ -781,7 +782,7 @@ Test.map ─► ParseMap ─► MapData ─┬─► BuildBrushPolygons ─► B
   are skipped. The player box is `PlayerHalfExtents` (1 × 1.75 × 1 m, like
   32 × 56 × 32 units in Quake and `info_player_start` in `Abomination.fgd`),
   defined once in `World/PlayerStart.h`.
-- **Collision tools** (`CollisionDebug`, View > Collision): brush bounds, a
+- **Collision tools** (`CollisionDebug`, View > Physics > Collision): brush bounds, a
   box traced from the camera straight ahead (point, small box or player box;
   the stopping box and the normal are drawn as debug lines, the numbers are
   shown in the window) and a colliding free-fly camera (it stops at walls; a
@@ -843,7 +844,7 @@ AI (later)              ─┘               jump, friction, accelerate,
   `MovementSettings` (running 7 m/s like modern shooters — Quake runs at
   10 m/s — acceleration 10, friction 4, stop speed 3.1 m/s, step 0.56 m, jump
   8.4 m/s ≈ 1.4 m high, air acceleration 10 up to 0.94 m/s). **View >
-  Movement** shows a speedometer and the state of the player and has sliders
+  Physics > Movement** shows a speedometer and the state of the player and has sliders
   for all of them; not saved yet (JSON configuration, 0.6).
 
 **Planned:** player clip brushes (invisible slopes over stairs) in maps;

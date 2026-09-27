@@ -9,9 +9,9 @@ namespace Abomination::Renderer
 
 namespace Abomination::UI
 {
-    // The Entities window of the debug overlay (View > Entities), an entity inspector: the list of all entities on the
-    // left, the components of the selected one on the right. Values can be changed in place (move the player, widen the
-    // camera's field of view), so the effect is visible at once.
+    // The Entities window of the debug overlay (View > Engine > Entities), an entity inspector: the list of all entities
+    // on the left, the components of the selected one on the right. Values can be changed in place (move the player, widen
+    // the camera's field of view), so the effect is visible at once.
     //
     // Every component type the inspector knows has its own small drawing function; components it does not know yet are
     // not shown. A new component type gets a drawing function here when it is added to the game.

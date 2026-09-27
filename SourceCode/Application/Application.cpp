@@ -199,7 +199,21 @@ namespace Abomination
         // First of all: remember where every interpolated entity is before this tick moves anything.
         Core::StorePreviousTransforms(m_registry);
 
-        m_cameraController.UpdateMovement(m_registry.get<Core::Transform>(m_camera), m_actionStates, tickDuration);
+        Core::Transform& cameraTransform = m_registry.get<Core::Transform>(m_camera);
+        const glm::vec3 cameraPositionBefore = cameraTransform.position;
+        m_cameraController.UpdateMovement(cameraTransform, m_actionStates, tickDuration);
+
+        // A colliding camera moves only as far as its box gets. It stops at walls instead of sliding along them (sliding
+        // comes with the movement of the player). A camera that starts inside a brush (the tool was switched on in a
+        // wall) moves freely, so it can get out.
+        if (m_collisionSettings.doesCameraCollide)
+        {
+            const World::TraceResult trace =
+                World::TraceBox(m_level.GetCollisionBrushes(), glm::dvec3(cameraPositionBefore),
+                                glm::dvec3(cameraTransform.position), World::CameraHalfExtents);
+            if (!trace.startsInSolid)
+                cameraTransform.position = glm::vec3(trace.endPosition);
+        }
 
         Gameplay::UpdateSpinningEntities(m_registry, tickDuration);
     }
@@ -247,6 +261,9 @@ namespace Abomination
             m_renderStatistics = Renderer::DrawMeshes(m_registry, view, interpolationFactor, m_renderAssets,
                                                       m_systemShaders, m_renderSettings);
 
+            m_cameraTrace = World::UpdateCollisionDebug(m_level.GetCollisionBrushes(), m_collisionSettings,
+                                                        cameraTransform, m_debugLines);
+
             if (m_renderSettings.areWorldAxesVisible)
             {
                 constexpr glm::vec3 Origin{0.0f};
@@ -277,6 +294,9 @@ namespace Abomination
             .renderStatistics = m_renderStatistics,
             .levelStatistics = m_level.GetStatistics(),
             .isLevelReloadRequested = m_isLevelReloadRequested,
+            .collisionSettings = m_collisionSettings,
+            .cameraTrace = m_cameraTrace,
+            .collisionBrushCount = m_level.GetCollisionBrushes().size(),
         });
 
         m_window.SwapBuffers();

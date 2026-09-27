@@ -14,6 +14,7 @@
 #include "Renderer/RenderSettings.h"
 #include "Renderer/RenderSystem.h"
 #include "UI/DebugOverlay.h"
+#include "World/CollisionDebug.h"
 #include "World/Level.h"
 
 #include <entt/entt.hpp>
@@ -96,6 +97,10 @@ namespace Abomination
         // Set by the Reload button of the Renderer window; the level is reloaded at the start of the next frame, not in the
         // middle of drawing the overlay.
         bool m_isLevelReloadRequested = false;
+
+        // The collision tools of the debug overlay (View > Collision) and the camera trace of the last frame.
+        World::CollisionDebugSettings m_collisionSettings;
+        World::CameraTrace m_cameraTrace;
 
         // All entities of the game and their components. Components hold only handles to assets, never pointers, so they
         // stay valid when Application (and with it m_renderAssets) is moved out of Create().

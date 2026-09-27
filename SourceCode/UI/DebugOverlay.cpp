@@ -12,6 +12,7 @@
 #include "Renderer/RenderSettings.h"
 #include "Renderer/RenderSystem.h"
 #include "UI/UIScale.h"
+#include "World/CollisionDebug.h"
 #include "World/LevelMesh.h"
 
 #include <imgui.h>
@@ -83,6 +84,9 @@ namespace Abomination::UI
 
         // The Renderer window opens for the first time at the right edge of the default window.
         constexpr ImVec2 RendererWindowInitialPosition(900.0f, 40.0f);
+
+        // The Collision window opens for the first time below the Renderer window.
+        constexpr ImVec2 CollisionWindowInitialPosition(900.0f, 360.0f);
 
         // The color of assets replaced by a fallback: the same magenta as the fallbacks themselves.
         constexpr ImVec4 FallbackTextColor(1.0f, 0.0f, 1.0f, 1.0f);
@@ -194,6 +198,9 @@ namespace Abomination::UI
 
             if (m_isRendererWindowOpen)
                 DrawRendererWindow(context);
+
+            if (m_isCollisionWindowOpen)
+                DrawCollisionWindow(context);
         }
 
         // 3. ImGui turns the recorded windows into lists of triangles, and the OpenGL backend draws them.
@@ -228,6 +235,7 @@ namespace Abomination::UI
             ImGui::MenuItem("Assets", nullptr, &m_isAssetsWindowOpen);
             ImGui::MenuItem("Entities", nullptr, &m_isEntitiesWindowOpen);
             ImGui::MenuItem("Renderer", nullptr, &m_isRendererWindowOpen);
+            ImGui::MenuItem("Collision", nullptr, &m_isCollisionWindowOpen);
             ImGui::EndMenu();
         }
 
@@ -514,7 +522,8 @@ namespace Abomination::UI
             if (ImGui::RadioButton("Wireframe", settings.isWireframeEnabled))
                 settings.isWireframeEnabled = true;
             ImGui::Checkbox("World axes", &settings.areWorldAxesVisible);
-            ImGui::SetItemTooltip("Arrows along X (red), Y (green, up) and Z (blue) from the origin of the world, 1 m long, drawn over everything.");
+            ImGui::SetItemTooltip("Arrows along X (red), Y (green, up) and Z (blue) from the origin of the world,\n"
+                                  "1 m long, drawn over everything.");
 
             ImGui::SeparatorText("Last frame");
             ImGui::Text("Draw calls: %d", context.renderStatistics.drawCallCount);
@@ -532,6 +541,53 @@ namespace Abomination::UI
                 context.isLevelReloadRequested = true;
             ImGui::SetItemTooltip("Loads the map again.\n"
                                   "Build the CopyAssets target first to copy a map saved in TrenchBroom.");
+        }
+        ImGui::End();
+    }
+
+    void DebugOverlay::DrawCollisionWindow(const DebugOverlayContext& context)
+    {
+        ImGui::SetNextWindowPos(ScaleToUI(CollisionWindowInitialPosition), ImGuiCond_FirstUseEver);
+        if (ImGui::Begin("Collision", &m_isCollisionWindowOpen, ImGuiWindowFlags_AlwaysAutoResize))
+        {
+            World::CollisionDebugSettings& settings = context.collisionSettings;
+
+            ImGui::Text("Collision brushes: %zu", context.collisionBrushCount);
+            ImGui::Checkbox("Brush bounds", &settings.areBrushBoundsVisible);
+            ImGui::SetItemTooltip("The bounding box of every brush (orange): the quick test before its planes.");
+
+            ImGui::SeparatorText("Camera");
+            ImGui::Checkbox("Camera collides", &settings.doesCameraCollide);
+            ImGui::SetItemTooltip("The free-fly camera stops at walls. It does not slide along them yet.");
+
+            ImGui::SeparatorText("Trace from the camera");
+            ImGui::Checkbox("Enabled", &settings.isCameraTraceEnabled);
+            ImGui::SetItemTooltip("A box flies from the camera straight ahead (up to %.0f m). Yellow: where it stops;\n"
+                                  "green arrow: the normal of the surface it hits.",
+                                  World::CameraTraceLength);
+
+            // One radio button per shape, on one line.
+            for (std::size_t index = 0; index < World::TraceShapeNames.size(); ++index)
+            {
+                if (index > 0)
+                    ImGui::SameLine();
+
+                const auto shape = static_cast<World::TraceShape>(index);
+                // data() is safe here: the names are string literals, which end with a zero like ImGui expects.
+                if (ImGui::RadioButton(World::TraceShapeNames[index].data(), settings.cameraTraceShape == shape))
+                    settings.cameraTraceShape = shape;
+            }
+
+            const World::CameraTrace& trace = context.cameraTrace;
+            if (trace.isValid)
+            {
+                const World::TraceResult& result = trace.result;
+                ImGui::Text("Fraction:  %.3f", result.fraction);
+                ImGui::Text("Distance:  %.2f m", trace.distance);
+                ImGui::Text("Normal:    (%.2f, %.2f, %.2f)", result.hitNormal.x, result.hitNormal.y, result.hitNormal.z);
+                ImGui::Text("Starts in solid: %s, stuck: %s", result.startsInSolid ? "yes" : "no",
+                            result.isStuck ? "yes" : "no");
+            }
         }
         ImGui::End();
     }

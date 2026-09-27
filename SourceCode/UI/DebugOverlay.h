@@ -8,6 +8,7 @@
 
 #include <entt/entt.hpp>
 
+#include <cstddef>
 #include <expected>
 #include <filesystem>
 #include <string>
@@ -34,6 +35,8 @@ namespace Abomination::Renderer
 namespace Abomination::World
 {
     struct LevelMeshStatistics;
+    struct CollisionDebugSettings;
+    struct CameraTrace;
 }
 
 namespace Abomination::UI
@@ -53,6 +56,9 @@ namespace Abomination::UI
         const Renderer::RenderStatistics& renderStatistics;
         const World::LevelMeshStatistics& levelStatistics;
         bool& isLevelReloadRequested;
+        World::CollisionDebugSettings& collisionSettings;
+        const World::CameraTrace& cameraTrace;
+        std::size_t collisionBrushCount;
     };
 
     // Developer overlay drawn with Dear ImGui on top of the game: a menu bar with debug windows and settings.
@@ -94,6 +100,7 @@ namespace Abomination::UI
         // How the scene is drawn (solid or wireframe) and how much: draw calls and triangles of the last frame, and the
         // numbers of the loaded level.
         void DrawRendererWindow(const DebugOverlayContext& context);
+        void DrawCollisionWindow(const DebugOverlayContext& context);
 
         // Members are destroyed in reverse order of declaration: both backends first, then the ImGui context they use.
         ImGuiLibrary m_library;
@@ -111,6 +118,7 @@ namespace Abomination::UI
         bool m_isAssetsWindowOpen = false;
         bool m_isEntitiesWindowOpen = false;
         bool m_isRendererWindowOpen = false;
+        bool m_isCollisionWindowOpen = false;
 
         EntitiesWindow m_entitiesWindow;
 

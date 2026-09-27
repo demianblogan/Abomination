@@ -513,6 +513,8 @@ namespace Abomination::UI
             ImGui::SameLine();
             if (ImGui::RadioButton("Wireframe", settings.isWireframeEnabled))
                 settings.isWireframeEnabled = true;
+            ImGui::Checkbox("World axes", &settings.areWorldAxesVisible);
+            ImGui::SetItemTooltip("Arrows along X (red), Y (green, up) and Z (blue) from the origin of the world, 1 m long, drawn over everything.");
 
             ImGui::SeparatorText("Last frame");
             ImGui::Text("Draw calls: %d", context.renderStatistics.drawCallCount);

@@ -9,6 +9,8 @@
 #include "Platform/SDLLibrary.h"
 #include "Platform/Window.h"
 #include "Renderer/RenderAssets.h"
+#include "Renderer/DebugLineRenderer.h"
+#include "Renderer/DebugLines.h"
 #include "Renderer/RenderSettings.h"
 #include "Renderer/RenderSystem.h"
 #include "UI/DebugOverlay.h"
@@ -80,6 +82,10 @@ namespace Abomination
         // How the scene is drawn (changed in the Renderer window of the overlay) and what the last frame cost (shown there).
         Renderer::RenderSettings m_renderSettings;
         Renderer::RenderStatistics m_renderStatistics;
+
+        // Lines any code can add during a frame for debugging; drawn over the scene and cleared at the end of Render().
+        Renderer::DebugLines m_debugLines;
+        Renderer::DebugLineRenderer m_debugLineRenderer;
 
         // The folder with the game files, for loading maps after startup.
         std::filesystem::path m_assetsDirectory;

@@ -17,6 +17,8 @@
 #include "World/Level.h"
 #include "World/MapParser.h"
 
+#include <glm/vec2.hpp>
+#include <glm/vec3.hpp>
 #include <glm/vec4.hpp>
 
 #include <utility>
@@ -34,6 +36,9 @@ namespace Abomination
         // The map loaded at start, relative to the assets folder. Its meshes are named after it in the mesh store
         // ("Maps/Test.map#Episode1/Wall_MossyBrick").
         const std::string StartMapPath = "Maps/Test.map";
+
+        // The width of debug lines in pixels at 100% display scale.
+        constexpr float DebugLineWidth = 2.5f;
     }
 
     std::expected<Application, std::string> Application::Create(const std::filesystem::path& assetsDirectory)
@@ -241,7 +246,24 @@ namespace Abomination
 
             m_renderStatistics = Renderer::DrawMeshes(m_registry, view, interpolationFactor, m_renderAssets,
                                                       m_systemShaders, m_renderSettings);
+
+            if (m_renderSettings.areWorldAxesVisible)
+            {
+                constexpr glm::vec3 Origin{0.0f};
+                constexpr auto OnTop = Renderer::DebugLineDepth::OnTop;
+                m_debugLines.AddArrow(Origin, {1.0f, 0.0f, 0.0f}, {1.0f, 0.2f, 0.2f}, OnTop);
+                m_debugLines.AddArrow(Origin, {0.0f, 1.0f, 0.0f}, {0.2f, 1.0f, 0.2f}, OnTop);
+                m_debugLines.AddArrow(Origin, {0.0f, 0.0f, 1.0f}, {0.3f, 0.5f, 1.0f}, OnTop);
+            }
+
+            // The line width is given at 100% display scale, like the debug overlay: on a 4K monitor at 200% it doubles.
+            const glm::vec2 viewportSize(static_cast<float>(widthInPixels), static_cast<float>(heightInPixels));
+            m_debugLineRenderer.Draw(m_debugLines, view, m_renderAssets.shaders.Get(m_systemShaders.debugLines), viewportSize,
+                                     DebugLineWidth * m_window.GetDisplayScale());
         }
+
+        // The lines of this frame are drawn (or, in a minimized window, dropped); the next frame adds its own.
+        m_debugLines.Clear();
 
         // The overlay is drawn last, on top of the game.
         m_debugOverlay.Draw({

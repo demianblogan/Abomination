@@ -80,6 +80,10 @@ set(LIBRARY_SOURCES
     Platform/WindowSizing.cpp
 
     Renderer/CameraLens.h
+    Renderer/DebugLineRenderer.h
+    Renderer/DebugLineRenderer.cpp
+    Renderer/DebugLines.h
+    Renderer/DebugLines.cpp
     Renderer/DebugOutput.h
     Renderer/DebugOutput.cpp
     Renderer/GLBuffer.h

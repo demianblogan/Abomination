@@ -18,6 +18,28 @@ namespace Abomination::Renderer
         glNamedBufferStorage(m_bufferID, static_cast<GLsizeiptr>(data.size()), data.data(), 0);
     }
 
+    GLBuffer GLBuffer::CreateDynamic(std::size_t byteCount)
+    {
+        std::uint32_t bufferID = 0;
+        glCreateBuffers(1, &bufferID);
+
+        // No data yet (nullptr). GL_DYNAMIC_STORAGE_BIT allows glNamedBufferSubData later: the contents may change, the
+        // size may not.
+        glNamedBufferStorage(bufferID, static_cast<GLsizeiptr>(byteCount), nullptr, GL_DYNAMIC_STORAGE_BIT);
+
+        return GLBuffer(bufferID);
+    }
+
+    GLBuffer::GLBuffer(std::uint32_t bufferID) noexcept
+        : m_bufferID(bufferID)
+    {}
+
+    void GLBuffer::Update(std::span<const std::byte> data)
+    {
+        // Offset 0: write from the first byte of the buffer.
+        glNamedBufferSubData(m_bufferID, 0, static_cast<GLsizeiptr>(data.size()), data.data());
+    }
+
     GLBuffer::GLBuffer(GLBuffer&& other) noexcept
         : m_bufferID(std::exchange(other.m_bufferID, 0))
     {}

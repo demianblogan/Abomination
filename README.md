@@ -135,6 +135,7 @@ The current build (milestone 0.2 in progress) has a free-fly camera in a test le
 | <kbd>Shift</kbd> | Fly faster |
 | Hold **right mouse button** | Look around with the mouse |
 | <kbd>F1</kbd> | Show / hide the debug overlay |
+| <kbd>~</kbd> | Open / close the in-game console (the log) |
 | <kbd>Alt</kbd> + <kbd>Enter</kbd> | Switch between windowed and borderless |
 | <kbd>Esc</kbd> | Quit the game |
 

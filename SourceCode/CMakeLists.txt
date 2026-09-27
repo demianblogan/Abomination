@@ -40,6 +40,8 @@ set(LIBRARY_SOURCES
     Core/Image.cpp
     Core/Log.h
     Core/Log.cpp
+    Core/LogHistory.h
+    Core/LogHistory.cpp
     Core/Name.h
     Core/Plane.h
     Core/Plane.cpp
@@ -119,6 +121,8 @@ set(LIBRARY_SOURCES
     Renderer/View.h
     Renderer/View.cpp
 
+    UI/ConsoleWindow.h
+    UI/ConsoleWindow.cpp
     UI/DebugOverlay.h
     UI/DebugOverlay.cpp
     UI/EntitiesWindow.h
@@ -177,6 +181,13 @@ add_executable(Abomination
 )
 target_link_libraries(Abomination PRIVATE AbominationCore)
 abomination_set_compiler_options(Abomination)
+
+# A Windows application, not a console application: Windows opens no console window for the game. The log is read
+# in the in-game console (the ` key) and in Abomination.log next to the executable.
+# A Windows application normally starts in WinMain(); /ENTRY:mainCRTStartup makes it start in the ordinary main()
+# instead, so Main.cpp stays the same (and SDL, which could provide a WinMain, stays inside the Platform module).
+set_target_properties(Abomination PROPERTIES WIN32_EXECUTABLE TRUE)
+target_link_options(Abomination PRIVATE /ENTRY:mainCRTStartup)
 
 # --- Assets: the Assets folder is copied next to the executable ------------------
 # The game finds its files relative to the executable (Platform::GetExecutableDirectory() / "Assets"),

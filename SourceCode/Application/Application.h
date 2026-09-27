@@ -26,6 +26,7 @@
 namespace Abomination::Core
 {
     class FrameStatistics;
+    class LogHistory;
 }
 
 namespace Abomination::World
@@ -42,7 +43,10 @@ namespace Abomination
     {
     public:
         // assetsDirectory: the folder with the game files (fonts, shaders, textures), normally next to the executable.
-        [[nodiscard]] static std::expected<Application, std::string> Create(const std::filesystem::path& assetsDirectory);
+        // logHistory: the last messages of the log (see Core::LogHistory), shown by the in-game console; it must outlive
+        // the application.
+        [[nodiscard]] static std::expected<Application, std::string> Create(const std::filesystem::path& assetsDirectory,
+                                                                            Core::LogHistory& logHistory);
 
         // Runs the main loop until the window is closed. Returns the exit code of the process.
         [[nodiscard]] int Run();
@@ -50,7 +54,8 @@ namespace Abomination
     private:
         // map: the parsed start map, whose entities the constructor creates. assetsDirectory is kept for loading maps later.
         Application(Platform::SDLLibrary SDLLibrary, Platform::Window window, Renderer::RenderAssets renderAssets,
-                    const World::MapData& map, UI::DebugOverlay debugOverlay, std::filesystem::path assetsDirectory);
+                    const World::MapData& map, UI::DebugOverlay debugOverlay, std::filesystem::path assetsDirectory,
+                    Core::LogHistory& logHistory);
 
         // The two kinds of updates of the main loop, named like in Unity:
         //   Update()      - once per frame: what must react immediately and does not depend on time
@@ -90,6 +95,10 @@ namespace Abomination
 
         // The folder with the game files, for loading maps after startup.
         std::filesystem::path m_assetsDirectory;
+
+        // Not owned: main() owns the history and keeps it alive longer than the application. A pointer, not a reference,
+        // so Application stays movable.
+        Core::LogHistory* m_logHistory = nullptr;
 
         // The loaded level (its statistics are shown in the Renderer window).
         World::Level m_level;

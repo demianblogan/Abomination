@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <filesystem>
 #include <format>
 #include <string_view>
@@ -7,6 +8,8 @@
 
 namespace Abomination::Core
 {
+    class LogHistory;
+
     // Ordered from the least to the most important. Messages below LogSettings::minimumLevel are discarded.
     enum class LogLevel
     {
@@ -28,11 +31,19 @@ namespace Abomination::Core
         World,
     };
 
+    // Names for tools (the in-game console), in the order of the enum values. The log file uses the same names.
+    inline constexpr std::array<std::string_view, 6> LogLevelNames = {
+        "trace", "debug", "info", "warning", "error", "critical"};
+    inline constexpr std::array<std::string_view, 5> LogCategoryNames = {"Core", "Platform", "Renderer", "UI", "World"};
+
     struct LogSettings
     {
         std::filesystem::path filePath = "Abomination.log";
         LogLevel minimumLevel = LogLevel::Info;
-        bool needToWriteToConsole = true;
+
+        // If set, every written message is also kept here (see LogHistory), for the in-game console. It must stay alive
+        // until Shutdown().
+        LogHistory* history = nullptr;
     };
 }
 

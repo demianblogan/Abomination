@@ -1,4 +1,5 @@
 #include "Core/Log.h"
+#include "Core/LogHistory.h"
 
 #include <gtest/gtest.h>
 
@@ -6,6 +7,7 @@
 #include <fstream>
 #include <sstream>
 #include <string>
+#include <vector>
 
 namespace Abomination::Core
 {
@@ -30,7 +32,6 @@ namespace Abomination::Core
             Log::Initialize(LogSettings{
                 .filePath = m_logFilePath,
                 .minimumLevel = minimumLevel,
-                .needToWriteToConsole = false,
             });
         }
 
@@ -94,5 +95,28 @@ namespace Abomination::Core
         const std::string contents = ShutdownAndReadLogFile();
         EXPECT_EQ(contents.find("First run"), std::string::npos);
         EXPECT_NE(contents.find("Second run"), std::string::npos);
+    }
+
+    TEST_F(LogTest, HistoryKeepsMessagesInParts)
+    {
+        LogHistory history;
+        Log::Initialize(LogSettings{
+            .filePath = m_logFilePath,
+            .minimumLevel = LogLevel::Info,
+            .history = &history,
+        });
+
+        Log::Write(LogCategory::World, LogLevel::Warning, "The map has no {}", "info_player_start");
+        Log::Write(LogCategory::Core, LogLevel::Debug, "Below the minimum level");
+        Log::Shutdown();
+
+        std::vector<LogEntry> entries;
+        history.VisitEntries([&entries](const LogEntry& entry) { entries.push_back(entry); });
+
+        ASSERT_EQ(entries.size(), 1u);
+        EXPECT_EQ(entries[0].category, LogCategory::World);
+        EXPECT_EQ(entries[0].level, LogLevel::Warning);
+        EXPECT_EQ(entries[0].message, "The map has no info_player_start");
+        EXPECT_EQ(entries[0].timeText.size(), std::string("12:03:41.512").size());
     }
 }

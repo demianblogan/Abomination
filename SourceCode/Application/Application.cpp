@@ -41,7 +41,8 @@ namespace Abomination
         constexpr float DebugLineWidth = 2.5f;
     }
 
-    std::expected<Application, std::string> Application::Create(const std::filesystem::path& assetsDirectory)
+    std::expected<Application, std::string> Application::Create(const std::filesystem::path& assetsDirectory,
+                                                                Core::LogHistory& logHistory)
     {
         std::expected<Platform::SDLLibrary, std::string> SDLLibrary = Platform::SDLLibrary::Initialize();
         if (!SDLLibrary.has_value())
@@ -81,16 +82,17 @@ namespace Abomination
             return std::unexpected(debugOverlay.error());
 
         return Application(std::move(*SDLLibrary), std::move(*window), std::move(renderAssets), *map,
-                           std::move(*debugOverlay), assetsDirectory);
+                           std::move(*debugOverlay), assetsDirectory, logHistory);
     }
 
     Application::Application(Platform::SDLLibrary SDLLibrary, Platform::Window window, Renderer::RenderAssets renderAssets,
                              const World::MapData& map, UI::DebugOverlay debugOverlay,
-                             std::filesystem::path assetsDirectory)
+                             std::filesystem::path assetsDirectory, Core::LogHistory& logHistory)
         : m_SDLLibrary(std::move(SDLLibrary))
         , m_window(std::move(window))
         , m_renderAssets(std::move(renderAssets))
         , m_assetsDirectory(std::move(assetsDirectory))
+        , m_logHistory(&logHistory)
         , m_debugOverlay(std::move(debugOverlay))
     {
         m_systemShaders = Renderer::LoadSystemShaders(m_renderAssets.shaders);
@@ -171,6 +173,9 @@ namespace Abomination
 
         if (m_actionStates.WasActionStarted(Input::Action::ToggleDebugOverlay))
             m_debugOverlay.ToggleVisibility();
+
+        if (m_actionStates.WasActionStarted(Input::Action::ToggleConsole))
+            m_debugOverlay.ToggleConsole();
 
         // While LookAroundMode is active (the right mouse button by default), the mouse is captured for looking around,
         // like in the Unity and Unreal editors. The mode is switched only when the action starts or stops.
@@ -297,6 +302,7 @@ namespace Abomination
             .collisionSettings = m_collisionSettings,
             .cameraTrace = m_cameraTrace,
             .collisionBrushCount = m_level.GetCollisionBrushes().size(),
+            .logHistory = *m_logHistory,
         });
 
         m_window.SwapBuffers();

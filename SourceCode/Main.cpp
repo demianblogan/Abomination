@@ -1,6 +1,7 @@
 #include "Application/Application.h"
 #include "Core/BuildConfiguration.h"
 #include "Core/Log.h"
+#include "Core/LogHistory.h"
 #include "Core/Version.h"
 #include "Platform/SystemServices.h"
 
@@ -27,12 +28,12 @@ namespace
 
     // Creates and runs the application. It is a separate function so that the application (the window, SDL)
     // is destroyed when the function returns, while logging still works and can record the shutdown.
-    int RunApplication()
+    int RunApplication(LogHistory& logHistory)
     {
         // CMake copies the Assets folder of the repository next to the executable on every build.
         const std::filesystem::path assetsDirectory = Platform::GetExecutableDirectory() / "Assets";
 
-        std::expected<Application, std::string> application = Application::Create(assetsDirectory);
+        std::expected<Application, std::string> application = Application::Create(assetsDirectory, logHistory);
         if (!application.has_value())
         {
             Log::Write(LogCategory::Core, LogLevel::Critical, "{}", application.error());
@@ -47,14 +48,18 @@ namespace
 
 int main()
 {
+    // The last messages, kept for the in-game console. It lives until the end of main(), after Log::Shutdown().
+    LogHistory logHistory;
+
     Log::Initialize(LogSettings{
         .filePath = Platform::GetExecutableDirectory() / "Abomination.log",
         .minimumLevel = IsDebugBuild ? LogLevel::Debug : LogLevel::Info,
+        .history = &logHistory,
     });
 
     Log::Write(LogCategory::Core, LogLevel::Info, "Abomination {}", GetGameVersionString());
 
-    const int exitCode = RunApplication();
+    const int exitCode = RunApplication(logHistory);
 
     Log::Shutdown();
 

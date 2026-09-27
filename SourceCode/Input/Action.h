@@ -33,6 +33,9 @@ namespace Abomination::Input
         ToggleDebugOverlay,
         ToggleConsole,
 
+        // Switches between the player and the free-fly camera (a debug "noclip" view that flies through walls).
+        ToggleFreeFlyCamera,
+
         // Not an action: the number of actions above. Must stay the last value.
         Count,
     };

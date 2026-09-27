@@ -20,6 +20,7 @@ set(TEST_SOURCES
     Core/VersionTests.cpp
 
     Gameplay/FreeFlyCameraControllerTests.cpp
+    Gameplay/PlayerTests.cpp
     Gameplay/SpinTests.cpp
 
     Input/ActionStatesTests.cpp

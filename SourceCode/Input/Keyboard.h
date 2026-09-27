@@ -29,6 +29,7 @@ namespace Abomination::Input
 
         // Function keys
         F1 = 58,
+        F2 = 59,
 
         // Modifiers
         LeftShift = 225,

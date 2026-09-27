@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Gameplay/FreeFlyCamera.h"
+#include "Gameplay/MouseLook.h"
 
 #include <entt/entt.hpp>
 #include <glm/gtc/quaternion.hpp>
@@ -38,10 +39,6 @@ namespace Abomination::Gameplay
         float mouseSensitivity = 0.0025f;
     };
 
-    // The rotation of a camera turned by yaw and pitch: first tilt by the pitch around +X, then turn by the yaw around the
-    // world +Y. Applied to the camera's forward (0, 0, -1), it gives the direction the camera looks in.
-    [[nodiscard]] glm::quat CalculateCameraRotation(float yaw, float pitch);
-
     // Creates a free-fly camera entity at position, turned by yaw (radians, 0 looks along -Z): Name, Transform,
     // PreviousTransform (it moves in ticks, so it is interpolated), Renderer::CameraLens and FreeFlyCamera.
     entt::entity SpawnFreeFlyCamera(entt::registry& registry, glm::vec3 position, float yaw = 0.0f);
@@ -66,7 +63,7 @@ namespace Abomination::Gameplay
         // the parameters show exactly what is read (const) and what is changed, and any camera can be driven by it.
 
         // Turns the camera by the mouse movement of this frame while LookAroundMode is active: changes the angles
-        // (pitch clamped to FreeFlyCamera::MaxPitch) and sets the rotation of the transform from them.
+        // (see TurnByMouse) and sets the rotation of the transform from them.
         void UpdateRotation(FreeFlyCamera& camera, Core::Transform& transform, const Input::ActionStates& actions,
                             const Input::Mouse& mouse) const;
 

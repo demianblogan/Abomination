@@ -21,6 +21,7 @@ namespace Abomination::Input
         bindings.Bind(Action::ToggleScreenMode, KeyCombination{.modifier = Key::RightAlt, .key = Key::Enter});
         bindings.Bind(Action::ToggleDebugOverlay, Key::F1);
         bindings.Bind(Action::ToggleConsole, Key::Grave);
+        bindings.Bind(Action::ToggleFreeFlyCamera, Key::F2);
 
         return bindings;
     }

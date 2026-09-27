@@ -1,6 +1,6 @@
 #pragma once
 
-#include <glm/trigonometric.hpp>
+#include "Gameplay/MouseLook.h"
 
 namespace Abomination::Gameplay
 {
@@ -12,9 +12,8 @@ namespace Abomination::Gameplay
     //   pitch - tilt up/down. 0 looks at the horizon, a positive pitch looks up.
     struct FreeFlyCamera
     {
-        // Pitch is kept within this range. At exactly +-90 degrees the view direction would be parallel to the up axis,
-        // and the camera could no longer tell where its right side is: the picture would suddenly flip.
-        static constexpr float MaxPitch = glm::radians(89.0f);
+        // Pitch is kept within this range (see MaxLookPitch).
+        static constexpr float MaxPitch = MaxLookPitch;
 
         float yaw = 0.0f;
         float pitch = 0.0f;

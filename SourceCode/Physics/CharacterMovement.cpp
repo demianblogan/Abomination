@@ -20,6 +20,10 @@ namespace Abomination::Physics
         // (the same numbers as Quake).
         constexpr int MaximumBumpCount = 4;
         constexpr std::size_t MaximumPlaneCount = 5;
+
+        // A horizontal speed below this (1 mm/s) counts as standing: friction stops it completely instead of dividing by
+        // an almost zero speed.
+        constexpr float StandingSpeed = 0.001f;
     }
 
     glm::vec3 ClipVelocity(const glm::vec3& velocity, const glm::vec3& normal)
@@ -176,7 +180,7 @@ namespace Abomination::Physics
     void ApplyFriction(glm::vec3& velocity, const MovementSettings& settings, float deltaTime)
     {
         const float speed = glm::length(glm::vec2(velocity.x, velocity.z));
-        if (speed < 0.001f)
+        if (speed < StandingSpeed)
         {
             velocity.x = 0.0f;
             velocity.z = 0.0f;

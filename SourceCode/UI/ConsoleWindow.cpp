@@ -36,6 +36,10 @@ namespace Abomination::UI
         constexpr float MinimumHeightFraction = 0.15f;
         constexpr float MaximumHeightFraction = 0.9f;
 
+        // The most the game may show through the console (1 is opaque): below this the messages become hard to read.
+        constexpr float MinimumOpacity = 0.2f;
+        constexpr float MaximumOpacity = 1.0f;
+
         // A thin vertical line between groups of the toolbar.
         void DrawToolbarSeparator()
         {
@@ -161,7 +165,7 @@ namespace Abomination::UI
         DrawToolbarSeparator();
         DrawLabel("Opacity");
         ImGui::SetNextItemWidth(ScaleToUI(SliderWidth));
-        ImGui::SliderFloat("##Opacity", &m_opacity, 0.2f, 1.0f, "%.2f");
+        ImGui::SliderFloat("##Opacity", &m_opacity, MinimumOpacity, MaximumOpacity, "%.2f");
         ImGui::SameLine();
         DrawLabel("Height");
         ImGui::SetNextItemWidth(ScaleToUI(SliderWidth));
@@ -188,7 +192,9 @@ namespace Abomination::UI
             for (std::size_t index = 0; index < entries.size(); ++index)
             {
                 const Core::LogEntry& entry = entries[index];
-                if (m_visibleLevels[std::to_underlying(entry.level)] && m_visibleCategories[std::to_underlying(entry.category)])
+                const bool isLevelShown = m_visibleLevels[std::to_underlying(entry.level)];
+                const bool isCategoryShown = m_visibleCategories[std::to_underlying(entry.category)];
+                if (isLevelShown && isCategoryShown)
                     m_shownIndices.push_back(index);
             }
 

@@ -115,9 +115,9 @@ namespace Abomination::Physics
                                  const glm::dvec3& halfExtents);
 
     // Tries to move a box that overlaps a brush out of it by a tiny distance: up to 1 unit (3 cm) along any of the 26
-    // directions to the sides, edges and corners of a cube, the shortest distances first. Returns true and updates position if a
-    // free place was found. A safety net for mistakes of the movement code, like PM_NudgePosition of Quake 2: without it
-    // a box that got a hair into a wall would stay stuck there forever, because every trace starting inside a brush fails.
+    // directions to the sides, edges and corners of a cube, the shortest distances first. Returns true and updates position
+    // if a free place was found. A safety net for mistakes of the movement code, like PM_NudgePosition of Quake 2: without
+    // it a box that got a hair into a wall would stay stuck there forever, because every trace starting inside a brush fails.
     [[nodiscard]] bool PushOutOfSolid(std::span<const World::CollisionBrush> brushes, glm::dvec3& position,
                                       const glm::dvec3& halfExtents);
 

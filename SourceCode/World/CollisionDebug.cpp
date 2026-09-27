@@ -13,6 +13,9 @@ namespace Abomination::World
         constexpr glm::vec3 FreeBoxColor{0.5f, 0.8f, 1.0f};
         constexpr glm::vec3 NormalColor{0.3f, 1.0f, 0.3f};
 
+        // The half size of the small trace box: a cube of 0.5 m, smaller than the player.
+        constexpr glm::dvec3 SmallBoxHalfExtents{0.25};
+
         // The length of the normal arrow in meters.
         constexpr float NormalArrowLength = 0.75f;
 
@@ -42,7 +45,7 @@ namespace Abomination::World
             case TraceShape::Point:
                 return glm::dvec3(0.0);
             case TraceShape::SmallBox:
-                return glm::dvec3(0.25);
+                return SmallBoxHalfExtents;
             case TraceShape::PlayerBox:
                 return PlayerHalfExtents;
         }

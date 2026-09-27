@@ -41,7 +41,17 @@ namespace Abomination::UI
         constexpr float PositionDragSpeed = 0.01f;   // meters
         constexpr float RotationDragSpeed = 0.5f;    // degrees
         constexpr float ScaleDragSpeed = 0.01f;
+        constexpr float SpinDragSpeed = 0.01f;       // axis components and radians per second
+        constexpr float NearPlaneDragSpeed = 0.01f;  // meters
+        constexpr float FarPlaneDragSpeed = 1.0f;    // meters
+
+        // Limits of the editable values.
         constexpr float SmallestScale = 0.01f;       // a scale of 0 would squash the mesh to nothing
+        constexpr float LargestScale = 100.0f;
+        constexpr float SmallestVerticalFOVDegrees = 20.0f;
+        constexpr float LargestVerticalFOVDegrees = 120.0f;
+        constexpr float SmallestPlaneGap = 0.01f;    // meters: the near plane stays above 0 and below the far plane
+        constexpr float LargestFarPlane = 10000.0f;  // meters
 
         // Header colors of the component sections, one per module (see ComponentModule below). Muted colors keep the white
         // header text readable: steel for the basics, teal for drawing, violet for physics, amber for game rules.
@@ -190,7 +200,7 @@ namespace Abomination::UI
                 transform.rotation = glm::quat(glm::radians(angles));
             ImGui::SetItemTooltip("Degrees around X, Y and Z.");
 
-            if (ImGui::DragFloat3("Scale", &transform.scale.x, ScaleDragSpeed, SmallestScale, 100.0f))
+            if (ImGui::DragFloat3("Scale", &transform.scale.x, ScaleDragSpeed, SmallestScale, LargestScale))
                 transform.scale = glm::max(transform.scale, glm::vec3(SmallestScale));
         }
 
@@ -209,8 +219,8 @@ namespace Abomination::UI
 
         void DrawSpin(Gameplay::Spin& spin)
         {
-            ImGui::DragFloat3("Axis", &spin.axis.x, 0.01f);
-            ImGui::DragFloat("Speed", &spin.speed, 0.01f);
+            ImGui::DragFloat3("Axis", &spin.axis.x, SpinDragSpeed);
+            ImGui::DragFloat("Speed", &spin.speed, SpinDragSpeed);
             ImGui::SetItemTooltip("Radians per second; negative turns the other way.");
         }
 
@@ -218,12 +228,15 @@ namespace Abomination::UI
         {
             // Shown in degrees, stored in radians.
             float verticalFOVDegrees = glm::degrees(lens.verticalFOV);
-            if (ImGui::SliderFloat("Vertical FOV", &verticalFOVDegrees, 20.0f, 120.0f, "%.0f deg"))
+            if (ImGui::SliderFloat("Vertical FOV", &verticalFOVDegrees, SmallestVerticalFOVDegrees, LargestVerticalFOVDegrees,
+                                   "%.0f deg"))
                 lens.verticalFOV = glm::radians(verticalFOVDegrees);
 
             // The near plane must stay above 0 and below the far plane, or the projection breaks.
-            ImGui::DragFloat("Near plane", &lens.nearPlane, 0.01f, 0.01f, lens.farPlane - 0.01f, "%.2f m");
-            ImGui::DragFloat("Far plane", &lens.farPlane, 1.0f, lens.nearPlane + 0.01f, 10000.0f, "%.0f m");
+            ImGui::DragFloat("Near plane", &lens.nearPlane, NearPlaneDragSpeed, SmallestPlaneGap,
+                             lens.farPlane - SmallestPlaneGap, "%.2f m");
+            ImGui::DragFloat("Far plane", &lens.farPlane, FarPlaneDragSpeed, lens.nearPlane + SmallestPlaneGap,
+                             LargestFarPlane, "%.0f m");
         }
 
         void DrawLookAngles(const Gameplay::LookAngles& look)

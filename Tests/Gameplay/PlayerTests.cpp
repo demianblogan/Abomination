@@ -23,16 +23,15 @@ namespace Abomination::Gameplay
         constexpr float Tolerance = 1e-5f;
     }
 
-    TEST(Player, SpawnsWithEyesAtPlayerStart)
+    TEST(Player, SpawnsAtPlayerStart)
     {
         entt::registry registry;
-        const World::PlayerStart start{.eyePosition = {1.0f, 2.0f, 3.0f}, .yaw = 0.5f};
+        const World::PlayerStart start{.boxCenter = {1.0f, 2.0f, 3.0f}, .yaw = 0.5f};
 
         const entt::entity player = SpawnPlayer(registry, start);
 
-        // The center of the box is PlayerEyeHeight below the eyes, and the view looks along the yaw of the start.
-        const Core::Transform& transform = registry.get<Core::Transform>(player);
-        EXPECT_NEAR(transform.position.y, 2.0f - PlayerEyeHeight, Tolerance);
+        // The entity is at the center of the box, and the view looks along the yaw of the start.
+        EXPECT_EQ(registry.get<Core::Transform>(player).position, start.boxCenter);
         EXPECT_FLOAT_EQ(registry.get<PlayerLook>(player).yaw, 0.5f);
         EXPECT_EQ(registry.get<Physics::CharacterBody>(player).halfExtents, World::PlayerHalfExtents);
         EXPECT_TRUE(registry.all_of<Renderer::CameraLens>(player));

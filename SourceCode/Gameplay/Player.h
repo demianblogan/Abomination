@@ -2,7 +2,7 @@
 
 #include "Core/Transform.h"
 #include "Core/Units.h"
-#include "World/Level.h"
+#include "World/PlayerStart.h"
 
 #include <entt/entt.hpp>
 
@@ -38,8 +38,8 @@ namespace Abomination::Gameplay
     // then catch up by StepSmoothingSpeed.
     void UpdateStepSmoothing(PlayerStepSmoothing& smoothing, float steppedUpHeight, float deltaTime);
 
-    // Creates the player at the player start of the level: Name, Transform (the center of the box, the eyes at
-    // playerStart.eyePosition), PreviousTransform (the player moves in ticks), Physics::CharacterBody with the box of
+    // Creates the player at the player start of the level: Name, Transform (the center of the box, at
+    // playerStart.boxCenter), PreviousTransform (the player moves in ticks), Physics::CharacterBody with the box of
     // the Quake player (World::PlayerHalfExtents), PlayerLook, PlayerStepSmoothing and a Renderer::CameraLens (the
     // player is also a camera).
     entt::entity SpawnPlayer(entt::registry& registry, const World::PlayerStart& playerStart);

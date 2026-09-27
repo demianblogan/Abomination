@@ -4,6 +4,7 @@
 #include "Renderer/DebugLines.h"
 #include "World/CollisionBrush.h"
 #include "World/CollisionTrace.h"
+#include "World/PlayerStart.h"
 
 #include <glm/vec3.hpp>
 
@@ -15,9 +16,6 @@
 
 namespace Abomination::World
 {
-    // The half size of the box of the Quake player: 32 x 56 x 32 units, that is 1 x 1.75 x 1 meters.
-    inline constexpr glm::dvec3 PlayerHalfExtents{0.5, 0.875, 0.5};
-
     // The box traced from the camera by the collision tools.
     enum class TraceShape : std::uint8_t
     {

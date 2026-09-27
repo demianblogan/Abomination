@@ -163,6 +163,7 @@ set(LIBRARY_SOURCES
     World/MapData.cpp
     World/MapParser.h
     World/MapParser.cpp
+    World/PlayerStart.h
     World/TextureCoordinates.h
     World/TextureCoordinates.cpp
 )

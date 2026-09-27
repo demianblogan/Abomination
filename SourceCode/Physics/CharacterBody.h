@@ -9,8 +9,9 @@ namespace Abomination::Physics
     // so it slides along walls the same way whichever way the character looks.
     struct CharacterBody
     {
-        // Half the size of the box along each axis, in meters.
-        glm::dvec3 halfExtents{0.5, 0.875, 0.5};
+        // Half the size of the box along each axis, in meters. Set by whoever creates the character: the player gets
+        // World::PlayerHalfExtents, the box of info_player_start in the map editor.
+        glm::dvec3 halfExtents{0.0};
 
         // Meters per second. Changed by the movement code every tick (walking, gravity, jumping, hitting walls).
         glm::vec3 velocity{0.0f};

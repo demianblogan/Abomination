@@ -47,6 +47,7 @@ set(TEST_SOURCES
     World/LevelMeshTests.cpp
     World/MapCoordinatesTests.cpp
     World/MapParserTests.cpp
+    World/PlayerStartTests.cpp
     World/TextureCoordinatesTests.cpp
 )
 

@@ -4,25 +4,15 @@
 #include "World/CollisionBrush.h"
 #include "World/LevelMesh.h"
 #include "World/MapData.h"
+#include "World/PlayerStart.h"
 
 #include <entt/entt.hpp>
-#include <glm/vec3.hpp>
 
 #include <string>
 #include <vector>
 
 namespace Abomination::World
 {
-    // Where the player appears and where they look, in game coordinates (from the info_player_start entity).
-    struct PlayerStart
-    {
-        // The position of the player's eyes.
-        glm::vec3 eyePosition{0.0f};
-
-        // Radians, like every yaw of the game (see Gameplay/MouseLook.h).
-        float yaw = 0.0f;
-    };
-
     // A loaded level: the entities that draw its static geometry, its collision brushes, where the player starts and
     // numbers about it. Created from a parsed map by Create(), removed by Unload().
     //

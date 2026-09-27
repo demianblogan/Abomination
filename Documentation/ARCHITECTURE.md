@@ -744,8 +744,9 @@ Test.map ─► ParseMap ─► MapData ─┬─► BuildBrushPolygons ─► B
   `Transform`, `MeshRenderer` with the `TexturedShaded` program); together
   they play the part of entity 0, the world, in Quake. The level costs one
   draw call per texture. `info_player_start` does not become an entity: its
-  origin (+22 units, the eye height of the Quake player) and angle are kept as
-  `PlayerStart`, and the camera is created there. The level also keeps its
+  origin (+4 units: the center of the player box, which reaches from 24 units
+  below the origin to 32 above it) and angle are kept as `PlayerStart`
+  (`World/PlayerStart.h`), and the player is created there. The level also keeps its
   collision brushes and its statistics; its data is private.
 - **Unloading** (`Level::Unload`): destroys the entities of the level, then
   removes the Level asset group. It is called explicitly, not by the
@@ -777,7 +778,8 @@ Test.map ─► ParseMap ─► MapData ─┬─► BuildBrushPolygons ─► B
   `SurfaceEpsilon` (1/32 unit, ~1 mm) before the surface, so the next trace
   does not start inside it. Brushes whose bounding box the way does not touch
   are skipped. The player box is `PlayerHalfExtents` (1 × 1.75 × 1 m, like
-  32 × 56 × 32 units in Quake).
+  32 × 56 × 32 units in Quake and `info_player_start` in `Abomination.fgd`),
+  defined once in `World/PlayerStart.h`.
 - **Collision tools** (`CollisionDebug`, View > Collision): brush bounds, a
   box traced from the camera straight ahead (point, small box or player box;
   the stopping box and the normal are drawn as debug lines, the numbers are

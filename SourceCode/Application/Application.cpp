@@ -108,10 +108,11 @@ namespace Abomination
         // m_renderAssets stay valid because they are numbers, not pointers.
         m_level = World::Level::Create(m_registry, m_renderAssets, map, StartMapPath);
 
-        // The player appears where the map puts them. The free-fly camera waits at the same place; F2 switches to it.
+        // The player appears where the map puts them. The free-fly camera waits at their eyes; F2 switches to it.
         const World::PlayerStart& playerStart = m_level.GetPlayerStart();
         m_player = Gameplay::SpawnPlayer(m_registry, playerStart);
-        m_freeFlyCamera = Gameplay::SpawnFreeFlyCamera(m_registry, playerStart.eyePosition, playerStart.yaw);
+        const glm::vec3 eyePosition = playerStart.boxCenter + glm::vec3(0.0f, Gameplay::PlayerEyeHeight, 0.0f);
+        m_freeFlyCamera = Gameplay::SpawnFreeFlyCamera(m_registry, eyePosition, playerStart.yaw);
     }
 
     int Application::Run()

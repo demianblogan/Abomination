@@ -77,7 +77,14 @@ namespace Abomination::Renderer
         void GLAPIENTRY HandleDebugMessage(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei /*length*/,
                                            const GLchar* message, const void* /*userParameter*/)
         {
-            Core::Log::Write(LogCategory::Renderer, ConvertSeverityToLogLevel(severity), "OpenGL {} ({}, #{}): {}",
+            // Performance messages are hints about how the driver works, not mistakes, so they are at most Debug. For
+            // example, NVIDIA reports as a medium-severity warning that it recompiled a vertex shader when the wireframe
+            // mode is switched on, which is expected and costs nothing noticeable.
+            LogLevel level = ConvertSeverityToLogLevel(severity);
+            if (type == GL_DEBUG_TYPE_PERFORMANCE && level > LogLevel::Debug)
+                level = LogLevel::Debug;
+
+            Core::Log::Write(LogCategory::Renderer, level, "OpenGL {} ({}, #{}): {}",
                              ConvertTypeToString(type), ConvertSourceToString(source), id, message);
         }
     }

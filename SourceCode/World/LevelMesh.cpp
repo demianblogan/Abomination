@@ -1,13 +1,13 @@
 #include "World/LevelMesh.h"
 
+#include "Core/Plane.h"
 #include "World/BrushGeometry.h"
 #include "World/MapCoordinates.h"
 #include "World/TextureCoordinates.h"
 
-#include <glm/geometric.hpp>
-
 #include <cstddef>
 #include <cstdint>
+#include <optional>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -37,6 +37,16 @@ namespace Abomination::World
                 if (polygon.empty())
                     continue;
 
+                // The normal of every vertex is the normal of the face's plane, turned into game axes. It is not
+                // calculated from the corners (the cross product of two edges): after clipping, two neighbouring corners
+                // can lie a hair apart, and such a short edge gives an inaccurate normal, or NaN when the corners are
+                // equal. The plane is exact. A face with corners always has a plane (BuildBrushPolygons skips the rest).
+                const std::optional<Core::Plane> mapPlane =
+                    Core::CreatePlaneFromPoints(face.points[0], face.points[1], face.points[2]);
+                if (!mapPlane.has_value())
+                    continue;
+                const glm::vec3 normal(ConvertMapPlane(*mapPlane).normal);
+
                 ++counts.faceCount;
 
                 // try_emplace adds the texture with the index of a new part only if it is not there yet; either way it
@@ -46,22 +56,16 @@ namespace Abomination::World
                     result.parts.push_back(LevelMeshPart{.textureName = face.textureName});
                 Renderer::MeshData& data = result.parts[entry->second].data;
 
-                // The corners of the face in game coordinates. They are counter-clockwise seen from the front, so the
-                // cross product of two edges points out of the face: that is its normal. Texture coordinates are
-                // calculated from the corner in map coordinates, the space the texture axes of the face are given in.
+                // The corners of the face in game coordinates. Texture coordinates are calculated from the corner in map
+                // coordinates, the space the texture axes of the face are given in.
                 const glm::ivec2 textureSize = getTextureSize(face.textureName);
                 const auto firstVertex = static_cast<std::uint32_t>(data.vertices.size());
                 for (const glm::dvec3& corner : polygon)
                     data.vertices.push_back(Renderer::MeshVertex{
                         .position = ConvertMapPosition(corner),
                         .texCoord = CalculateTextureCoordinates(face, corner, textureSize),
+                        .normal = normal,
                     });
-
-                const glm::vec3 edge1 = data.vertices[firstVertex + 1].position - data.vertices[firstVertex].position;
-                const glm::vec3 edge2 = data.vertices[firstVertex + 2].position - data.vertices[firstVertex].position;
-                const glm::vec3 normal = glm::normalize(glm::cross(edge1, edge2));
-                for (std::size_t index = firstVertex; index < data.vertices.size(); ++index)
-                    data.vertices[index].normal = normal;
 
                 // A convex polygon is cut into triangles like a fan: corner 0 with every pair of neighbours after it,
                 // (0, 1, 2), (0, 2, 3), (0, 3, 4), ... A polygon with N corners gives N - 2 triangles, all

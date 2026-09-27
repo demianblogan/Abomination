@@ -183,7 +183,7 @@ target_include_directories(AbominationCore PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_include_directories(AbominationCore SYSTEM PRIVATE ${Stb_INCLUDE_DIR})  # Only Core/Image.cpp includes stb
 target_link_libraries(AbominationCore
     PUBLIC
-        EnTT                  # Header-only; game headers will hold entt::registry and entities, so it is public
+        EnTT                  # Header-only; game headers hold entt::registry and entities, so it is public
         glm::glm-header-only  # Renderer headers use glm types, so everyone who uses the library needs glm too
     PRIVATE
         GLAD                  # Only Renderer/*.cpp include GLAD, no header does

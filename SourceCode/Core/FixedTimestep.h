@@ -40,16 +40,11 @@ namespace Abomination::Core
         // before the last tick and after it, so movement looks smooth even when frames and ticks do not line up.
         [[nodiscard]] float GetInterpolationFactor() const noexcept;
 
-        // How many ticks the last Advance() returned. For the debug overlay.
-        [[nodiscard]] int GetLastTickCount() const noexcept;
-
     private:
         int m_ticksPerSecond = 0;
         float m_tickDuration = 0.0f;
 
         // Time that has passed but has not been simulated yet, in seconds. Always less than one tick after Advance().
         float m_accumulator = 0.0f;
-
-        int m_lastTickCount = 0;
     };
 }

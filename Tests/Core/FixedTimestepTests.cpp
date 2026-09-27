@@ -32,7 +32,6 @@ namespace Abomination::Core
     TEST_F(FixedTimestepTest, LongFrameRunsSeveralTicks)
     {
         EXPECT_EQ(m_timestep.Advance(0.75f), 3);
-        EXPECT_EQ(m_timestep.GetLastTickCount(), 3);
     }
 
     TEST_F(FixedTimestepTest, RestIsCarriedToNextFrame)

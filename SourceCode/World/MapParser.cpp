@@ -393,7 +393,7 @@ namespace Abomination::World
 
         std::expected<MapData, std::string> map = ParseMap(*text);
         if (!map.has_value())
-            return std::unexpected(std::format("{}: {}", path.filename().string(), map.error()));
+            return std::unexpected(std::format("{}: {}", Core::ToUTF8String(path.filename()), map.error()));
 
         return map;
     }

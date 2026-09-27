@@ -36,13 +36,9 @@ namespace Abomination::Core
         void Add(LogEntry entry);
         void Clear();
 
-        // Calls visitor(entry) for every message, from the oldest to the newest. The history stays locked meanwhile:
-        // the visitor must not write to the log, or the thread would wait for itself forever.
-        template <typename Visitor>
-        void VisitEntries(Visitor&& visitor) const;
-
         // Calls reader(entries) once with all messages (a const std::deque<LogEntry>&, the oldest first) while the history
         // is locked: for readers that need to jump around in them, like the console, which draws only the visible lines.
+        // The reader must not write to the log meanwhile, or the thread would wait for itself forever.
         template <typename Reader>
         void ReadEntries(Reader&& reader) const;
 
@@ -65,16 +61,8 @@ namespace Abomination::Core
     template <typename Reader>
     void LogHistory::ReadEntries(Reader&& reader) const
     {
+        // lock_guard locks the mutex now and unlocks it when it goes out of scope, even if the reader throws.
         const std::lock_guard lock(m_mutex);
         reader(m_entries); // const here, because the function is const
-    }
-
-    template <typename Visitor>
-    void LogHistory::VisitEntries(Visitor&& visitor) const
-    {
-        // lock_guard locks the mutex now and unlocks it when it goes out of scope, even if the visitor throws.
-        const std::lock_guard lock(m_mutex);
-        for (const LogEntry& entry : m_entries)
-            visitor(entry);
     }
 }

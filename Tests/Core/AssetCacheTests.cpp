@@ -135,9 +135,12 @@ namespace Abomination::Core
 
     TEST_F(AssetCacheTest, AssetsAreGlobalByDefault)
     {
+        // Removing the Level group does not touch an asset added without a lifetime.
         const AssetHandle<std::string> handle = m_cache.Add("Shaders/Wireframe", "wireframe");
 
-        EXPECT_EQ(m_cache.GetLifetime(handle), AssetLifetime::Global);
+        m_cache.RemoveAll(AssetLifetime::Level);
+
+        EXPECT_TRUE(m_cache.IsValid(handle));
     }
 
     TEST_F(AssetCacheTest, RemoveAllRemovesOnlyThatLifetime)
@@ -176,12 +179,11 @@ namespace Abomination::Core
         // A level texture the whole game asks for too must survive the level.
         const AssetHandle<std::string> handle = m_cache.Add("Textures/Wall.png", "wall", AssetLifetime::Level);
         m_cache.ExtendLifetime(handle, AssetLifetime::Global);
-        EXPECT_EQ(m_cache.GetLifetime(handle), AssetLifetime::Global);
 
-        // A shorter lifetime never shortens it: neither when extending nor when the asset is added again.
+        // A shorter lifetime never shortens it: neither when extending nor when the asset is added again. So removing
+        // the Level group leaves it.
         m_cache.ExtendLifetime(handle, AssetLifetime::Level);
         m_cache.Add("Textures/Wall.png", "reloaded wall", AssetLifetime::Level);
-        EXPECT_EQ(m_cache.GetLifetime(handle), AssetLifetime::Global);
 
         m_cache.RemoveAll(AssetLifetime::Level);
         EXPECT_TRUE(m_cache.IsValid(handle));

@@ -150,6 +150,10 @@ namespace Abomination::Core::Log
         //    The "_mt" suffix means "multi-threaded": the sink may be used from several threads at the same time.
         std::vector<spdlog::sink_ptr> sinks;
 
+        // The only place where path.string() (the code page of the system, not UTF-8, see Core::ToUTF8String) is right:
+        // spdlog opens the file with the narrow fopen of Windows, which expects exactly that code page. A folder with
+        // characters missing from the code page cannot be used for the log; spdlog would need to be built with wide file
+        // names (SPDLOG_WCHAR_FILENAMES) for that.
         constexpr bool NeedToTruncateFile = true; // Every run starts with an empty log file
         sinks.push_back(std::make_shared<spdlog::sinks::basic_file_sink_mt>(settings.filePath.string(), NeedToTruncateFile));
 

@@ -126,8 +126,8 @@ namespace Abomination::Renderer
         if (!fragmentShaderSource.has_value())
             return std::unexpected(fragmentShaderSource.error());
 
-        const std::string debugName =
-            std::format("{} + {}", vertexShaderPath.filename().string(), fragmentShaderPath.filename().string());
+        const std::string debugName = std::format("{} + {}", Core::ToUTF8String(vertexShaderPath.filename()),
+                                                  Core::ToUTF8String(fragmentShaderPath.filename()));
 
         return Create(*vertexShaderSource, *fragmentShaderSource, debugName);
     }

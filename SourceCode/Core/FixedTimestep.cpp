@@ -24,9 +24,7 @@ namespace Abomination::Core
         }
 
         // Ticks above the limit are dropped: that time is never simulated, and the game falls behind the real time.
-        m_lastTickCount = std::min(availableTickCount, MaxTicksPerFrame);
-
-        return m_lastTickCount;
+        return std::min(availableTickCount, MaxTicksPerFrame);
     }
 
     float FixedTimestep::GetTickDuration() const noexcept
@@ -42,10 +40,5 @@ namespace Abomination::Core
     float FixedTimestep::GetInterpolationFactor() const noexcept
     {
         return m_accumulator / m_tickDuration;
-    }
-
-    int FixedTimestep::GetLastTickCount() const noexcept
-    {
-        return m_lastTickCount;
     }
 }

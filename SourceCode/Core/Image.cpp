@@ -39,7 +39,8 @@ namespace Abomination::Core
             &stbi_image_free);
 
         if (decodedPixels == nullptr)
-            return std::unexpected(std::format("Failed to decode the image \"{}\": {}", path.string(), stbi_failure_reason()));
+            return std::unexpected(
+                std::format("Failed to decode the image \"{}\": {}", ToUTF8String(path), stbi_failure_reason()));
 
         const std::size_t byteCount = static_cast<std::size_t>(width) * static_cast<std::size_t>(height) * ImageChannelCount;
 

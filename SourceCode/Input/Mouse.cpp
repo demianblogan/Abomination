@@ -10,6 +10,13 @@ namespace Abomination::Input
         {
             return std::to_underlying(button);
         }
+
+        // The platform layer casts the button number of SDL to MouseButton without checking it. A mouse with more buttons
+        // can report numbers above Forward (5), which have no slot in the arrays; writing there would go past their end.
+        bool IsKnownButton(std::size_t index) noexcept
+        {
+            return index >= std::to_underlying(MouseButton::Left) && index <= std::to_underlying(MouseButton::Forward);
+        }
     }
 
     void Mouse::StartFrame() noexcept
@@ -33,7 +40,7 @@ namespace Abomination::Input
     void Mouse::PressButton(MouseButton button) noexcept
     {
         const std::size_t index = ConvertToIndex(button);
-        if (m_heldButtons[index])
+        if (!IsKnownButton(index) || m_heldButtons[index])
             return;
 
         m_heldButtons[index] = true;
@@ -43,7 +50,7 @@ namespace Abomination::Input
     void Mouse::ReleaseButton(MouseButton button) noexcept
     {
         const std::size_t index = ConvertToIndex(button);
-        if (!m_heldButtons[index])
+        if (!IsKnownButton(index) || !m_heldButtons[index])
             return;
 
         m_heldButtons[index] = false;
@@ -74,16 +81,19 @@ namespace Abomination::Input
 
     bool Mouse::IsButtonHeld(MouseButton button) const noexcept
     {
-        return m_heldButtons[ConvertToIndex(button)];
+        const std::size_t index = ConvertToIndex(button);
+        return IsKnownButton(index) && m_heldButtons[index];
     }
 
     bool Mouse::WasButtonPressed(MouseButton button) const noexcept
     {
-        return m_pressedButtons[ConvertToIndex(button)];
+        const std::size_t index = ConvertToIndex(button);
+        return IsKnownButton(index) && m_pressedButtons[index];
     }
 
     bool Mouse::WasButtonReleased(MouseButton button) const noexcept
     {
-        return m_releasedButtons[ConvertToIndex(button)];
+        const std::size_t index = ConvertToIndex(button);
+        return IsKnownButton(index) && m_releasedButtons[index];
     }
 }

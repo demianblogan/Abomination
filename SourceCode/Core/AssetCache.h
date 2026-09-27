@@ -46,9 +46,6 @@ namespace Abomination::Core
         // forget what they remember about these paths).
         std::vector<std::string> RemoveAll(AssetLifetime lifetime);
 
-        // The lifetime group of the asset; Global for an invalid handle. For tools.
-        [[nodiscard]] AssetLifetime GetLifetime(AssetHandle<Asset> handle) const;
-
         // The asset, or nullptr if the handle is invalid: default-constructed, or its asset was removed.
         // The pointer is valid until the next Add() or Remove(): the vector of slots may move its elements.
         [[nodiscard]] Asset* Get(AssetHandle<Asset> handle);
@@ -207,15 +204,6 @@ namespace Abomination::Core
         }
 
         return removedPaths;
-    }
-
-    template <typename Asset>
-    AssetLifetime AssetCache<Asset>::GetLifetime(AssetHandle<Asset> handle) const
-    {
-        if (!IsValid(handle))
-            return AssetLifetime::Global;
-
-        return m_slots[handle.index].lifetime;
     }
 
     template <typename Asset>

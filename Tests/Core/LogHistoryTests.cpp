@@ -2,6 +2,7 @@
 
 #include <gtest/gtest.h>
 
+#include <deque>
 #include <string>
 #include <vector>
 
@@ -18,7 +19,11 @@ namespace Abomination::Core
         std::vector<std::string> GetMessages(const LogHistory& history)
         {
             std::vector<std::string> messages;
-            history.VisitEntries([&messages](const LogEntry& entry) { messages.push_back(entry.message); });
+            history.ReadEntries([&messages](const std::deque<LogEntry>& entries)
+            {
+                for (const LogEntry& entry : entries)
+                    messages.push_back(entry.message);
+            });
 
             return messages;
         }

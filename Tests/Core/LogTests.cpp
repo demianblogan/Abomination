@@ -3,6 +3,7 @@
 
 #include <gtest/gtest.h>
 
+#include <deque>
 #include <filesystem>
 #include <fstream>
 #include <sstream>
@@ -111,7 +112,10 @@ namespace Abomination::Core
         Log::Shutdown();
 
         std::vector<LogEntry> entries;
-        history.VisitEntries([&entries](const LogEntry& entry) { entries.push_back(entry); });
+        history.ReadEntries([&entries](const std::deque<LogEntry>& historyEntries)
+        {
+            entries.assign(historyEntries.begin(), historyEntries.end());
+        });
 
         ASSERT_EQ(entries.size(), 1u);
         EXPECT_EQ(entries[0].category, LogCategory::World);

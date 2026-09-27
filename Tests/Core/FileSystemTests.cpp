@@ -76,4 +76,26 @@ namespace Abomination::Core
         ASSERT_FALSE(contents.has_value());
         EXPECT_NE(contents.error().find("Failed to open"), std::string::npos);
     }
+
+    TEST(FileSystem, PathWithCyrillicLettersBecomesUTF8)
+    {
+        // "Папка/Файл.png": every Cyrillic letter is two bytes in UTF-8 (П is D0 9F), whatever the code page of Windows.
+        const std::filesystem::path path(u8"Папка/Файл.png");
+
+        const std::string text = ToUTF8String(path);
+
+        EXPECT_EQ(text.size(), 2u * 5u + 1u + 2u * 4u + 4u); // 5 and 4 letters, "/" and ".png"
+        EXPECT_EQ(text.substr(0, 2), "\xD0\x9F");
+        EXPECT_EQ(text.substr(text.size() - 4), ".png");
+    }
+
+    TEST(FileSystem, ErrorMessageShowsPathInUTF8)
+    {
+        const std::filesystem::path missingFile(u8"Нет.txt"); // "Нет.txt"
+
+        const std::expected<std::string, std::string> contents = ReadTextFile(missingFile);
+
+        ASSERT_FALSE(contents.has_value());
+        EXPECT_NE(contents.error().find(ToUTF8String(missingFile)), std::string::npos);
+    }
 }

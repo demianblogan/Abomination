@@ -36,6 +36,7 @@ set(TEST_SOURCES
 
     World/BrushGeometryTests.cpp
     World/CollisionBrushTests.cpp
+    World/CollisionTraceTests.cpp
     World/LevelMeshTests.cpp
     World/MapCoordinatesTests.cpp
     World/MapParserTests.cpp

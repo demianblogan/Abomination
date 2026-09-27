@@ -128,6 +128,8 @@ set(LIBRARY_SOURCES
     World/BrushGeometry.cpp
     World/CollisionBrush.h
     World/CollisionBrush.cpp
+    World/CollisionTrace.h
+    World/CollisionTrace.cpp
     World/Level.h
     World/Level.cpp
     World/LevelMesh.h

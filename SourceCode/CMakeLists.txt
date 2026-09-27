@@ -124,8 +124,8 @@ set(LIBRARY_SOURCES
 
     World/BrushGeometry.h
     World/BrushGeometry.cpp
-    World/LevelLoader.h
-    World/LevelLoader.cpp
+    World/Level.h
+    World/Level.cpp
     World/LevelMesh.h
     World/LevelMesh.cpp
     World/MapCoordinates.h

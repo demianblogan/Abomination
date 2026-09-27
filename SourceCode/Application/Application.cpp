@@ -14,7 +14,7 @@
 #include "Renderer/RenderCommands.h"
 #include "Renderer/RenderSystem.h"
 #include "Renderer/View.h"
-#include "World/LevelLoader.h"
+#include "World/Level.h"
 #include "World/MapParser.h"
 
 #include <glm/vec4.hpp>
@@ -92,10 +92,11 @@ namespace Abomination
 
         // Entities are created here, not in Create(): the registry is a member, and the handles the components get from
         // m_renderAssets stay valid because they are numbers, not pointers.
-        m_level = World::SpawnLevel(m_registry, m_renderAssets, map, StartMapPath);
+        m_level = World::Level::Create(m_registry, m_renderAssets, map, StartMapPath);
 
         // The camera starts where the map puts the player, at the height of the player's eyes.
-        m_camera = Gameplay::SpawnFreeFlyCamera(m_registry, m_level.playerStart.eyePosition, m_level.playerStart.yaw);
+        const World::PlayerStart& playerStart = m_level.GetPlayerStart();
+        m_camera = Gameplay::SpawnFreeFlyCamera(m_registry, playerStart.eyePosition, playerStart.yaw);
     }
 
     int Application::Run()
@@ -210,8 +211,8 @@ namespace Abomination
             return;
         }
 
-        World::UnloadLevel(m_registry, m_renderAssets, m_level);
-        m_level = World::SpawnLevel(m_registry, m_renderAssets, *map, StartMapPath);
+        m_level.Unload(m_registry, m_renderAssets);
+        m_level = World::Level::Create(m_registry, m_renderAssets, *map, StartMapPath);
     }
 
     void Application::Render(const Core::FrameStatistics& frameStatistics)
@@ -252,7 +253,7 @@ namespace Abomination
             .registry = m_registry,
             .renderSettings = m_renderSettings,
             .renderStatistics = m_renderStatistics,
-            .levelStatistics = m_level.statistics,
+            .levelStatistics = m_level.GetStatistics(),
             .isLevelReloadRequested = m_isLevelReloadRequested,
         });
 

@@ -1,4 +1,4 @@
-#include "World/LevelLoader.h"
+#include "World/Level.h"
 
 #include "Core/Log.h"
 #include "Core/Name.h"
@@ -67,22 +67,22 @@ namespace Abomination::World
         }
     }
 
-    LoadedLevel SpawnLevel(entt::registry& registry, Renderer::RenderAssets& assets, const MapData& map,
-                           const std::string& mapName)
+    Level Level::Create(entt::registry& registry, Renderer::RenderAssets& assets, const MapData& map,
+                        const std::string& mapPath)
     {
-        LoadedLevel level;
-        level.playerStart = ReadPlayerStart(map);
+        Level level;
+        level.m_playerStart = ReadPlayerStart(map);
 
         const MapEntity* world = FindEntity(map, "worldspawn");
         if (world == nullptr)
         {
-            Core::Log::Write(LogCategory::World, LogLevel::Error, "The map {} has no worldspawn entity", mapName);
+            Core::Log::Write(LogCategory::World, LogLevel::Error, "The map {} has no worldspawn entity", mapPath);
 
             return level;
         }
 
         // Texture coordinates need the size of every texture, so the textures of the level are loaded here, into the Level
-        // lifetime group like the meshes below: UnloadLevel removes them all at once. A missing texture gets the
+        // lifetime group like the meshes below: Unload() removes them all at once. A missing texture gets the
         // checkerboard fallback of the store (and a warning in the log), with the size of the fallback.
         const TextureSizeLookup getTextureSize = [&assets](const std::string& textureName)
         {
@@ -92,7 +92,7 @@ namespace Abomination::World
             return glm::ivec2(texture.GetWidth(), texture.GetHeight());
         };
         LevelMesh levelMesh = BuildLevelMesh(*world, getTextureSize);
-        level.statistics = levelMesh.statistics;
+        level.m_statistics = levelMesh.statistics;
 
         // One entity per texture: every one is one draw call with its own texture. The textures were loaded above, so
         // Load() only returns their handles now.
@@ -103,31 +103,41 @@ namespace Abomination::World
             registry.emplace<Core::Name>(entity, "World geometry: " + part.textureName);
             registry.emplace<Core::Transform>(entity);
             registry.emplace<Renderer::MeshRenderer>(entity, Renderer::MeshRenderer{
-                .mesh = assets.meshes.Add(mapName + "#" + part.textureName, part.data, Core::AssetLifetime::Level),
+                .mesh = assets.meshes.Add(mapPath + "#" + part.textureName, part.data, Core::AssetLifetime::Level),
                 .texture = assets.textures.Load(MakeTexturePath(part.textureName), Core::AssetLifetime::Level),
                 .shaderProgram = shaderProgram,
             });
-            level.geometry.push_back(entity);
+            level.m_geometryEntities.push_back(entity);
         }
 
         Core::Log::Write(LogCategory::World, LogLevel::Info, "Level {} loaded: {} brushes, {} faces, {} triangles, {} textures",
-                         mapName, level.statistics.brushCount, level.statistics.faceCount, level.statistics.triangleCount,
-                         levelMesh.parts.size());
+                         mapPath, level.m_statistics.brushCount, level.m_statistics.faceCount,
+                         level.m_statistics.triangleCount, levelMesh.parts.size());
 
         return level;
     }
 
-    void UnloadLevel(entt::registry& registry, Renderer::RenderAssets& assets, LoadedLevel& level)
+    void Level::Unload(entt::registry& registry, Renderer::RenderAssets& assets)
     {
         // The entities first: their components hold handles to the assets removed below. A removed handle would only
         // draw the fallback, but nothing should be left referring to a level that is gone.
-        for (const entt::entity entity : level.geometry)
+        for (const entt::entity entity : m_geometryEntities)
             if (registry.valid(entity))
                 registry.destroy(entity);
 
         assets.RemoveAll(Core::AssetLifetime::Level);
-        level = {};
+        *this = Level{};
 
         Core::Log::Write(LogCategory::World, LogLevel::Info, "Level unloaded");
+    }
+
+    const PlayerStart& Level::GetPlayerStart() const noexcept
+    {
+        return m_playerStart;
+    }
+
+    const LevelMeshStatistics& Level::GetStatistics() const noexcept
+    {
+        return m_statistics;
     }
 }

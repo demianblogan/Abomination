@@ -12,7 +12,7 @@
 #include "Renderer/RenderSettings.h"
 #include "Renderer/RenderSystem.h"
 #include "UI/DebugOverlay.h"
-#include "World/LevelLoader.h"
+#include "World/Level.h"
 
 #include <entt/entt.hpp>
 
@@ -84,8 +84,8 @@ namespace Abomination
         // The folder with the game files, for loading maps after startup.
         std::filesystem::path m_assetsDirectory;
 
-        // The loaded level: its entities, where the player starts and its statistics (shown in the Renderer window).
-        World::LoadedLevel m_level;
+        // The loaded level (its statistics are shown in the Renderer window).
+        World::Level m_level;
 
         // Set by the Reload button of the Renderer window; the level is reloaded at the start of the next frame, not in the
         // middle of drawing the overlay.

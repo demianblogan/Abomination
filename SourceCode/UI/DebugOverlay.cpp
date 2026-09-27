@@ -11,6 +11,7 @@
 #include "Renderer/RenderAssets.h"
 #include "Renderer/RenderSettings.h"
 #include "Renderer/RenderSystem.h"
+#include "UI/MovementWindow.h"
 #include "UI/UIScale.h"
 #include "World/CollisionDebug.h"
 #include "World/LevelMesh.h"
@@ -201,6 +202,10 @@ namespace Abomination::UI
 
             if (m_isCollisionWindowOpen)
                 DrawCollisionWindow(context);
+
+            if (m_isMovementWindowOpen)
+                DrawMovementWindow(&m_isMovementWindowOpen, context.physicsSettings, context.movementSettings,
+                                   context.playerBody);
         }
 
         // The console is drawn even while the rest of the overlay is hidden: it has its own key.
@@ -249,6 +254,7 @@ namespace Abomination::UI
             ImGui::MenuItem("Entities", nullptr, &m_isEntitiesWindowOpen);
             ImGui::MenuItem("Renderer", nullptr, &m_isRendererWindowOpen);
             ImGui::MenuItem("Collision", nullptr, &m_isCollisionWindowOpen);
+            ImGui::MenuItem("Movement", nullptr, &m_isMovementWindowOpen);
             ImGui::MenuItem("Console", "`", m_consoleWindow.GetOpenFlag());
             ImGui::EndMenu();
         }

@@ -400,6 +400,9 @@ namespace Abomination
             .cameraTrace = m_cameraTrace,
             .collisionBrushCount = m_level.GetCollisionBrushes().size(),
             .logHistory = *m_logHistory,
+            .physicsSettings = m_physicsSettings,
+            .movementSettings = m_movementSettings,
+            .playerBody = m_registry.get<Physics::CharacterBody>(m_player),
         });
 
         m_window.SwapBuffers();

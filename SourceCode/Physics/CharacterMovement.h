@@ -19,12 +19,14 @@ namespace Abomination::Physics
         float gravity = 25.0f;
     };
 
-    // How a character walks, with the values of the Quake player. Changed in the debug overlay; later read from the
+    // How a character walks. The formulas are those of Quake, and so are most values; the running speed is that of
+    // modern shooters instead, because Quake is very fast. Changed in the debug overlay; later read from the
     // configuration of every kind of character (enemies walk slower).
     struct MovementSettings
     {
-        // The fastest a character can run on its own, in meters per second: 320 units/s in Quake.
-        float maxSpeed = 10.0f;
+        // The fastest a character can run on its own, in meters per second. Modern shooters run at about 6-7 m/s
+        // (Counter-Strike 6.4, Valorant 6.75); Quake runs at 10 m/s (320 units/s), faster than a sprinter.
+        float maxSpeed = 7.0f;
 
         // How fast the character reaches its speed on the ground: every second it may gain groundAcceleration times its
         // wished speed (10 in Quake, so full speed in a tenth of a second).

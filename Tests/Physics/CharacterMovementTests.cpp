@@ -176,14 +176,15 @@ namespace Abomination::Physics
         Core::Transform transform{.position = {0.0f, 0.875f + static_cast<float>(World::SurfaceEpsilon), 0.0f}};
         const MoveCommand command{.wishDirection = {0.0f, 0.0f, -1.0f}};
 
-        // Friction and acceleration settle on the speed where they balance: with Quake's values that is close to the
-        // maximum speed (acceleration adds 10 * 10 = 100 m/s per second, friction takes 4 * speed).
+        // Friction and acceleration settle on the speed where they balance: with these values that is the maximum speed
+        // (acceleration adds 10 * maxSpeed per second, more than friction takes, 4 * speed).
         for (int tick = 0; tick < 60; ++tick)
             UpdateCharacter(body, transform, brushes, PhysicsSettings{}, MovementSettings{}, command, TickDuration);
 
         EXPECT_TRUE(body.isOnGround);
-        EXPECT_GT(-body.velocity.z, 8.0f);
-        EXPECT_LE(-body.velocity.z, 10.0f + Tolerance);
+        const float maxSpeed = MovementSettings{}.maxSpeed;
+        EXPECT_GT(-body.velocity.z, 0.8f * maxSpeed);
+        EXPECT_LE(-body.velocity.z, maxSpeed + Tolerance);
         EXPECT_LT(transform.position.z, -4.0f);
     }
 

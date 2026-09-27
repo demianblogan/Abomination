@@ -138,6 +138,8 @@ set(LIBRARY_SOURCES
     UI/EntitiesWindow.cpp
     UI/ImGuiLibrary.h
     UI/ImGuiLibrary.cpp
+    UI/MovementWindow.h
+    UI/MovementWindow.cpp
     UI/UIScale.h
     UI/UIScale.cpp
 

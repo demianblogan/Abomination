@@ -7,15 +7,28 @@
 
 namespace Abomination::World
 {
-    glm::vec3 ConvertMapPosition(const glm::dvec3& mapPosition)
+    namespace
     {
-        return ConvertMapDirection(mapPosition / UnitsPerMeter);
+        // The turn of the axes shared by all conversions: (x, y, z) -> (x, z, -y).
+        glm::dvec3 TurnMapAxes(const glm::dvec3& mapVector)
+        {
+            return {mapVector.x, mapVector.z, -mapVector.y};
+        }
     }
 
-    glm::vec3 ConvertMapDirection(const glm::dvec3& mapDirection)
+    glm::vec3 ConvertMapPosition(const glm::dvec3& mapPosition)
     {
-        return glm::vec3(static_cast<float>(mapDirection.x), static_cast<float>(mapDirection.z),
-                         static_cast<float>(-mapDirection.y));
+        return glm::vec3(ConvertMapPositionPrecise(mapPosition));
+    }
+
+    glm::dvec3 ConvertMapPositionPrecise(const glm::dvec3& mapPosition)
+    {
+        return TurnMapAxes(mapPosition / UnitsPerMeter);
+    }
+
+    Core::Plane ConvertMapPlane(const Core::Plane& mapPlane)
+    {
+        return {.normal = TurnMapAxes(mapPlane.normal), .distance = mapPlane.distance / UnitsPerMeter};
     }
 
     float ConvertMapAngleToYaw(double mapAngleDegrees)

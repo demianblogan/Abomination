@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Core/Plane.h"
+
 #include <glm/vec3.hpp>
 
 #include <optional>
@@ -22,8 +24,12 @@ namespace Abomination::World
     // with it the front side of faces, stays the same.
     [[nodiscard]] glm::vec3 ConvertMapPosition(const glm::dvec3& mapPosition);
 
-    // A direction (a normal, an axis): the same turn, without the change of units, because a direction has no length.
-    [[nodiscard]] glm::vec3 ConvertMapDirection(const glm::dvec3& mapDirection);
+    // The same as ConvertMapPosition, but in doubles: for collision data, which stays in doubles like the map.
+    [[nodiscard]] glm::dvec3 ConvertMapPositionPrecise(const glm::dvec3& mapPosition);
+
+    // A plane: its normal turns like a direction, its distance from the origin only changes units (turning around the
+    // origin does not change distances from it). In doubles, like Core::Plane.
+    [[nodiscard]] Core::Plane ConvertMapPlane(const Core::Plane& mapPlane);
 
     // The "angle" of a map entity (degrees counter-clockwise from map +X, seen from above) as the yaw of the game
     // (radians counter-clockwise from game -Z, see Gameplay::FreeFlyCamera): an angle of 90 (map +Y) is yaw 0.

@@ -93,6 +93,7 @@ namespace Abomination::World
         };
         LevelMesh levelMesh = BuildLevelMesh(*world, getTextureSize);
         level.m_statistics = levelMesh.statistics;
+        level.m_collisionBrushes = BuildCollisionBrushes(*world);
 
         // One entity per texture: every one is one draw call with its own texture. The textures were loaded above, so
         // Load() only returns their handles now.
@@ -110,9 +111,10 @@ namespace Abomination::World
             level.m_geometryEntities.push_back(entity);
         }
 
-        Core::Log::Write(LogCategory::World, LogLevel::Info, "Level {} loaded: {} brushes, {} faces, {} triangles, {} textures",
-                         mapPath, level.m_statistics.brushCount, level.m_statistics.faceCount,
-                         level.m_statistics.triangleCount, levelMesh.parts.size());
+        Core::Log::Write(LogCategory::World, LogLevel::Info,
+                         "Level {} loaded: {} brushes, {} faces, {} triangles, {} textures, {} collision brushes", mapPath,
+                         level.m_statistics.brushCount, level.m_statistics.faceCount,
+                         level.m_statistics.triangleCount, levelMesh.parts.size(), level.m_collisionBrushes.size());
 
         return level;
     }
@@ -139,5 +141,10 @@ namespace Abomination::World
     const LevelMeshStatistics& Level::GetStatistics() const noexcept
     {
         return m_statistics;
+    }
+
+    const std::vector<CollisionBrush>& Level::GetCollisionBrushes() const noexcept
+    {
+        return m_collisionBrushes;
     }
 }

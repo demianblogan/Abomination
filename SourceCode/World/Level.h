@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Renderer/RenderAssets.h"
+#include "World/CollisionBrush.h"
 #include "World/LevelMesh.h"
 #include "World/MapData.h"
 
@@ -22,8 +23,8 @@ namespace Abomination::World
         float yaw = 0.0f;
     };
 
-    // A loaded level: the entities that draw its static geometry, where the player starts and numbers about it; its
-    // collision data comes next. Created from a parsed map by Create(), removed by Unload().
+    // A loaded level: the entities that draw its static geometry, its collision brushes, where the player starts and
+    // numbers about it. Created from a parsed map by Create(), removed by Unload().
     //
     // The level puts its entities into a registry and its assets into stores that the application owns, not the level.
     // So it cannot clean up in its destructor (the registry may already be gone by then): Unload() is called explicitly
@@ -47,9 +48,14 @@ namespace Abomination::World
         [[nodiscard]] const PlayerStart& GetPlayerStart() const noexcept;
         [[nodiscard]] const LevelMeshStatistics& GetStatistics() const noexcept;
 
+        // The solid brushes of the world, for collision (see CollisionBrush).
+        [[nodiscard]] const std::vector<CollisionBrush>& GetCollisionBrushes() const noexcept;
+
     private:
         // The entities that draw the static geometry, one per texture; empty if the map has no world.
         std::vector<entt::entity> m_geometryEntities;
+
+        std::vector<CollisionBrush> m_collisionBrushes;
 
         PlayerStart m_playerStart;
         LevelMeshStatistics m_statistics;

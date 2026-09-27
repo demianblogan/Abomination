@@ -14,11 +14,7 @@
 //   game (OpenGL, glm):        meters, Y is up, -Z is forward
 namespace Abomination::World
 {
-    // 32 units are about 1 meter: the Quake player is 56 units tall (about 1.75 m), and the grid sizes of TrenchBroom
-    // (8, 16, 32, 64) are based on this scale.
-    inline constexpr double UnitsPerMeter = 32.0;
-
-    // A position: axes turned (x, y, z) -> (x, z, -y), then units -> meters.
+    // A position: axes turned (x, y, z) -> (x, z, -y), then units -> meters (see Core/Units.h).
     // The turn is a rotation by 90 degrees around X: map +Z (up) becomes game +Y (up), map +Y becomes game -Z.
     // A rotation keeps the handedness of the coordinate system, so the counter-clockwise order of face corners, and
     // with it the front side of faces, stays the same.

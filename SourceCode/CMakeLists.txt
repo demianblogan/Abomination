@@ -49,6 +49,7 @@ set(LIBRARY_SOURCES
     Core/Transform.cpp
     Core/TransformInterpolation.h
     Core/TransformInterpolation.cpp
+    Core/Units.h
     Core/Version.h
     Core/Version.cpp.in
 

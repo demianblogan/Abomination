@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Core/Transform.h"
+#include "Core/Units.h"
 #include "Physics/CharacterBody.h"
 #include "World/CollisionBrush.h"
 
@@ -16,7 +17,7 @@ namespace Abomination::Physics
     {
         // Meters per second squared, downwards. Quake uses 800 units/s², that is 25 m/s²: much more than the real 9.81,
         // which makes jumps short and snappy instead of floaty.
-        float gravity = 25.0f;
+        float gravity = Core::MapUnitsToMeters(800.0f);
     };
 
     // How a character walks. The formulas are those of Quake, and so are most values; the running speed is that of
@@ -35,20 +36,20 @@ namespace Abomination::Physics
         // How fast a character on the ground slows down without input: every second it loses friction times its speed
         // (4 in Quake), but at least friction times stopSpeed, so it stops completely instead of creeping forever.
         float friction = 4.0f;
-        float stopSpeed = 100.0f / 32.0f;
+        float stopSpeed = Core::MapUnitsToMeters(100.0f);
 
         // The highest step a character walks up without jumping: 18 units in Quake, about 0.56 m.
-        float stepHeight = 18.0f / 32.0f;
+        float stepHeight = Core::MapUnitsToMeters(18.0f);
 
         // The upward speed a jump starts with: 270 units/s in Quake. With 25 m/s² of gravity the jump reaches
         // jumpSpeed² / (2 × gravity) = about 1.4 m.
-        float jumpSpeed = 270.0f / 32.0f;
+        float jumpSpeed = Core::MapUnitsToMeters(270.0f);
 
         // Control in the air, the way Quake does it: the character may only add speed up to maxAirWishSpeed in the wished
         // direction (30 units/s, about 1 m/s), but at the full rate of airAcceleration. That is too little to fly anywhere
         // you like, but enough to bend a jump by turning the mouse while holding a strafe key ("air strafing").
         float airAcceleration = 10.0f;
-        float maxAirWishSpeed = 30.0f / 32.0f;
+        float maxAirWishSpeed = Core::MapUnitsToMeters(30.0f);
     };
 
     // What a character wants to do in one tick: from the keys (the player) or from an AI (enemies later). The movement
@@ -69,11 +70,11 @@ namespace Abomination::Physics
 
     // How far below the box the ground is looked for: a quarter of a unit, as in Quake 2. It must be more than the gap
     // a trace leaves before a surface (World::SurfaceEpsilon), or a character standing on the floor would not find it.
-    inline constexpr double GroundCheckDistance = 0.25 / 32.0;
+    inline constexpr double GroundCheckDistance = Core::MapUnitsToMeters(0.25);
 
     // A character moving up faster than this is not on the ground even if the ground is right below it (the first
     // moments of a jump). 180 units/s, as in Quake.
-    inline constexpr float MaximumGroundUpwardSpeed = 180.0f / 32.0f;
+    inline constexpr float MaximumGroundUpwardSpeed = Core::MapUnitsToMeters(180.0f);
 
     // The velocity with the part that goes into the surface removed: what is left moves along the surface. normal
     // points out of the surface. Moving away from the surface (or along it) does not change the velocity.

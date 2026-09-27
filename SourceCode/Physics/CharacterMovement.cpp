@@ -244,7 +244,8 @@ namespace Abomination::Physics
     {
         // Distances from an eighth of a unit (4 mm) to a whole unit (3 cm), the smallest first, so the box moves as little
         // as possible.
-        constexpr std::array<double, 4> Distances = {1.0 / 8.0 / 32.0, 1.0 / 4.0 / 32.0, 1.0 / 2.0 / 32.0, 1.0 / 32.0};
+        constexpr std::array<double, 4> Distances = {Core::MapUnitsToMeters(1.0 / 8.0), Core::MapUnitsToMeters(1.0 / 4.0),
+                                                     Core::MapUnitsToMeters(1.0 / 2.0), Core::MapUnitsToMeters(1.0)};
 
         for (const double distance : Distances)
             for (int x = -1; x <= 1; ++x)

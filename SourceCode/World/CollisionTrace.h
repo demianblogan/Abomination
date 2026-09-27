@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Core/Units.h"
 #include "World/CollisionBrush.h"
 
 #include <glm/vec3.hpp>
@@ -10,7 +11,7 @@ namespace Abomination::World
 {
     // The distance a traced box stops before a surface: 1/32 of a map unit (about 1 mm), as in Quake. Without it the
     // stopped box could end up a hair inside the surface after rounding, and the next trace would start stuck in it.
-    inline constexpr double SurfaceEpsilon = 1.0 / 32.0 / 32.0;
+    inline constexpr double SurfaceEpsilon = Core::MapUnitsToMeters(1.0 / 32.0);
 
     // What happened to a box moved along a straight line (see TraceBox).
     struct TraceResult

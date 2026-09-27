@@ -17,6 +17,7 @@ set(TEST_SOURCES
     Core/PlaneTests.cpp
     Core/TransformTests.cpp
     Core/TransformInterpolationTests.cpp
+    Core/UnitsTests.cpp
     Core/VersionTests.cpp
 
     Gameplay/FreeFlyCameraControllerTests.cpp

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Core/Transform.h"
+#include "Core/Units.h"
 #include "World/Level.h"
 
 #include <entt/entt.hpp>
@@ -17,7 +18,7 @@ namespace Abomination::Gameplay
 
     // The eyes of the player above the center of their box: 18 units, as in Quake (the box of the Quake player goes from
     // 24 units below its origin to 32 above it, the eyes are 22 above the origin, so 18 above the center of the box).
-    inline constexpr float PlayerEyeHeight = 18.0f / 32.0f;
+    inline constexpr float PlayerEyeHeight = Core::MapUnitsToMeters(18.0f);
 
     // Component: how far the eyes are below where they belong after the body stepped up a stair (0 or negative), now and
     // one tick earlier (the view is drawn between the two, like interpolated transforms). The body goes up a step at once
@@ -30,8 +31,8 @@ namespace Abomination::Gameplay
     };
 
     // How fast the eyes catch up with the body (80 units/s in Quake) and how far they may fall behind (12 units).
-    inline constexpr float StepSmoothingSpeed = 80.0f / 32.0f;
-    inline constexpr float MaximumStepLag = 12.0f / 32.0f;
+    inline constexpr float StepSmoothingSpeed = Core::MapUnitsToMeters(80.0f);
+    inline constexpr float MaximumStepLag = Core::MapUnitsToMeters(12.0f);
 
     // One tick of the smoothing: the eyes stay behind by the height the body just stepped up (at most MaximumStepLag),
     // then catch up by StepSmoothingSpeed.

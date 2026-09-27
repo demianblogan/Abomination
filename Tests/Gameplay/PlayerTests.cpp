@@ -137,4 +137,23 @@ namespace Abomination::Gameplay
 
         EXPECT_FLOAT_EQ(smoothing.offset, -MaximumStepLag);
     }
+
+    TEST_F(PlayerControllerMoveTest, JumpPressedBetweenTicksIsNotLost)
+    {
+        // Frame 1: Space is pressed and released before any tick runs. Frame 2 has a tick: it still gets the jump.
+        m_devices.keyboard.StartFrame();
+        m_devices.keyboard.PressKey(Input::Key::Space);
+        m_actions.Update(m_devices, m_bindings);
+        m_controller.CollectFrameInput(m_actions);
+
+        m_devices.keyboard.StartFrame();
+        m_devices.keyboard.ReleaseKey(Input::Key::Space);
+        m_actions.Update(m_devices, m_bindings);
+        m_controller.CollectFrameInput(m_actions);
+
+        EXPECT_TRUE(m_controller.CreateMoveCommand(PlayerLook{}, m_actions).wantsToJump);
+
+        // The press is used up: the next tick does not jump again.
+        EXPECT_FALSE(m_controller.CreateMoveCommand(PlayerLook{}, m_actions).wantsToJump);
+    }
 }

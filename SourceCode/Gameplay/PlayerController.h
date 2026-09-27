@@ -32,12 +32,21 @@ namespace Abomination::Gameplay
         // no movement otherwise.
         void UpdateRotation(PlayerLook& look, glm::vec2 mouseMovement) const;
 
+        // Remembers the presses of this frame that must not be lost before the next tick. Called once per frame.
+        // A tick reads the actions of its frame, but a frame may have no tick at all (at a high frame rate most frames
+        // have none): a jump pressed and released in such a frame would never reach a tick. So a press is kept here
+        // until the next move command takes it.
+        void CollectFrameInput(const Input::ActionStates& actions);
+
         // What the player wants to do this tick: MoveForward/Backward/Left/Right (WASD) relative to where the player
-        // looks, but always horizontal: looking at the floor does not make the player walk into it.
-        [[nodiscard]] Physics::MoveCommand CreateMoveCommand(const PlayerLook& look,
-                                                             const Input::ActionStates& actions) const;
+        // looks, but always horizontal: looking at the floor does not make the player walk into it; and a jump if one
+        // was pressed since the last command (see CollectFrameInput), which it takes.
+        [[nodiscard]] Physics::MoveCommand CreateMoveCommand(const PlayerLook& look, const Input::ActionStates& actions);
 
     private:
         PlayerControllerSettings m_settings;
+
+        // A jump was pressed and no move command has taken it yet.
+        bool m_isJumpRequested = false;
     };
 }

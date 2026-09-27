@@ -50,6 +50,7 @@ namespace Abomination::Input
         EXPECT_EQ(bindings.GetBindings(Action::Quit)[0], InputBinding(Key::Escape));
         EXPECT_EQ(bindings.GetBindings(Action::ToggleConsole)[0], InputBinding(Key::Grave));
         EXPECT_EQ(bindings.GetBindings(Action::ToggleFreeFlyCamera)[0], InputBinding(Key::F2));
+        EXPECT_EQ(bindings.GetBindings(Action::Jump)[0], InputBinding(Key::Space));
         EXPECT_EQ(bindings.GetBindings(Action::ToggleScreenMode)[0], InputBinding(KeyCombination{Key::LeftAlt, Key::Enter}));
     }
 }

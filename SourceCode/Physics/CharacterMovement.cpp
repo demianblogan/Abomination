@@ -217,6 +217,21 @@ namespace Abomination::Physics
         return trace.fraction < 1.0 && trace.hitNormal.y >= MinimumGroundNormalY;
     }
 
+    void AirAccelerate(glm::vec3& velocity, const glm::vec3& wishDirection, float wishSpeed, float maxWishSpeed,
+                       float acceleration, float deltaTime)
+    {
+        // Like Accelerate, with one difference: the missing speed is counted up to maxWishSpeed, while the rate still
+        // uses the full wishSpeed. Turning the wished direction keeps the missing speed high (the velocity along the new
+        // direction is small), which is what lets a jump bend and speed up while strafing.
+        const float currentSpeed = glm::dot(velocity, wishDirection);
+        const float missingSpeed = glm::min(wishSpeed, maxWishSpeed) - currentSpeed;
+        if (missingSpeed <= 0.0f)
+            return;
+
+        const float addedSpeed = glm::min(acceleration * wishSpeed * deltaTime, missingSpeed);
+        velocity += wishDirection * addedSpeed;
+    }
+
     bool IsInSolid(std::span<const World::CollisionBrush> brushes, const glm::dvec3& position,
                    const glm::dvec3& halfExtents)
     {
@@ -291,6 +306,14 @@ namespace Abomination::Physics
         const glm::vec3 wishDirection = wishLength > 0.0f ? command.wishDirection / wishLength : glm::vec3(0.0f);
         const float wishSpeed = movementSettings.maxSpeed * glm::min(wishLength, 1.0f);
 
+        // A jump leaves the ground in this very tick: no friction for it, so a jump started at full speed keeps it. Pressing
+        // jump again right on landing loses almost nothing to friction (the base of "bunny hopping" in Quake).
+        if (body.isOnGround && command.wantsToJump)
+        {
+            body.velocity.y = movementSettings.jumpSpeed;
+            body.isOnGround = false;
+        }
+
         if (body.isOnGround)
         {
             // Gravity would keep pushing the box into the floor every tick, and on a slope the push would turn into
@@ -301,12 +324,19 @@ namespace Abomination::Physics
         }
         else
         {
+            AirAccelerate(body.velocity, wishDirection, wishSpeed, movementSettings.maxAirWishSpeed,
+                          movementSettings.airAcceleration, deltaTime);
             body.velocity.y -= physicsSettings.gravity * deltaTime;
         }
 
         glm::dvec3 position(transform.position);
+        // Steps are walked up on the ground, and also in the air while not moving up, like in Quake 2 and 3: a player who
+        // jumps onto stairs lands on them and runs on, instead of hitting the edge of a step like a wall and losing all
+        // speed. While moving up (the first half of a jump) stepping is off, or a jump next to a wall would climb it one
+        // step at a time. (The other way to smooth stairs is in the map: an invisible slope over them, "player clip".)
         body.steppedUpHeight = 0.0f;
-        if (body.isOnGround)
+        const bool canStepUp = body.isOnGround || body.velocity.y <= 0.0f;
+        if (canStepUp)
             body.steppedUpHeight = StepSlideMove(brushes, position, body.velocity, body.halfExtents,
                                                  movementSettings.stepHeight, deltaTime);
         else

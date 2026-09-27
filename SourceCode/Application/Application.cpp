@@ -209,6 +209,8 @@ namespace Abomination
         // with two ticks. Only what is controlled now turns.
         if (m_controlMode == ControlMode::Player)
         {
+            m_playerController.CollectFrameInput(m_actionStates);
+
             if (m_isMouseCaptured && !isCaptureStarting)
                 m_playerController.UpdateRotation(m_registry.get<Gameplay::PlayerLook>(m_player),
                                                   m_inputDevices.mouse.GetMovement());

@@ -7,6 +7,8 @@
 #include <glm/trigonometric.hpp>
 #include <glm/vec3.hpp>
 
+#include <utility>
+
 namespace Abomination::Gameplay
 {
     using Input::Action;
@@ -29,8 +31,13 @@ namespace Abomination::Gameplay
         TurnByMouse(look.yaw, look.pitch, mouseMovement, m_settings.mouseSensitivity);
     }
 
-    Physics::MoveCommand PlayerController::CreateMoveCommand(const PlayerLook& look,
-                                                             const Input::ActionStates& actions) const
+    void PlayerController::CollectFrameInput(const Input::ActionStates& actions)
+    {
+        if (actions.WasActionStarted(Action::Jump))
+            m_isJumpRequested = true;
+    }
+
+    Physics::MoveCommand PlayerController::CreateMoveCommand(const PlayerLook& look, const Input::ActionStates& actions)
     {
         const float forwardInput =
             GetActionValue(actions, Action::MoveForward) - GetActionValue(actions, Action::MoveBackward);
@@ -47,6 +54,10 @@ namespace Abomination::Gameplay
         if (direction != glm::vec3(0.0f))
             direction = glm::normalize(direction);
 
-        return Physics::MoveCommand{.wishDirection = direction};
+        // The jump press goes to this command only: holding the key does not jump again on landing, it has to be pressed
+        // again, like in Quake.
+        const bool wantsToJump = std::exchange(m_isJumpRequested, false);
+
+        return Physics::MoveCommand{.wishDirection = direction, .wantsToJump = wantsToJump};
     }
 }

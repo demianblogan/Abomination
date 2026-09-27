@@ -37,6 +37,16 @@ namespace Abomination::Physics
 
         // The highest step a character walks up without jumping: 18 units in Quake, about 0.56 m.
         float stepHeight = 18.0f / 32.0f;
+
+        // The upward speed a jump starts with: 270 units/s in Quake. With 25 m/s² of gravity the jump reaches
+        // jumpSpeed² / (2 × gravity) = about 1.4 m.
+        float jumpSpeed = 270.0f / 32.0f;
+
+        // Control in the air, the way Quake does it: the character may only add speed up to maxAirWishSpeed in the wished
+        // direction (30 units/s, about 1 m/s), but at the full rate of airAcceleration. That is too little to fly anywhere
+        // you like, but enough to bend a jump by turning the mouse while holding a strafe key ("air strafing").
+        float airAcceleration = 10.0f;
+        float maxAirWishSpeed = 30.0f / 32.0f;
     };
 
     // What a character wants to do in one tick: from the keys (the player) or from an AI (enemies later). The movement
@@ -45,6 +55,9 @@ namespace Abomination::Physics
     {
         // Where the character wants to go: horizontal, length 1 to go at full speed, 0 to stand.
         glm::vec3 wishDirection{0.0f};
+
+        // Jump now, if standing on the ground. In the air the wish is ignored (no double jumps).
+        bool wantsToJump = false;
     };
 
     // A surface is ground (the character can stand and walk on it) when its normal points up at least this much: the y
@@ -73,7 +86,8 @@ namespace Abomination::Physics
 
     // Like SlideMove, but also walks up steps: the move is tried twice, as it is and lifted by stepHeight (then put down
     // again), and the one that got further horizontally wins. On flat ground both give the same, at a step the lifted one
-    // gets over it. The same approach as PM_StepSlideMove of Quake 2. For characters on the ground only.
+    // gets over it. The same approach as PM_StepSlideMove of Quake 2. For characters on the ground, or in the air while
+    // not moving up (landing on stairs).
     // Returns how high the box walked up (0 if the plain move won).
     float StepSlideMove(std::span<const World::CollisionBrush> brushes, glm::dvec3& position, glm::vec3& velocity,
                        const glm::dvec3& halfExtents, float stepHeight, float deltaTime);
@@ -87,6 +101,11 @@ namespace Abomination::Physics
     // Quake.
     void Accelerate(glm::vec3& velocity, const glm::vec3& wishDirection, float wishSpeed, float acceleration,
                     float deltaTime);
+
+    // Accelerate for a character in the air: the missing speed is counted up to maxWishSpeed only, but the rate is that
+    // of the full wishSpeed (see MovementSettings::maxAirWishSpeed). The air-accelerate function of Quake.
+    void AirAccelerate(glm::vec3& velocity, const glm::vec3& wishDirection, float wishSpeed, float maxWishSpeed,
+                       float acceleration, float deltaTime);
 
     // Whether a box at position overlaps a brush.
     [[nodiscard]] bool IsInSolid(std::span<const World::CollisionBrush> brushes, const glm::dvec3& position,
@@ -104,9 +123,10 @@ namespace Abomination::Physics
     [[nodiscard]] bool IsOnGround(std::span<const World::CollisionBrush> brushes, const glm::dvec3& position,
                                   const glm::dvec3& halfExtents);
 
-    // One tick of a character: on the ground, friction slows it down and the command speeds it up; in the air, gravity
-    // pulls it down. Then it moves through the level (stepping up stairs on the ground, sliding along walls) and checks
-    // whether it stands on the ground. transform.position is the center of its box.
+    // One tick of a character: a jump starts if it is wished and the character stands on the ground; on the ground,
+    // friction slows it down and the command speeds it up; in the air, gravity pulls it down and the command bends the
+    // way a little (AirAccelerate). Then it moves through the level (stepping up stairs on the ground, sliding along
+    // walls) and checks whether it stands on the ground. transform.position is the center of its box.
     void UpdateCharacter(CharacterBody& body, Core::Transform& transform, std::span<const World::CollisionBrush> brushes,
                          const PhysicsSettings& physicsSettings, const MovementSettings& movementSettings,
                          const MoveCommand& command, float deltaTime);

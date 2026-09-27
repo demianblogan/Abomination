@@ -251,4 +251,84 @@ namespace Abomination::Physics
         EXPECT_TRUE(body.isInSolid); // started the tick inside the wall
         EXPECT_FALSE(IsInSolid(brushes, glm::dvec3(transform.position), HalfExtents));
     }
+
+    TEST(CharacterMovement, JumpLeavesGroundAndLandsAgain)
+    {
+        const std::vector<World::CollisionBrush> brushes = CreateFloorAndWall();
+        CharacterBody body{.halfExtents = HalfExtents, .isOnGround = true};
+        const float standingY = 0.875f + static_cast<float>(World::SurfaceEpsilon);
+        Core::Transform transform{.position = {0.0f, standingY, 0.0f}};
+        const MovementSettings settings;
+
+        UpdateCharacter(body, transform, brushes, PhysicsSettings{}, settings, MoveCommand{.wantsToJump = true},
+                        TickDuration);
+        EXPECT_FALSE(body.isOnGround);
+        EXPECT_GT(body.velocity.y, 0.0f);
+
+        // The highest point: jumpSpeed² / (2 × gravity) = 8.44² / 50 = about 1.42 m.
+        float highestY = transform.position.y;
+        for (int tick = 0; tick < 120 && !body.isOnGround; ++tick)
+        {
+            UpdateCharacter(body, transform, brushes, PhysicsSettings{}, settings, {}, TickDuration);
+            highestY = glm::max(highestY, transform.position.y);
+        }
+
+        EXPECT_NEAR(highestY - standingY, 1.42f, 0.1f);
+        EXPECT_TRUE(body.isOnGround);
+        EXPECT_NEAR(transform.position.y, standingY, 0.01f);
+    }
+
+    TEST(CharacterMovement, NoJumpInAir)
+    {
+        CharacterBody body{.halfExtents = HalfExtents};
+        Core::Transform transform{.position = {0.0f, 5.0f, 0.0f}};
+
+        UpdateCharacter(body, transform, CreateFloorAndWall(), PhysicsSettings{}, MovementSettings{},
+                        MoveCommand{.wantsToJump = true}, TickDuration);
+
+        EXPECT_LT(body.velocity.y, 0.0f); // still falling
+    }
+
+    TEST(CharacterMovement, AirControlAddsOnlyALittleSpeed)
+    {
+        // Falling straight down and wishing to go right: at most maxAirWishSpeed (about 1 m/s) is added that way.
+        glm::vec3 velocity{0.0f, -5.0f, 0.0f};
+        const MovementSettings settings;
+
+        for (int tick = 0; tick < 60; ++tick)
+            AirAccelerate(velocity, {1.0f, 0.0f, 0.0f}, settings.maxSpeed, settings.maxAirWishSpeed,
+                          settings.airAcceleration, TickDuration);
+
+        EXPECT_NEAR(velocity.x, settings.maxAirWishSpeed, Tolerance);
+    }
+
+    TEST(CharacterMovement, LandingOnStairsKeepsRunning)
+    {
+        // Falling forward towards a step 0.4 m high: the bottom of the box is 0.3 m above the floor, lower than the top of
+        // the step, so the edge of the step is in the way. The box steps over it and runs on instead of stopping.
+        std::vector<World::CollisionBrush> brushes = CreateFloorAndWall();
+        brushes.push_back(CreateBoxBrush({-50.0, 0.0, -50.0}, {50.0, 0.4, -2.0}));
+        CharacterBody body{.halfExtents = HalfExtents, .velocity = {0.0f, -1.0f, -8.0f}};
+        Core::Transform transform{.position = {0.0f, 0.875f + 0.3f, -1.0f}};
+
+        for (int tick = 0; tick < 30; ++tick)
+            UpdateCharacter(body, transform, brushes, PhysicsSettings{}, MovementSettings{}, {}, TickDuration);
+
+        EXPECT_LT(transform.position.z, -2.5f);                  // got past the edge at z = -2
+        EXPECT_NEAR(transform.position.y, 0.4f + 0.875f, 0.02f); // stands on the step
+    }
+
+    TEST(CharacterMovement, RisingCharacterDoesNotStepUp)
+    {
+        // Moving up (the first half of a jump) into the face of a step: no stepping, the face stops the box like a wall.
+        std::vector<World::CollisionBrush> brushes = CreateFloorAndWall();
+        brushes.push_back(CreateBoxBrush({-50.0, 0.0, -50.0}, {50.0, 0.4, -2.0}));
+        CharacterBody body{.halfExtents = HalfExtents, .velocity = {0.0f, 1.0f, -8.0f}};
+        Core::Transform transform{.position = {0.0f, 0.875f + 0.05f, -1.45f}}; // one tick (0.13 m) reaches the face
+
+        UpdateCharacter(body, transform, brushes, PhysicsSettings{}, MovementSettings{}, {}, TickDuration);
+
+        EXPECT_NEAR(transform.position.z, -1.5f, 0.01f); // stopped at the face of the step
+        EXPECT_EQ(body.steppedUpHeight, 0.0f);
+    }
 }

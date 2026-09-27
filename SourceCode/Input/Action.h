@@ -22,6 +22,9 @@ namespace Abomination::Input
         MoveFaster,
         LookAroundMode,
 
+        // Player
+        Jump,
+
         // Application
         // Closes the game. Escape for now; from 0.8 Escape opens the pause menu, and quitting moves to a button there.
         Quit,

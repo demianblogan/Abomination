@@ -785,9 +785,9 @@ Test.map ─► ParseMap ─► MapData ─┬─► BuildBrushPolygons ─► B
 - **Collision tools** (`CollisionDebug`, View > Physics > Collision): brush bounds, a
   box traced from the camera straight ahead (point, small box or player box;
   the stopping box and the normal are drawn as debug lines, the numbers are
-  shown in the window) and a colliding free-fly camera (it stops at walls; a
-  camera that starts inside a brush moves freely to get out). Sliding along
-  walls is for the player (see section 12).
+  shown in the window) and a colliding free-fly camera (it slides along walls
+  with `Physics::SlideMove`, like the player, see section 12; a camera that
+  starts inside a brush moves freely to get out).
 
 **Planned:** a tree of brushes (BVH) when large maps make
 checking every brush measurably slow — with 17 brushes the bounding box test

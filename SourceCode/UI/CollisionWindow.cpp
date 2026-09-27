@@ -25,7 +25,7 @@ namespace Abomination::UI
 
             ImGui::SeparatorText("Camera");
             ImGui::Checkbox("Camera collides", &settings.doesCameraCollide);
-            ImGui::SetItemTooltip("The free-fly camera stops at walls. It does not slide along them yet.");
+            ImGui::SetItemTooltip("The free-fly camera slides along walls instead of flying through them.");
 
             ImGui::SeparatorText("Trace from the camera");
             ImGui::Checkbox("Enabled", &settings.isCameraTraceEnabled);

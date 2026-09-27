@@ -39,7 +39,7 @@ namespace Abomination::World
         bool isCameraTraceEnabled = false;
         TraceShape cameraTraceShape = TraceShape::PlayerBox;
 
-        // The free-fly camera stops at walls instead of flying through them (see CameraHalfExtents).
+        // The free-fly camera slides along walls instead of flying through them (see CameraHalfExtents).
         bool doesCameraCollide = false;
     };
 

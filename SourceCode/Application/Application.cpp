@@ -25,6 +25,7 @@
 #include <glm/vec3.hpp>
 #include <glm/vec4.hpp>
 
+#include <span>
 #include <utility>
 
 namespace Abomination
@@ -253,15 +254,17 @@ namespace Abomination
             const glm::vec3 cameraPositionBefore = cameraTransform.position;
             m_freeFlyCameraController.UpdateMovement(cameraTransform, m_actionStates, tickDuration);
 
-            // A colliding camera moves only as far as its box gets. It stops at walls instead of sliding along them. A
-            // camera that starts inside a brush (the tool was switched on in a wall) moves freely, so it can get out.
-            if (m_collisionSettings.doesCameraCollide)
+            // A colliding camera makes the same move again, but through the level: it slides along what it hits, like the
+            // player (Physics::SlideMove), instead of flying through. The controller has already moved the transform, so
+            // the move is turned into a velocity for this tick. A camera that starts inside a brush (the tool was switched
+            // on in a wall) keeps the free move, so it can get out.
+            const std::span<const World::CollisionBrush> brushes = m_level.GetCollisionBrushes();
+            glm::dvec3 position(cameraPositionBefore);
+            if (m_collisionSettings.doesCameraCollide && !Physics::IsInSolid(brushes, position, World::CameraHalfExtents))
             {
-                const World::TraceResult trace =
-                    World::TraceBox(m_level.GetCollisionBrushes(), glm::dvec3(cameraPositionBefore),
-                                    glm::dvec3(cameraTransform.position), World::CameraHalfExtents);
-                if (!trace.startsInSolid)
-                    cameraTransform.position = glm::vec3(trace.endPosition);
+                glm::vec3 velocity = (cameraTransform.position - cameraPositionBefore) / tickDuration;
+                Physics::SlideMove(brushes, position, velocity, World::CameraHalfExtents, tickDuration);
+                cameraTransform.position = glm::vec3(position);
             }
         }
 

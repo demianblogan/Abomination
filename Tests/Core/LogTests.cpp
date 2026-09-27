@@ -32,7 +32,6 @@ namespace Abomination::Core
             Log::Initialize(LogSettings{
                 .filePath = m_logFilePath,
                 .minimumLevel = minimumLevel,
-                .needToWriteToConsole = false,
             });
         }
 
@@ -104,7 +103,6 @@ namespace Abomination::Core
         Log::Initialize(LogSettings{
             .filePath = m_logFilePath,
             .minimumLevel = LogLevel::Info,
-            .needToWriteToConsole = false,
             .history = &history,
         });
 

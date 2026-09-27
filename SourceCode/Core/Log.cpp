@@ -6,7 +6,6 @@
 #include <spdlog/pattern_formatter.h>
 #include <spdlog/sinks/base_sink.h>
 #include <spdlog/sinks/basic_file_sink.h>
-#include <spdlog/sinks/stdout_color_sinks.h>
 
 #include <array>
 #include <memory>
@@ -18,7 +17,8 @@
 // spdlog terms used in this file:
 //   logger - the object messages are written to. It has a name (printed as "[Renderer]") and a minimum level.
 //            Every accepted message is passed on to all sinks of the logger.
-//   sink   - a destination where a message ends up: the console, a file, ... One sink can be used by several loggers.
+//   sink   - a destination where a message ends up: a file, the history in memory, ... One sink can be used by several
+//            loggers.
 namespace Abomination::Core::Log
 {
     namespace
@@ -33,8 +33,7 @@ namespace Abomination::Core::Log
 
         // [12:03:41.512] [Renderer] [warning] Message
         //  %H:%M:%S.%e - time with milliseconds, %n - logger name, %l - level, %v - the message itself.
-        //  The text between %^ and %$ is colored by the level (only in the console).
-        constexpr const char* MessagePattern = "[%H:%M:%S.%e] [%n] [%^%l%$] %v";
+        constexpr const char* MessagePattern = "[%H:%M:%S.%e] [%n] [%l] %v";
 
         // One logger per category; the index in the array is the numeric value of LogCategory.
         // All loggers write to the same sinks and differ only by the name printed in the message.
@@ -149,9 +148,6 @@ namespace Abomination::Core::Log
         //    shared by several loggers: spdlog::sink_ptr is an alias for std::shared_ptr<spdlog::sinks::sink>.
         //    The "_mt" suffix means "multi-threaded": the sink may be used from several threads at the same time.
         std::vector<spdlog::sink_ptr> sinks;
-
-        if (settings.needToWriteToConsole)
-            sinks.push_back(std::make_shared<spdlog::sinks::stdout_color_sink_mt>()); // Console output, levels in color
 
         constexpr bool NeedToTruncateFile = true; // Every run starts with an empty log file
         sinks.push_back(std::make_shared<spdlog::sinks::basic_file_sink_mt>(settings.filePath.string(), NeedToTruncateFile));

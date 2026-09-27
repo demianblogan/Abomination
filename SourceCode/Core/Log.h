@@ -26,6 +26,7 @@ namespace Abomination::Core
     {
         Core,
         Platform,
+        Physics,
         Renderer,
         UI,
         World,
@@ -34,7 +35,8 @@ namespace Abomination::Core
     // Names for tools (the in-game console), in the order of the enum values. The log file uses the same names.
     inline constexpr std::array<std::string_view, 6> LogLevelNames = {
         "trace", "debug", "info", "warning", "error", "critical"};
-    inline constexpr std::array<std::string_view, 5> LogCategoryNames = {"Core", "Platform", "Renderer", "UI", "World"};
+    inline constexpr std::array<std::string_view, 6> LogCategoryNames = {
+        "Core", "Platform", "Physics", "Renderer", "UI", "World"};
 
     struct LogSettings
     {

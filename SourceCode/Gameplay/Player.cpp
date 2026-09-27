@@ -7,6 +7,7 @@
 #include "Renderer/CameraLens.h"
 #include "World/CollisionDebug.h"
 
+#include <glm/common.hpp>
 #include <glm/vec3.hpp>
 
 namespace Abomination::Gameplay
@@ -22,16 +23,28 @@ namespace Abomination::Gameplay
         registry.emplace<Core::Transform>(player, Core::Transform{.position = center});
         registry.emplace<Physics::CharacterBody>(player, Physics::CharacterBody{.halfExtents = World::PlayerHalfExtents});
         registry.emplace<PlayerLook>(player, PlayerLook{.yaw = playerStart.yaw});
+        registry.emplace<PlayerStepSmoothing>(player);
         registry.emplace<Renderer::CameraLens>(player);
         Core::EnableInterpolation(registry, player);
 
         return player;
     }
 
-    Core::Transform CalculatePlayerEyeTransform(const Core::Transform& body, const PlayerLook& look)
+    void UpdateStepSmoothing(PlayerStepSmoothing& smoothing, float steppedUpHeight, float deltaTime)
+    {
+        smoothing.previousOffset = smoothing.offset;
+
+        // The body went up: the eyes stay where they were, so they are that much lower relative to the body now.
+        smoothing.offset = glm::max(smoothing.offset - steppedUpHeight, -MaximumStepLag);
+
+        // ...and rise towards the body at a constant speed, without overshooting.
+        smoothing.offset = glm::min(smoothing.offset + StepSmoothingSpeed * deltaTime, 0.0f);
+    }
+
+    Core::Transform CalculatePlayerEyeTransform(const Core::Transform& body, const PlayerLook& look, float stepOffset)
     {
         return Core::Transform{
-            .position = body.position + glm::vec3(0.0f, PlayerEyeHeight, 0.0f),
+            .position = body.position + glm::vec3(0.0f, PlayerEyeHeight + stepOffset, 0.0f),
             .rotation = CalculateCameraRotation(look.yaw, look.pitch),
         };
     }

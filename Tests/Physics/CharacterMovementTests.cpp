@@ -58,7 +58,8 @@ namespace Abomination::Physics
         CharacterBody body{.halfExtents = HalfExtents};
         Core::Transform transform{.position = {0.0f, 10.0f, 0.0f}};
 
-        UpdateCharacter(body, transform, CreateFloorAndWall(), PhysicsSettings{.gravity = 25.0f}, TickDuration);
+        UpdateCharacter(body, transform, CreateFloorAndWall(), PhysicsSettings{.gravity = 25.0f}, MovementSettings{}, {},
+                        TickDuration);
 
         // One tick of gravity: the speed grows by g * dt downwards.
         EXPECT_NEAR(body.velocity.y, -25.0f * TickDuration, Tolerance);
@@ -74,7 +75,7 @@ namespace Abomination::Physics
 
         // Two seconds are more than enough to fall 2 meters.
         for (int tick = 0; tick < 120; ++tick)
-            UpdateCharacter(body, transform, brushes, PhysicsSettings{}, TickDuration);
+            UpdateCharacter(body, transform, brushes, PhysicsSettings{}, MovementSettings{}, {}, TickDuration);
 
         // Standing on the floor: the bottom of the box just above y = 0, not falling any more.
         EXPECT_TRUE(body.isOnGround);
@@ -137,5 +138,117 @@ namespace Abomination::Physics
 
         EXPECT_TRUE(isOnGroundAt(createSlope(30.0), 30.0));
         EXPECT_FALSE(isOnGroundAt(createSlope(60.0), 60.0));
+    }
+
+    TEST(CharacterMovement, FrictionStopsCharacterWithoutInput)
+    {
+        glm::vec3 velocity{5.0f, 0.0f, 0.0f};
+        const MovementSettings settings;
+
+        // Friction takes friction * speed per second: 4 * 5 = 20 m/s per second, so after one tick of 1/60 s the speed
+        // is 5 - 20/60.
+        ApplyFriction(velocity, settings, TickDuration);
+        EXPECT_NEAR(velocity.x, 5.0f - 20.0f * TickDuration, Tolerance);
+
+        // A second later the character stands still.
+        for (int tick = 0; tick < 60; ++tick)
+            ApplyFriction(velocity, settings, TickDuration);
+        EXPECT_EQ(velocity, glm::vec3(0.0f));
+    }
+
+    TEST(CharacterMovement, AccelerateAddsAtMostWhatIsMissing)
+    {
+        // Standing: one tick adds acceleration * wishSpeed * dt = 10 * 10 / 60.
+        glm::vec3 velocity{0.0f};
+        Accelerate(velocity, {1.0f, 0.0f, 0.0f}, 10.0f, 10.0f, TickDuration);
+        EXPECT_NEAR(velocity.x, 100.0f * TickDuration, Tolerance);
+
+        // Already at the wished speed in that direction: nothing is added.
+        velocity = {10.0f, 0.0f, 0.0f};
+        Accelerate(velocity, {1.0f, 0.0f, 0.0f}, 10.0f, 10.0f, TickDuration);
+        EXPECT_NEAR(velocity.x, 10.0f, Tolerance);
+    }
+
+    TEST(CharacterMovement, WalkingOnFloorReachesMaximumSpeed)
+    {
+        const std::vector<World::CollisionBrush> brushes = CreateFloorAndWall();
+        CharacterBody body{.halfExtents = HalfExtents, .isOnGround = true};
+        Core::Transform transform{.position = {0.0f, 0.875f + static_cast<float>(World::SurfaceEpsilon), 0.0f}};
+        const MoveCommand command{.wishDirection = {0.0f, 0.0f, -1.0f}};
+
+        // Friction and acceleration settle on the speed where they balance: with Quake's values that is close to the
+        // maximum speed (acceleration adds 10 * 10 = 100 m/s per second, friction takes 4 * speed).
+        for (int tick = 0; tick < 60; ++tick)
+            UpdateCharacter(body, transform, brushes, PhysicsSettings{}, MovementSettings{}, command, TickDuration);
+
+        EXPECT_TRUE(body.isOnGround);
+        EXPECT_GT(-body.velocity.z, 8.0f);
+        EXPECT_LE(-body.velocity.z, 10.0f + Tolerance);
+        EXPECT_LT(transform.position.z, -4.0f);
+    }
+
+    TEST(CharacterMovement, StepUpWalksOntoLowStep)
+    {
+        // A step 0.4 m high (lower than the 0.56 m step height) in front of the character.
+        std::vector<World::CollisionBrush> brushes = CreateFloorAndWall();
+        brushes.push_back(CreateBoxBrush({-50.0, 0.0, -50.0}, {50.0, 0.4, -2.0}));
+        glm::dvec3 position{0.0, 0.875 + World::SurfaceEpsilon, 0.0};
+        glm::vec3 velocity{0.0f, 0.0f, -8.0f};
+
+        const float steppedUpHeight = StepSlideMove(brushes, position, velocity, HalfExtents, 18.0f / 32.0f, 0.5f);
+
+        // Went over the edge at z = -2 and stands on the step.
+        EXPECT_NEAR(steppedUpHeight, 0.4f, 0.01f);
+        EXPECT_LT(position.z, -2.5);
+        EXPECT_NEAR(position.y, 0.4 + 0.875, 0.01);
+    }
+
+    TEST(CharacterMovement, StepUpDoesNotClimbHighWall)
+    {
+        // A block 1 m high: too high for a step, the character stops at it.
+        std::vector<World::CollisionBrush> brushes = CreateFloorAndWall();
+        brushes.push_back(CreateBoxBrush({-50.0, 0.0, -50.0}, {50.0, 1.0, -2.0}));
+        glm::dvec3 position{0.0, 0.875 + World::SurfaceEpsilon, 0.0};
+        glm::vec3 velocity{0.0f, 0.0f, -8.0f};
+
+        StepSlideMove(brushes, position, velocity, HalfExtents, 18.0f / 32.0f, 0.5f);
+
+        EXPECT_NEAR(position.z, -1.5, 0.01); // stopped half the box before the block
+        EXPECT_NEAR(position.y, 0.875, 0.01);
+    }
+
+    TEST(CharacterMovement, BoxSlightlyInWallIsPushedOut)
+    {
+        // The box reaches 2 mm into the wall at x = 2: a case like the player once stuck at a wall of the test map.
+        const std::vector<World::CollisionBrush> brushes = CreateFloorAndWall();
+        glm::dvec3 position{1.502, 1.0, 0.0};
+        ASSERT_TRUE(IsInSolid(brushes, position, HalfExtents));
+
+        EXPECT_TRUE(PushOutOfSolid(brushes, position, HalfExtents));
+
+        EXPECT_FALSE(IsInSolid(brushes, position, HalfExtents));
+        EXPECT_NEAR(position.x, 1.502, 0.04); // moved by a few millimeters at most
+    }
+
+    TEST(CharacterMovement, BoxDeepInWallIsNotPushedOut)
+    {
+        // Half a meter inside: too far for the few millimeters PushOutOfSolid tries. This is not its job.
+        const std::vector<World::CollisionBrush> brushes = CreateFloorAndWall();
+        glm::dvec3 position{2.5, 2.0, 0.0};
+
+        EXPECT_FALSE(PushOutOfSolid(brushes, position, HalfExtents));
+        EXPECT_EQ(position, glm::dvec3(2.5, 2.0, 0.0));
+    }
+
+    TEST(CharacterMovement, StuckCharacterIsPushedOutAndMarked)
+    {
+        const std::vector<World::CollisionBrush> brushes = CreateFloorAndWall();
+        CharacterBody body{.halfExtents = HalfExtents, .isOnGround = true};
+        Core::Transform transform{.position = {1.502f, 0.9f, 0.0f}};
+
+        UpdateCharacter(body, transform, brushes, PhysicsSettings{}, MovementSettings{}, {}, TickDuration);
+
+        EXPECT_TRUE(body.isInSolid); // started the tick inside the wall
+        EXPECT_FALSE(IsInSolid(brushes, glm::dvec3(transform.position), HalfExtents));
     }
 }

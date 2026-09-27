@@ -20,6 +20,7 @@
 #include "World/Level.h"
 #include "World/MapParser.h"
 
+#include <glm/common.hpp>
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
 #include <glm/vec4.hpp>
@@ -184,24 +185,33 @@ namespace Abomination
         if (m_actionStates.WasActionStarted(Input::Action::ToggleConsole))
             m_debugOverlay.ToggleConsole();
 
-        // While LookAroundMode is active (the right mouse button by default), the mouse is captured for looking around,
-        // like in the Unity and Unreal editors. The mode is switched only when the action starts or stops.
-        // Capturing is done here because the window belongs to the application; the controller only turns the camera.
-        if (m_actionStates.WasActionStarted(Input::Action::LookAroundMode))
-            m_window.SetRelativeMouseMode(true);
-        if (m_actionStates.WasActionStopped(Input::Action::LookAroundMode))
-            m_window.SetRelativeMouseMode(false);
-
         if (m_actionStates.WasActionStarted(Input::Action::ToggleFreeFlyCamera))
             ToggleFreeFlyCamera();
+
+        // The mouse is captured (hidden, locked inside the window, reporting only movement) while it turns a view: always
+        // while playing, unless the debug overlay or the console is open and needs the cursor; and while LookAroundMode
+        // is active (the right mouse button), like in the Unity and Unreal editors. Capturing is done here because the
+        // window belongs to the application; the controllers only turn views.
+        const bool isPlaying =
+            m_controlMode == ControlMode::Player && !m_debugOverlay.IsVisible() && !m_debugOverlay.IsConsoleOpen();
+        const bool shouldCaptureMouse = isPlaying || m_actionStates.IsActionActive(Input::Action::LookAroundMode);
+
+        // Switching into relative mode can report one big jump of movement in that frame: it is not used for turning.
+        const bool isCaptureStarting = shouldCaptureMouse && !m_isMouseCaptured;
+        if (shouldCaptureMouse != m_isMouseCaptured)
+        {
+            m_window.SetRelativeMouseMode(shouldCaptureMouse);
+            m_isMouseCaptured = shouldCaptureMouse;
+        }
 
         // Turning follows the mouse every frame, not in ticks: it uses the mouse movement of this frame, which does not
         // depend on time. In ticks, the movement of a frame without ticks would be lost and applied twice in a frame
         // with two ticks. Only what is controlled now turns.
         if (m_controlMode == ControlMode::Player)
         {
-            m_playerController.UpdateRotation(m_registry.get<Gameplay::PlayerLook>(m_player), m_actionStates,
-                                              m_inputDevices.mouse);
+            if (m_isMouseCaptured && !isCaptureStarting)
+                m_playerController.UpdateRotation(m_registry.get<Gameplay::PlayerLook>(m_player),
+                                                  m_inputDevices.mouse.GetMovement());
             return;
         }
 
@@ -221,10 +231,17 @@ namespace Abomination
         // First of all: remember where every interpolated entity is before this tick moves anything.
         Core::StorePreviousTransforms(m_registry);
 
-        // The player falls and slides through the level in every mode: the world goes on while the free-fly camera looks.
+        // The player moves through the level in every mode (the world goes on while the free-fly camera looks), but only
+        // takes commands from the keys while controlled.
+        const Physics::MoveCommand playerCommand =
+            m_controlMode == ControlMode::Player
+                ? m_playerController.CreateMoveCommand(m_registry.get<Gameplay::PlayerLook>(m_player), m_actionStates)
+                : Physics::MoveCommand{};
         Physics::CharacterBody& playerBody = m_registry.get<Physics::CharacterBody>(m_player);
         Physics::UpdateCharacter(playerBody, m_registry.get<Core::Transform>(m_player), m_level.GetCollisionBrushes(),
-                                 m_physicsSettings, tickDuration);
+                                 m_physicsSettings, m_movementSettings, playerCommand, tickDuration);
+        auto& stepSmoothing = m_registry.get<Gameplay::PlayerStepSmoothing>(m_player);
+        Gameplay::UpdateStepSmoothing(stepSmoothing, playerBody.steppedUpHeight, tickDuration);
 
         if (m_controlMode == ControlMode::FreeFlyCamera)
         {
@@ -278,7 +295,13 @@ namespace Abomination
         // The body of the player does not turn with the view: the eyes take the look angles, which follow the mouse every
         // frame and so are not interpolated.
         if (m_controlMode == ControlMode::Player)
-            return Gameplay::CalculatePlayerEyeTransform(interpolated, m_registry.get<Gameplay::PlayerLook>(m_player));
+        {
+            // The step smoothing moves in ticks too, so it is drawn between its last two values like the transform.
+            const auto& smoothing = m_registry.get<Gameplay::PlayerStepSmoothing>(m_player);
+            const float stepOffset = glm::mix(smoothing.previousOffset, smoothing.offset, interpolationFactor);
+            return Gameplay::CalculatePlayerEyeTransform(interpolated, m_registry.get<Gameplay::PlayerLook>(m_player),
+                                                         stepOffset);
+        }
 
         return interpolated;
     }

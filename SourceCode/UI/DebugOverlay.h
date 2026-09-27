@@ -89,6 +89,8 @@ namespace Abomination::UI
         // Opens or closes the in-game console (see ConsoleWindow). It works while the rest of the overlay is hidden.
         void ToggleConsole() noexcept;
 
+        [[nodiscard]] bool IsConsoleOpen() const noexcept;
+
     private:
         DebugOverlay(ImGuiLibrary library, Platform::ImGuiPlatformBackend platformBackend,
                      Renderer::ImGuiRendererBackend rendererBackend, std::string GPUName) noexcept;

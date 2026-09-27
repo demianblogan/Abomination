@@ -19,6 +19,34 @@ namespace Abomination::Physics
         float gravity = 25.0f;
     };
 
+    // How a character walks, with the values of the Quake player. Changed in the debug overlay; later read from the
+    // configuration of every kind of character (enemies walk slower).
+    struct MovementSettings
+    {
+        // The fastest a character can run on its own, in meters per second: 320 units/s in Quake.
+        float maxSpeed = 10.0f;
+
+        // How fast the character reaches its speed on the ground: every second it may gain groundAcceleration times its
+        // wished speed (10 in Quake, so full speed in a tenth of a second).
+        float groundAcceleration = 10.0f;
+
+        // How fast a character on the ground slows down without input: every second it loses friction times its speed
+        // (4 in Quake), but at least friction times stopSpeed, so it stops completely instead of creeping forever.
+        float friction = 4.0f;
+        float stopSpeed = 100.0f / 32.0f;
+
+        // The highest step a character walks up without jumping: 18 units in Quake, about 0.56 m.
+        float stepHeight = 18.0f / 32.0f;
+    };
+
+    // What a character wants to do in one tick: from the keys (the player) or from an AI (enemies later). The movement
+    // code decides what really happens.
+    struct MoveCommand
+    {
+        // Where the character wants to go: horizontal, length 1 to go at full speed, 0 to stand.
+        glm::vec3 wishDirection{0.0f};
+    };
+
     // A surface is ground (the character can stand and walk on it) when its normal points up at least this much: the y
     // of the normal is the cosine of the slope angle, and 0.7 is about 45 degrees. Steeper slopes are walls: the
     // character slides down them. The same value as Quake.
@@ -43,14 +71,43 @@ namespace Abomination::Physics
     void SlideMove(std::span<const World::CollisionBrush> brushes, glm::dvec3& position, glm::vec3& velocity,
                    const glm::dvec3& halfExtents, float deltaTime);
 
+    // Like SlideMove, but also walks up steps: the move is tried twice, as it is and lifted by stepHeight (then put down
+    // again), and the one that got further horizontally wins. On flat ground both give the same, at a step the lifted one
+    // gets over it. The same approach as PM_StepSlideMove of Quake 2. For characters on the ground only.
+    // Returns how high the box walked up (0 if the plain move won).
+    float StepSlideMove(std::span<const World::CollisionBrush> brushes, glm::dvec3& position, glm::vec3& velocity,
+                       const glm::dvec3& halfExtents, float stepHeight, float deltaTime);
+
+    // Slows down the horizontal velocity of a character on the ground (see MovementSettings::friction).
+    void ApplyFriction(glm::vec3& velocity, const MovementSettings& settings, float deltaTime);
+
+    // Speeds the velocity up towards wishSpeed in wishDirection (length 1), by at most acceleration * wishSpeed per
+    // second. Only the part of the velocity along wishDirection counts towards the wished speed: turning keeps momentum,
+    // and a character already faster than wishSpeed in that direction is not slowed down. The accelerate function of
+    // Quake.
+    void Accelerate(glm::vec3& velocity, const glm::vec3& wishDirection, float wishSpeed, float acceleration,
+                    float deltaTime);
+
+    // Whether a box at position overlaps a brush.
+    [[nodiscard]] bool IsInSolid(std::span<const World::CollisionBrush> brushes, const glm::dvec3& position,
+                                 const glm::dvec3& halfExtents);
+
+    // Tries to move a box that overlaps a brush out of it by a tiny distance: up to 1 unit (3 cm) along any of the 26
+    // directions to the sides, edges and corners of a cube, the nearest first. Returns true and updates position if a
+    // free place was found. A safety net for mistakes of the movement code, like PM_NudgePosition of Quake 2: without it
+    // a box that got a hair into a wall would stay stuck there forever, because every trace starting inside a brush fails.
+    [[nodiscard]] bool PushOutOfSolid(std::span<const World::CollisionBrush> brushes, glm::dvec3& position,
+                                      const glm::dvec3& halfExtents);
+
     // Whether a box at position stands on the ground: something walkable (see MinimumGroundNormalY) is directly below it,
     // within GroundCheckDistance.
     [[nodiscard]] bool IsOnGround(std::span<const World::CollisionBrush> brushes, const glm::dvec3& position,
                                   const glm::dvec3& halfExtents);
 
-    // One tick of a character: gravity pulls it down while it is in the air, it slides through the level along its
-    // velocity (SlideMove), and then it checks whether it stands on the ground. transform.position is the center of its
-    // box.
+    // One tick of a character: on the ground, friction slows it down and the command speeds it up; in the air, gravity
+    // pulls it down. Then it moves through the level (stepping up stairs on the ground, sliding along walls) and checks
+    // whether it stands on the ground. transform.position is the center of its box.
     void UpdateCharacter(CharacterBody& body, Core::Transform& transform, std::span<const World::CollisionBrush> brushes,
-                         const PhysicsSettings& settings, float deltaTime);
+                         const PhysicsSettings& physicsSettings, const MovementSettings& movementSettings,
+                         const MoveCommand& command, float deltaTime);
 }

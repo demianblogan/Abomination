@@ -141,6 +141,12 @@ namespace Abomination
         // Gravity and other settings of the physical world.
         Physics::PhysicsSettings m_physicsSettings;
 
+        // How the player walks (speed, acceleration, friction, steps).
+        Physics::MovementSettings m_movementSettings;
+
+        // The mouse is in relative mode (see Update).
+        bool m_isMouseCaptured = false;
+
         // The player entity (an entity number: its components live in m_registry) and the controller that turns input into
         // what the player does.
         entt::entity m_player = entt::null;

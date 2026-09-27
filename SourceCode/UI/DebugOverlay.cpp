@@ -229,6 +229,11 @@ namespace Abomination::UI
         m_consoleWindow.Toggle();
     }
 
+    bool DebugOverlay::IsConsoleOpen() const noexcept
+    {
+        return m_consoleWindow.IsOpen();
+    }
+
     void DebugOverlay::DrawMainMenuBar(const DebugOverlayContext& context)
     {
         // BeginMainMenuBar() creates a bar along the top edge of the screen; BeginMenu() adds a menu to it that opens

@@ -214,14 +214,14 @@ namespace Abomination
             m_playerController.CollectFrameInput(m_actionStates);
 
             if (m_isMouseCaptured && !isCaptureStarting)
-                m_playerController.UpdateRotation(m_registry.get<Gameplay::PlayerLook>(m_player),
+                m_playerController.UpdateRotation(m_registry.get<Gameplay::LookAngles>(m_player),
                                                   m_inputDevices.mouse.GetMovement());
             return;
         }
 
         Core::Transform& cameraTransform = m_registry.get<Core::Transform>(m_freeFlyCamera);
-        Gameplay::FreeFlyCamera& freeFlyCamera = m_registry.get<Gameplay::FreeFlyCamera>(m_freeFlyCamera);
-        m_freeFlyCameraController.UpdateRotation(freeFlyCamera, cameraTransform, m_actionStates, m_inputDevices.mouse);
+        Gameplay::LookAngles& cameraLook = m_registry.get<Gameplay::LookAngles>(m_freeFlyCamera);
+        m_freeFlyCameraController.UpdateRotation(cameraLook, cameraTransform, m_actionStates, m_inputDevices.mouse);
 
         // The rotation from the mouse is already up to date in this frame, so it must not be interpolated between ticks:
         // drawing a rotation between the last two ticks would make the view lag behind the mouse. Setting the previous
@@ -239,7 +239,7 @@ namespace Abomination
         // takes commands from the keys while controlled.
         const Physics::MoveCommand playerCommand =
             m_controlMode == ControlMode::Player
-                ? m_playerController.CreateMoveCommand(m_registry.get<Gameplay::PlayerLook>(m_player), m_actionStates)
+                ? m_playerController.CreateMoveCommand(m_registry.get<Gameplay::LookAngles>(m_player), m_actionStates)
                 : Physics::MoveCommand{};
         Physics::CharacterBody& playerBody = m_registry.get<Physics::CharacterBody>(m_player);
         Physics::UpdateCharacter(playerBody, m_registry.get<Core::Transform>(m_player), m_level.GetCollisionBrushes(),
@@ -278,13 +278,12 @@ namespace Abomination
 
         // The free-fly camera jumps to the eyes of the player and looks the same way. Its previous transform is set too,
         // so the interpolation does not draw it flying from its old place in the first frame.
-        const Gameplay::PlayerLook& look = m_registry.get<Gameplay::PlayerLook>(m_player);
+        const Gameplay::LookAngles& look = m_registry.get<Gameplay::LookAngles>(m_player);
         const Core::Transform eyes =
             Gameplay::CalculatePlayerEyeTransform(m_registry.get<Core::Transform>(m_player), look);
         m_registry.get<Core::Transform>(m_freeFlyCamera) = eyes;
         m_registry.get<Core::PreviousTransform>(m_freeFlyCamera).value = eyes;
-        m_registry.get<Gameplay::FreeFlyCamera>(m_freeFlyCamera) =
-            Gameplay::FreeFlyCamera{.yaw = look.yaw, .pitch = look.pitch};
+        m_registry.get<Gameplay::LookAngles>(m_freeFlyCamera) = look;
 
         m_controlMode = ControlMode::FreeFlyCamera;
     }
@@ -303,7 +302,7 @@ namespace Abomination
             // The step smoothing moves in ticks too, so it is drawn between its last two values like the transform.
             const auto& smoothing = m_registry.get<Gameplay::PlayerStepSmoothing>(m_player);
             const float stepOffset = glm::mix(smoothing.previousOffset, smoothing.offset, interpolationFactor);
-            return Gameplay::CalculatePlayerEyeTransform(interpolated, m_registry.get<Gameplay::PlayerLook>(m_player),
+            return Gameplay::CalculatePlayerEyeTransform(interpolated, m_registry.get<Gameplay::LookAngles>(m_player),
                                                          stepOffset);
         }
 

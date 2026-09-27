@@ -69,4 +69,13 @@ namespace Abomination::Input
     {
         return m_stoppedActions[std::to_underlying(action)];
     }
+
+    float ActionStates::GetAxis(Action positive, Action negative) const noexcept
+    {
+        // Each action counts as 1 while active and 0 otherwise; subtracting lets opposite actions cancel each other out.
+        const float positiveValue = IsActionActive(positive) ? 1.0f : 0.0f;
+        const float negativeValue = IsActionActive(negative) ? 1.0f : 0.0f;
+
+        return positiveValue - negativeValue;
+    }
 }

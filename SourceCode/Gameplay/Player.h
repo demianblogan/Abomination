@@ -2,20 +2,15 @@
 
 #include "Core/Transform.h"
 #include "Core/Units.h"
+#include "Gameplay/MouseLook.h"
 #include "World/PlayerStart.h"
 
 #include <entt/entt.hpp>
 
+// The body of the player (its box) never turns: the view turns with the mouse (the LookAngles component of the player
+// entity), and walking goes along the yaw.
 namespace Abomination::Gameplay
 {
-    // Component: where the player looks, as two angles (see MouseLook.h). The body of the player (its box) never turns;
-    // the view turns with the mouse, and walking goes along the yaw.
-    struct PlayerLook
-    {
-        float yaw = 0.0f;
-        float pitch = 0.0f;
-    };
-
     // The eyes of the player above the center of their box: 18 units, as in Quake (the box of the Quake player goes from
     // 24 units below its origin to 32 above it, the eyes are 22 above the origin, so 18 above the center of the box).
     inline constexpr float PlayerEyeHeight = Core::MapUnitsToMeters(18.0f);
@@ -40,12 +35,12 @@ namespace Abomination::Gameplay
 
     // Creates the player at the player start of the level: Name, Transform (the center of the box, at
     // playerStart.boxCenter), PreviousTransform (the player moves in ticks), Physics::CharacterBody with the box of
-    // the Quake player (World::PlayerHalfExtents), PlayerLook, PlayerStepSmoothing and a Renderer::CameraLens (the
+    // the Quake player (World::PlayerHalfExtents), LookAngles, PlayerStepSmoothing and a Renderer::CameraLens (the
     // player is also a camera).
     entt::entity SpawnPlayer(entt::registry& registry, const World::PlayerStart& playerStart);
 
     // Where the camera of the player is: at the eyes above the body (moved by stepOffset, see PlayerStepSmoothing),
     // looking along the look angles. body is the transform of the player (it may be interpolated).
-    [[nodiscard]] Core::Transform CalculatePlayerEyeTransform(const Core::Transform& body, const PlayerLook& look,
+    [[nodiscard]] Core::Transform CalculatePlayerEyeTransform(const Core::Transform& body, const LookAngles& look,
                                                               float stepOffset = 0.0f);
 }

@@ -137,4 +137,27 @@ namespace Abomination::Input
 
         EXPECT_FALSE(m_actions.IsActionActive(Action::ToggleScreenMode));
     }
+
+    TEST_F(ActionStatesTest, OppositeActionsMakeAnAxis)
+    {
+        StartFrame();
+        UpdateActions();
+        EXPECT_FLOAT_EQ(m_actions.GetAxis(Action::MoveForward, Action::MoveBackward), 0.0f);
+
+        StartFrame();
+        m_devices.keyboard.PressKey(Key::S);
+        UpdateActions();
+        EXPECT_FLOAT_EQ(m_actions.GetAxis(Action::MoveForward, Action::MoveBackward), -1.0f);
+
+        // W and S together cancel out.
+        StartFrame();
+        m_devices.keyboard.PressKey(Key::W);
+        UpdateActions();
+        EXPECT_FLOAT_EQ(m_actions.GetAxis(Action::MoveForward, Action::MoveBackward), 0.0f);
+
+        StartFrame();
+        m_devices.keyboard.ReleaseKey(Key::S);
+        UpdateActions();
+        EXPECT_FLOAT_EQ(m_actions.GetAxis(Action::MoveForward, Action::MoveBackward), 1.0f);
+    }
 }

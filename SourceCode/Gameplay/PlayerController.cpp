@@ -13,22 +13,13 @@ namespace Abomination::Gameplay
 {
     using Input::Action;
 
-    namespace
-    {
-        // 1.0 while the action is active, 0.0 otherwise: lets opposite actions cancel each other out by subtraction.
-        float GetActionValue(const Input::ActionStates& actions, Action action) noexcept
-        {
-            return actions.IsActionActive(action) ? 1.0f : 0.0f;
-        }
-    }
-
     PlayerController::PlayerController(const PlayerControllerSettings& settings) noexcept
         : m_settings(settings)
     {}
 
-    void PlayerController::UpdateRotation(PlayerLook& look, glm::vec2 mouseMovement) const
+    void PlayerController::UpdateRotation(LookAngles& look, glm::vec2 mouseMovement) const
     {
-        TurnByMouse(look.yaw, look.pitch, mouseMovement, m_settings.mouseSensitivity);
+        TurnByMouse(look, mouseMovement, m_settings.mouseSensitivity);
     }
 
     void PlayerController::CollectFrameInput(const Input::ActionStates& actions)
@@ -37,11 +28,10 @@ namespace Abomination::Gameplay
             m_isJumpRequested = true;
     }
 
-    Physics::MoveCommand PlayerController::CreateMoveCommand(const PlayerLook& look, const Input::ActionStates& actions)
+    Physics::MoveCommand PlayerController::CreateMoveCommand(const LookAngles& look, const Input::ActionStates& actions)
     {
-        const float forwardInput =
-            GetActionValue(actions, Action::MoveForward) - GetActionValue(actions, Action::MoveBackward);
-        const float rightInput = GetActionValue(actions, Action::MoveRight) - GetActionValue(actions, Action::MoveLeft);
+        const float forwardInput = actions.GetAxis(Action::MoveForward, Action::MoveBackward);
+        const float rightInput = actions.GetAxis(Action::MoveRight, Action::MoveLeft);
 
         // Forward and right on the ground, from the yaw only. A yaw of 0 looks along -Z, and a positive yaw turns left
         // (see MouseLook.h): forward is (-sin yaw, 0, -cos yaw), right is forward turned 90 degrees to the right.

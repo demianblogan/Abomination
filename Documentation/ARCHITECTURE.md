@@ -488,8 +488,8 @@ player entity                                free-fly camera entity
 ├── Core::Transform         center of the box ├── Core::Transform          position + rotation
 ├── Core::PreviousTransform interpolation     ├── Core::PreviousTransform  interpolation
 ├── Physics::CharacterBody  box, velocity,    ├── Renderer::CameraLens
-│                           on ground         └── Gameplay::FreeFlyCamera  yaw and pitch
-├── Gameplay::PlayerLook    yaw and pitch
+│                           on ground         └── Gameplay::LookAngles     yaw and pitch
+├── Gameplay::LookAngles    yaw and pitch
 ├── Gameplay::PlayerStepSmoothing  eyes gliding up steps
 └── Renderer::CameraLens
 ```
@@ -506,9 +506,10 @@ player entity                                free-fly camera entity
   frame is kept until the next tick takes it (`CollectFrameInput`), so a short
   press in a frame without a tick is not lost. It knows nothing about walls
   or speeds: the Physics module decides how the player moves.
-- **Mouse look** is shared (`Gameplay/MouseLook`): `TurnByMouse` changes yaw
-  and pitch by the mouse movement of a frame (pitch clamped to ±89°),
-  `CalculateCameraRotation` builds the rotation from them.
+- **Mouse look** is shared (`Gameplay/MouseLook`): both entities keep yaw and
+  pitch in the same component, `LookAngles`. `TurnByMouse` changes them by the
+  mouse movement of a frame (pitch clamped to ±89°), `CalculateCameraRotation`
+  builds the rotation from them.
 - **The mouse is captured** (relative mode) while playing — the player is
   controlled and neither the debug overlay nor the console is open — and
   while the right mouse button is held (looking around with the overlay
@@ -517,7 +518,8 @@ player entity                                free-fly camera entity
 
 - A camera looks along its **local −Z** axis; its local +X is its right side,
   local +Y the top of the screen. Its direction in the world is its rotation
-  applied to these local directions (`rotation * LocalForward`).
+  applied to these local directions (`rotation * LocalForward`; `WorldUp`,
+  `LocalForward` and `LocalRight` are defined once in `Core/Transform.h`).
 - `Renderer::CalculateView` turns `Transform` + `CameraLens` into a
   `Renderer::View`: the view matrix is the inverse of the camera's own
   placement (move the world by −position, then turn it back by the conjugate
@@ -527,7 +529,7 @@ player entity                                free-fly camera entity
 - **Controllers** move camera entities; there are no separate camera classes.
   Now: `Gameplay::FreeFlyCameraController` (WASD relative to the view, Q/E
   along the world vertical, Shift faster, mouse look while the right button
-  is held). It keeps yaw and pitch in `FreeFlyCamera` (mouse movement adds to
+  is held). It keeps yaw and pitch in `LookAngles` (mouse movement adds to
   them directly, pitch is clamped to ±89°, no roll) and builds the rotation
   from them (`CalculateCameraRotation`: `angleAxis(yaw, WorldUp) *
   angleAxis(pitch, LocalRight)`). Planned: view bob and recoil for the player
@@ -669,8 +671,7 @@ Library: **EnTT 4.0.0** (`ThirdParty/EnTT`, see section 3).
 | `MeshRenderer` | Renderer | mesh, texture and program handles | `DrawMeshes` |
 | `CameraLens` | Renderer | vertical FOV, near and far plane | `CalculateView` |
 | `Spin` | Gameplay | axis, speed | `UpdateSpinningEntities` |
-| `FreeFlyCamera` | Gameplay | yaw, pitch | `FreeFlyCameraController` |
-| `PlayerLook` | Gameplay | yaw, pitch of the player's view | `PlayerController`, the view |
+| `LookAngles` | Gameplay | yaw, pitch of a view turned by the mouse (the player, the free-fly camera) | `PlayerController`, `FreeFlyCameraController`, the view |
 | `PlayerStepSmoothing` | Gameplay | eyes behind the body after a step, now and last tick | the view |
 | `CharacterBody` | Physics | box size, velocity, on ground, stepped up, in solid | `UpdateCharacter`, Movement window |
 

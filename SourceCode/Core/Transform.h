@@ -6,6 +6,14 @@
 
 namespace Abomination::Core
 {
+    // The vertical axis of the world (see ARCHITECTURE.md, section 8): the yaw of views turns around it.
+    inline constexpr glm::vec3 WorldUp{0.0f, 1.0f, 0.0f};
+
+    // Directions in an entity's own coordinates: it looks along -Z (OpenGL's "forward"), its right side is +X. Turned by
+    // the rotation of the entity (rotation * direction) they give where it looks and where its right side is in the world.
+    inline constexpr glm::vec3 LocalForward{0.0f, 0.0f, -1.0f};
+    inline constexpr glm::vec3 LocalRight{1.0f, 0.0f, 0.0f};
+
     // Where an entity is, how it is turned and how big it is: the component almost every entity has.
     // Used by gameplay (moving things), physics (later) and the renderer (the model matrix), so it lives in Core.
     //

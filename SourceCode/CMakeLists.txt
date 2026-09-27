@@ -53,7 +53,6 @@ set(LIBRARY_SOURCES
     Core/Version.h
     Core/Version.cpp.in
 
-    Gameplay/FreeFlyCamera.h
     Gameplay/FreeFlyCameraController.h
     Gameplay/FreeFlyCameraController.cpp
     Gameplay/MouseLook.h

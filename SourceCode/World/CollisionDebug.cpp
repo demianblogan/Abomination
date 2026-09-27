@@ -16,9 +16,6 @@ namespace Abomination::World
         // The length of the normal arrow in meters.
         constexpr float NormalArrowLength = 0.75f;
 
-        // A camera looks along its local -Z (see ARCHITECTURE.md, section 8).
-        constexpr glm::vec3 LocalForward{0.0f, 0.0f, -1.0f};
-
         // A point has no size, so it gets a small cross to be visible.
         constexpr float PointMarkerSize = 0.1f;
         constexpr std::array<glm::vec3, 3> WorldAxes = {
@@ -67,7 +64,7 @@ namespace Abomination::World
         // The box starts at the camera and flies straight ahead, where the camera looks.
         const glm::dvec3 halfExtents = GetHalfExtents(settings.cameraTraceShape);
         const glm::dvec3 start(camera.position);
-        const glm::dvec3 forward(camera.rotation * LocalForward);
+        const glm::dvec3 forward(camera.rotation * Core::LocalForward);
         trace.result = TraceBox(brushes, start, start + forward * CameraTraceLength, halfExtents);
         trace.distance = CameraTraceLength * trace.result.fraction;
         trace.isValid = true;

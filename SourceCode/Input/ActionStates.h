@@ -24,6 +24,10 @@ namespace Abomination::Input
         [[nodiscard]] bool WasActionStarted(Action action) const noexcept;
         [[nodiscard]] bool WasActionStopped(Action action) const noexcept;
 
+        // A pair of opposite actions as one axis: 1 while only positive is active, -1 while only negative is, 0 while
+        // both or neither are (W and S together cancel out). For moving: GetAxis(MoveForward, MoveBackward).
+        [[nodiscard]] float GetAxis(Action positive, Action negative) const noexcept;
+
     private:
         // The index is the numeric value of Action.
         std::array<bool, ActionCount> m_activeActions{};

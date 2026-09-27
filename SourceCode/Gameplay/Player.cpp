@@ -18,7 +18,7 @@ namespace Abomination::Gameplay
 
         registry.emplace<Core::Transform>(player, Core::Transform{.position = playerStart.boxCenter});
         registry.emplace<Physics::CharacterBody>(player, Physics::CharacterBody{.halfExtents = World::PlayerHalfExtents});
-        registry.emplace<PlayerLook>(player, PlayerLook{.yaw = playerStart.yaw});
+        registry.emplace<LookAngles>(player, LookAngles{.yaw = playerStart.yaw});
         registry.emplace<PlayerStepSmoothing>(player);
         registry.emplace<Renderer::CameraLens>(player);
         Core::EnableInterpolation(registry, player);
@@ -37,11 +37,11 @@ namespace Abomination::Gameplay
         smoothing.offset = glm::min(smoothing.offset + StepSmoothingSpeed * deltaTime, 0.0f);
     }
 
-    Core::Transform CalculatePlayerEyeTransform(const Core::Transform& body, const PlayerLook& look, float stepOffset)
+    Core::Transform CalculatePlayerEyeTransform(const Core::Transform& body, const LookAngles& look, float stepOffset)
     {
         return Core::Transform{
             .position = body.position + glm::vec3(0.0f, PlayerEyeHeight + stepOffset, 0.0f),
-            .rotation = CalculateCameraRotation(look.yaw, look.pitch),
+            .rotation = CalculateCameraRotation(look),
         };
     }
 }

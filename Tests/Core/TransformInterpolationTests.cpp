@@ -11,8 +11,6 @@ namespace Abomination::Core
     {
         constexpr float Tolerance = 1e-5f;
 
-        const glm::vec3 WorldUp{0.0f, 1.0f, 0.0f};
-
         void ExpectNear(glm::vec3 actual, glm::vec3 expected)
         {
             EXPECT_NEAR(actual.x, expected.x, Tolerance);

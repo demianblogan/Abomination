@@ -3,7 +3,7 @@
 #include "Core/Name.h"
 #include "Core/Transform.h"
 #include "Core/TransformInterpolation.h"
-#include "Gameplay/FreeFlyCamera.h"
+#include "Gameplay/MouseLook.h"
 #include "Gameplay/Spin.h"
 #include "Renderer/CameraLens.h"
 #include "Renderer/MeshRenderer.h"
@@ -213,11 +213,11 @@ namespace Abomination::UI
             ImGui::DragFloat("Far plane", &lens.farPlane, 1.0f, lens.nearPlane + 0.01f, 10000.0f, "%.0f m");
         }
 
-        void DrawFreeFlyCamera(const Gameplay::FreeFlyCamera& camera)
+        void DrawLookAngles(const Gameplay::LookAngles& look)
         {
-            // Read-only: the controller builds the Transform rotation from these angles, so they are changed with the mouse.
-            ImGui::Text("Yaw:   %.1f deg", glm::degrees(camera.yaw));
-            ImGui::Text("Pitch: %.1f deg", glm::degrees(camera.pitch));
+            // Read-only: the view is built from these angles, so they are changed with the mouse.
+            ImGui::Text("Yaw:   %.1f deg", glm::degrees(look.yaw));
+            ImGui::Text("Pitch: %.1f deg", glm::degrees(look.pitch));
         }
     }
 
@@ -283,11 +283,10 @@ namespace Abomination::UI
                                         "how wide, how near and how far the camera sees."))
                     DrawCameraLens(*lens);
 
-            if (const Gameplay::FreeFlyCamera* freeFlyCamera = registry.try_get<Gameplay::FreeFlyCamera>(entity);
-                freeFlyCamera != nullptr)
-                if (DrawComponentHeader("Free-Fly Camera", ComponentModule::Gameplay,
-                                        "yaw and pitch of the camera turned with the mouse."))
-                    DrawFreeFlyCamera(*freeFlyCamera);
+            if (const Gameplay::LookAngles* look = registry.try_get<Gameplay::LookAngles>(entity); look != nullptr)
+                if (DrawComponentHeader("Look Angles", ComponentModule::Gameplay,
+                                        "yaw and pitch of the view, turned with the mouse."))
+                    DrawLookAngles(*look);
         }
         ImGui::EndChild();
 

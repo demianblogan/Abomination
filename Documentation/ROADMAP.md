@@ -73,7 +73,7 @@ seen (collision, map geometry) get debug visualizations in the overlay.
 | 8 | `feat/collision`                | ✅     | `World::Level` class; collision brushes (planes, bounding boxes, bevel planes); box trace through the brushes (Quake 2 style); debug lines (wide, depth-tested or on top, boxes and arrows) and world axes; Collision window: brush bounds, a trace from the camera, a colliding free-fly camera |
 | 9 | `feat/log-console`              | ✅     | Recent log messages kept in memory (a third spdlog sink); an in-game console at the bottom of the screen (the ~ key): level and module filters, colors, auto-scroll, opacity and height; the game runs without a console window |
 | 10 | `feat/player-movement`         | ✅     | The player as an entity (box, look angles, camera at the eyes) and F2 to switch to the free-fly camera; a new Physics module: gravity, sliding along walls, walking with Quake acceleration and friction, steps (also when landing on stairs) with smoothed view, jumping and air control, jumps between ticks kept; mouse captured while playing; stuck-in-wall detection and push-out; Movement window with a speedometer and sliders |
-| 11 | `refactor/review-0.2`          | ⏳     | A review of the whole project before the release: dead code, wrong comments, needless work, magic numbers, comments on hard math, architecture (for example the View menu split into submenus); then a guided walkthrough of the project; release v0.2.0 |
+| 11 | `refactor/review-0.2`          | 🔨     | A review of the whole project before the release: dead code removed, outdated comments fixed; map units (`Core/Units.h`), shader locations (`Renderer/ShaderInterface.h`), the player box and start (`World/PlayerStart.h`) each defined once; one `LookAngles` component for the player and the free-fly camera, action axes, shared directions; player components in the entity inspector; one file per debug window and View submenus; magic numbers named; the colliding free-fly camera slides along walls; then a guided walkthrough of the project; release v0.2.0 |
 
 **Done when:** a level made in TrenchBroom loads with textures, the player
 walks, runs and jumps on it and collides with its walls, movement behaves the
@@ -92,6 +92,10 @@ far:
   map brings hundreds of entities.
 - **0.3** — asset pipeline decision: where models come from (generated,
   downloaded, bought) and how they are imported. Audio via miniaudio.
+  `Application` holds the switching between the player and the free-fly
+  camera and their updates (about 400 lines after 0.2); when the weapon adds
+  its own update and view, move this into Gameplay (a player system and a
+  camera system), guided by what the weapon needs.
 - **0.4** — navmesh via Recast/Detour for ground enemies; flying enemies need
   a separate approach. Frustum culling of entities (a bounding sphere tested
   against the six planes of the view) once enemies, pickups and effects bring

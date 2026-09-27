@@ -119,7 +119,7 @@ A module may depend only on modules **below** it in this diagram.
 
 | Module        | Responsibility                                                  | Status  |
 |---------------|-----------------------------------------------------------------|---------|
-| `Core`        | Time (clock, frame timer, fixed timestep, FPS limit), frame statistics, logging, files, image decoding, asset handles, cache and lifetime groups, bounding boxes, `Transform`, `Name`, transform interpolation, planes and convex polygon clipping | 0.1 |
+| `Core`        | Time (clock, frame timer, fixed timestep, FPS limit), frame statistics, logging, files, image decoding, asset handles, cache and lifetime groups, bounding boxes, `Transform` and the world and local directions, `Name`, transform interpolation, planes and convex polygon clipping, map units and meters (`Units.h`) | 0.1 |
 | `Input`       | Keyboard and mouse state, actions and bindings (see section 7)  | 0.1     |
 | `Platform`    | SDL3 window (size from the monitor, screen modes), OpenGL context creation, OS events → `Input` | 0.1     |
 | `Renderer`    | Everything OpenGL. Exposes a high-level API (see section 6)     | 0.1     |
@@ -367,6 +367,7 @@ Inside the renderer:
   section 9).
 - Explicit `layout(location)` / `layout(binding)` everywhere: C++ constants
   and shaders agree on the numbers in advance, nothing is queried at run time.
+  All the C++ side of them is in `Renderer/ShaderInterface.h`.
 - `View` — what the renderer knows about the camera of a frame: the view and
   projection matrices and the position, calculated by `CalculateView` from the
   camera entity's `Core::Transform` and `CameraLens` (see section 8).

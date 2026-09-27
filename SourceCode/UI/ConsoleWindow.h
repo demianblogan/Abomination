@@ -23,6 +23,7 @@ namespace Abomination::UI
         void Draw(Core::LogHistory& history);
 
         void Toggle() noexcept;
+        [[nodiscard]] bool IsOpen() const noexcept;
 
         // For the check mark of View > Console, which switches the console like Toggle().
         [[nodiscard]] bool* GetOpenFlag() noexcept;

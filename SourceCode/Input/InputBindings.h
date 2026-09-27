@@ -30,8 +30,9 @@ namespace Abomination::Input
     class InputBindings
     {
     public:
-        // The default controls: WASD to move, Q/E down/up, Shift faster, the right mouse button to look around,
-        // F1 for the debug overlay, ` for the console, Escape to quit, Alt+Enter to switch between windowed and borderless.
+        // The default controls: WASD to move, Space to jump, Q/E down/up, Shift faster, the right mouse button to look
+        // around, F1 for the debug overlay, F2 for the free-fly camera, ` for the console, Escape to quit, Alt+Enter to
+        // switch between windowed and borderless.
         [[nodiscard]] static InputBindings CreateDefault();
 
         // Adds one more input for the action; the existing bindings of the action stay.

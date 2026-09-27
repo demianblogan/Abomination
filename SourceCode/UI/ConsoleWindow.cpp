@@ -138,6 +138,11 @@ namespace Abomination::UI
         m_isOpen = !m_isOpen;
     }
 
+    bool ConsoleWindow::IsOpen() const noexcept
+    {
+        return m_isOpen;
+    }
+
     bool* ConsoleWindow::GetOpenFlag() noexcept
     {
         return &m_isOpen;

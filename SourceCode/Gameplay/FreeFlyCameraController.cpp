@@ -32,15 +32,6 @@ namespace Abomination::Gameplay
         }
     }
 
-    glm::quat CalculateCameraRotation(float yaw, float pitch)
-    {
-        // The pitch quaternion is on the right, so it is applied first: tilt the camera up or down around its own right
-        // axis while it still looks along -Z, then turn the tilted camera around the world vertical axis by the yaw.
-        // The other order would turn first and then tilt around a fixed axis, which after turning is no longer the camera's
-        // side: the camera would roll instead of looking up.
-        return glm::angleAxis(yaw, WorldUp) * glm::angleAxis(pitch, LocalRight);
-    }
-
     entt::entity SpawnFreeFlyCamera(entt::registry& registry, glm::vec3 position, float yaw)
     {
         const entt::entity camera = registry.create();
@@ -63,19 +54,12 @@ namespace Abomination::Gameplay
     {
         // Only while LookAroundMode is active, and not in the frame it starts: switching the mouse into relative mode
         // can produce one big jump of movement in that frame, which would snap the camera.
-        // The mouse movement is the distance moved during this frame, so it is not multiplied by any delta time:
-        // the same hand movement turns the camera by the same angle at any frame rate.
         const bool isLookingAround =
             actions.IsActionActive(Action::LookAroundMode) && !actions.WasActionStarted(Action::LookAroundMode);
         if (!isLookingAround)
             return;
 
-        // Moving the mouse to the right (+X) must turn right, which is a negative yaw;
-        // moving it up (-Y, screen coordinates grow downwards) must look up, which is a positive pitch.
-        const glm::vec2 mouseMovement = mouse.GetMovement();
-        camera.yaw -= mouseMovement.x * m_settings.mouseSensitivity;
-        camera.pitch = glm::clamp(camera.pitch - mouseMovement.y * m_settings.mouseSensitivity, -FreeFlyCamera::MaxPitch,
-                                  FreeFlyCamera::MaxPitch);
+        TurnByMouse(camera.yaw, camera.pitch, mouse.GetMovement(), m_settings.mouseSensitivity);
 
         transform.rotation = CalculateCameraRotation(camera.yaw, camera.pitch);
     }

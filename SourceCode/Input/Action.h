@@ -22,6 +22,9 @@ namespace Abomination::Input
         MoveFaster,
         LookAroundMode,
 
+        // Player
+        Jump,
+
         // Application
         // Closes the game. Escape for now; from 0.8 Escape opens the pause menu, and quitting moves to a button there.
         Quit,
@@ -32,6 +35,9 @@ namespace Abomination::Input
         // Developer tools
         ToggleDebugOverlay,
         ToggleConsole,
+
+        // Switches between the player and the free-fly camera (a debug "noclip" view that flies through walls).
+        ToggleFreeFlyCamera,
 
         // Not an action: the number of actions above. Must stay the last value.
         Count,

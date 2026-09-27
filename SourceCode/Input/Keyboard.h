@@ -25,10 +25,12 @@ namespace Abomination::Input
         // Control keys
         Enter = 40,
         Escape = 41,
+        Space = 44,
         Grave = 53, // ` and ~, left of 1 (Ё on a Russian keyboard)
 
         // Function keys
         F1 = 58,
+        F2 = 59,
 
         // Modifiers
         LeftShift = 225,

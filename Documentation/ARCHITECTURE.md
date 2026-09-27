@@ -102,7 +102,9 @@ A module may depend only on modules **below** it in this diagram.
 ├───────────────────────────────────────────────┤
 │  Gameplay      game rules, player, enemies    │   gameplay layer
 ├───────────────────────────────────────────────┤
-│  AI       Physics      World       Audio      │   systems layer
+│  AI       Physics                             │   systems layer (use the level)
+├───────────────────────────────────────────────┤
+│  World              Audio                     │   the level, collision, sound
 ├───────────────────────────────────────────────┤
 │  Renderer                 Config              │   engine layer
 ├───────────────────────────────────────────────┤
@@ -123,11 +125,11 @@ A module may depend only on modules **below** it in this diagram.
 | `Renderer`    | Everything OpenGL. Exposes a high-level API (see section 6)     | 0.1     |
 | `Config`      | Loading JSON data and settings                                  | Planned |
 | `World`       | `.map` parsing, brush geometry, the level, collision brushes and box traces (see section 11); level compiler later | 0.2 |
-| `Physics`     | Quake-style movement on top of the box traces of `World`         | Planned |
+| `Physics`     | Characters moving through the level like in Quake: gravity, sliding along walls, steps, walking, jumping, air control, on top of the box traces of `World` (see section 12) | 0.2 |
 | `AI`          | Enemy behaviour, pathfinding                                    | Planned |
 | `Audio`       | Sounds and music (miniaudio)                                    | Planned |
-| `Gameplay`    | Game rules: free-fly camera, spin (0.1–0.2); player, weapons, enemies | 0.1 |
-| `UI`          | Dear ImGui debug overlay: menu bar, performance, assets, entity inspector, renderer (0.1–0.2); HUD and menus (later) | 0.1 |
+| `Gameplay`    | Game rules: the player (entity, controller, view), free-fly camera, mouse look, spin (0.1–0.2); weapons, enemies | 0.1 |
+| `UI`          | Dear ImGui debug overlay: menu bar, performance, assets, entity inspector, renderer, collision, movement, in-game console (0.1–0.2); HUD and menus (later) | 0.1 |
 | `Save`        | Serialization of the game state                                 | Planned |
 | `Application` | Startup, shutdown, main loop, switching between game states     | 0.1     |
 
@@ -157,7 +159,7 @@ A module may depend only on modules **below** it in this diagram.
   ImGui is used only for developer tools, never for the game interface.
 - **The debug overlay** has a main menu bar (F1): *View* opens and closes
   debug windows (now *Performance*, *Assets*, *Entities*, *Renderer*,
-  *Collision* and *Console*; all
+  *Collision*, *Movement* and *Console*; all
   closed at the first start), *Settings*
   changes settings grouped like the future options menu (now *Display*:
   screen mode, V-Sync, FPS limit, UI scale). The font size is one constant next to the font
@@ -420,7 +422,8 @@ OS → [Platform] SDL events
           ▼
      [Input] ActionStates: actions calculated through InputBindings
           MoveForward ← W, LookAroundMode ← right mouse button, ToggleDebugOverlay ← F1,
-          Quit ← Escape, ToggleScreenMode ← Alt+Enter (left or right Alt), ToggleConsole ← `
+          Quit ← Escape, ToggleScreenMode ← Alt+Enter (left or right Alt), ToggleConsole ← `,
+          Jump ← Space, ToggleFreeFlyCamera ← F2
           active / started this frame / stopped this frame
           ▼
      Code asks for actions, never for keys:
@@ -448,7 +451,8 @@ OS → [Platform] SDL events
   gamepad support possible without changing gameplay code.
 - Mouse movement is not an action: it is an amount per frame, read directly
   (it will become an analog "look" input together with the gamepad sticks).
-- **Application actions** (overlay, quitting, screen mode; later pause and
+- **Application actions** (overlay, console, quitting, screen mode, free-fly
+  camera; later pause and
   screenshots) are handled by `Application`; quitting asks the window to close
   (`Window::RequestClose`, the same path as its close button), so the frame
   ends normally and everything shuts down in order. Escape quits until the
@@ -469,18 +473,47 @@ operation, so `Application` switches it when `LookAroundMode` starts/stops.
 | Gamepad (Xbox, DualSense), analog inputs      | 0.7          |
 | Bindings from settings, rebinding screen, input contexts (menu / game) | 0.8 |
 
-## 8. Camera
+## 8. Camera and player
 
-The camera is an ordinary entity; `Application` keeps its number
-(`m_camera`) to know which entity is the active camera.
+There are two views, both ordinary entities: the **player** and the
+**free-fly camera** (a debug "noclip" view that flies through walls).
+`Application` keeps both entity numbers and a `ControlMode`: which one gets
+the input and whose eyes the scene is drawn through. **F2** switches; the
+free-fly camera then jumps to the eyes of the player, and the player is drawn
+as a green box (it has no model yet). The player keeps moving (falling) while
+the free-fly camera looks.
 
 ```
-camera entity
-├── Core::Transform          where it stands and where it looks (position + quaternion)
-├── Core::PreviousTransform  interpolation, like every entity that moves in ticks
-├── Renderer::CameraLens     vertical field of view, near and far plane
-└── Gameplay::FreeFlyCamera  yaw and pitch, turned with the mouse
+player entity                                free-fly camera entity
+├── Core::Transform         center of the box ├── Core::Transform          position + rotation
+├── Core::PreviousTransform interpolation     ├── Core::PreviousTransform  interpolation
+├── Physics::CharacterBody  box, velocity,    ├── Renderer::CameraLens
+│                           on ground         └── Gameplay::FreeFlyCamera  yaw and pitch
+├── Gameplay::PlayerLook    yaw and pitch
+├── Gameplay::PlayerStepSmoothing  eyes gliding up steps
+└── Renderer::CameraLens
 ```
+
+- **The player** (`Gameplay/Player`): the box never turns (like in Quake), the
+  view turns. The eyes are 18 units (0.56 m) above the center of the box
+  (`PlayerEyeHeight`); `CalculatePlayerEyeTransform` makes the camera
+  transform from the (interpolated) body and the look angles. After the body
+  walks up a step (at once), the eyes follow it smoothly: 80 units/s, at most
+  12 units behind (`PlayerStepSmoothing`, like Quake), interpolated between
+  ticks.
+- `PlayerController` turns input into a `Physics::MoveCommand` (see section
+  12): WASD relative to the yaw, always horizontal; a jump pressed in any
+  frame is kept until the next tick takes it (`CollectFrameInput`), so a short
+  press in a frame without a tick is not lost. It knows nothing about walls
+  or speeds: the Physics module decides how the player moves.
+- **Mouse look** is shared (`Gameplay/MouseLook`): `TurnByMouse` changes yaw
+  and pitch by the mouse movement of a frame (pitch clamped to ±89°),
+  `CalculateCameraRotation` builds the rotation from them.
+- **The mouse is captured** (relative mode) while playing — the player is
+  controlled and neither the debug overlay nor the console is open — and
+  while the right mouse button is held (looking around with the overlay
+  open, or with the free-fly camera). The first frame of capturing is not
+  used for turning: switching can report one big jump of movement.
 
 - A camera looks along its **local −Z** axis; its local +X is its right side,
   local +Y the top of the screen. Its direction in the world is its rotation
@@ -496,10 +529,9 @@ camera entity
   along the world vertical, Shift faster, mouse look while the right button
   is held). It keeps yaw and pitch in `FreeFlyCamera` (mouse movement adds to
   them directly, pitch is clamped to ±89°, no roll) and builds the rotation
-  from them: `angleAxis(yaw, WorldUp) * angleAxis(pitch, LocalRight)`.
-  Planned: the player's camera controller (eye height, view bob, recoil) with
-  its own component instead of `FreeFlyCamera`; the free-fly camera stays as a
-  debug noclip mode.
+  from them (`CalculateCameraRotation`: `angleAxis(yaw, WorldUp) *
+  angleAxis(pitch, LocalRight)`). Planned: view bob and recoil for the player
+  (0.3).
 - Controllers get the components they work with as parameters instead of
   storing references. Turning and moving are separate calls because they run
   at different rates (see section 5): `UpdateRotation(freeFlyCamera,
@@ -638,6 +670,9 @@ Library: **EnTT 4.0.0** (`ThirdParty/EnTT`, see section 3).
 | `CameraLens` | Renderer | vertical FOV, near and far plane | `CalculateView` |
 | `Spin` | Gameplay | axis, speed | `UpdateSpinningEntities` |
 | `FreeFlyCamera` | Gameplay | yaw, pitch | `FreeFlyCameraController` |
+| `PlayerLook` | Gameplay | yaw, pitch of the player's view | `PlayerController`, the view |
+| `PlayerStepSmoothing` | Gameplay | eyes behind the body after a step, now and last tick | the view |
+| `CharacterBody` | Physics | box size, velocity, on ground, stepped up, in solid | `UpdateCharacter`, Movement window |
 
 **Where components live.** A component lives next to the system that
 processes it, in the module it belongs to (`Renderer/MeshRenderer.h` next to
@@ -748,23 +783,77 @@ Test.map ─► ParseMap ─► MapData ─┬─► BuildBrushPolygons ─► B
   the stopping box and the normal are drawn as debug lines, the numbers are
   shown in the window) and a colliding free-fly camera (it stops at walls; a
   camera that starts inside a brush moves freely to get out). Sliding along
-  walls comes with the movement of the player.
+  walls is for the player (see section 12).
 
-**Planned:** sliding along walls, stepping up stairs and standing on the
-ground (player movement branch); a tree of brushes (BVH) when large maps make
+**Planned:** a tree of brushes (BVH) when large maps make
 checking every brush measurably slow — with 17 brushes the bounding box test
 takes microseconds; entities from the map (enemies, pickups, doors,
 0.4–0.6); a level compiler with lightmaps and visibility (0.5), which needs
 closed maps (a hole to the outside is a *leak*).
 
-## 12. Data-driven design — Planned
+## 12. Physics
+
+The `Physics` module moves characters (the player now, enemies later) through
+the level, with the formulas of Quake. It sits above `World`: it uses the box
+traces (`World::TraceBox`) and knows nothing about input.
+
+```
+PlayerController (keys) ─► MoveCommand ─► UpdateCharacter (every tick) ─► CharacterBody + Transform
+AI (later)              ─┘               jump, friction, accelerate,
+                                         gravity, step/slide move, ground check
+```
+
+- **`CharacterBody`** (component): the half size of the box, the velocity,
+  whether it stands on the ground, how high it stepped up last tick, whether
+  it started the last tick inside a brush. **`MoveCommand`**: where the
+  character wants to go (horizontal) and whether it wants to jump.
+- **One tick** (`UpdateCharacter`): a jump starts on the ground (no friction
+  in that tick, so a jump keeps its speed); on the ground friction slows the
+  character down and `Accelerate` speeds it up; in the air `AirAccelerate`
+  steers a little and gravity pulls down; then the box moves and the ground
+  is checked.
+- **Friction** (`ApplyFriction`): loses friction × speed per second, but at
+  least friction × stopSpeed, so it stops completely. **Accelerate**: adds up
+  to acceleration × wishSpeed per second, but never more than what is missing
+  to the wished speed along the wished direction. **AirAccelerate**: the same,
+  but the missing speed is counted only up to `maxAirWishSpeed` (~1 m/s),
+  which still bends a jump when turning with a strafe key (air strafing).
+- **Sliding** (`SlideMove`, `PM_FlyMove` of Quake): at every hit the velocity
+  is clipped to the surface (`ClipVelocity`: the part into it removed) and
+  the rest of the tick is spent sliding, up to 4 hits; two surfaces leave the
+  line where they meet, more stop the box.
+- **Steps** (`StepSlideMove`, `PM_StepSlideMove` of Quake 2): the move is tried
+  as it is and lifted by the step height (up, across, down); the one that got
+  further horizontally wins. Used on the ground and in the air while not
+  moving up, so landing on stairs keeps running. Returns the height walked
+  up, for the smoothing of the view.
+- **Ground** (`IsOnGround`): something with a normal of y ≥ 0.7 (up to ~45°)
+  within a quarter of a unit below the box; moving up faster than 180 units/s
+  is never on the ground. Gravity acts only in the air.
+- **Stuck in a wall**: a box that starts a tick inside a brush makes every
+  trace fail. Then a warning with all details goes to the log (once per case,
+  category *Physics*), and `PushOutOfSolid` tries tiny moves (4 mm to 3 cm in
+  26 directions) to get it out, like `PM_NudgePosition` of Quake 2. Added
+  after the player once got stuck at a wall: the log gives the data to
+  reproduce such a case and turn it into a test.
+- **Settings**: `PhysicsSettings` (gravity 25 m/s², like Quake) and
+  `MovementSettings` (running 7 m/s like modern shooters — Quake runs at
+  10 m/s — acceleration 10, friction 4, stop speed 3.1 m/s, step 0.56 m, jump
+  8.4 m/s ≈ 1.4 m high, air acceleration 10 up to 0.94 m/s). **View >
+  Movement** shows a speedometer and the state of the player and has sliders
+  for all of them; not saved yet (JSON configuration, 0.6).
+
+**Planned:** player clip brushes (invisible slopes over stairs) in maps;
+swimming, ladders and moving platforms (0.6); knockback from weapons (0.3).
+
+## 13. Data-driven design — Planned
 
 - Balance values (weapon damage, enemy health, speeds) are read from
   `Assets/Configurations/*.json`.
 - User settings are stored separately in the user's folder
   (`%APPDATA%/AloneBull/Abomination/`), never in `Assets/`.
 
-## 13. Save system — Planned (0.8)
+## 14. Save system — Planned (0.8)
 
 Every gameplay component must be serializable. Rules to follow from 0.2:
 
@@ -772,7 +861,7 @@ Every gameplay component must be serializable. Rules to follow from 0.2:
   stored as entity IDs, references to resources as asset IDs/paths.
 - No hidden state in systems that would be lost on save/load.
 
-## 14. Threading
+## 15. Threading
 
 Single-threaded for now. Candidates for background threads later: asset
 loading, audio (miniaudio already runs its own thread), lightmap baking.

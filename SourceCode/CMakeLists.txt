@@ -55,6 +55,12 @@ set(LIBRARY_SOURCES
     Gameplay/FreeFlyCamera.h
     Gameplay/FreeFlyCameraController.h
     Gameplay/FreeFlyCameraController.cpp
+    Gameplay/MouseLook.h
+    Gameplay/MouseLook.cpp
+    Gameplay/Player.h
+    Gameplay/Player.cpp
+    Gameplay/PlayerController.h
+    Gameplay/PlayerController.cpp
     Gameplay/Spin.h
     Gameplay/Spin.cpp
 
@@ -69,6 +75,9 @@ set(LIBRARY_SOURCES
     Input/Mouse.h
     Input/Mouse.cpp
 
+    Physics/CharacterBody.h
+    Physics/CharacterMovement.h
+    Physics/CharacterMovement.cpp
     Platform/ImGuiPlatformBackend.h
     Platform/ImGuiPlatformBackend.cpp
     Platform/ScreenMode.h
@@ -129,6 +138,8 @@ set(LIBRARY_SOURCES
     UI/EntitiesWindow.cpp
     UI/ImGuiLibrary.h
     UI/ImGuiLibrary.cpp
+    UI/MovementWindow.h
+    UI/MovementWindow.cpp
     UI/UIScale.h
     UI/UIScale.cpp
 

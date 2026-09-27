@@ -20,12 +20,15 @@ set(TEST_SOURCES
     Core/VersionTests.cpp
 
     Gameplay/FreeFlyCameraControllerTests.cpp
+    Gameplay/PlayerTests.cpp
     Gameplay/SpinTests.cpp
 
     Input/ActionStatesTests.cpp
     Input/InputBindingsTests.cpp
     Input/KeyboardTests.cpp
     Input/MouseTests.cpp
+
+    Physics/CharacterMovementTests.cpp
 
     Platform/WindowSizingTests.cpp
 

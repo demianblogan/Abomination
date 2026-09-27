@@ -27,6 +27,13 @@ namespace Abomination::Platform
     class Window;
 }
 
+namespace Abomination::Physics
+{
+    struct CharacterBody;
+    struct MovementSettings;
+    struct PhysicsSettings;
+}
+
 namespace Abomination::Renderer
 {
     struct RenderAssets;
@@ -62,6 +69,9 @@ namespace Abomination::UI
         const World::CameraTrace& cameraTrace;
         std::size_t collisionBrushCount;
         Core::LogHistory& logHistory;
+        Physics::PhysicsSettings& physicsSettings;
+        Physics::MovementSettings& movementSettings;
+        const Physics::CharacterBody& playerBody;
     };
 
     // Developer overlay drawn with Dear ImGui on top of the game: a menu bar with debug windows and settings.
@@ -88,6 +98,8 @@ namespace Abomination::UI
 
         // Opens or closes the in-game console (see ConsoleWindow). It works while the rest of the overlay is hidden.
         void ToggleConsole() noexcept;
+
+        [[nodiscard]] bool IsConsoleOpen() const noexcept;
 
     private:
         DebugOverlay(ImGuiLibrary library, Platform::ImGuiPlatformBackend platformBackend,
@@ -125,6 +137,7 @@ namespace Abomination::UI
         bool m_isEntitiesWindowOpen = false;
         bool m_isRendererWindowOpen = false;
         bool m_isCollisionWindowOpen = false;
+        bool m_isMovementWindowOpen = false;
 
         EntitiesWindow m_entitiesWindow;
         ConsoleWindow m_consoleWindow;

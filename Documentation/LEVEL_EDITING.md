@@ -66,8 +66,10 @@ can be placed. This is described by two files kept in the repository:
 
 The game loads `Assets/Maps/Test.map` at startup: save the map in
 TrenchBroom, build (so the changed file is copied next to the executable)
-and start the game. The camera appears at `info_player_start`, looking in the
-direction of its angle.
+and start the game. The player appears at `info_player_start`, looking in the
+direction of its angle. A player start placed on the floor puts the player on
+the floor; one placed higher lets the player fall at the start (like in
+Quake). F2 switches to the free-fly camera to look at the map from anywhere.
 
 - Faces are drawn with their textures, lighter or darker by the direction
   they face, so walls, floor and ceiling stay apart until real lighting (0.5).

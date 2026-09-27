@@ -126,14 +126,15 @@ Full instructions, including the command line: **[BUILDING.md](Documentation/BUI
 
 ## 🎮 Controls
 
-The current build (milestone 0.2 in progress) has a free-fly camera in a test level made in TrenchBroom.
+The current build (milestone 0.2 in progress) lets you run and jump around a test level made in TrenchBroom,
+with Quake-style movement.
 
 | Input | Action |
 |:-----:|--------|
-| <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> | Fly forward, left, back, right (relative to the view) |
-| <kbd>E</kbd> / <kbd>Q</kbd> | Fly up / down |
-| <kbd>Shift</kbd> | Fly faster |
-| Hold **right mouse button** | Look around with the mouse |
+| <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> | Run forward, left, back, right (relative to the view) |
+| <kbd>Space</kbd> | Jump |
+| Mouse | Look around (while the debug overlay is open: hold the **right mouse button**) |
+| <kbd>F2</kbd> | Switch to the free-fly camera and back (fly through walls: <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd>, <kbd>E</kbd> / <kbd>Q</kbd> up / down, <kbd>Shift</kbd> faster, right mouse button to look) |
 | <kbd>F1</kbd> | Show / hide the debug overlay |
 | <kbd>~</kbd> | Open / close the in-game console (the log) |
 | <kbd>Alt</kbd> + <kbd>Enter</kbd> | Switch between windowed and borderless |

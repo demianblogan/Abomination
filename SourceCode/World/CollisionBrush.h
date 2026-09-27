@@ -25,7 +25,7 @@ namespace Abomination::World
     //
     // Every brush also gets bevel planes: the sides of its bounding box (normals along +X, -X, +Y, -Y, +Z, -Z) that the
     // brush does not have as faces yet. They cut nothing off the brush itself, which is inside its box anyway. They are
-    // needed when a box is traced against the brush (the next step): the planes are moved out by the size of the box,
+    // needed when a box is traced against the brush (see TraceBox): the planes are moved out by the size of the box,
     // and at sharp corners moved planes meet far from the brush, so the brush would reach out too far; the moved bevel
     // planes cut that off.
     //

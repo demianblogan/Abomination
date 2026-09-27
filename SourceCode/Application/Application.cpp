@@ -137,7 +137,8 @@ namespace Abomination
             // 3. The simulation in fixed ticks: 0, 1 or several per frame, depending on how long the frame was.
             //    The ticks of this frame read the input of this frame. A frame without ticks does not lose held keys
             //    (they are still held in the next frame), but a short press that starts and stops between two ticks
-            //    would be lost; it does not matter for flying, and will be handled for jumping (0.2, player movement).
+            //    would be lost, so presses that matter (jumping) are collected every frame in Update() (see
+            //    Gameplay::PlayerController::CollectFrameInput).
             const int tickCount = m_fixedTimestep.Advance(frameTimer.GetDeltaTime());
             for (int tick = 0; tick < tickCount; ++tick)
                 FixedUpdate(m_fixedTimestep.GetTickDuration());

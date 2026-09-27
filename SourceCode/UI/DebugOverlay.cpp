@@ -165,7 +165,6 @@ namespace Abomination::UI
 
     void DebugOverlay::Draw(const DebugOverlayContext& context)
     {
-        // 1. Start the frame: the backends pass ImGui the window size, the time and the input of this frame.
         // 0. The scale of the interface: the display scale of Windows (2.0 on a 4K monitor at 200%) times the UI scale chosen
         //    in the menu. The style is rebuilt only when the scale changes, and before the frame starts, because ImGui picks
         //    the font for the whole frame in NewFrame().
@@ -176,6 +175,7 @@ namespace Abomination::UI
             m_appliedScale = scale;
         }
 
+        // 1. Start the frame: the backends pass ImGui the window size, the time and the input of this frame.
         m_rendererBackend.StartFrame();
         m_platformBackend.StartFrame();
         ImGui::NewFrame();

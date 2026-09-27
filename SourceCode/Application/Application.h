@@ -97,7 +97,7 @@ namespace Abomination
         // Every graphics asset of the game, loaded once.
         Renderer::RenderAssets m_renderAssets;
 
-        // Shaders the render system uses on its own (the wireframe), loaded once in the constructor.
+        // Shaders the renderer uses on its own (the wireframe, the debug lines), loaded once in the constructor.
         Renderer::SystemShaders m_systemShaders;
 
         // How the scene is drawn (changed in the Renderer window of the overlay) and what the last frame cost (shown there).

@@ -10,8 +10,8 @@ namespace Abomination::Renderer
 namespace Abomination::UI
 {
     // The Entities window of the debug overlay (View > Entities), an entity inspector: the list of all entities on the
-    // left, the components of the selected one on the right. Values can be changed in place (move a crate, change the
-    // speed of a spin, widen the camera's field of view), so the effect is visible at once.
+    // left, the components of the selected one on the right. Values can be changed in place (move the player, widen the
+    // camera's field of view), so the effect is visible at once.
     //
     // Every component type the inspector knows has its own small drawing function; components it does not know yet are
     // not shown. A new component type gets a drawing function here when it is added to the game.
@@ -19,7 +19,7 @@ namespace Abomination::UI
     {
     public:
         // Draws the window while *isOpen is true; its close button sets *isOpen to false.
-        // The assets turn the handles of components into readable names ("Textures/Crate.png").
+        // The assets turn the handles of components into readable names ("Textures/Episode1/Crate_Rotten.png").
         void Draw(bool* isOpen, entt::registry& registry, const Renderer::RenderAssets& assets);
 
     private:

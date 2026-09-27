@@ -150,8 +150,7 @@ namespace Abomination::UI
 
     void ConsoleWindow::DrawToolbar(Core::LogHistory& history)
     {
-        // The lowest level shown, as a drop-down list of the level names.
-        // Filters | Auto-scroll | Opacity, Height | Clear
+        // Filters (levels, modules) | Auto-scroll | Opacity, Height | Clear
         DrawFilterCombo("Levels", Core::LogLevelNames, m_visibleLevels);
         ImGui::SameLine();
         DrawFilterCombo("Modules", Core::LogCategoryNames, m_visibleCategories);

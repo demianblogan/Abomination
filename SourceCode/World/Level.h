@@ -19,7 +19,7 @@ namespace Abomination::World
         // The position of the player's eyes.
         glm::vec3 eyePosition{0.0f};
 
-        // Radians, like Gameplay::FreeFlyCamera::yaw.
+        // Radians, like every yaw of the game (see Gameplay/MouseLook.h).
         float yaw = 0.0f;
     };
 

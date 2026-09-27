@@ -177,12 +177,12 @@ namespace Abomination::Gameplay
         StartFrame();
         m_devices.mouse.Move({0.0f, -1000.0f});
         RunFrame(0.016f);
-        EXPECT_FLOAT_EQ(m_camera.pitch, FreeFlyCamera::MaxPitch);
+        EXPECT_FLOAT_EQ(m_camera.pitch, MaxLookPitch);
 
         StartFrame();
         m_devices.mouse.Move({0.0f, 5000.0f});
         RunFrame(0.016f);
-        EXPECT_FLOAT_EQ(m_camera.pitch, -FreeFlyCamera::MaxPitch);
+        EXPECT_FLOAT_EQ(m_camera.pitch, -MaxLookPitch);
     }
 
     TEST(CameraRotation, PositiveYawTurnsLeft)

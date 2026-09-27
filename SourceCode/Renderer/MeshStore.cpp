@@ -36,11 +36,6 @@ namespace Abomination::Renderer
         m_cache.RemoveAll(lifetime);
     }
 
-    std::optional<MeshHandle> MeshStore::Find(const std::string& name) const
-    {
-        return m_cache.Find(name);
-    }
-
     const Mesh& MeshStore::Get(MeshHandle handle) const
     {
         const Mesh* mesh = m_cache.Get(handle);

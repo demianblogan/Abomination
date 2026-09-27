@@ -7,7 +7,6 @@
 #include "Renderer/MeshData.h"
 
 #include <cstddef>
-#include <optional>
 #include <string>
 
 namespace Abomination::Renderer
@@ -33,9 +32,6 @@ namespace Abomination::Renderer
 
         // Removes every mesh of the lifetime group from video memory; their handles become invalid.
         void RemoveAll(Core::AssetLifetime lifetime);
-
-        // The handle of the mesh stored under name, or nothing.
-        [[nodiscard]] std::optional<MeshHandle> Find(const std::string& name) const;
 
         // The mesh of the handle. An invalid handle gives the fallback cube.
         [[nodiscard]] const Mesh& Get(MeshHandle handle) const;

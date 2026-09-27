@@ -12,9 +12,6 @@ namespace Abomination::Gameplay
     //   pitch - tilt up/down. 0 looks at the horizon, a positive pitch looks up.
     struct FreeFlyCamera
     {
-        // Pitch is kept within this range (see MaxLookPitch).
-        static constexpr float MaxPitch = MaxLookPitch;
-
         float yaw = 0.0f;
         float pitch = 0.0f;
     };

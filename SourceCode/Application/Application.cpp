@@ -357,8 +357,8 @@ namespace Abomination
             m_renderStatistics = Renderer::DrawMeshes(m_registry, view, interpolationFactor, m_renderAssets,
                                                       m_systemShaders, m_renderSettings);
 
-            m_cameraTrace = World::UpdateCollisionDebug(m_level.GetCollisionBrushes(), m_collisionSettings,
-                                                        cameraTransform, m_debugLines);
+            m_cameraCast = World::UpdateCollisionDebug(m_level.GetCollisionBrushes(), m_collisionSettings,
+                                                       cameraTransform, m_debugLines);
 
             // Seen from the free-fly camera, the player is a box (it has no model yet), so it is clear where they stand.
             if (m_controlMode == ControlMode::FreeFlyCamera)
@@ -401,7 +401,7 @@ namespace Abomination
             .levelStatistics = m_level.GetStatistics(),
             .isLevelReloadRequested = m_isLevelReloadRequested,
             .collisionSettings = m_collisionSettings,
-            .cameraTrace = m_cameraTrace,
+            .cameraCast = m_cameraCast,
             .collisionBrushCount = m_level.GetCollisionBrushes().size(),
             .logHistory = *m_logHistory,
             .physicsSettings = m_physicsSettings,

@@ -117,7 +117,7 @@ namespace Abomination::UI
                                    context.levelStatistics, context.isLevelReloadRequested);
 
             if (m_isCollisionWindowOpen)
-                DrawCollisionWindow(&m_isCollisionWindowOpen, context.collisionSettings, context.cameraTrace,
+                DrawCollisionWindow(&m_isCollisionWindowOpen, context.collisionSettings, context.cameraCast,
                                     context.collisionBrushCount);
 
             if (m_isMovementWindowOpen)
@@ -187,7 +187,7 @@ namespace Abomination::UI
 
             if (ImGui::BeginMenu("Physics"))
             {
-                ImGui::MenuItem("Collision", nullptr, &m_isCollisionWindowOpen);
+                ImGui::MenuItem("Collisions", nullptr, &m_isCollisionWindowOpen);
                 ImGui::MenuItem("Movement", nullptr, &m_isMovementWindowOpen);
                 ImGui::EndMenu();
             }

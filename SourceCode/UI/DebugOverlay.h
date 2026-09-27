@@ -45,7 +45,7 @@ namespace Abomination::World
 {
     struct LevelMeshStatistics;
     struct CollisionDebugSettings;
-    struct CameraTrace;
+    struct CameraCast;
 }
 
 namespace Abomination::UI
@@ -66,7 +66,7 @@ namespace Abomination::UI
         const World::LevelMeshStatistics& levelStatistics;
         bool& isLevelReloadRequested;
         World::CollisionDebugSettings& collisionSettings;
-        const World::CameraTrace& cameraTrace;
+        const World::CameraCast& cameraCast;
         std::size_t collisionBrushCount;
         Core::LogHistory& logHistory;
         Physics::PhysicsSettings& physicsSettings;

@@ -160,7 +160,7 @@ A module may depend only on modules **below** it in this diagram.
 - **The debug overlay** has a main menu bar (F1): *View* opens and closes
   debug windows (now *Performance* and *Console* at the top, then submenus by
   part of the engine: *Engine* — *Entities*, *Assets*; *Rendering* —
-  *Renderer*; *Physics* — *Collision*, *Movement*; one file per window; all
+  *Renderer*; *Physics* — *Collisions*, *Movement*; one file per window; all
   closed at the first start), *Settings*
   changes settings grouped like the future options menu (now *Display*:
   screen mode, V-Sync, FPS limit, UI scale). The font size is one constant next to the font
@@ -783,8 +783,8 @@ Test.map ─► ParseMap ─► MapData ─┬─► BuildBrushPolygons ─► B
   are skipped. The player box is `PlayerHalfExtents` (1 × 1.75 × 1 m, like
   32 × 56 × 32 units in Quake and `info_player_start` in `Abomination.fgd`),
   defined once in `World/PlayerStart.h`.
-- **Collision tools** (`CollisionDebug`, View > Physics > Collision): brush bounds, a
-  box traced from the camera straight ahead (point, small box or player box;
+- **Collision tools** (`CollisionDebug`, View > Physics > Collisions): collider
+  bounds, a cast from the camera straight ahead (ray, small box or player box;
   the stopping box and the normal are drawn as debug lines, the numbers are
   shown in the window) and a colliding free-fly camera (it slides along walls
   with `Physics::SlideMove`, like the player, see section 12; a camera that

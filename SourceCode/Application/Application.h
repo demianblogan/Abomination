@@ -122,9 +122,9 @@ namespace Abomination
         // middle of drawing the overlay.
         bool m_isLevelReloadRequested = false;
 
-        // The collision tools of the debug overlay (View > Physics > Collision) and the camera trace of the last frame.
+        // The collision tools of the debug overlay (View > Physics > Collisions) and the camera cast of the last frame.
         World::CollisionDebugSettings m_collisionSettings;
-        World::CameraTrace m_cameraTrace;
+        World::CameraCast m_cameraCast;
 
         // All entities of the game and their components. Components hold only handles to assets, never pointers, so they
         // stay valid when Application (and with it m_renderAssets) is moved out of Create().

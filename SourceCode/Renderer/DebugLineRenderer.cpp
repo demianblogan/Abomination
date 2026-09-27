@@ -1,5 +1,7 @@
 #include "Renderer/DebugLineRenderer.h"
 
+#include "Renderer/ShaderInterface.h"
+
 #include <glad/gl.h>
 
 #include <array>
@@ -9,16 +11,7 @@ namespace Abomination::Renderer
 {
     namespace
     {
-        // Must match layout(location = N) in DebugLines.vert.
-        constexpr std::uint32_t LineStartAttribute = 0;
-        constexpr std::uint32_t LineEndAttribute = 1;
-        constexpr std::uint32_t ColorAttribute = 2;
-        constexpr std::uint32_t CornerAttribute = 3;
-        constexpr std::uint32_t ViewUniform = 1;
-        constexpr std::uint32_t ProjectionUniform = 2;
-        constexpr std::uint32_t ViewportSizeUniform = 3;
-        constexpr std::uint32_t LineWidthUniform = 4;
-
+        // The vertex array has only one vertex buffer, connected to binding slot 0.
         constexpr std::uint32_t VertexBufferBinding = 0;
 
         // Every line is a strip of 2 triangles: 6 corners.
@@ -40,10 +33,11 @@ namespace Abomination::Renderer
     {
         m_vertexCapacity = InitialVertexCapacity;
         m_vertexArray.SetVertexBuffer(VertexBufferBinding, m_vertexBuffer, sizeof(StripVertex));
-        m_vertexArray.SetFloatAttribute(LineStartAttribute, VertexBufferBinding, 3, offsetof(StripVertex, lineStart));
-        m_vertexArray.SetFloatAttribute(LineEndAttribute, VertexBufferBinding, 3, offsetof(StripVertex, lineEnd));
-        m_vertexArray.SetFloatAttribute(ColorAttribute, VertexBufferBinding, 3, offsetof(StripVertex, color));
-        m_vertexArray.SetFloatAttribute(CornerAttribute, VertexBufferBinding, 2, offsetof(StripVertex, corner));
+        GLVertexArray& vertexArray = m_vertexArray;
+        vertexArray.SetFloatAttribute(DebugLineStartAttribute, VertexBufferBinding, 3, offsetof(StripVertex, lineStart));
+        vertexArray.SetFloatAttribute(DebugLineEndAttribute, VertexBufferBinding, 3, offsetof(StripVertex, lineEnd));
+        vertexArray.SetFloatAttribute(DebugLineColorAttribute, VertexBufferBinding, 3, offsetof(StripVertex, color));
+        vertexArray.SetFloatAttribute(DebugLineCornerAttribute, VertexBufferBinding, 2, offsetof(StripVertex, corner));
     }
 
     void DebugLineRenderer::Draw(const DebugLines& lines, const View& view, const GLShaderProgram& program,
@@ -64,8 +58,8 @@ namespace Abomination::Renderer
         program.Use();
         program.SetUniform(ViewUniform, view.viewMatrix);
         program.SetUniform(ProjectionUniform, view.projectionMatrix);
-        program.SetUniform(ViewportSizeUniform, viewportSize);
-        program.SetUniform(LineWidthUniform, lineWidth);
+        program.SetUniform(DebugLineViewportSizeUniform, viewportSize);
+        program.SetUniform(DebugLineWidthUniform, lineWidth);
         m_vertexArray.Bind();
 
         // Seen from one side or the other, the corners of a strip can go clockwise or counter-clockwise: no culling.

@@ -124,6 +124,7 @@ set(LIBRARY_SOURCES
     Renderer/RenderSettings.h
     Renderer/RenderSystem.h
     Renderer/RenderSystem.cpp
+    Renderer/ShaderInterface.h
     Renderer/ShaderStore.h
     Renderer/ShaderStore.cpp
     Renderer/TextureStore.h

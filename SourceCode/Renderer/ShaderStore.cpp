@@ -14,7 +14,8 @@ namespace Abomination::Renderer
     namespace
     {
         // The fallback program is written in the code, not in files, so it is available even when the files are not.
-        // It only places the vertices like every other program and paints every pixel magenta.
+        // It only places the vertices like every other program and paints every pixel magenta. GLSL text cannot use the
+        // C++ constants, so its locations are written as numbers: they must match Renderer/ShaderInterface.h.
         constexpr std::string_view FallbackVertexShaderSource = R"(
             #version 460 core
             layout(location = 0) in vec3 aPosition;

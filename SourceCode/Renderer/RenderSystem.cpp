@@ -3,24 +3,12 @@
 #include "Core/Transform.h"
 #include "Core/TransformInterpolation.h"
 #include "Renderer/MeshRenderer.h"
+#include "Renderer/ShaderInterface.h"
 
 #include <glad/gl.h>
 
-#include <cstdint>
-
 namespace Abomination::Renderer
 {
-    namespace
-    {
-        // Must match layout(location = N) of the uniforms in TexturedMesh.vert (and the fallback program).
-        constexpr std::uint32_t ModelUniform = 0;
-        constexpr std::uint32_t ViewUniform = 1;
-        constexpr std::uint32_t ProjectionUniform = 2;
-
-        // Must match layout(binding = N) of uniAlbedoTexture in TexturedMesh.frag.
-        constexpr std::uint32_t AlbedoTextureUnit = 0;
-    }
-
     SystemShaders LoadSystemShaders(ShaderStore& shaders)
     {
         return SystemShaders{

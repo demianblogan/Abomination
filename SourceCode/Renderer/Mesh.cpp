@@ -1,5 +1,7 @@
 #include "Renderer/Mesh.h"
 
+#include "Renderer/ShaderInterface.h"
+
 #include <glad/gl.h>
 
 #include <span>
@@ -9,11 +11,6 @@ namespace Abomination::Renderer
 {
     namespace
     {
-        // Must match layout(location = N) of the vertex inputs in every mesh shader (TexturedMesh.vert, the fallback).
-        constexpr std::uint32_t PositionAttribute = 0;
-        constexpr std::uint32_t TexCoordAttribute = 1;
-        constexpr std::uint32_t NormalAttribute = 2;
-
         // The vertex array has only one vertex buffer, connected to binding slot 0.
         constexpr std::uint32_t VertexBufferBinding = 0;
     }
@@ -27,9 +24,9 @@ namespace Abomination::Renderer
         // Describe the layout of MeshVertex and connect both buffers.
         GLVertexArray vertexArray;
         vertexArray.SetVertexBuffer(VertexBufferBinding, vertexBuffer, sizeof(MeshVertex));
-        vertexArray.SetFloatAttribute(PositionAttribute, VertexBufferBinding, 3, offsetof(MeshVertex, position));
-        vertexArray.SetFloatAttribute(TexCoordAttribute, VertexBufferBinding, 2, offsetof(MeshVertex, texCoord));
-        vertexArray.SetFloatAttribute(NormalAttribute, VertexBufferBinding, 3, offsetof(MeshVertex, normal));
+        vertexArray.SetFloatAttribute(MeshPositionAttribute, VertexBufferBinding, 3, offsetof(MeshVertex, position));
+        vertexArray.SetFloatAttribute(MeshTexCoordAttribute, VertexBufferBinding, 2, offsetof(MeshVertex, texCoord));
+        vertexArray.SetFloatAttribute(MeshNormalAttribute, VertexBufferBinding, 3, offsetof(MeshVertex, normal));
         vertexArray.SetIndexBuffer(indexBuffer);
 
         return Mesh(std::move(vertexBuffer), std::move(indexBuffer), std::move(vertexArray), data.vertices.size(),

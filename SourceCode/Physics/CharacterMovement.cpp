@@ -21,6 +21,12 @@ namespace Abomination::Physics
         constexpr int MaximumBumpCount = 4;
         constexpr std::size_t MaximumPlaneCount = 5;
 
+        // Two surfaces hit during one move count as the same one when their normals are this close (the dot product is
+        // the cosine of the angle between them: 0.99 is about 8 degrees), and how fast the velocity is pushed away from a
+        // surface hit twice (the same values as Quake 3).
+        constexpr float SameSurfaceDot = 0.99f;
+        constexpr float SurfacePushSpeed = Core::MapUnitsToMeters(1.0f);
+
         // A horizontal speed below this (1 mm/s) counts as standing: friction stops it completely instead of dividing by
         // an almost zero speed.
         constexpr float StandingSpeed = 0.001f;
@@ -82,12 +88,30 @@ namespace Abomination::Physics
             // Hit something: the rest of the time is spent sliding along it.
             timeLeft -= timeLeft * static_cast<float>(trace.fraction);
 
+            // The same surface again, without having moved (fraction 0): the velocity clipped to it still went a hair into
+            // it, because of float rounding. It is not remembered a second time. Two copies of one surface would look like
+            // a corner of two walls to the code below, and the line where "they" meet, cross(n, n), is a zero vector:
+            // normalizing it gives NaN, and the character vanished (found on the test map, running along the slanted side
+            // of the octagonal column). Instead the velocity gets a tiny push away from the surface, 1 unit/s like in
+            // Quake 3, and the move goes on.
+            const glm::vec3 hitNormal(trace.hitNormal);
+            bool isSurfaceKnown = false;
+            for (std::size_t index = 0; index < planeCount; ++index)
+                if (glm::dot(hitNormal, planes[index]) > SameSurfaceDot)
+                    isSurfaceKnown = true;
+
+            if (isSurfaceKnown)
+            {
+                velocity += hitNormal * SurfacePushSpeed;
+                continue;
+            }
+
             if (planeCount >= MaximumPlaneCount)
             {
                 velocity = glm::vec3(0.0f);
                 break;
             }
-            planes[planeCount++] = glm::vec3(trace.hitNormal);
+            planes[planeCount++] = hitNormal;
 
             // Find a velocity along all surfaces hit so far: clip against each one and check it does not go into any of
             // the others. The first that works is taken.
@@ -109,7 +133,8 @@ namespace Abomination::Physics
             {
                 // No single surface works: two walls meeting at an angle (a corner, a crease). The only direction along
                 // both is the line where they meet, the cross product of their normals; keep the part of the velocity
-                // along it. With three or more surfaces there is no such line: stop.
+                // along it. With three or more surfaces there is no such line: stop. The two normals are never the same
+                // direction (see SameSurfaceDot above), so the cross product is never zero.
                 if (planeCount != 2)
                 {
                     velocity = glm::vec3(0.0f);

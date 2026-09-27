@@ -29,6 +29,7 @@ set(TEST_SOURCES
     Input/KeyboardTests.cpp
     Input/MouseTests.cpp
 
+    Physics/CharacterMovementMapTests.cpp
     Physics/CharacterMovementTests.cpp
 
     Platform/WindowSizingTests.cpp

@@ -20,6 +20,8 @@ set(LIBRARY_SOURCES
     Core/AssetCache.h
     Core/AssetHandle.h
     Core/AssetLifetime.h
+    Core/BoundingBox.h
+    Core/BoundingBox.cpp
     Core/BuildConfiguration.h
     Core/Clock.h
     Core/ConvexPolygon.h

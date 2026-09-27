@@ -7,6 +7,8 @@
 
 namespace Abomination::Core
 {
+    class LogHistory;
+
     // Ordered from the least to the most important. Messages below LogSettings::minimumLevel are discarded.
     enum class LogLevel
     {
@@ -33,6 +35,10 @@ namespace Abomination::Core
         std::filesystem::path filePath = "Abomination.log";
         LogLevel minimumLevel = LogLevel::Info;
         bool needToWriteToConsole = true;
+
+        // If set, every written message is also kept here (see LogHistory), for the in-game console. It must stay alive
+        // until Shutdown().
+        LogHistory* history = nullptr;
     };
 }
 

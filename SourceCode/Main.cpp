@@ -1,6 +1,7 @@
 #include "Application/Application.h"
 #include "Core/BuildConfiguration.h"
 #include "Core/Log.h"
+#include "Core/LogHistory.h"
 #include "Core/Version.h"
 #include "Platform/SystemServices.h"
 
@@ -47,9 +48,13 @@ namespace
 
 int main()
 {
+    // The last messages, kept for the in-game console. It lives until the end of main(), after Log::Shutdown().
+    LogHistory logHistory;
+
     Log::Initialize(LogSettings{
         .filePath = Platform::GetExecutableDirectory() / "Abomination.log",
         .minimumLevel = IsDebugBuild ? LogLevel::Debug : LogLevel::Info,
+        .history = &logHistory,
     });
 
     Log::Write(LogCategory::Core, LogLevel::Info, "Abomination {}", GetGameVersionString());

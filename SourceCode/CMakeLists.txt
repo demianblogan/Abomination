@@ -40,6 +40,8 @@ set(LIBRARY_SOURCES
     Core/Image.cpp
     Core/Log.h
     Core/Log.cpp
+    Core/LogHistory.h
+    Core/LogHistory.cpp
     Core/Name.h
     Core/Plane.h
     Core/Plane.cpp

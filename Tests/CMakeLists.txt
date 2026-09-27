@@ -12,6 +12,7 @@ set(TEST_SOURCES
     Core/FrameStatisticsTests.cpp
     Core/FrameTimerTests.cpp
     Core/ImageTests.cpp
+    Core/LogHistoryTests.cpp
     Core/LogTests.cpp
     Core/PlaneTests.cpp
     Core/TransformTests.cpp

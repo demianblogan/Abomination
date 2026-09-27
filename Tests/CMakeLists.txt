@@ -28,6 +28,8 @@ set(TEST_SOURCES
     Input/KeyboardTests.cpp
     Input/MouseTests.cpp
 
+    Physics/CharacterMovementTests.cpp
+
     Platform/WindowSizingTests.cpp
 
     Renderer/DebugLinesTests.cpp

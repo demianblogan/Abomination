@@ -9,6 +9,7 @@
 #include "Gameplay/Player.h"
 #include "Gameplay/Spin.h"
 #include "Physics/CharacterBody.h"
+#include "Physics/CharacterMovement.h"
 #include "Platform/SystemServices.h"
 #include "Renderer/DebugOutput.h"
 #include "Renderer/OpenGLLoader.h"
@@ -220,7 +221,11 @@ namespace Abomination
         // First of all: remember where every interpolated entity is before this tick moves anything.
         Core::StorePreviousTransforms(m_registry);
 
-        // Only the free-fly camera moves for now; the player gets gravity and walking in the next steps.
+        // The player falls and slides through the level in every mode: the world goes on while the free-fly camera looks.
+        Physics::CharacterBody& playerBody = m_registry.get<Physics::CharacterBody>(m_player);
+        Physics::UpdateCharacter(playerBody, m_registry.get<Core::Transform>(m_player), m_level.GetCollisionBrushes(),
+                                 m_physicsSettings, tickDuration);
+
         if (m_controlMode == ControlMode::FreeFlyCamera)
         {
             Core::Transform& cameraTransform = m_registry.get<Core::Transform>(m_freeFlyCamera);

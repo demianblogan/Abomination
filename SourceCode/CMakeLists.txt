@@ -76,6 +76,8 @@ set(LIBRARY_SOURCES
     Input/Mouse.cpp
 
     Physics/CharacterBody.h
+    Physics/CharacterMovement.h
+    Physics/CharacterMovement.cpp
     Platform/ImGuiPlatformBackend.h
     Platform/ImGuiPlatformBackend.cpp
     Platform/ScreenMode.h

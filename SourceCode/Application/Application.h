@@ -5,6 +5,7 @@
 #include "Core/Transform.h"
 #include "Gameplay/FreeFlyCameraController.h"
 #include "Gameplay/PlayerController.h"
+#include "Physics/CharacterMovement.h"
 #include "Input/ActionStates.h"
 #include "Input/InputBindings.h"
 #include "Input/InputDevices.h"
@@ -136,6 +137,9 @@ namespace Abomination
             FreeFlyCamera,
         };
         ControlMode m_controlMode = ControlMode::Player;
+
+        // Gravity and other settings of the physical world.
+        Physics::PhysicsSettings m_physicsSettings;
 
         // The player entity (an entity number: its components live in m_registry) and the controller that turns input into
         // what the player does.

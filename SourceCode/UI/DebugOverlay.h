@@ -3,6 +3,7 @@
 #include "Core/BuildConfiguration.h"
 #include "Platform/ImGuiPlatformBackend.h"
 #include "Renderer/ImGuiRendererBackend.h"
+#include "UI/ConsoleWindow.h"
 #include "UI/EntitiesWindow.h"
 #include "UI/ImGuiLibrary.h"
 
@@ -18,6 +19,7 @@ namespace Abomination::Core
     class FixedTimestep;
     class FrameLimiter;
     class FrameStatistics;
+    class LogHistory;
 }
 
 namespace Abomination::Platform
@@ -59,6 +61,7 @@ namespace Abomination::UI
         World::CollisionDebugSettings& collisionSettings;
         const World::CameraTrace& cameraTrace;
         std::size_t collisionBrushCount;
+        Core::LogHistory& logHistory;
     };
 
     // Developer overlay drawn with Dear ImGui on top of the game: a menu bar with debug windows and settings.
@@ -82,6 +85,9 @@ namespace Abomination::UI
         void ToggleVisibility() noexcept;
 
         [[nodiscard]] bool IsVisible() const noexcept;
+
+        // Opens or closes the in-game console (see ConsoleWindow). It works while the rest of the overlay is hidden.
+        void ToggleConsole() noexcept;
 
     private:
         DebugOverlay(ImGuiLibrary library, Platform::ImGuiPlatformBackend platformBackend,
@@ -121,6 +127,7 @@ namespace Abomination::UI
         bool m_isCollisionWindowOpen = false;
 
         EntitiesWindow m_entitiesWindow;
+        ConsoleWindow m_consoleWindow;
 
         // The UI scale chosen in Settings > Display > UI scale, and the full scale (with the display scale of Windows) the
         // style was last built for; 0 until the first frame. Not saved between runs yet: settings files come with the

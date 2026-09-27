@@ -20,6 +20,7 @@ namespace Abomination::Input
         bindings.Bind(Action::ToggleScreenMode, KeyCombination{.modifier = Key::LeftAlt, .key = Key::Enter});
         bindings.Bind(Action::ToggleScreenMode, KeyCombination{.modifier = Key::RightAlt, .key = Key::Enter});
         bindings.Bind(Action::ToggleDebugOverlay, Key::F1);
+        bindings.Bind(Action::ToggleConsole, Key::Grave);
 
         return bindings;
     }

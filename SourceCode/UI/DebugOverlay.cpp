@@ -203,6 +203,9 @@ namespace Abomination::UI
                 DrawCollisionWindow(context);
         }
 
+        // The console is drawn even while the rest of the overlay is hidden: it has its own key.
+        m_consoleWindow.Draw(context.logHistory);
+
         // 3. ImGui turns the recorded windows into lists of triangles, and the OpenGL backend draws them.
         ImGui::Render();
         m_rendererBackend.DrawFrame();
@@ -221,6 +224,11 @@ namespace Abomination::UI
         return m_isVisible;
     }
 
+    void DebugOverlay::ToggleConsole() noexcept
+    {
+        m_consoleWindow.Toggle();
+    }
+
     void DebugOverlay::DrawMainMenuBar(const DebugOverlayContext& context)
     {
         // BeginMainMenuBar() creates a bar along the top edge of the screen; BeginMenu() adds a menu to it that opens
@@ -236,6 +244,7 @@ namespace Abomination::UI
             ImGui::MenuItem("Entities", nullptr, &m_isEntitiesWindowOpen);
             ImGui::MenuItem("Renderer", nullptr, &m_isRendererWindowOpen);
             ImGui::MenuItem("Collision", nullptr, &m_isCollisionWindowOpen);
+            ImGui::MenuItem("Console", "`", m_consoleWindow.GetOpenFlag());
             ImGui::EndMenu();
         }
 

@@ -28,12 +28,12 @@ namespace
 
     // Creates and runs the application. It is a separate function so that the application (the window, SDL)
     // is destroyed when the function returns, while logging still works and can record the shutdown.
-    int RunApplication()
+    int RunApplication(LogHistory& logHistory)
     {
         // CMake copies the Assets folder of the repository next to the executable on every build.
         const std::filesystem::path assetsDirectory = Platform::GetExecutableDirectory() / "Assets";
 
-        std::expected<Application, std::string> application = Application::Create(assetsDirectory);
+        std::expected<Application, std::string> application = Application::Create(assetsDirectory, logHistory);
         if (!application.has_value())
         {
             Log::Write(LogCategory::Core, LogLevel::Critical, "{}", application.error());
@@ -59,7 +59,7 @@ int main()
 
     Log::Write(LogCategory::Core, LogLevel::Info, "Abomination {}", GetGameVersionString());
 
-    const int exitCode = RunApplication();
+    const int exitCode = RunApplication(logHistory);
 
     Log::Shutdown();
 

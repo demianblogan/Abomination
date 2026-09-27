@@ -43,21 +43,7 @@ namespace Abomination::Core::Log
 
         constexpr std::string_view ConvertToString(LogCategory category) noexcept
         {
-            switch (category)
-            {
-                case LogCategory::Core:
-                    return "Core";
-                case LogCategory::Platform:
-                    return "Platform";
-                case LogCategory::Renderer:
-                    return "Renderer";
-                case LogCategory::UI:
-                    return "UI";
-                case LogCategory::World:
-                    return "World";
-            }
-
-            return "Unknown";
+            return LogCategoryNames[std::to_underlying(category)];
         }
 
         constexpr spdlog::level::level_enum ConvertToSPDLogLevel(LogLevel level) noexcept

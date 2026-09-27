@@ -121,6 +121,8 @@ set(LIBRARY_SOURCES
     Renderer/View.h
     Renderer/View.cpp
 
+    UI/ConsoleWindow.h
+    UI/ConsoleWindow.cpp
     UI/DebugOverlay.h
     UI/DebugOverlay.cpp
     UI/EntitiesWindow.h

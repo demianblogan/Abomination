@@ -41,6 +41,11 @@ namespace Abomination::Core
         template <typename Visitor>
         void VisitEntries(Visitor&& visitor) const;
 
+        // Calls reader(entries) once with all messages (a const std::deque<LogEntry>&, the oldest first) while the history
+        // is locked: for readers that need to jump around in them, like the console, which draws only the visible lines.
+        template <typename Reader>
+        void ReadEntries(Reader&& reader) const;
+
         [[nodiscard]] std::size_t GetCount() const;
 
         // How many messages were ever added (not reduced by pushing out or Clear()). The console scrolls to the bottom
@@ -56,6 +61,13 @@ namespace Abomination::Core
         std::size_t m_capacity = 0;
         std::uint64_t m_addedCount = 0;
     };
+
+    template <typename Reader>
+    void LogHistory::ReadEntries(Reader&& reader) const
+    {
+        const std::lock_guard lock(m_mutex);
+        reader(m_entries); // const here, because the function is const
+    }
 
     template <typename Visitor>
     void LogHistory::VisitEntries(Visitor&& visitor) const

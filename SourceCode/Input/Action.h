@@ -31,6 +31,7 @@ namespace Abomination::Input
 
         // Developer tools
         ToggleDebugOverlay,
+        ToggleConsole,
 
         // Not an action: the number of actions above. Must stay the last value.
         Count,

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Renderer/MeshData.h"
+#include "Renderer/Assets/MeshData.h"
 #include "World/MapData.h"
 
 #include <glm/vec2.hpp>

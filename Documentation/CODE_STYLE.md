@@ -169,7 +169,7 @@ namespace Abomination::Renderer
 Order, separated by a blank line (clang-format sorts inside groups):
 
 1. The matching header (in a `.cpp`).
-2. Project headers — quotes, path from `SourceCode/`: `#include "Renderer/Mesh.h"`.
+2. Project headers — quotes, path from `SourceCode/`: `#include "Renderer/Assets/Mesh.h"`.
 3. Third-party headers — angle brackets: `#include <glm/glm.hpp>`.
 4. Standard library headers: `#include <vector>`.
 

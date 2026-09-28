@@ -3,22 +3,22 @@ find_package(Stb REQUIRED)  # ImageTests writes test PNG files with stb_image_wr
 
 # --- Unit tests: one executable for all tests, mirrors SourceCode/ ------------
 set(TEST_SOURCES
-    Core/AssetCacheTests.cpp
-    Core/BoundingBoxTests.cpp
-    Core/ConvexPolygonTests.cpp
-    Core/FileSystemTests.cpp
-    Core/FixedTimestepTests.cpp
-    Core/FrameLimiterTests.cpp
-    Core/FrameStatisticsTests.cpp
-    Core/FrameTimerTests.cpp
-    Core/ImageTests.cpp
-    Core/LogHistoryTests.cpp
-    Core/LogTests.cpp
-    Core/PlaneTests.cpp
-    Core/TransformTests.cpp
-    Core/TransformInterpolationTests.cpp
-    Core/UnitsTests.cpp
     Core/VersionTests.cpp
+    Core/Assets/AssetCacheTests.cpp
+    Core/Files/FileSystemTests.cpp
+    Core/Files/ImageTests.cpp
+    Core/Logging/LogHistoryTests.cpp
+    Core/Logging/LogTests.cpp
+    Core/Math/BoundingBoxTests.cpp
+    Core/Math/ConvexPolygonTests.cpp
+    Core/Math/PlaneTests.cpp
+    Core/Math/UnitsTests.cpp
+    Core/Scene/TransformInterpolationTests.cpp
+    Core/Scene/TransformTests.cpp
+    Core/Time/FixedTimestepTests.cpp
+    Core/Time/FrameLimiterTests.cpp
+    Core/Time/FrameStatisticsTests.cpp
+    Core/Time/FrameTimerTests.cpp
 
     Gameplay/FreeFlyCameraControllerTests.cpp
     Gameplay/PlayerTests.cpp
@@ -34,10 +34,10 @@ set(TEST_SOURCES
 
     Platform/WindowSizingTests.cpp
 
-    Renderer/DebugLinesTests.cpp
-    Renderer/GLTextureTests.cpp
-    Renderer/MeshPrimitivesTests.cpp
-    Renderer/ViewTests.cpp
+    Renderer/Assets/MeshPrimitivesTests.cpp
+    Renderer/Camera/ViewTests.cpp
+    Renderer/Debug/DebugLinesTests.cpp
+    Renderer/OpenGL/GLTextureTests.cpp
 
     ThirdParty/EnTTTests.cpp
 

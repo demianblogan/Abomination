@@ -5,7 +5,7 @@
 #include "Input/InputBindings.h"
 #include "Input/InputDevices.h"
 #include "Physics/CharacterBody.h"
-#include "Renderer/CameraLens.h"
+#include "Renderer/Camera/CameraLens.h"
 #include "World/CollisionDebug.h"
 
 #include <glm/geometric.hpp>

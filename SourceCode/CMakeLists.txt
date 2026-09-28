@@ -17,41 +17,41 @@ set(LIBRARY_SOURCES
     Application/Application.h
     Application/Application.cpp
 
-    Core/AssetCache.h
-    Core/AssetHandle.h
-    Core/AssetLifetime.h
-    Core/BoundingBox.h
-    Core/BoundingBox.cpp
     Core/BuildConfiguration.h
-    Core/Clock.h
-    Core/ConvexPolygon.h
-    Core/ConvexPolygon.cpp
-    Core/FileSystem.h
-    Core/FileSystem.cpp
-    Core/FixedTimestep.h
-    Core/FixedTimestep.cpp
-    Core/FrameLimiter.h
-    Core/FrameLimiter.cpp
-    Core/FrameStatistics.h
-    Core/FrameStatistics.cpp
-    Core/FrameTimer.h
-    Core/FrameTimer.cpp
-    Core/Image.h
-    Core/Image.cpp
-    Core/Log.h
-    Core/Log.cpp
-    Core/LogHistory.h
-    Core/LogHistory.cpp
-    Core/Name.h
-    Core/Plane.h
-    Core/Plane.cpp
-    Core/Transform.h
-    Core/Transform.cpp
-    Core/TransformInterpolation.h
-    Core/TransformInterpolation.cpp
-    Core/Units.h
     Core/Version.h
     Core/Version.cpp.in
+    Core/Assets/AssetCache.h
+    Core/Assets/AssetHandle.h
+    Core/Assets/AssetLifetime.h
+    Core/Files/FileSystem.h
+    Core/Files/FileSystem.cpp
+    Core/Files/Image.h
+    Core/Files/Image.cpp
+    Core/Logging/Log.h
+    Core/Logging/Log.cpp
+    Core/Logging/LogHistory.h
+    Core/Logging/LogHistory.cpp
+    Core/Math/BoundingBox.h
+    Core/Math/BoundingBox.cpp
+    Core/Math/ConvexPolygon.h
+    Core/Math/ConvexPolygon.cpp
+    Core/Math/Plane.h
+    Core/Math/Plane.cpp
+    Core/Math/Units.h
+    Core/Scene/Name.h
+    Core/Scene/Transform.h
+    Core/Scene/Transform.cpp
+    Core/Scene/TransformInterpolation.h
+    Core/Scene/TransformInterpolation.cpp
+    Core/Time/Clock.h
+    Core/Time/FixedTimestep.h
+    Core/Time/FixedTimestep.cpp
+    Core/Time/FrameLimiter.h
+    Core/Time/FrameLimiter.cpp
+    Core/Time/FrameStatistics.h
+    Core/Time/FrameStatistics.cpp
+    Core/Time/FrameTimer.h
+    Core/Time/FrameTimer.cpp
 
     Gameplay/FreeFlyCameraController.h
     Gameplay/FreeFlyCameraController.cpp
@@ -90,46 +90,46 @@ set(LIBRARY_SOURCES
     Platform/WindowSizing.h
     Platform/WindowSizing.cpp
 
-    Renderer/CameraLens.h
-    Renderer/DebugLineRenderer.h
-    Renderer/DebugLineRenderer.cpp
-    Renderer/DebugLines.h
-    Renderer/DebugLines.cpp
-    Renderer/DebugOutput.h
-    Renderer/DebugOutput.cpp
-    Renderer/GLBuffer.h
-    Renderer/GLBuffer.cpp
-    Renderer/GLShaderProgram.h
-    Renderer/GLShaderProgram.cpp
-    Renderer/GLTexture.h
-    Renderer/GLTexture.cpp
-    Renderer/GLVertexArray.h
-    Renderer/GLVertexArray.cpp
     Renderer/ImGuiRendererBackend.h
     Renderer/ImGuiRendererBackend.cpp
-    Renderer/Mesh.h
-    Renderer/Mesh.cpp
-    Renderer/MeshData.h
-    Renderer/MeshPrimitives.h
-    Renderer/MeshPrimitives.cpp
     Renderer/MeshRenderer.h
-    Renderer/MeshStore.h
-    Renderer/MeshStore.cpp
-    Renderer/OpenGLLoader.h
-    Renderer/OpenGLLoader.cpp
-    Renderer/RenderAssets.h
-    Renderer/RenderCommands.h
-    Renderer/RenderCommands.cpp
     Renderer/RenderSettings.h
     Renderer/RenderSystem.h
     Renderer/RenderSystem.cpp
-    Renderer/ShaderInterface.h
-    Renderer/ShaderStore.h
-    Renderer/ShaderStore.cpp
-    Renderer/TextureStore.h
-    Renderer/TextureStore.cpp
-    Renderer/View.h
-    Renderer/View.cpp
+    Renderer/Assets/Mesh.h
+    Renderer/Assets/Mesh.cpp
+    Renderer/Assets/MeshData.h
+    Renderer/Assets/MeshPrimitives.h
+    Renderer/Assets/MeshPrimitives.cpp
+    Renderer/Assets/MeshStore.h
+    Renderer/Assets/MeshStore.cpp
+    Renderer/Assets/RenderAssets.h
+    Renderer/Assets/ShaderStore.h
+    Renderer/Assets/ShaderStore.cpp
+    Renderer/Assets/TextureStore.h
+    Renderer/Assets/TextureStore.cpp
+    Renderer/Camera/CameraLens.h
+    Renderer/Camera/View.h
+    Renderer/Camera/View.cpp
+    Renderer/Debug/DebugLineRenderer.h
+    Renderer/Debug/DebugLineRenderer.cpp
+    Renderer/Debug/DebugLines.h
+    Renderer/Debug/DebugLines.cpp
+    Renderer/OpenGL/DebugOutput.h
+    Renderer/OpenGL/DebugOutput.cpp
+    Renderer/OpenGL/GLBuffer.h
+    Renderer/OpenGL/GLBuffer.cpp
+    Renderer/OpenGL/GLShaderProgram.h
+    Renderer/OpenGL/GLShaderProgram.cpp
+    Renderer/OpenGL/GLTexture.h
+    Renderer/OpenGL/GLTexture.cpp
+    Renderer/OpenGL/GLVertexArray.h
+    Renderer/OpenGL/GLVertexArray.cpp
+    Renderer/OpenGL/OpenGLLoader.h
+    Renderer/OpenGL/OpenGLLoader.cpp
+    Renderer/OpenGL/RenderCommands.h
+    Renderer/OpenGL/RenderCommands.cpp
+    Renderer/OpenGL/ShaderInterface.h
 
     UI/AssetsWindow.h
     UI/AssetsWindow.cpp
@@ -180,7 +180,7 @@ add_library(AbominationCore STATIC
     ${GENERATED_DIR}/Core/Version.cpp
 )
 target_include_directories(AbominationCore PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-target_include_directories(AbominationCore SYSTEM PRIVATE ${Stb_INCLUDE_DIR})  # Only Core/Image.cpp includes stb
+target_include_directories(AbominationCore SYSTEM PRIVATE ${Stb_INCLUDE_DIR})  # Only Core/Files/Image.cpp includes stb
 target_link_libraries(AbominationCore
     PUBLIC
         EnTT                  # Header-only; game headers hold entt::registry and entities, so it is public

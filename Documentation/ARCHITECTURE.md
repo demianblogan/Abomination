@@ -367,7 +367,7 @@ Inside the renderer:
   section 9).
 - Explicit `layout(location)` / `layout(binding)` everywhere: C++ constants
   and shaders agree on the numbers in advance, nothing is queried at run time.
-  All the C++ side of them is in `Renderer/ShaderInterface.h`.
+  All the C++ side of them is in `Renderer/OpenGL/ShaderInterface.h`.
 - `View` — what the renderer knows about the camera of a frame: the view and
   projection matrices and the position, calculated by `CalculateView` from the
   camera entity's `Core::Transform` and `CameraLens` (see section 8).
@@ -521,7 +521,7 @@ player entity                                free-fly camera entity
 - A camera looks along its **local −Z** axis; its local +X is its right side,
   local +Y the top of the screen. Its direction in the world is its rotation
   applied to these local directions (`rotation * LocalForward`; `WorldUp`,
-  `LocalForward` and `LocalRight` are defined once in `Core/Transform.h`).
+  `LocalForward` and `LocalRight` are defined once in `Core/Scene/Transform.h`).
 - `Renderer::CalculateView` turns `Transform` + `CameraLens` into a
   `Renderer::View`: the view matrix is the inverse of the camera's own
   placement (move the world by −position, then turn it back by the conjugate
@@ -684,7 +684,16 @@ would have to see every module and break the dependency rule. A component
 used by one system only shares its file (`Gameplay/Spin.h`); a component used
 by several gets its own header. When a module grows, it is split into topic
 folders that hold components and systems together (`Gameplay/Weapons/`,
-`Gameplay/Enemies/`), keeping the namespace of the module.
+`Gameplay/Enemies/`), keeping the namespace of the module: `Core/Time/Clock.h`
+is `Abomination::Core::Clock`. Core and Renderer are split already:
+
+| Module | Root | Topic folders |
+|--------|------|---------------|
+| `Core` | `BuildConfiguration`, `Version` | `Time/` (clock, frame timer, fixed timestep, FPS limit, statistics), `Logging/`, `Files/` (files, images), `Math/` (units, planes, polygons, bounding boxes), `Assets/` (handles, cache, lifetimes), `Scene/` (`Name`, `Transform`, interpolation) |
+| `Renderer` | `RenderSystem`, `RenderSettings`, `MeshRenderer`, `ImGuiRendererBackend` | `OpenGL/` (wrappers of OpenGL objects, loader, debug output, shader interface), `Assets/` (meshes and the stores), `Camera/` (`CameraLens`, `View`), `Debug/` (debug lines) |
+
+A module is split when its folder no longer shows its parts at a glance
+(around 20 files); the tests in `Tests/` follow the same folders.
 
 **Tools.** The entity inspector of the debug overlay (View > Engine > Entities) lists
 all entities (`registry.view<entt::entity>()`) and shows and edits the

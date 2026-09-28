@@ -1,9 +1,9 @@
 #include "Renderer/RenderSystem.h"
 
-#include "Core/Transform.h"
-#include "Core/TransformInterpolation.h"
+#include "Core/Scene/Transform.h"
+#include "Core/Scene/TransformInterpolation.h"
 #include "Renderer/MeshRenderer.h"
-#include "Renderer/ShaderInterface.h"
+#include "Renderer/OpenGL/ShaderInterface.h"
 
 #include <glad/gl.h>
 

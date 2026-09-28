@@ -1,6 +1,6 @@
 #include "Platform/SDLLibrary.h"
 
-#include "Core/Log.h"
+#include "Core/Logging/Log.h"
 
 #include <SDL3/SDL.h>
 

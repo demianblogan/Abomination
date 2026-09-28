@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Renderer/RenderAssets.h"
+#include "Renderer/Assets/RenderAssets.h"
 #include "World/CollisionBrush.h"
 #include "World/LevelMesh.h"
 #include "World/MapData.h"

@@ -1,8 +1,8 @@
 #include "UI/DebugOverlay.h"
 
-#include "Core/FrameLimiter.h"
+#include "Core/Time/FrameLimiter.h"
 #include "Platform/Window.h"
-#include "Renderer/OpenGLLoader.h"
+#include "Renderer/OpenGL/OpenGLLoader.h"
 #include "UI/AssetsWindow.h"
 #include "UI/CollisionWindow.h"
 #include "UI/MovementWindow.h"

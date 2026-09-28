@@ -1,8 +1,8 @@
 #include "World/Level.h"
 
-#include "Core/Log.h"
-#include "Core/Name.h"
-#include "Core/Transform.h"
+#include "Core/Logging/Log.h"
+#include "Core/Scene/Name.h"
+#include "Core/Scene/Transform.h"
 #include "Renderer/MeshRenderer.h"
 #include "World/MapCoordinates.h"
 

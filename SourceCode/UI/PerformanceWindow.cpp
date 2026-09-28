@@ -1,9 +1,9 @@
 #include "UI/PerformanceWindow.h"
 
 #include "Core/BuildConfiguration.h"
-#include "Core/FixedTimestep.h"
-#include "Core/FrameLimiter.h"
-#include "Core/FrameStatistics.h"
+#include "Core/Time/FixedTimestep.h"
+#include "Core/Time/FrameLimiter.h"
+#include "Core/Time/FrameStatistics.h"
 #include "Core/Version.h"
 #include "Platform/Window.h"
 #include "UI/UIScale.h"

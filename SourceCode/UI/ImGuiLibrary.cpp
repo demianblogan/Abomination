@@ -1,7 +1,7 @@
 #include "UI/ImGuiLibrary.h"
 
-#include "Core/FileSystem.h"
-#include "Core/Log.h"
+#include "Core/Files/FileSystem.h"
+#include "Core/Logging/Log.h"
 
 #include <imgui.h>
 

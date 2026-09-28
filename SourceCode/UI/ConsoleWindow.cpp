@@ -1,6 +1,6 @@
 #include "UI/ConsoleWindow.h"
 
-#include "Core/LogHistory.h"
+#include "Core/Logging/LogHistory.h"
 #include "UI/UIScale.h"
 
 #include <imgui.h>

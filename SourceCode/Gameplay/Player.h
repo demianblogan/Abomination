@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Core/Transform.h"
-#include "Core/Units.h"
+#include "Core/Math/Units.h"
+#include "Core/Scene/Transform.h"
 #include "Gameplay/MouseLook.h"
 #include "World/PlayerStart.h"
 

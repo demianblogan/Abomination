@@ -1,10 +1,10 @@
-#include "Core/Transform.h"
-#include "Core/TransformInterpolation.h"
+#include "Core/Scene/Transform.h"
+#include "Core/Scene/TransformInterpolation.h"
 #include "Gameplay/FreeFlyCameraController.h"
 #include "Input/ActionStates.h"
 #include "Input/InputBindings.h"
 #include "Input/InputDevices.h"
-#include "Renderer/CameraLens.h"
+#include "Renderer/Camera/CameraLens.h"
 
 #include <entt/entt.hpp>
 #include <glm/exponential.hpp>

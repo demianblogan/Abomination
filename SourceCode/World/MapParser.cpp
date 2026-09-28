@@ -1,6 +1,6 @@
 #include "World/MapParser.h"
 
-#include "Core/FileSystem.h"
+#include "Core/Files/FileSystem.h"
 
 #include <charconv>
 #include <cstddef>

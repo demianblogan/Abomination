@@ -1,7 +1,7 @@
 #include "UI/AssetsWindow.h"
 
-#include "Core/AssetLifetime.h"
-#include "Renderer/RenderAssets.h"
+#include "Core/Assets/AssetLifetime.h"
+#include "Renderer/Assets/RenderAssets.h"
 #include "UI/UIScale.h"
 
 #include <imgui.h>

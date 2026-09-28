@@ -1,9 +1,9 @@
 #pragma once
 
-#include "Renderer/RenderAssets.h"
+#include "Renderer/Assets/RenderAssets.h"
+#include "Renderer/Assets/ShaderStore.h"
+#include "Renderer/Camera/View.h"
 #include "Renderer/RenderSettings.h"
-#include "Renderer/ShaderStore.h"
-#include "Renderer/View.h"
 
 #include <entt/entt.hpp>
 
@@ -33,7 +33,7 @@ namespace Abomination::Renderer
 
     // The render system: draws every entity that has a Core::Transform and a MeshRenderer, as seen from the view.
     // Entities with a Core::PreviousTransform are drawn at fraction interpolationFactor of the way from their previous
-    // to their current transform (see Core/TransformInterpolation.h); the others at their current transform.
+    // to their current transform (see Core/Scene/TransformInterpolation.h); the others at their current transform.
     // settings choose how to draw: filled, with the shader of every entity, or as a wireframe, with the wireframe shader
     // of systemShaders for every entity. Only reads the registry: drawing never changes the game.
     // Returns how much was drawn.

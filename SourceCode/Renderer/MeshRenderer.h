@@ -1,8 +1,8 @@
 #pragma once
 
-#include "Renderer/MeshStore.h"
-#include "Renderer/ShaderStore.h"
-#include "Renderer/TextureStore.h"
+#include "Renderer/Assets/MeshStore.h"
+#include "Renderer/Assets/ShaderStore.h"
+#include "Renderer/Assets/TextureStore.h"
 
 namespace Abomination::Renderer
 {

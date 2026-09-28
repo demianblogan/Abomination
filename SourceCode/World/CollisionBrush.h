@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Core/BoundingBox.h"
-#include "Core/Plane.h"
+#include "Core/Math/BoundingBox.h"
+#include "Core/Math/Plane.h"
 #include "World/MapData.h"
 
 #include <vector>

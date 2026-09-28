@@ -1,7 +1,7 @@
 #include "Platform/Window.h"
 
 #include "Core/BuildConfiguration.h"
-#include "Core/Log.h"
+#include "Core/Logging/Log.h"
 #include "Input/InputDevices.h"
 #include "Platform/WindowSizing.h"
 

@@ -1,10 +1,10 @@
 #include "Gameplay/Player.h"
 
-#include "Core/Name.h"
-#include "Core/TransformInterpolation.h"
+#include "Core/Scene/Name.h"
+#include "Core/Scene/TransformInterpolation.h"
 #include "Gameplay/MouseLook.h"
 #include "Physics/CharacterBody.h"
-#include "Renderer/CameraLens.h"
+#include "Renderer/Camera/CameraLens.h"
 
 #include <glm/common.hpp>
 #include <glm/vec3.hpp>

@@ -1,11 +1,11 @@
 #include "Gameplay/FreeFlyCameraController.h"
 
-#include "Core/Name.h"
-#include "Core/Transform.h"
-#include "Core/TransformInterpolation.h"
+#include "Core/Scene/Name.h"
+#include "Core/Scene/Transform.h"
+#include "Core/Scene/TransformInterpolation.h"
 #include "Input/ActionStates.h"
 #include "Input/Mouse.h"
-#include "Renderer/CameraLens.h"
+#include "Renderer/Camera/CameraLens.h"
 
 #include <glm/common.hpp>
 #include <glm/geometric.hpp>

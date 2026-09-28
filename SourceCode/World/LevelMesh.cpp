@@ -1,6 +1,6 @@
 #include "World/LevelMesh.h"
 
-#include "Core/Plane.h"
+#include "Core/Math/Plane.h"
 #include "World/BrushGeometry.h"
 #include "World/MapCoordinates.h"
 #include "World/TextureCoordinates.h"

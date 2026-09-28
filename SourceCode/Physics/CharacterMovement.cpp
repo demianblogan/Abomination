@@ -1,6 +1,6 @@
 #include "Physics/CharacterMovement.h"
 
-#include "Core/Log.h"
+#include "Core/Logging/Log.h"
 #include "World/CollisionTrace.h"
 
 #include <glm/common.hpp>

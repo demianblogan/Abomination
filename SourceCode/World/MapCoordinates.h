@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Core/Plane.h"
+#include "Core/Math/Plane.h"
 
 #include <glm/vec3.hpp>
 
@@ -14,7 +14,7 @@
 //   game (OpenGL, glm):        meters, Y is up, -Z is forward
 namespace Abomination::World
 {
-    // A position: axes turned (x, y, z) -> (x, z, -y), then units -> meters (see Core/Units.h).
+    // A position: axes turned (x, y, z) -> (x, z, -y), then units -> meters (see Core/Math/Units.h).
     // The turn is a rotation by 90 degrees around X: map +Z (up) becomes game +Y (up), map +Y becomes game -Z.
     // A rotation keeps the handedness of the coordinate system, so the counter-clockwise order of face corners, and
     // with it the front side of faces, stays the same.

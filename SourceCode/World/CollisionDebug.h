@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Core/Transform.h"
-#include "Renderer/DebugLines.h"
+#include "Core/Scene/Transform.h"
+#include "Renderer/Debug/DebugLines.h"
 #include "World/CollisionBrush.h"
 #include "World/CollisionTrace.h"
 #include "World/PlayerStart.h"

@@ -1,15 +1,15 @@
 #include "UI/EntitiesWindow.h"
 
-#include "Core/Name.h"
-#include "Core/Transform.h"
-#include "Core/TransformInterpolation.h"
+#include "Core/Scene/Name.h"
+#include "Core/Scene/Transform.h"
+#include "Core/Scene/TransformInterpolation.h"
 #include "Gameplay/MouseLook.h"
 #include "Gameplay/Player.h"
 #include "Gameplay/Spin.h"
 #include "Physics/CharacterBody.h"
-#include "Renderer/CameraLens.h"
+#include "Renderer/Assets/RenderAssets.h"
+#include "Renderer/Camera/CameraLens.h"
 #include "Renderer/MeshRenderer.h"
-#include "Renderer/RenderAssets.h"
 #include "UI/UIScale.h"
 
 #include <glm/gtc/quaternion.hpp>

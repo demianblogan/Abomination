@@ -63,14 +63,14 @@ namespace Abomination::Core
     {
         // One second of frames at different frame rates always gives 60 ticks (±1 for float rounding at the end
         // of the second: the 60th tick may still be in the accumulator).
-        for (const int framesPerSecond : {15, 30, 60, 144, 1000})
+        for (const int FPS : {15, 30, 60, 144, 1000})
         {
             FixedTimestep timestep(60);
             int tickCount = 0;
-            for (int frame = 0; frame < framesPerSecond; ++frame)
-                tickCount += timestep.Advance(1.0f / static_cast<float>(framesPerSecond));
+            for (int frame = 0; frame < FPS; ++frame)
+                tickCount += timestep.Advance(1.0f / static_cast<float>(FPS));
 
-            EXPECT_NEAR(tickCount, 60, 1) << "at " << framesPerSecond << " FPS";
+            EXPECT_NEAR(tickCount, 60, 1) << "at " << FPS << " FPS";
         }
     }
 }

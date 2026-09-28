@@ -37,7 +37,7 @@ namespace Abomination::UI
         //   120    - an even pattern: 0, 1, 0, 1 ticks per frame;
         //   144    - an uneven pattern (0, 0, 1, 0, 1, ...), where movement stutters without interpolation;
         //   240    - common fast monitors, many frames without a tick.
-        constexpr std::array FramesPerSecondLimits{0, 15, 30, 60, 120, 144, 240};
+        constexpr std::array FPSLimits{0, 15, 30, 60, 120, 144, 240};
 
         // The UI scales offered in Settings > Display > UI scale. They multiply the display scale of Windows: for a screen
         // whose Windows setting does not match how far away it is (a 4K TV at 100%, seen from the sofa).
@@ -229,11 +229,11 @@ namespace Abomination::UI
                 // One item per limit, the current one checked (like radio buttons).
                 if (ImGui::BeginMenu("FPS limit"))
                 {
-                    for (const int limit : FramesPerSecondLimits)
+                    for (const int limit : FPSLimits)
                     {
-                        const bool isCurrentLimit = context.frameLimiter.GetMaxFramesPerSecond() == limit;
-                        if (ImGui::MenuItem(FormatFramesPerSecondLimit(limit).c_str(), nullptr, isCurrentLimit))
-                            context.frameLimiter.SetMaxFramesPerSecond(limit);
+                        const bool isCurrentLimit = context.frameLimiter.GetMaxFPS() == limit;
+                        if (ImGui::MenuItem(FormatFPSLimit(limit).c_str(), nullptr, isCurrentLimit))
+                            context.frameLimiter.SetMaxFPS(limit);
                     }
 
                     ImGui::EndMenu();

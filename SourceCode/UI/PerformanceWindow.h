@@ -26,5 +26,5 @@ namespace Abomination::UI
                                const Core::FrameLimiter& frameLimiter, std::string_view GPUName);
 
     // "Unlimited" or "144 FPS": the text of a frame rate limit, in this window and in the Settings menu.
-    [[nodiscard]] std::string FormatFramesPerSecondLimit(int maxFramesPerSecond);
+    [[nodiscard]] std::string FormatFPSLimit(int maxFPS);
 }

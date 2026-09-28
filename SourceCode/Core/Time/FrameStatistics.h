@@ -35,7 +35,7 @@ namespace Abomination::Core
         [[nodiscard]] float GetAverageFrameTime() const noexcept;
 
         // Frames per second derived from GetAverageFrameTime(). 0 while no frame was added.
-        [[nodiscard]] float GetAverageFramesPerSecond() const noexcept;
+        [[nodiscard]] float GetAverageFPS() const noexcept;
 
         // Duration of the longest frame in seconds over the same frames as GetAverageFrameTime(). 0 while no frame was added.
         [[nodiscard]] float GetLongestFrameTime() const noexcept;

@@ -14,7 +14,7 @@ namespace Abomination::Core
         const FrameStatistics statistics;
 
         EXPECT_FLOAT_EQ(statistics.GetAverageFrameTime(), 0.0f);
-        EXPECT_FLOAT_EQ(statistics.GetAverageFramesPerSecond(), 0.0f);
+        EXPECT_FLOAT_EQ(statistics.GetAverageFPS(), 0.0f);
         EXPECT_FLOAT_EQ(statistics.GetLongestFrameTime(), 0.0f);
         EXPECT_TRUE(statistics.GetFrameTimeSamples().empty());
     }
@@ -28,7 +28,7 @@ namespace Abomination::Core
         statistics.AddFrame(0.030f, 0);
 
         EXPECT_NEAR(statistics.GetAverageFrameTime(), 0.020f, Tolerance);
-        EXPECT_NEAR(statistics.GetAverageFramesPerSecond(), 50.0f, 0.001f);
+        EXPECT_NEAR(statistics.GetAverageFPS(), 50.0f, 0.001f);
     }
 
     // The following tests use powers of two (0.25, 0.125, 0.0625): they are exact in float, so the interval ends
@@ -46,12 +46,12 @@ namespace Abomination::Core
         for (int frame = 0; frame < 7; ++frame)
             statistics.AddFrame(0.0625f, 0);
         EXPECT_FLOAT_EQ(statistics.GetAverageFrameTime(), 0.125f);
-        EXPECT_FLOAT_EQ(statistics.GetAverageFramesPerSecond(), 8.0f);
+        EXPECT_FLOAT_EQ(statistics.GetAverageFPS(), 8.0f);
 
         // ...which happens on the 8th frame: 8 x 0.0625 s = 0.5 s.
         statistics.AddFrame(0.0625f, 0);
         EXPECT_FLOAT_EQ(statistics.GetAverageFrameTime(), 0.0625f);
-        EXPECT_FLOAT_EQ(statistics.GetAverageFramesPerSecond(), 16.0f);
+        EXPECT_FLOAT_EQ(statistics.GetAverageFPS(), 16.0f);
     }
 
     TEST(FrameStatistics, LongestFrameIsForgottenInNextInterval)

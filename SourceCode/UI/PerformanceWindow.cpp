@@ -75,14 +75,14 @@ namespace Abomination::UI
             const float longestFrameTime = frameStatistics.GetLongestFrameTime();
 
             // "{:.0f}" - no digits after the point, "{:.2f}" - two digits.
-            const std::string framesPerSecondText = std::format("FPS: {:.0f}", frameStatistics.GetAverageFramesPerSecond());
+            const std::string FPSText = std::format("FPS: {:.0f}", frameStatistics.GetAverageFPS());
             const std::string frameTimeText =
                 std::format("Frame time: {:.2f} ms (longest {:.2f} ms)", averageFrameTime * MillisecondsPerSecond,
                             longestFrameTime * MillisecondsPerSecond);
             const std::string frameRateSettingsText =
                 std::format("V-Sync: {}, FPS limit: {}", window.IsVSyncEnabled() ? "on" : "off",
-                            FormatFramesPerSecondLimit(frameLimiter.GetMaxFramesPerSecond()));
-            ImGui::TextUnformatted(framesPerSecondText.c_str());
+                            FormatFPSLimit(frameLimiter.GetMaxFPS()));
+            ImGui::TextUnformatted(FPSText.c_str());
             ImGui::TextUnformatted(frameTimeText.c_str());
             ImGui::TextUnformatted(frameRateSettingsText.c_str());
 
@@ -113,11 +113,11 @@ namespace Abomination::UI
         ImGui::End();
     }
 
-    std::string FormatFramesPerSecondLimit(int maxFramesPerSecond)
+    std::string FormatFPSLimit(int maxFPS)
     {
-        if (maxFramesPerSecond == 0)
+        if (maxFPS == 0)
             return "Unlimited";
 
-        return std::format("{} FPS", maxFramesPerSecond);
+        return std::format("{} FPS", maxFPS);
     }
 }

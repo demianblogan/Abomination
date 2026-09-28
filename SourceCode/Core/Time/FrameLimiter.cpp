@@ -4,32 +4,32 @@
 
 namespace Abomination::Core
 {
-    void FrameLimiter::SetMaxFramesPerSecond(int maxFramesPerSecond) noexcept
+    void FrameLimiter::SetMaxFPS(int maxFPS) noexcept
     {
-        if (maxFramesPerSecond <= 0)
+        if (maxFPS <= 0)
         {
-            m_maxFramesPerSecond = 0;
+            m_maxFPS = 0;
             m_minFrameDuration = Duration::zero();
 
             return;
         }
 
-        m_maxFramesPerSecond = maxFramesPerSecond;
+        m_maxFPS = maxFPS;
 
         // duration<double> holds seconds as a double: 1/60 = 0.01666... s. duration_cast then converts it into the ticks
         // of the clock (nanoseconds), dropping the fraction of a nanosecond: 16'666'666 ns.
-        const std::chrono::duration<double> minFrameSeconds(1.0 / maxFramesPerSecond);
+        const std::chrono::duration<double> minFrameSeconds(1.0 / maxFPS);
         m_minFrameDuration = std::chrono::duration_cast<Duration>(minFrameSeconds);
     }
 
-    int FrameLimiter::GetMaxFramesPerSecond() const noexcept
+    int FrameLimiter::GetMaxFPS() const noexcept
     {
-        return m_maxFramesPerSecond;
+        return m_maxFPS;
     }
 
     Duration FrameLimiter::GetWaitTime(TimePoint frameStartTime, TimePoint now) const noexcept
     {
-        if (m_maxFramesPerSecond == 0)
+        if (m_maxFPS == 0)
             return Duration::zero();
 
         // The frame must not end before this moment.

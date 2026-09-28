@@ -45,7 +45,7 @@ namespace Abomination::Core
         return m_intervalTime / static_cast<float>(m_intervalFrameCount);
     }
 
-    float FrameStatistics::GetAverageFramesPerSecond() const noexcept
+    float FrameStatistics::GetAverageFPS() const noexcept
     {
         const float averageFrameTime = GetAverageFrameTime();
         if (averageFrameTime <= 0.0f)

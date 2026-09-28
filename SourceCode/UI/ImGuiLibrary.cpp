@@ -5,6 +5,7 @@
 
 #include <imgui.h>
 
+#include <cassert>
 #include <filesystem>
 #include <utility>
 
@@ -121,6 +122,9 @@ namespace Abomination::UI
 
     void ImGuiLibrary::SetScale(float scale)
     {
+        // A scale of 0 or less would make all text and sizes vanish or turn inside out.
+        assert(scale > 0.0f);
+
         ApplyStyle(m_fontSize, scale);
     }
 

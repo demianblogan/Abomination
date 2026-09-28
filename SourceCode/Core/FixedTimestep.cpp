@@ -1,13 +1,19 @@
 #include "Core/FixedTimestep.h"
 
 #include <algorithm>
+#include <cassert>
 
 namespace Abomination::Core
 {
     FixedTimestep::FixedTimestep(int ticksPerSecond) noexcept
         : m_ticksPerSecond(ticksPerSecond)
         , m_tickDuration(1.0f / static_cast<float>(ticksPerSecond))
-    {}
+    {
+        // 0 ticks per second would make the tick infinitely long. An assertion checks a mistake of the programmer, not a
+        // situation the game handles: in Debug builds it stops the program right here (with the debugger attached, on
+        // this line); in Release builds it is removed and costs nothing.
+        assert(ticksPerSecond > 0);
+    }
 
     int FixedTimestep::Advance(float frameTime) noexcept
     {

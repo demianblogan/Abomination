@@ -4,10 +4,15 @@
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/gtc/quaternion.hpp>
 
+#include <cassert>
+
 namespace Abomination::Renderer
 {
     View CalculateView(const Core::Transform& cameraTransform, const CameraLens& lens, float aspectRatio)
     {
+        // A minimized window has a height of 0; the caller must not ask for a View then (glm::perspective divides by it).
+        assert(aspectRatio > 0.0f);
+
         // The camera's own matrix (without scale) would place a "camera object" in the world: rotate, then move to its
         // position. The view matrix must do the opposite to the whole world, so that the camera ends up at the origin
         // looking along -Z: first move everything by -position, then turn it back by the inverse rotation.

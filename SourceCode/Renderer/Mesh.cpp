@@ -4,6 +4,7 @@
 
 #include <glad/gl.h>
 
+#include <cassert>
 #include <span>
 #include <utility>
 
@@ -17,6 +18,10 @@ namespace Abomination::Renderer
 
     Mesh Mesh::Create(const MeshData& data)
     {
+        // At least one triangle, and only whole triangles: every 3 indices are one. MeshStore replaces empty data with the
+        // fallback cube before it gets here.
+        assert(!data.vertices.empty() && data.indices.size() >= 3 && data.indices.size() % 3 == 0);
+
         // Upload the vertices and the indices to the GPU once; from now on they live in video memory.
         GLBuffer vertexBuffer(std::as_bytes(std::span(data.vertices)));
         GLBuffer indexBuffer(std::as_bytes(std::span(data.indices)));

@@ -6,6 +6,8 @@
 
 #include <algorithm>
 #include <bit>
+#include <cassert>
+#include <cstddef>
 #include <utility>
 
 namespace Abomination::Renderer
@@ -25,6 +27,11 @@ namespace Abomination::Renderer
 
     GLTexture GLTexture::CreateFromImage(const Core::Image& image)
     {
+        // A texture of 0 texels is an OpenGL error, and fewer pixels than the size promises would be read past their end.
+        assert(image.width > 0 && image.height > 0);
+        assert(image.pixels.size() == static_cast<std::size_t>(image.width) * static_cast<std::size_t>(image.height) *
+                                          Core::ImageChannelCount);
+
         GLuint textureID = 0;
         glCreateTextures(GL_TEXTURE_2D, 1, &textureID);
 

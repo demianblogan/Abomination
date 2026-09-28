@@ -5,6 +5,7 @@
 #include <glm/vector_relational.hpp>
 
 #include <algorithm>
+#include <cassert>
 
 namespace Abomination::World
 {
@@ -124,6 +125,9 @@ namespace Abomination::World
     TraceResult TraceBox(std::span<const CollisionBrush> brushes, const glm::dvec3& start, const glm::dvec3& end,
                          const glm::dvec3& halfExtents)
     {
+        // A negative half size would move the planes into the brush instead of out of it. 0 is fine: a point, a ray.
+        assert(glm::all(glm::greaterThanEqual(halfExtents, glm::dvec3(0.0))));
+
         TraceResult result;
 
         for (const CollisionBrush& brush : brushes)

@@ -3,10 +3,15 @@
 #include <glm/common.hpp>
 #include <glm/gtc/quaternion.hpp>
 
+#include <cassert>
+
 namespace Abomination::Core
 {
     void EnableInterpolation(entt::registry& registry, entt::entity entity)
     {
+        // The previous transform starts as a copy of the current one, so there must be one to copy.
+        assert(registry.all_of<Transform>(entity));
+
         // emplace_or_replace: works whether or not the entity already had the component.
         registry.emplace_or_replace<PreviousTransform>(entity, registry.get<Transform>(entity));
     }

@@ -38,9 +38,12 @@ namespace Abomination::Renderer
         [[nodiscard]] std::uint32_t GetID() const noexcept;
 
     private:
-        explicit GLBuffer(std::uint32_t bufferID) noexcept;
+        GLBuffer(std::uint32_t bufferID, std::size_t byteCount) noexcept;
 
         // 0 means "no buffer" (a moved-from object).
         std::uint32_t m_bufferID = 0;
+
+        // The size of the buffer, which never changes; Update() checks that its data fits.
+        std::size_t m_byteCount = 0;
     };
 }

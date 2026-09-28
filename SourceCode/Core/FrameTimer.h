@@ -22,12 +22,8 @@ namespace Abomination::Core
         // Duration of the last frame in seconds, at most MaxDeltaTime. 0 before the first StartFrame().
         [[nodiscard]] float GetDeltaTime() const noexcept;
 
-        // Sum of all frame durations in seconds since the timer was created.
-        [[nodiscard]] double GetTotalTime() const noexcept;
-
     private:
         TimePoint m_previousFrameTime;
         float m_deltaTime = 0.0f;
-        double m_totalTime = 0.0;
     };
 }

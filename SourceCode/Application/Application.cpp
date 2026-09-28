@@ -25,6 +25,7 @@
 #include <glm/vec3.hpp>
 #include <glm/vec4.hpp>
 
+#include <chrono>
 #include <span>
 #include <utility>
 
@@ -120,7 +121,8 @@ namespace Abomination
     {
         Core::Log::Write(LogCategory::Core, LogLevel::Info, "Main loop started");
 
-        Core::FrameTimer frameTimer(Core::Clock::now());
+        const Core::TimePoint loopStartTime = Core::Clock::now();
+        Core::FrameTimer frameTimer(loopStartTime);
         Core::FrameStatistics frameStatistics;
 
         // One iteration is one frame.
@@ -155,8 +157,11 @@ namespace Abomination
             Platform::SleepPrecisely(m_frameLimiter.GetWaitTime(frameStartTime, Core::Clock::now()));
         }
 
-        Core::Log::Write(LogCategory::Core, LogLevel::Info, "Main loop finished after {:.1f} seconds",
-                         frameTimer.GetTotalTime());
+        // How long the game really ran, for the log file: when a log ends in a bug, it shows whether it came right after the
+        // start or hours later. The difference of two time points, not a sum of delta times: FrameTimer counts a long frame
+        // (a breakpoint, a dragged window) as only MaxDeltaTime.
+        const double sessionSeconds = std::chrono::duration<double>(Core::Clock::now() - loopStartTime).count();
+        Core::Log::Write(LogCategory::Core, LogLevel::Info, "Main loop finished after {:.1f} seconds", sessionSeconds);
 
         return 0;
     }

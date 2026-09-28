@@ -16,16 +16,10 @@ namespace Abomination::Core
 
         m_previousFrameTime = now;
         m_deltaTime = static_cast<float>(deltaTime);
-        m_totalTime += deltaTime;
     }
 
     float FrameTimer::GetDeltaTime() const noexcept
     {
         return m_deltaTime;
-    }
-
-    double FrameTimer::GetTotalTime() const noexcept
-    {
-        return m_totalTime;
     }
 }

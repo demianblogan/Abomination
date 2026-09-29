@@ -1,11 +1,11 @@
 #include "Gameplay/FreeFlyCameraController.h"
 
-#include "Core/Name.h"
-#include "Core/Transform.h"
-#include "Core/TransformInterpolation.h"
+#include "Core/Scene/Name.h"
+#include "Core/Scene/Transform.h"
+#include "Core/Scene/TransformInterpolation.h"
 #include "Input/ActionStates.h"
 #include "Input/Mouse.h"
-#include "Renderer/CameraLens.h"
+#include "Renderer/Camera/CameraLens.h"
 
 #include <glm/common.hpp>
 #include <glm/geometric.hpp>
@@ -15,31 +15,15 @@ namespace Abomination::Gameplay
 {
     using Input::Action;
 
-    namespace
-    {
-        // The vertical axis of the world: the yaw turns around it, and E and Q fly along it.
-        constexpr glm::vec3 WorldUp{0.0f, 1.0f, 0.0f};
-
-        // The camera's own directions (in its local coordinates): it looks along -Z, its right side is +X. Turned by the
-        // camera's rotation (rotation * direction) they give where the camera looks and where its right side is in the world.
-        constexpr glm::vec3 LocalForward{0.0f, 0.0f, -1.0f};
-        constexpr glm::vec3 LocalRight{1.0f, 0.0f, 0.0f};
-
-        // 1.0 while the action is active, 0.0 otherwise: lets opposite actions cancel each other out by subtraction.
-        float GetActionValue(const Input::ActionStates& actions, Action action) noexcept
-        {
-            return actions.IsActionActive(action) ? 1.0f : 0.0f;
-        }
-    }
-
     entt::entity SpawnFreeFlyCamera(entt::registry& registry, glm::vec3 position, float yaw)
     {
         const entt::entity camera = registry.create();
         registry.emplace<Core::Name>(camera, "Camera");
-        const Core::Transform transform{.position = position, .rotation = CalculateCameraRotation(yaw, 0.0f)};
+        const LookAngles look{.yaw = yaw};
+        const Core::Transform transform{.position = position, .rotation = CalculateCameraRotation(look)};
         registry.emplace<Core::Transform>(camera, transform);
         registry.emplace<Renderer::CameraLens>(camera);
-        registry.emplace<FreeFlyCamera>(camera, FreeFlyCamera{.yaw = yaw});
+        registry.emplace<LookAngles>(camera, look);
         Core::EnableInterpolation(registry, camera);
 
         return camera;
@@ -49,7 +33,7 @@ namespace Abomination::Gameplay
         : m_settings(settings)
     {}
 
-    void FreeFlyCameraController::UpdateRotation(FreeFlyCamera& camera, Core::Transform& transform,
+    void FreeFlyCameraController::UpdateRotation(LookAngles& look, Core::Transform& transform,
                                                  const Input::ActionStates& actions, const Input::Mouse& mouse) const
     {
         // Only while LookAroundMode is active, and not in the frame it starts: switching the mouse into relative mode
@@ -59,9 +43,9 @@ namespace Abomination::Gameplay
         if (!isLookingAround)
             return;
 
-        TurnByMouse(camera.yaw, camera.pitch, mouse.GetMovement(), m_settings.mouseSensitivity);
+        TurnByMouse(look, mouse.GetMovement(), m_settings.mouseSensitivity);
 
-        transform.rotation = CalculateCameraRotation(camera.yaw, camera.pitch);
+        transform.rotation = CalculateCameraRotation(look);
     }
 
     void FreeFlyCameraController::UpdateMovement(Core::Transform& transform, const Input::ActionStates& actions,
@@ -69,19 +53,18 @@ namespace Abomination::Gameplay
     {
         // 1. Direction of movement. Every pair of opposite actions gives the input along its axis: -1, 0 or +1
         //    (W alone: +1 forward, S alone: -1, both or none: 0, so the camera stays in place).
-        const float forwardInput =
-            GetActionValue(actions, Action::MoveForward) - GetActionValue(actions, Action::MoveBackward);
-        const float rightInput = GetActionValue(actions, Action::MoveRight) - GetActionValue(actions, Action::MoveLeft);
-        const float upInput = GetActionValue(actions, Action::MoveUp) - GetActionValue(actions, Action::MoveDown);
+        const float forwardInput = actions.GetAxis(Action::MoveForward, Action::MoveBackward);
+        const float rightInput = actions.GetAxis(Action::MoveRight, Action::MoveLeft);
+        const float upInput = actions.GetAxis(Action::MoveUp, Action::MoveDown);
 
         // The camera's own directions in the world: the rotation applied to its local directions (quaternion * vector
         // turns the vector). Forward includes looking up or down; right stays horizontal, because the camera never rolls
         // (the pitch turns around the local X axis, which leaves the local right direction unchanged).
         // Up is the world vertical axis, not the camera's: E and Q fly straight up and down wherever the camera looks.
-        const glm::vec3 forward = transform.rotation * LocalForward;
-        const glm::vec3 right = transform.rotation * LocalRight;
+        const glm::vec3 forward = transform.rotation * Core::LocalForward;
+        const glm::vec3 right = transform.rotation * Core::LocalRight;
 
-        glm::vec3 direction = forward * forwardInput + right * rightInput + WorldUp * upInput;
+        glm::vec3 direction = forward * forwardInput + right * rightInput + Core::WorldUp * upInput;
         if (direction == glm::vec3(0.0f))
             return;
 

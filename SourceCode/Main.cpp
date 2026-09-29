@@ -1,7 +1,7 @@
 #include "Application/Application.h"
 #include "Core/BuildConfiguration.h"
-#include "Core/Log.h"
-#include "Core/LogHistory.h"
+#include "Core/Logging/Log.h"
+#include "Core/Logging/LogHistory.h"
 #include "Core/Version.h"
 #include "Platform/SystemServices.h"
 

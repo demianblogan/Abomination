@@ -93,7 +93,7 @@ namespace Abomination::Platform
         [[nodiscard]] SDL_GLContextState* GetSDLContext() const noexcept;
 
     private:
-        Window(SDL_Window* window, SDL_GLContextState* context, int widthInPixels, int heightInPixels) noexcept;
+        Window(SDL_Window* window, SDL_GLContextState* context) noexcept;
 
         void Destroy() noexcept;
 

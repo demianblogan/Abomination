@@ -26,7 +26,7 @@ namespace Abomination::World
             return map.value().entities.at(0).brushes.at(0);
         }
 
-        // The direction a polygon faces: the normal of its first three corners (counter-clockwise seen from the front).
+        // The direction a polygon faces: the normal of its first three vertices (counter-clockwise seen from the front).
         glm::dvec3 CalculateFacingDirection(const Core::ConvexPolygon& polygon)
         {
             return glm::normalize(glm::cross(polygon[1] - polygon[0], polygon[2] - polygon[0]));
@@ -35,8 +35,8 @@ namespace Abomination::World
         glm::dvec3 CalculateCenter(const Core::ConvexPolygon& polygon)
         {
             glm::dvec3 sum(0.0);
-            for (const glm::dvec3& corner : polygon)
-                sum += corner;
+            for (const glm::dvec3& vertex : polygon)
+                sum += vertex;
 
             return sum / static_cast<double>(polygon.size());
         }
@@ -86,19 +86,19 @@ namespace Abomination::World
         {
             ASSERT_EQ(polygon.size(), 4u);
 
-            // Every corner is a corner of the box.
-            for (const glm::dvec3& corner : polygon)
+            // Every vertex is a corner of the box.
+            for (const glm::dvec3& vertex : polygon)
             {
-                EXPECT_TRUE(IsOneOf(corner.x, 48.0, 64.0)) << corner.x;
-                EXPECT_TRUE(IsOneOf(corner.y, -448.0, 64.0)) << corner.y;
-                EXPECT_TRUE(IsOneOf(corner.z, -16.0, 240.0)) << corner.z;
+                EXPECT_TRUE(IsOneOf(vertex.x, 48.0, 64.0)) << vertex.x;
+                EXPECT_TRUE(IsOneOf(vertex.y, -448.0, 64.0)) << vertex.y;
+                EXPECT_TRUE(IsOneOf(vertex.z, -16.0, 240.0)) << vertex.z;
             }
         }
     }
 
     TEST(BrushGeometry, FacesLookOutOfBrush)
     {
-        // The corners of every face go counter-clockwise seen from outside, so the facing direction of each polygon
+        // The vertices of every face go counter-clockwise seen from outside, so the facing direction of each polygon
         // points away from the center of the brush (and matches the plane of its face).
         for (const std::string_view mapText : {WallMap, WedgeMap})
         {
@@ -133,9 +133,9 @@ namespace Abomination::World
         EXPECT_EQ(polygons[3].size(), 3u);
         EXPECT_EQ(polygons[4].size(), 3u);
 
-        // Every corner of the slope lies on the plane x + z = 64.
-        for (const glm::dvec3& corner : polygons[2])
-            EXPECT_NEAR(corner.x + corner.z, 64.0, Tolerance);
+        // Every vertex of the slope lies on the plane x + z = 64.
+        for (const glm::dvec3& vertex : polygons[2])
+            EXPECT_NEAR(vertex.x + vertex.z, 64.0, Tolerance);
     }
 
     TEST(BrushGeometry, PlaneThatMissesBrushGivesEmptyFace)

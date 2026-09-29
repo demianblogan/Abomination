@@ -42,10 +42,10 @@ namespace Abomination::World
     TEST(MapCoordinates, PlaneTurnsNormalAndScalesDistance)
     {
         // The map plane z = 64 facing up becomes the game plane y = 2 facing up.
-        const Core::Plane plane = ConvertMapPlane({.normal = {0.0, 0.0, 1.0}, .distance = 64.0});
+        const Core::Plane plane = ConvertMapPlane({.normal = {0.0, 0.0, 1.0}, .distanceFromOrigin = 64.0});
 
         EXPECT_EQ(plane.normal, glm::dvec3(0.0, 1.0, 0.0));
-        EXPECT_DOUBLE_EQ(plane.distance, 2.0);
+        EXPECT_DOUBLE_EQ(plane.distanceFromOrigin, 2.0);
     }
 
     TEST(MapCoordinates, PreciseAndFloatPositionsAgree)

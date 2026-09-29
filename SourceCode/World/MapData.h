@@ -23,7 +23,8 @@ namespace Abomination::World
         // Three points on the plane of the face. Their order tells which side of the plane is the outside of the brush.
         std::array<glm::dvec3, 3> points{};
 
-        // The texture file name without the extension: "Crate" for Assets/Textures/Crate.png.
+        // The texture as a path in Assets/Textures without the extension: "Episode1/Wall_MossyBrick" for
+        // Assets/Textures/Episode1/Wall_MossyBrick.png.
         std::string textureName;
 
         // How the texture lies on the face (used when textures are drawn): the directions of the texture's U (across)

@@ -5,8 +5,8 @@
 
 namespace Abomination::Gameplay
 {
-    // Component: the entity keeps turning around an axis, like the rotating crates of the demo level
-    // (later: pickups turning in place, as in Quake).
+    // Component: the entity keeps turning around an axis. Nothing spins at the moment; pickups will turn in place with
+    // it, as in Quake (0.6).
     struct Spin
     {
         // The axis in world coordinates; does not have to be normalized.

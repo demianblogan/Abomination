@@ -41,7 +41,7 @@ namespace Abomination::World
             const bool facesPositive = direction.x + direction.y + direction.z > 0.0;
             const glm::dvec3& corner = facesPositive ? box.maximum : box.minimum;
 
-            return {.normal = direction, .distance = glm::dot(direction, corner)};
+            return {.normal = direction, .distanceFromOrigin = glm::dot(direction, corner)};
         }
     }
 
@@ -53,9 +53,9 @@ namespace Abomination::World
         for (const MapBrush& mapBrush : entity.brushes)
         {
             CollisionBrush brush;
-            std::vector<glm::dvec3> corners;
+            std::vector<glm::dvec3> vertices;
 
-            // The shapes of the faces tell which faces really exist, and their corners give the bounding box.
+            // The shapes of the faces tell which faces really exist, and their vertices give the bounding box.
             const std::vector<Core::ConvexPolygon> polygons = BuildBrushPolygons(mapBrush);
             for (std::size_t faceIndex = 0; faceIndex < polygons.size(); ++faceIndex)
             {
@@ -69,14 +69,14 @@ namespace Abomination::World
                     continue;
 
                 brush.planes.push_back(ConvertMapPlane(*mapPlane));
-                for (const glm::dvec3& corner : polygons[faceIndex])
-                    corners.push_back(ConvertMapPositionPrecise(corner));
+                for (const glm::dvec3& vertex : polygons[faceIndex])
+                    vertices.push_back(ConvertMapPositionPrecise(vertex));
             }
 
             if (brush.planes.empty())
                 continue;
 
-            brush.bounds = Core::CalculateBoundingBox(corners);
+            brush.bounds = Core::CalculateBoundingBox(vertices);
 
             // Bevel planes: the sides of the box that the brush does not have as faces. A box brush has all six already
             // and gets none; a ramp gets the ones its slanted face replaces.

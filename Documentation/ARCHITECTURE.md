@@ -119,7 +119,7 @@ A module may depend only on modules **below** it in this diagram.
 
 | Module        | Responsibility                                                  | Status  |
 |---------------|-----------------------------------------------------------------|---------|
-| `Core`        | Time (clock, frame timer, fixed timestep, FPS limit), frame statistics, logging, files, image decoding, asset handles, cache and lifetime groups, bounding boxes, `Transform`, `Name`, transform interpolation, planes and convex polygon clipping | 0.1 |
+| `Core`        | Time (clock, frame timer, fixed timestep, FPS limit), frame statistics, logging, files, image decoding, asset handles, cache and lifetime groups, bounding boxes, `Transform` and the world and local directions, `Name`, transform interpolation, planes and convex polygon clipping, map units and meters (`Units.h`) | 0.1 |
 | `Input`       | Keyboard and mouse state, actions and bindings (see section 7)  | 0.1     |
 | `Platform`    | SDL3 window (size from the monitor, screen modes), OpenGL context creation, OS events → `Input` | 0.1     |
 | `Renderer`    | Everything OpenGL. Exposes a high-level API (see section 6)     | 0.1     |
@@ -158,8 +158,9 @@ A module may depend only on modules **below** it in this diagram.
   (drawing), and `UI::DebugOverlay` combines them and describes the windows.
   ImGui is used only for developer tools, never for the game interface.
 - **The debug overlay** has a main menu bar (F1): *View* opens and closes
-  debug windows (now *Performance*, *Assets*, *Entities*, *Renderer*,
-  *Collision*, *Movement* and *Console*; all
+  debug windows (now *Performance* and *Console* at the top, then submenus by
+  part of the engine: *Engine* — *Entities*, *Assets*; *Rendering* —
+  *Renderer*; *Physics* — *Collisions*, *Movement*; one file per window; all
   closed at the first start), *Settings*
   changes settings grouped like the future options menu (now *Display*:
   screen mode, V-Sync, FPS limit, UI scale). The font size is one constant next to the font
@@ -366,6 +367,7 @@ Inside the renderer:
   section 9).
 - Explicit `layout(location)` / `layout(binding)` everywhere: C++ constants
   and shaders agree on the numbers in advance, nothing is queried at run time.
+  All the C++ side of them is in `Renderer/OpenGL/ShaderInterface.h`.
 - `View` — what the renderer knows about the camera of a frame: the view and
   projection matrices and the position, calculated by `CalculateView` from the
   camera entity's `Core::Transform` and `CameraLens` (see section 8).
@@ -393,7 +395,7 @@ Inside the renderer:
   front of it. The vertices go into a dynamic buffer
   (`GLBuffer::CreateDynamic` + `Update`: fixed size, contents replaced every
   frame), replaced by one twice as big when a frame has more lines.
-- **Renderer window** of the debug overlay (View > Renderer): Solid /
+- **Renderer window** of the debug overlay (View > Rendering > Renderer): Solid /
   Wireframe, world axes (arrows along X, Y, Z from the origin, over
   everything), draw calls and triangles of the last frame, brushes, faces and
   triangles of the level, and *Reload*, which loads the map next to the
@@ -488,8 +490,8 @@ player entity                                free-fly camera entity
 ├── Core::Transform         center of the box ├── Core::Transform          position + rotation
 ├── Core::PreviousTransform interpolation     ├── Core::PreviousTransform  interpolation
 ├── Physics::CharacterBody  box, velocity,    ├── Renderer::CameraLens
-│                           on ground         └── Gameplay::FreeFlyCamera  yaw and pitch
-├── Gameplay::PlayerLook    yaw and pitch
+│                           on ground         └── Gameplay::LookAngles     yaw and pitch
+├── Gameplay::LookAngles    yaw and pitch
 ├── Gameplay::PlayerStepSmoothing  eyes gliding up steps
 └── Renderer::CameraLens
 ```
@@ -506,9 +508,10 @@ player entity                                free-fly camera entity
   frame is kept until the next tick takes it (`CollectFrameInput`), so a short
   press in a frame without a tick is not lost. It knows nothing about walls
   or speeds: the Physics module decides how the player moves.
-- **Mouse look** is shared (`Gameplay/MouseLook`): `TurnByMouse` changes yaw
-  and pitch by the mouse movement of a frame (pitch clamped to ±89°),
-  `CalculateCameraRotation` builds the rotation from them.
+- **Mouse look** is shared (`Gameplay/MouseLook`): both entities keep yaw and
+  pitch in the same component, `LookAngles`. `TurnByMouse` changes them by the
+  mouse movement of a frame (pitch clamped to ±89°), `CalculateCameraRotation`
+  builds the rotation from them.
 - **The mouse is captured** (relative mode) while playing — the player is
   controlled and neither the debug overlay nor the console is open — and
   while the right mouse button is held (looking around with the overlay
@@ -517,7 +520,8 @@ player entity                                free-fly camera entity
 
 - A camera looks along its **local −Z** axis; its local +X is its right side,
   local +Y the top of the screen. Its direction in the world is its rotation
-  applied to these local directions (`rotation * LocalForward`).
+  applied to these local directions (`rotation * LocalForward`; `WorldUp`,
+  `LocalForward` and `LocalRight` are defined once in `Core/Scene/Transform.h`).
 - `Renderer::CalculateView` turns `Transform` + `CameraLens` into a
   `Renderer::View`: the view matrix is the inverse of the camera's own
   placement (move the world by −position, then turn it back by the conjugate
@@ -527,7 +531,7 @@ player entity                                free-fly camera entity
 - **Controllers** move camera entities; there are no separate camera classes.
   Now: `Gameplay::FreeFlyCameraController` (WASD relative to the view, Q/E
   along the world vertical, Shift faster, mouse look while the right button
-  is held). It keeps yaw and pitch in `FreeFlyCamera` (mouse movement adds to
+  is held). It keeps yaw and pitch in `LookAngles` (mouse movement adds to
   them directly, pitch is clamped to ±89°, no roll) and builds the rotation
   from them (`CalculateCameraRotation`: `angleAxis(yaw, WorldUp) *
   angleAxis(pitch, LocalRight)`). Planned: view bob and recoil for the player
@@ -623,7 +627,7 @@ Renderer::RenderAssets                     all graphics stores, owned by Applica
   the handles of the removed level invalid. An asset asked for with both
   lifetimes keeps the longer one. Texture and mesh stores take the lifetime
   in every `Load`/`Add`; shader programs are always global.
-- **Assets window** of the debug overlay (View > Assets): every loaded
+- **Assets window** of the debug overlay (View > Engine > Assets): every loaded
   texture with its size, video memory (all mipmap levels) and lifetime, every
   mesh and shader program, fallbacks marked in magenta.
 
@@ -669,8 +673,7 @@ Library: **EnTT 4.0.0** (`ThirdParty/EnTT`, see section 3).
 | `MeshRenderer` | Renderer | mesh, texture and program handles | `DrawMeshes` |
 | `CameraLens` | Renderer | vertical FOV, near and far plane | `CalculateView` |
 | `Spin` | Gameplay | axis, speed | `UpdateSpinningEntities` |
-| `FreeFlyCamera` | Gameplay | yaw, pitch | `FreeFlyCameraController` |
-| `PlayerLook` | Gameplay | yaw, pitch of the player's view | `PlayerController`, the view |
+| `LookAngles` | Gameplay | yaw, pitch of a view turned by the mouse (the player, the free-fly camera) | `PlayerController`, `FreeFlyCameraController`, the view |
 | `PlayerStepSmoothing` | Gameplay | eyes behind the body after a step, now and last tick | the view |
 | `CharacterBody` | Physics | box size, velocity, on ground, stepped up, in solid | `UpdateCharacter`, Movement window |
 
@@ -681,9 +684,18 @@ would have to see every module and break the dependency rule. A component
 used by one system only shares its file (`Gameplay/Spin.h`); a component used
 by several gets its own header. When a module grows, it is split into topic
 folders that hold components and systems together (`Gameplay/Weapons/`,
-`Gameplay/Enemies/`), keeping the namespace of the module.
+`Gameplay/Enemies/`), keeping the namespace of the module: `Core/Time/Clock.h`
+is `Abomination::Core::Clock`. Core and Renderer are split already:
 
-**Tools.** The entity inspector of the debug overlay (View > Entities) lists
+| Module | Root | Topic folders |
+|--------|------|---------------|
+| `Core` | `BuildConfiguration`, `Version` | `Time/` (clock, frame timer, fixed timestep, FPS limit, statistics), `Logging/`, `Files/` (files, images), `Math/` (units, planes, polygons, bounding boxes), `Assets/` (handles, cache, lifetimes), `Scene/` (`Name`, `Transform`, interpolation) |
+| `Renderer` | `RenderSystem`, `RenderSettings`, `MeshRenderer`, `ImGuiRendererBackend` | `OpenGL/` (wrappers of OpenGL objects, loader, debug output, shader interface), `Assets/` (meshes and the stores), `Camera/` (`CameraLens`, `View`), `Debug/` (debug lines) |
+
+A module is split when its folder no longer shows its parts at a glance
+(around 20 files); the tests in `Tests/` follow the same folders.
+
+**Tools.** The entity inspector of the debug overlay (View > Engine > Entities) lists
 all entities (`registry.view<entt::entity>()`) and shows and edits the
 components of the selected one; section headers are colored by module.
 A new component type gets a small drawing function there.
@@ -744,8 +756,9 @@ Test.map ─► ParseMap ─► MapData ─┬─► BuildBrushPolygons ─► B
   `Transform`, `MeshRenderer` with the `TexturedShaded` program); together
   they play the part of entity 0, the world, in Quake. The level costs one
   draw call per texture. `info_player_start` does not become an entity: its
-  origin (+22 units, the eye height of the Quake player) and angle are kept as
-  `PlayerStart`, and the camera is created there. The level also keeps its
+  origin (+4 units: the center of the player box, which reaches from 24 units
+  below the origin to 32 above it) and angle are kept as `PlayerStart`
+  (`World/PlayerStart.h`), and the player is created there. The level also keeps its
   collision brushes and its statistics; its data is private.
 - **Unloading** (`Level::Unload`): destroys the entities of the level, then
   removes the Level asset group. It is called explicitly, not by the
@@ -777,13 +790,14 @@ Test.map ─► ParseMap ─► MapData ─┬─► BuildBrushPolygons ─► B
   `SurfaceEpsilon` (1/32 unit, ~1 mm) before the surface, so the next trace
   does not start inside it. Brushes whose bounding box the way does not touch
   are skipped. The player box is `PlayerHalfExtents` (1 × 1.75 × 1 m, like
-  32 × 56 × 32 units in Quake).
-- **Collision tools** (`CollisionDebug`, View > Collision): brush bounds, a
-  box traced from the camera straight ahead (point, small box or player box;
+  32 × 56 × 32 units in Quake and `info_player_start` in `Abomination.fgd`),
+  defined once in `World/PlayerStart.h`.
+- **Collision tools** (`CollisionDebug`, View > Physics > Collisions): collider
+  bounds, a cast from the camera straight ahead (ray, small box or player box;
   the stopping box and the normal are drawn as debug lines, the numbers are
-  shown in the window) and a colliding free-fly camera (it stops at walls; a
-  camera that starts inside a brush moves freely to get out). Sliding along
-  walls is for the player (see section 12).
+  shown in the window) and a colliding free-fly camera (it slides along walls
+  with `Physics::SlideMove`, like the player, see section 12; a camera that
+  starts inside a brush moves freely to get out).
 
 **Planned:** a tree of brushes (BVH) when large maps make
 checking every brush measurably slow — with 17 brushes the bounding box test
@@ -840,7 +854,7 @@ AI (later)              ─┘               jump, friction, accelerate,
   `MovementSettings` (running 7 m/s like modern shooters — Quake runs at
   10 m/s — acceleration 10, friction 4, stop speed 3.1 m/s, step 0.56 m, jump
   8.4 m/s ≈ 1.4 m high, air acceleration 10 up to 0.94 m/s). **View >
-  Movement** shows a speedometer and the state of the player and has sliders
+  Physics > Movement** shows a speedometer and the state of the player and has sliders
   for all of them; not saved yet (JSON configuration, 0.6).
 
 **Planned:** player clip brushes (invisible slopes over stairs) in maps;
@@ -863,5 +877,32 @@ Every gameplay component must be serializable. Rules to follow from 0.2:
 
 ## 15. Threading
 
-Single-threaded for now. Candidates for background threads later: asset
-loading, audio (miniaudio already runs its own thread), lightmap baking.
+**Single-threaded for now, on purpose.** The game runs at well over 1000 FPS
+on one thread while the monitor needs 60–144, so there is nothing to gain yet.
+Threads have a high price: a **data race** (two threads changing the same data
+at once) shows up rarely and at random, does not repeat under the debugger and
+breaks things far from its cause. OpenGL also works from one thread only (its
+context belongs to one thread), so drawing stays on the main thread; drawing
+from several threads would mean Vulkan or Direct3D 12.
+
+The only synchronized code today is `Core::LogHistory`: spdlog may write to it
+from any thread, so it is guarded by a `std::mutex`.
+
+**Where threads come in:**
+
+| Milestone | Where | Why | Difficulty |
+|-----------|-------|-----|------------|
+| 0.3 | Audio (miniaudio) | Sound must not stutter when a frame is slow. miniaudio runs its own thread; the game only sends it commands ("play the shot") | Low: the library owns the thread |
+| 0.5 | Lightmap baking (a tool, not the game) | Every surface of a level is calculated on its own, minutes of work; 8 cores make it 6–8 times faster | Low: the tasks share no data (the first thread code to write) |
+| 0.6 | Loading a level in the background | Level transitions without a frozen picture: images and models are decoded on a worker thread while the main thread shows a loading screen | Medium: decoding may run anywhere, but uploading to OpenGL only on the main thread |
+| 0.4+ | Navmesh and AI | Building the navigation mesh (Recast) when a level loads; path queries only if there are very many enemies | Only if the profiler shows the need |
+
+**Rules:**
+
+1. **Measure first.** A profiler shows what is slow; only then threads are
+   considered. "It will probably be faster" is not a reason.
+2. **Threads are for heavy, independent work**, where each task works on its
+   own data (baking surfaces, decoding files).
+3. **Hand data over instead of sharing it.** A worker loads a texture and
+   passes it to the main thread, which owns it from then on. That is safer
+   than shared data behind locks.

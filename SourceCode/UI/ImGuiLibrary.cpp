@@ -1,9 +1,11 @@
 #include "UI/ImGuiLibrary.h"
 
-#include "Core/Log.h"
+#include "Core/Files/FileSystem.h"
+#include "Core/Logging/Log.h"
 
 #include <imgui.h>
 
+#include <cassert>
 #include <filesystem>
 #include <utility>
 
@@ -24,12 +26,12 @@ namespace Abomination::UI
             // AddFontFromFileTTF stops the program with an assertion if the file does not exist, so check first.
             if (std::filesystem::exists(fontPath))
             {
-                if (fonts->AddFontFromFileTTF(fontPath.string().c_str(), fontSize) != nullptr)
+                if (fonts->AddFontFromFileTTF(Core::ToUTF8String(fontPath).c_str(), fontSize) != nullptr)
                     return;
             }
 
             Core::Log::Write(LogCategory::UI, LogLevel::Warning, "Failed to load the font \"{}\", using the built-in font",
-                             fontPath.string());
+                             Core::ToUTF8String(fontPath));
 
             // The built-in vector font stays sharp at any size, unlike the built-in pixel font (sharp only at 13 px).
             fonts->AddFontDefaultVector();
@@ -65,7 +67,7 @@ namespace Abomination::UI
         // handling is turned off (nullptr), and the file is loaded here and saved by SaveSettingsIfChanged() instead.
         ImGui::GetIO().IniFilename = nullptr;
         if (std::filesystem::exists(settingsPath))
-            ImGui::LoadIniSettingsFromDisk(settingsPath.string().c_str());
+            ImGui::LoadIniSettingsFromDisk(Core::ToUTF8String(settingsPath).c_str());
 
         AddDebugUIFont(fontPath, fontSize);
         ApplyStyle(fontSize, 1.0f);
@@ -120,6 +122,9 @@ namespace Abomination::UI
 
     void ImGuiLibrary::SetScale(float scale)
     {
+        // A scale of 0 or less would make all text and sizes vanish or turn inside out.
+        assert(scale > 0.0f);
+
         ApplyStyle(m_fontSize, scale);
     }
 
@@ -137,6 +142,6 @@ namespace Abomination::UI
 
     void ImGuiLibrary::SaveSettings() const
     {
-        ImGui::SaveIniSettingsToDisk(m_settingsPath.string().c_str());
+        ImGui::SaveIniSettingsToDisk(Core::ToUTF8String(m_settingsPath).c_str());
     }
 }

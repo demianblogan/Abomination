@@ -12,7 +12,7 @@ namespace Abomination::Input
     // New actions are added here when the game needs them.
     enum class Action : std::uint8_t
     {
-        // Free-fly camera
+        // Moving: the player walks with the first four, the free-fly camera uses all of them
         MoveForward,
         MoveBackward,
         MoveLeft,
@@ -20,6 +20,8 @@ namespace Abomination::Input
         MoveUp,
         MoveDown,
         MoveFaster,
+
+        // While active, the mouse turns the view even when the cursor is free (the debug overlay is open)
         LookAroundMode,
 
         // Player

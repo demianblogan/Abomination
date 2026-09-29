@@ -48,53 +48,53 @@ namespace Abomination::World
     {
         Renderer::DebugLines lines;
 
-        const CameraTrace trace = UpdateCollisionDebug(BuildCube(), {}, CreateCameraFacingCube(), lines);
+        const CameraCast cast = UpdateCollisionDebug(BuildCube(), {}, CreateCameraFacingCube(), lines);
 
         EXPECT_EQ(lines.GetLineCount(), 0u);
-        EXPECT_FALSE(trace.isValid);
+        EXPECT_FALSE(cast.isValid);
     }
 
     TEST(CollisionDebug, BrushBoundsAreOneBoxPerBrush)
     {
         Renderer::DebugLines lines;
 
-        const CollisionDebugSettings settings{.areBrushBoundsVisible = true};
+        const CollisionDebugSettings settings{.areColliderBoundsVisible = true};
         UpdateCollisionDebug(BuildCube(), settings, CreateCameraFacingCube(), lines);
 
         EXPECT_EQ(lines.GetLineCount(), 12u);
     }
 
-    TEST(CollisionDebug, CameraTraceStopsAtCubeAndShowsNormal)
+    TEST(CollisionDebug, CameraCastStopsAtCubeAndShowsNormal)
     {
         Renderer::DebugLines lines;
-        const CollisionDebugSettings settings{.isCameraTraceEnabled = true, .cameraTraceShape = TraceShape::PlayerBox};
+        const CollisionDebugSettings settings{.isCameraCastEnabled = true, .cameraCastShape = CastShape::PlayerBox};
 
-        const CameraTrace trace = UpdateCollisionDebug(BuildCube(), settings, CreateCameraFacingCube(), lines);
+        const CameraCast cast = UpdateCollisionDebug(BuildCube(), settings, CreateCameraFacingCube(), lines);
 
         // The front of the cube is at z = 0, the player box reaches 0.5 m forward: it stops 4.5 m ahead.
-        ASSERT_TRUE(trace.isValid);
-        EXPECT_NEAR(trace.distance, 4.5, 0.01);
-        EXPECT_EQ(trace.result.hitNormal, glm::dvec3(0.0, 0.0, 1.0));
+        ASSERT_TRUE(cast.isValid);
+        EXPECT_NEAR(cast.distance, 4.5, 0.01);
+        EXPECT_EQ(cast.result.hitNormal, glm::dvec3(0.0, 0.0, 1.0));
         EXPECT_EQ(lines.GetLineCount(), 12u + 5u); // the box and the normal arrow
     }
 
-    TEST(CollisionDebug, CameraTraceIntoEmptySpaceFliesAllTheWay)
+    TEST(CollisionDebug, CameraCastIntoEmptySpaceFliesAllTheWay)
     {
         // The camera turned around (180 degrees around Y) looks away from the cube.
         Core::Transform camera = CreateCameraFacingCube();
         camera.rotation = glm::angleAxis(glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f));
         Renderer::DebugLines lines;
 
-        const CameraTrace trace = UpdateCollisionDebug(BuildCube(), {.isCameraTraceEnabled = true}, camera, lines);
+        const CameraCast cast = UpdateCollisionDebug(BuildCube(), {.isCameraCastEnabled = true}, camera, lines);
 
-        EXPECT_EQ(trace.result.fraction, 1.0);
-        EXPECT_NEAR(trace.distance, CameraTraceLength, 1e-9);
+        EXPECT_EQ(cast.result.fraction, 1.0);
+        EXPECT_NEAR(cast.distance, CameraCastLength, 1e-9);
         EXPECT_EQ(lines.GetLineCount(), 12u); // only the box, no normal
     }
 
-    TEST(CollisionDebug, TraceShapesHaveTheirSizes)
+    TEST(CollisionDebug, CastShapesHaveTheirSizes)
     {
-        EXPECT_EQ(GetHalfExtents(TraceShape::Point), glm::dvec3(0.0));
-        EXPECT_EQ(GetHalfExtents(TraceShape::PlayerBox), PlayerHalfExtents);
+        EXPECT_EQ(GetHalfExtents(CastShape::Ray), glm::dvec3(0.0));
+        EXPECT_EQ(GetHalfExtents(CastShape::PlayerBox), PlayerHalfExtents);
     }
 }

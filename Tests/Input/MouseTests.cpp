@@ -63,4 +63,20 @@ namespace Abomination::Input
         EXPECT_TRUE(mouse.WasButtonReleased(MouseButton::Left));
         EXPECT_FALSE(mouse.WasButtonReleased(MouseButton::Right));
     }
+
+    TEST(Mouse, UnknownButtonIsIgnored)
+    {
+        // A mouse with extra buttons can report a number the game has no MouseButton for (SDL passes it on as it is).
+        // It must change nothing, and above all not write past the end of the button arrays.
+        const auto extraButton = static_cast<MouseButton>(7);
+        Mouse mouse;
+        mouse.StartFrame();
+
+        mouse.PressButton(extraButton);
+        mouse.ReleaseButton(extraButton);
+
+        EXPECT_FALSE(mouse.IsButtonHeld(extraButton));
+        EXPECT_FALSE(mouse.WasButtonPressed(extraButton));
+        EXPECT_FALSE(mouse.WasButtonReleased(extraButton));
+    }
 }

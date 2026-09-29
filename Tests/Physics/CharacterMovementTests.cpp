@@ -27,8 +27,8 @@ namespace Abomination::Physics
             const std::array<glm::dvec3, 3> axes = {glm::dvec3(1, 0, 0), glm::dvec3(0, 1, 0), glm::dvec3(0, 0, 1)};
             for (const glm::dvec3& axis : axes)
             {
-                brush.planes.push_back({.normal = axis, .distance = glm::dot(axis, maximum)});
-                brush.planes.push_back({.normal = -axis, .distance = glm::dot(-axis, minimum)});
+                brush.planes.push_back({.normal = axis, .distanceFromOrigin = glm::dot(axis, maximum)});
+                brush.planes.push_back({.normal = -axis, .distanceFromOrigin = glm::dot(-axis, minimum)});
             }
 
             return brush;
@@ -122,7 +122,8 @@ namespace Abomination::Physics
         {
             const double angle = angleDegrees * 3.14159265358979 / 180.0;
             World::CollisionBrush slope = CreateBoxBrush({-10.0, -10.0, -10.0}, {10.0, 0.0, 10.0});
-            slope.planes[2] = {.normal = {std::sin(angle), std::cos(angle), 0.0}, .distance = 0.0}; // replaces the top
+            // Replaces the top.
+            slope.planes[2] = {.normal = {std::sin(angle), std::cos(angle), 0.0}, .distanceFromOrigin = 0.0};
             return std::vector<World::CollisionBrush>{slope};
         };
 
@@ -196,7 +197,8 @@ namespace Abomination::Physics
         glm::dvec3 position{0.0, 0.875 + World::SurfaceEpsilon, 0.0};
         glm::vec3 velocity{0.0f, 0.0f, -8.0f};
 
-        const float steppedUpHeight = StepSlideMove(brushes, position, velocity, HalfExtents, 18.0f / 32.0f, 0.5f);
+        const float steppedUpHeight =
+            StepSlideMove(brushes, position, velocity, HalfExtents, Core::MapUnitsToMeters(18.0f), 0.5f);
 
         // Went over the edge at z = -2 and stands on the step.
         EXPECT_NEAR(steppedUpHeight, 0.4f, 0.01f);
@@ -212,7 +214,7 @@ namespace Abomination::Physics
         glm::dvec3 position{0.0, 0.875 + World::SurfaceEpsilon, 0.0};
         glm::vec3 velocity{0.0f, 0.0f, -8.0f};
 
-        StepSlideMove(brushes, position, velocity, HalfExtents, 18.0f / 32.0f, 0.5f);
+        StepSlideMove(brushes, position, velocity, HalfExtents, Core::MapUnitsToMeters(18.0f), 0.5f);
 
         EXPECT_NEAR(position.z, -1.5, 0.01); // stopped half the box before the block
         EXPECT_NEAR(position.y, 0.875, 0.01);

@@ -62,7 +62,7 @@ namespace Abomination::World
         CollisionBrush MoveBrush(CollisionBrush brush, const glm::dvec3& offset)
         {
             for (Core::Plane& plane : brush.planes)
-                plane.distance += glm::dot(plane.normal, offset);
+                plane.distanceFromOrigin += glm::dot(plane.normal, offset);
             brush.bounds.minimum += offset;
             brush.bounds.maximum += offset;
 
@@ -97,6 +97,36 @@ namespace Abomination::World
 
         EXPECT_LT(result.fraction, 1.0);
         ExpectNear(result.endPosition, {-0.5 - SurfaceEpsilon, 1.0, -1.0});
+        ExpectNear(result.hitNormal, {-1.0, 0.0, 0.0});
+        EXPECT_FALSE(result.startsInSolid);
+    }
+
+    TEST(CollisionTrace, BoxEndingCloserThanEpsilonToWallIsStopped)
+    {
+        // The box already stands SurfaceEpsilon in front of the wall and moves on to 0.01 mm in front of it. Its box does
+        // not reach the cube at any point, but the trace must still stop it SurfaceEpsilon in front of the wall, here
+        // where it is: a box left 0.01 mm in front of a wall touches it after rounding to float.
+        const std::vector<CollisionBrush> brushes = BuildFromMap(CubeMap);
+        const glm::dvec3 start{-0.5 - SurfaceEpsilon, 1.0, -1.0};
+
+        const TraceResult result = TraceBox(brushes, start, {-0.5 - 0.00001, 1.0, -1.0}, HalfExtents);
+
+        EXPECT_EQ(result.fraction, 0.0);
+        ExpectNear(result.endPosition, start);
+        ExpectNear(result.hitNormal, {-1.0, 0.0, 0.0});
+    }
+
+    TEST(CollisionTrace, BoxStartingCloserThanEpsilonToWallIsStopped)
+    {
+        // The box starts 0.01 mm in front of the wall, closer than SurfaceEpsilon, and moves 0.5 mm into it. It cannot
+        // move at all: the entering fraction (0.00001 - SurfaceEpsilon) / 0.00051 is about -1.9, and counts as 0.
+        const std::vector<CollisionBrush> brushes = BuildFromMap(CubeMap);
+        const glm::dvec3 start{-0.5 - 0.00001, 1.0, -1.0};
+
+        const TraceResult result = TraceBox(brushes, start, {-0.5 + 0.0005, 1.0, -1.0}, HalfExtents);
+
+        EXPECT_EQ(result.fraction, 0.0);
+        ExpectNear(result.endPosition, start);
         ExpectNear(result.hitNormal, {-1.0, 0.0, 0.0});
         EXPECT_FALSE(result.startsInSolid);
     }

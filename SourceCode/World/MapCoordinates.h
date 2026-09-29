@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Core/Plane.h"
+#include "Core/Math/Plane.h"
 
 #include <glm/vec3.hpp>
 
@@ -14,11 +14,7 @@
 //   game (OpenGL, glm):        meters, Y is up, -Z is forward
 namespace Abomination::World
 {
-    // 32 units are about 1 meter: the Quake player is 56 units tall (about 1.75 m), and the grid sizes of TrenchBroom
-    // (8, 16, 32, 64) are based on this scale.
-    inline constexpr double UnitsPerMeter = 32.0;
-
-    // A position: axes turned (x, y, z) -> (x, z, -y), then units -> meters.
+    // A position: axes turned (x, y, z) -> (x, z, -y), then units -> meters (see Core/Math/Units.h).
     // The turn is a rotation by 90 degrees around X: map +Z (up) becomes game +Y (up), map +Y becomes game -Z.
     // A rotation keeps the handedness of the coordinate system, so the counter-clockwise order of face corners, and
     // with it the front side of faces, stays the same.
@@ -32,7 +28,7 @@ namespace Abomination::World
     [[nodiscard]] Core::Plane ConvertMapPlane(const Core::Plane& mapPlane);
 
     // The "angle" of a map entity (degrees counter-clockwise from map +X, seen from above) as the yaw of the game
-    // (radians counter-clockwise from game -Z, see Gameplay::FreeFlyCamera): an angle of 90 (map +Y) is yaw 0.
+    // (radians counter-clockwise from game -Z, see Gameplay/MouseLook.h): an angle of 90 (map +Y) is yaw 0.
     [[nodiscard]] float ConvertMapAngleToYaw(double mapAngleDegrees);
 
     // Reads a vector property like "origin" "-48 -176 88". Returns nothing if the text is not three numbers.

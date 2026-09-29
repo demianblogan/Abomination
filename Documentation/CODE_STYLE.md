@@ -169,7 +169,7 @@ namespace Abomination::Renderer
 Order, separated by a blank line (clang-format sorts inside groups):
 
 1. The matching header (in a `.cpp`).
-2. Project headers — quotes, path from `SourceCode/`: `#include "Renderer/Mesh.h"`.
+2. Project headers — quotes, path from `SourceCode/`: `#include "Renderer/Assets/Mesh.h"`.
 3. Third-party headers — angle brackets: `#include <glm/glm.hpp>`.
 4. Standard library headers: `#include <vector>`.
 
@@ -216,6 +216,11 @@ Order, separated by a blank line (clang-format sorts inside groups):
 **Errors**
 
 - **Programmer errors** (broken invariants) → assertions (active in Debug).
+  A precondition written in a comment ("ticksPerSecond must be greater than
+  0") gets an `assert` at the start of the function when it is cheap to check
+  and breaking it would cause NaN, an OpenGL error or memory access out of
+  bounds: `assert(ticksPerSecond > 0);`. Checks at compile time use
+  `static_assert`.
 - **Recoverable errors** (missing file, bad JSON, shader compile error) →
   return `std::expected<T, Error>`.
 - **Fatal startup errors** (no OpenGL 4.6) → log and exit with a message box.

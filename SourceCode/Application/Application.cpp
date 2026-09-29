@@ -1,22 +1,22 @@
 #include "Application/Application.h"
 
 #include "Core/BuildConfiguration.h"
-#include "Core/FrameStatistics.h"
-#include "Core/FrameTimer.h"
-#include "Core/Log.h"
-#include "Core/Transform.h"
-#include "Core/TransformInterpolation.h"
+#include "Core/Logging/Log.h"
+#include "Core/Scene/Transform.h"
+#include "Core/Scene/TransformInterpolation.h"
+#include "Core/Time/FrameStatistics.h"
+#include "Core/Time/FrameTimer.h"
 #include "Gameplay/Player.h"
 #include "Gameplay/Spin.h"
 #include "Physics/CharacterBody.h"
 #include "Physics/CharacterMovement.h"
 #include "Platform/SystemServices.h"
-#include "Renderer/DebugOutput.h"
-#include "Renderer/OpenGLLoader.h"
-#include "Renderer/CameraLens.h"
-#include "Renderer/RenderCommands.h"
+#include "Renderer/Camera/CameraLens.h"
+#include "Renderer/Camera/View.h"
+#include "Renderer/OpenGL/DebugOutput.h"
+#include "Renderer/OpenGL/OpenGLLoader.h"
+#include "Renderer/OpenGL/RenderCommands.h"
 #include "Renderer/RenderSystem.h"
-#include "Renderer/View.h"
 #include "World/Level.h"
 #include "World/MapParser.h"
 
@@ -25,6 +25,8 @@
 #include <glm/vec3.hpp>
 #include <glm/vec4.hpp>
 
+#include <chrono>
+#include <span>
 #include <utility>
 
 namespace Abomination
@@ -108,17 +110,19 @@ namespace Abomination
         // m_renderAssets stay valid because they are numbers, not pointers.
         m_level = World::Level::Create(m_registry, m_renderAssets, map, StartMapPath);
 
-        // The player appears where the map puts them. The free-fly camera waits at the same place; F2 switches to it.
+        // The player appears where the map puts them. The free-fly camera waits at their eyes; F2 switches to it.
         const World::PlayerStart& playerStart = m_level.GetPlayerStart();
         m_player = Gameplay::SpawnPlayer(m_registry, playerStart);
-        m_freeFlyCamera = Gameplay::SpawnFreeFlyCamera(m_registry, playerStart.eyePosition, playerStart.yaw);
+        const glm::vec3 eyePosition = playerStart.boxCenter + glm::vec3(0.0f, Gameplay::PlayerEyeHeight, 0.0f);
+        m_freeFlyCamera = Gameplay::SpawnFreeFlyCamera(m_registry, eyePosition, playerStart.yaw);
     }
 
     int Application::Run()
     {
         Core::Log::Write(LogCategory::Core, LogLevel::Info, "Main loop started");
 
-        Core::FrameTimer frameTimer(Core::Clock::now());
+        const Core::TimePoint loopStartTime = Core::Clock::now();
+        Core::FrameTimer frameTimer(loopStartTime);
         Core::FrameStatistics frameStatistics;
 
         // One iteration is one frame.
@@ -137,7 +141,8 @@ namespace Abomination
             // 3. The simulation in fixed ticks: 0, 1 or several per frame, depending on how long the frame was.
             //    The ticks of this frame read the input of this frame. A frame without ticks does not lose held keys
             //    (they are still held in the next frame), but a short press that starts and stops between two ticks
-            //    would be lost; it does not matter for flying, and will be handled for jumping (0.2, player movement).
+            //    would be lost, so presses that matter (jumping) are collected every frame in Update() (see
+            //    Gameplay::PlayerController::CollectFrameInput).
             const int tickCount = m_fixedTimestep.Advance(frameTimer.GetDeltaTime());
             for (int tick = 0; tick < tickCount; ++tick)
                 FixedUpdate(m_fixedTimestep.GetTickDuration());
@@ -152,8 +157,11 @@ namespace Abomination
             Platform::SleepPrecisely(m_frameLimiter.GetWaitTime(frameStartTime, Core::Clock::now()));
         }
 
-        Core::Log::Write(LogCategory::Core, LogLevel::Info, "Main loop finished after {:.1f} seconds",
-                         frameTimer.GetTotalTime());
+        // How long the game really ran, for the log file: when a log ends in a bug, it shows whether it came right after the
+        // start or hours later. The difference of two time points, not a sum of delta times: FrameTimer counts a long frame
+        // (a breakpoint, a dragged window) as only MaxDeltaTime.
+        const double sessionSeconds = std::chrono::duration<double>(Core::Clock::now() - loopStartTime).count();
+        Core::Log::Write(LogCategory::Core, LogLevel::Info, "Main loop finished after {:.1f} seconds", sessionSeconds);
 
         return 0;
     }
@@ -212,14 +220,14 @@ namespace Abomination
             m_playerController.CollectFrameInput(m_actionStates);
 
             if (m_isMouseCaptured && !isCaptureStarting)
-                m_playerController.UpdateRotation(m_registry.get<Gameplay::PlayerLook>(m_player),
+                m_playerController.UpdateRotation(m_registry.get<Gameplay::LookAngles>(m_player),
                                                   m_inputDevices.mouse.GetMovement());
             return;
         }
 
         Core::Transform& cameraTransform = m_registry.get<Core::Transform>(m_freeFlyCamera);
-        Gameplay::FreeFlyCamera& freeFlyCamera = m_registry.get<Gameplay::FreeFlyCamera>(m_freeFlyCamera);
-        m_freeFlyCameraController.UpdateRotation(freeFlyCamera, cameraTransform, m_actionStates, m_inputDevices.mouse);
+        Gameplay::LookAngles& cameraLook = m_registry.get<Gameplay::LookAngles>(m_freeFlyCamera);
+        m_freeFlyCameraController.UpdateRotation(cameraLook, cameraTransform, m_actionStates, m_inputDevices.mouse);
 
         // The rotation from the mouse is already up to date in this frame, so it must not be interpolated between ticks:
         // drawing a rotation between the last two ticks would make the view lag behind the mouse. Setting the previous
@@ -237,7 +245,7 @@ namespace Abomination
         // takes commands from the keys while controlled.
         const Physics::MoveCommand playerCommand =
             m_controlMode == ControlMode::Player
-                ? m_playerController.CreateMoveCommand(m_registry.get<Gameplay::PlayerLook>(m_player), m_actionStates)
+                ? m_playerController.CreateMoveCommand(m_registry.get<Gameplay::LookAngles>(m_player), m_actionStates)
                 : Physics::MoveCommand{};
         Physics::CharacterBody& playerBody = m_registry.get<Physics::CharacterBody>(m_player);
         Physics::UpdateCharacter(playerBody, m_registry.get<Core::Transform>(m_player), m_level.GetCollisionBrushes(),
@@ -251,15 +259,17 @@ namespace Abomination
             const glm::vec3 cameraPositionBefore = cameraTransform.position;
             m_freeFlyCameraController.UpdateMovement(cameraTransform, m_actionStates, tickDuration);
 
-            // A colliding camera moves only as far as its box gets. It stops at walls instead of sliding along them. A
-            // camera that starts inside a brush (the tool was switched on in a wall) moves freely, so it can get out.
-            if (m_collisionSettings.doesCameraCollide)
+            // A colliding camera makes the same move again, but through the level: it slides along what it hits, like the
+            // player (Physics::SlideMove), instead of flying through. The controller has already moved the transform, so
+            // the move is turned into a velocity for this tick. A camera that starts inside a brush (the tool was switched
+            // on in a wall) keeps the free move, so it can get out.
+            const std::span<const World::CollisionBrush> brushes = m_level.GetCollisionBrushes();
+            glm::dvec3 position(cameraPositionBefore);
+            if (m_collisionSettings.doesCameraCollide && !Physics::IsInSolid(brushes, position, World::CameraHalfExtents))
             {
-                const World::TraceResult trace =
-                    World::TraceBox(m_level.GetCollisionBrushes(), glm::dvec3(cameraPositionBefore),
-                                    glm::dvec3(cameraTransform.position), World::CameraHalfExtents);
-                if (!trace.startsInSolid)
-                    cameraTransform.position = glm::vec3(trace.endPosition);
+                glm::vec3 velocity = (cameraTransform.position - cameraPositionBefore) / tickDuration;
+                Physics::SlideMove(brushes, position, velocity, World::CameraHalfExtents, tickDuration);
+                cameraTransform.position = glm::vec3(position);
             }
         }
 
@@ -276,13 +286,12 @@ namespace Abomination
 
         // The free-fly camera jumps to the eyes of the player and looks the same way. Its previous transform is set too,
         // so the interpolation does not draw it flying from its old place in the first frame.
-        const Gameplay::PlayerLook& look = m_registry.get<Gameplay::PlayerLook>(m_player);
+        const Gameplay::LookAngles& look = m_registry.get<Gameplay::LookAngles>(m_player);
         const Core::Transform eyes =
             Gameplay::CalculatePlayerEyeTransform(m_registry.get<Core::Transform>(m_player), look);
         m_registry.get<Core::Transform>(m_freeFlyCamera) = eyes;
         m_registry.get<Core::PreviousTransform>(m_freeFlyCamera).value = eyes;
-        m_registry.get<Gameplay::FreeFlyCamera>(m_freeFlyCamera) =
-            Gameplay::FreeFlyCamera{.yaw = look.yaw, .pitch = look.pitch};
+        m_registry.get<Gameplay::LookAngles>(m_freeFlyCamera) = look;
 
         m_controlMode = ControlMode::FreeFlyCamera;
     }
@@ -301,7 +310,7 @@ namespace Abomination
             // The step smoothing moves in ticks too, so it is drawn between its last two values like the transform.
             const auto& smoothing = m_registry.get<Gameplay::PlayerStepSmoothing>(m_player);
             const float stepOffset = glm::mix(smoothing.previousOffset, smoothing.offset, interpolationFactor);
-            return Gameplay::CalculatePlayerEyeTransform(interpolated, m_registry.get<Gameplay::PlayerLook>(m_player),
+            return Gameplay::CalculatePlayerEyeTransform(interpolated, m_registry.get<Gameplay::LookAngles>(m_player),
                                                          stepOffset);
         }
 
@@ -353,8 +362,8 @@ namespace Abomination
             m_renderStatistics = Renderer::DrawMeshes(m_registry, view, interpolationFactor, m_renderAssets,
                                                       m_systemShaders, m_renderSettings);
 
-            m_cameraTrace = World::UpdateCollisionDebug(m_level.GetCollisionBrushes(), m_collisionSettings,
-                                                        cameraTransform, m_debugLines);
+            m_cameraCast = World::UpdateCollisionDebug(m_level.GetCollisionBrushes(), m_collisionSettings,
+                                                       cameraTransform, m_debugLines);
 
             // Seen from the free-fly camera, the player is a box (it has no model yet), so it is clear where they stand.
             if (m_controlMode == ControlMode::FreeFlyCamera)
@@ -397,7 +406,7 @@ namespace Abomination
             .levelStatistics = m_level.GetStatistics(),
             .isLevelReloadRequested = m_isLevelReloadRequested,
             .collisionSettings = m_collisionSettings,
-            .cameraTrace = m_cameraTrace,
+            .cameraCast = m_cameraCast,
             .collisionBrushCount = m_level.GetCollisionBrushes().size(),
             .logHistory = *m_logHistory,
             .physicsSettings = m_physicsSettings,

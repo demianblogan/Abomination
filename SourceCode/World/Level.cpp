@@ -1,8 +1,8 @@
 #include "World/Level.h"
 
-#include "Core/Log.h"
-#include "Core/Name.h"
-#include "Core/Transform.h"
+#include "Core/Logging/Log.h"
+#include "Core/Scene/Name.h"
+#include "Core/Scene/Transform.h"
 #include "Renderer/MeshRenderer.h"
 #include "World/MapCoordinates.h"
 
@@ -23,9 +23,6 @@ namespace Abomination::World
         {
             return "Textures/" + textureName + ".png";
         }
-
-        // The eyes of the Quake player are 22 units above the origin of info_player_start (the center of its box).
-        constexpr double EyeHeightAboveOrigin = 22.0;
 
         const MapEntity* FindEntity(const MapData& map, const std::string& className)
         {
@@ -51,8 +48,10 @@ namespace Abomination::World
 
             if (const std::string* origin = FindProperty(*entity, "origin"); origin != nullptr)
             {
+                // The map stores the origin of the entity; the player is placed by the center of their box, which is a
+                // little higher (see PlayerStart.h). Z is up in the map, so the offset goes along map Z.
                 if (const std::optional<glm::dvec3> position = ParseVectorProperty(*origin); position.has_value())
-                    playerStart.eyePosition = ConvertMapPosition(*position + glm::dvec3(0.0, 0.0, EyeHeightAboveOrigin));
+                    playerStart.boxCenter = ConvertMapPosition(*position + glm::dvec3(0.0, 0.0, PlayerBoxCenterAboveOrigin));
             }
 
             if (const std::string* angle = FindProperty(*entity, "angle"); angle != nullptr)

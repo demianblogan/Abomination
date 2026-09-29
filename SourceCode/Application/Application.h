@@ -1,20 +1,20 @@
 #pragma once
 
-#include "Core/FixedTimestep.h"
-#include "Core/FrameLimiter.h"
-#include "Core/Transform.h"
+#include "Core/Scene/Transform.h"
+#include "Core/Time/FixedTimestep.h"
+#include "Core/Time/FrameLimiter.h"
 #include "Gameplay/FreeFlyCameraController.h"
 #include "Gameplay/PlayerController.h"
-#include "Physics/CharacterMovement.h"
 #include "Input/ActionStates.h"
 #include "Input/InputBindings.h"
 #include "Input/InputDevices.h"
+#include "Physics/CharacterMovement.h"
 #include "Platform/SDLLibrary.h"
 #include "Platform/Window.h"
-#include "Renderer/CameraLens.h"
-#include "Renderer/RenderAssets.h"
-#include "Renderer/DebugLineRenderer.h"
-#include "Renderer/DebugLines.h"
+#include "Renderer/Assets/RenderAssets.h"
+#include "Renderer/Camera/CameraLens.h"
+#include "Renderer/Debug/DebugLineRenderer.h"
+#include "Renderer/Debug/DebugLines.h"
 #include "Renderer/RenderSettings.h"
 #include "Renderer/RenderSystem.h"
 #include "UI/DebugOverlay.h"
@@ -97,7 +97,7 @@ namespace Abomination
         // Every graphics asset of the game, loaded once.
         Renderer::RenderAssets m_renderAssets;
 
-        // Shaders the render system uses on its own (the wireframe), loaded once in the constructor.
+        // Shaders the renderer uses on its own (the wireframe, the debug lines), loaded once in the constructor.
         Renderer::SystemShaders m_systemShaders;
 
         // How the scene is drawn (changed in the Renderer window of the overlay) and what the last frame cost (shown there).
@@ -122,9 +122,9 @@ namespace Abomination
         // middle of drawing the overlay.
         bool m_isLevelReloadRequested = false;
 
-        // The collision tools of the debug overlay (View > Collision) and the camera trace of the last frame.
+        // The collision tools of the debug overlay (View > Physics > Collisions) and the camera cast of the last frame.
         World::CollisionDebugSettings m_collisionSettings;
-        World::CameraTrace m_cameraTrace;
+        World::CameraCast m_cameraCast;
 
         // All entities of the game and their components. Components hold only handles to assets, never pointers, so they
         // stay valid when Application (and with it m_renderAssets) is moved out of Create().

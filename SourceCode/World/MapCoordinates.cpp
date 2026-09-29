@@ -1,5 +1,7 @@
 #include "World/MapCoordinates.h"
 
+#include "Core/Math/Units.h"
+
 #include <glm/trigonometric.hpp>
 
 #include <charconv>
@@ -23,12 +25,15 @@ namespace Abomination::World
 
     glm::dvec3 ConvertMapPositionPrecise(const glm::dvec3& mapPosition)
     {
-        return TurnMapAxes(mapPosition / UnitsPerMeter);
+        return TurnMapAxes(mapPosition / Core::UnitsPerMeter);
     }
 
     Core::Plane ConvertMapPlane(const Core::Plane& mapPlane)
     {
-        return {.normal = TurnMapAxes(mapPlane.normal), .distance = mapPlane.distance / UnitsPerMeter};
+        return {
+            .normal = TurnMapAxes(mapPlane.normal),
+            .distanceFromOrigin = Core::MapUnitsToMeters(mapPlane.distanceFromOrigin),
+        };
     }
 
     float ConvertMapAngleToYaw(double mapAngleDegrees)

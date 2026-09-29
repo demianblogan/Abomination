@@ -34,6 +34,9 @@ void main()
         return;
     }
 
+    // Along the line, w changes evenly (linearly) from start.w to end.w, so the point where it reaches MinimumW is the part
+    // (MinimumW - start.w) / (end.w - start.w) of the way. For example, start.w = -2 and end.w = 6: w grows by 8 over the
+    // line, and it needs about 2 of them to get from -2 to 0.001, so the start moves about 2 / 8 = 25% of the way to the end.
     if (start.w < MinimumW)
         start = mix(start, end, (MinimumW - start.w) / (end.w - start.w));
     if (end.w < MinimumW)

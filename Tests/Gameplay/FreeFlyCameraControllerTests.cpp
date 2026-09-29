@@ -1,10 +1,10 @@
-#include "Core/Transform.h"
-#include "Core/TransformInterpolation.h"
+#include "Core/Scene/Transform.h"
+#include "Core/Scene/TransformInterpolation.h"
 #include "Gameplay/FreeFlyCameraController.h"
 #include "Input/ActionStates.h"
 #include "Input/InputBindings.h"
 #include "Input/InputDevices.h"
-#include "Renderer/CameraLens.h"
+#include "Renderer/Camera/CameraLens.h"
 
 #include <entt/entt.hpp>
 #include <glm/exponential.hpp>
@@ -20,8 +20,8 @@ namespace Abomination::Gameplay
     {
         constexpr float Tolerance = 1e-5f;
 
-        const glm::vec3 LocalForward{0.0f, 0.0f, -1.0f};
-        const glm::vec3 LocalRight{1.0f, 0.0f, 0.0f};
+        using Core::LocalForward;
+        using Core::LocalRight;
 
         void ExpectVectorNear(glm::vec3 actual, glm::vec3 expected)
         {
@@ -61,13 +61,13 @@ namespace Abomination::Gameplay
         {
             m_camera.yaw = yaw;
             m_camera.pitch = pitch;
-            m_transform.rotation = CalculateCameraRotation(yaw, pitch);
+            m_transform.rotation = CalculateCameraRotation({yaw, pitch});
         }
 
         Input::InputDevices m_devices;
         Input::InputBindings m_bindings = Input::InputBindings::CreateDefault();
         Input::ActionStates m_actions;
-        FreeFlyCamera m_camera;
+        LookAngles m_camera;
         Core::Transform m_transform;
         FreeFlyCameraController m_controller{Settings};
     };
@@ -164,7 +164,7 @@ namespace Abomination::Gameplay
         EXPECT_NEAR(m_camera.pitch, 0.2f, Tolerance);
 
         // The transform follows the angles.
-        ExpectVectorNear(m_transform.rotation * LocalForward, CalculateCameraRotation(-0.1f, 0.2f) * LocalForward);
+        ExpectVectorNear(m_transform.rotation * LocalForward, CalculateCameraRotation({-0.1f, 0.2f}) * LocalForward);
     }
 
     TEST_F(FreeFlyCameraControllerTest, PitchIsClampedBelowStraightUpAndDown)
@@ -177,17 +177,17 @@ namespace Abomination::Gameplay
         StartFrame();
         m_devices.mouse.Move({0.0f, -1000.0f});
         RunFrame(0.016f);
-        EXPECT_FLOAT_EQ(m_camera.pitch, FreeFlyCamera::MaxPitch);
+        EXPECT_FLOAT_EQ(m_camera.pitch, MaxLookPitch);
 
         StartFrame();
         m_devices.mouse.Move({0.0f, 5000.0f});
         RunFrame(0.016f);
-        EXPECT_FLOAT_EQ(m_camera.pitch, -FreeFlyCamera::MaxPitch);
+        EXPECT_FLOAT_EQ(m_camera.pitch, -MaxLookPitch);
     }
 
     TEST(CameraRotation, PositiveYawTurnsLeft)
     {
-        const glm::quat rotation = CalculateCameraRotation(glm::radians(90.0f), 0.0f);
+        const glm::quat rotation = CalculateCameraRotation({glm::radians(90.0f), 0.0f});
 
         ExpectVectorNear(rotation * LocalForward, {-1.0f, 0.0f, 0.0f});
         ExpectVectorNear(rotation * LocalRight, {0.0f, 0.0f, -1.0f});
@@ -195,7 +195,7 @@ namespace Abomination::Gameplay
 
     TEST(CameraRotation, PositivePitchLooksUp)
     {
-        const glm::vec3 forward = CalculateCameraRotation(0.0f, glm::radians(45.0f)) * LocalForward;
+        const glm::vec3 forward = CalculateCameraRotation({0.0f, glm::radians(45.0f)}) * LocalForward;
 
         EXPECT_GT(forward.y, 0.0f);
         EXPECT_NEAR(glm::length(forward), 1.0f, Tolerance);
@@ -203,7 +203,7 @@ namespace Abomination::Gameplay
 
     TEST(CameraRotation, RightStaysHorizontalWhenLookingUp)
     {
-        const glm::quat rotation = CalculateCameraRotation(glm::radians(30.0f), glm::radians(60.0f));
+        const glm::quat rotation = CalculateCameraRotation({glm::radians(30.0f), glm::radians(60.0f)});
         const glm::vec3 right = rotation * LocalRight;
 
         EXPECT_NEAR(right.y, 0.0f, Tolerance);
@@ -216,7 +216,7 @@ namespace Abomination::Gameplay
 
         const entt::entity camera = SpawnFreeFlyCamera(registry, {1.0f, 2.0f, 3.0f});
 
-        EXPECT_TRUE((registry.all_of<Core::Transform, Core::PreviousTransform, Renderer::CameraLens, FreeFlyCamera>(camera)));
+        EXPECT_TRUE((registry.all_of<Core::Transform, Core::PreviousTransform, Renderer::CameraLens, LookAngles>(camera)));
         ExpectVectorNear(registry.get<Core::Transform>(camera).position, {1.0f, 2.0f, 3.0f});
         ExpectVectorNear(registry.get<Core::PreviousTransform>(camera).value.position, {1.0f, 2.0f, 3.0f});
     }

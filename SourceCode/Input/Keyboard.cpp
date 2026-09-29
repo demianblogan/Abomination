@@ -1,5 +1,6 @@
 #include "Input/Keyboard.h"
 
+#include <cassert>
 #include <utility>
 
 namespace Abomination::Input
@@ -8,7 +9,11 @@ namespace Abomination::Input
     {
         std::size_t ConvertToIndex(Key key) noexcept
         {
-            return std::to_underlying(key);
+            // SDL scancodes are always below SDL_SCANCODE_COUNT (= KeyCount); a larger value would be past the bitsets.
+            const std::size_t index = std::to_underlying(key);
+            assert(index < KeyCount);
+
+            return index;
         }
     }
 

@@ -1,6 +1,6 @@
 #include "UI/ConsoleWindow.h"
 
-#include "Core/LogHistory.h"
+#include "Core/Logging/LogHistory.h"
 #include "UI/UIScale.h"
 
 #include <imgui.h>
@@ -35,6 +35,10 @@ namespace Abomination::UI
         // The console never gets smaller or bigger than this part of the screen.
         constexpr float MinimumHeightFraction = 0.15f;
         constexpr float MaximumHeightFraction = 0.9f;
+
+        // The most the game may show through the console (1 is opaque): below this the messages become hard to read.
+        constexpr float MinimumOpacity = 0.2f;
+        constexpr float MaximumOpacity = 1.0f;
 
         // A thin vertical line between groups of the toolbar.
         void DrawToolbarSeparator()
@@ -107,7 +111,7 @@ namespace Abomination::UI
         if (!m_isOpen)
         {
             // Forget the messages seen, so the console scrolls to the newest one as soon as it opens again.
-            m_seenAddedCount = 0;
+            m_seenAddedEntryCount = 0;
             return;
         }
 
@@ -150,8 +154,7 @@ namespace Abomination::UI
 
     void ConsoleWindow::DrawToolbar(Core::LogHistory& history)
     {
-        // The lowest level shown, as a drop-down list of the level names.
-        // Filters | Auto-scroll | Opacity, Height | Clear
+        // Filters (levels, modules) | Auto-scroll | Opacity, Height | Clear
         DrawFilterCombo("Levels", Core::LogLevelNames, m_visibleLevels);
         ImGui::SameLine();
         DrawFilterCombo("Modules", Core::LogCategoryNames, m_visibleCategories);
@@ -162,7 +165,7 @@ namespace Abomination::UI
         DrawToolbarSeparator();
         DrawLabel("Opacity");
         ImGui::SetNextItemWidth(ScaleToUI(SliderWidth));
-        ImGui::SliderFloat("##Opacity", &m_opacity, 0.2f, 1.0f, "%.2f");
+        ImGui::SliderFloat("##Opacity", &m_opacity, MinimumOpacity, MaximumOpacity, "%.2f");
         ImGui::SameLine();
         DrawLabel("Height");
         ImGui::SetNextItemWidth(ScaleToUI(SliderWidth));
@@ -189,7 +192,9 @@ namespace Abomination::UI
             for (std::size_t index = 0; index < entries.size(); ++index)
             {
                 const Core::LogEntry& entry = entries[index];
-                if (m_visibleLevels[std::to_underlying(entry.level)] && m_visibleCategories[std::to_underlying(entry.category)])
+                const bool isLevelShown = m_visibleLevels[std::to_underlying(entry.level)];
+                const bool isCategoryShown = m_visibleCategories[std::to_underlying(entry.category)];
+                if (isLevelShown && isCategoryShown)
                     m_shownIndices.push_back(index);
             }
 
@@ -222,10 +227,10 @@ namespace Abomination::UI
         });
 
         // A new message arrived since the last frame: scroll to the very bottom, where it is.
-        const std::uint64_t addedCount = history.GetAddedCount();
-        if (m_isAutoScrollEnabled && addedCount != m_seenAddedCount)
+        const std::uint64_t addedEntryCount = history.GetAddedEntryCount();
+        if (m_isAutoScrollEnabled && addedEntryCount != m_seenAddedEntryCount)
             ImGui::SetScrollHereY(1.0f);
-        m_seenAddedCount = addedCount;
+        m_seenAddedEntryCount = addedEntryCount;
 
         ImGui::EndChild();
     }

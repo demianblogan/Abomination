@@ -2,6 +2,8 @@
 
 #include <glm/geometric.hpp>
 
+#include <cassert>
+
 namespace Abomination::World
 {
     namespace
@@ -15,6 +17,9 @@ namespace Abomination::World
 
     glm::vec2 CalculateTextureCoordinates(const MapFace& face, const glm::dvec3& point, glm::ivec2 textureSize)
     {
+        // The texels are divided by the texture size below. Every texture has a size (a missing one gets the 8x8 fallback).
+        assert(textureSize.x > 0 && textureSize.y > 0);
+
         const double texelU = glm::dot(point, face.textureUAxis) / MakeValidScale(face.textureScaleU) + face.textureOffsetU;
         const double texelV = glm::dot(point, face.textureVAxis) / MakeValidScale(face.textureScaleV) + face.textureOffsetV;
 

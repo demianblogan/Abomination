@@ -1,7 +1,7 @@
 #include "Platform/Window.h"
 
 #include "Core/BuildConfiguration.h"
-#include "Core/Log.h"
+#include "Core/Logging/Log.h"
 #include "Input/InputDevices.h"
 #include "Platform/WindowSizing.h"
 
@@ -126,7 +126,7 @@ namespace Abomination::Platform
             return std::unexpected(std::format("Failed to create an OpenGL 4.6 Core context: {}", SDL_GetError()));
         }
 
-        Window result(window, context, 0, 0);
+        Window result(window, context);
         result.SetVSyncEnabled(settings.isVSyncEnabled);
 
         // The windowed size set above stays the size the window returns to when it leaves fullscreen.
@@ -147,11 +147,9 @@ namespace Abomination::Platform
         return result;
     }
 
-    Window::Window(SDL_Window* window, SDL_GLContextState* context, int widthInPixels, int heightInPixels) noexcept
+    Window::Window(SDL_Window* window, SDL_GLContextState* context) noexcept
         : m_window(window)
         , m_context(context)
-        , m_widthInPixels(widthInPixels)
-        , m_heightInPixels(heightInPixels)
     {}
 
     Window::Window(Window&& other) noexcept

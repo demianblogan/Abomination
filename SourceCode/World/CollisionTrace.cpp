@@ -5,6 +5,7 @@
 #include <glm/vector_relational.hpp>
 
 #include <algorithm>
+#include <cassert>
 
 namespace Abomination::World
 {
@@ -20,11 +21,17 @@ namespace Abomination::World
 
         // Everything the moving box touches stays inside the box around its whole way: a quick test to skip brushes
         // far away from it.
+        //
+        // The way is made SurfaceEpsilon larger on every side: a trace must also see brushes it only comes closer to than
+        // SurfaceEpsilon, because it stops that far in front of them. Without it, a box moving to 0.01 mm in front of a
+        // wall skipped the wall (their boxes do not overlap), ended up closer than SurfaceEpsilon, and after rounding to
+        // float touched the wall and counted as inside it (found on the test map: jumping next to a wall).
         bool DoesWayTouchBrushBounds(const CollisionBrush& brush, const glm::dvec3& start, const glm::dvec3& end,
                                      const glm::dvec3& halfExtents)
         {
-            const glm::dvec3 wayMinimum = glm::min(start, end) - halfExtents;
-            const glm::dvec3 wayMaximum = glm::max(start, end) + halfExtents;
+            const glm::dvec3 margin = halfExtents + glm::dvec3(SurfaceEpsilon);
+            const glm::dvec3 wayMinimum = glm::min(start, end) - margin;
+            const glm::dvec3 wayMaximum = glm::max(start, end) + margin;
 
             // Two boxes overlap when they overlap along every axis.
             return glm::all(glm::lessThanEqual(wayMinimum, brush.bounds.maximum)) &&
@@ -47,9 +54,9 @@ namespace Abomination::World
             for (const Core::Plane& plane : brush.planes)
             {
                 // Signed distances of the start and the end from the plane moved out for the box: positive in front.
-                const double movedDistance = plane.distance + CalculateReach(plane.normal, halfExtents);
-                const double startDistance = glm::dot(plane.normal, start) - movedDistance;
-                const double endDistance = glm::dot(plane.normal, end) - movedDistance;
+                const double movedDistanceFromOrigin = plane.distanceFromOrigin + CalculateReach(plane.normal, halfExtents);
+                const double startDistance = glm::dot(plane.normal, start) - movedDistanceFromOrigin;
+                const double endDistance = glm::dot(plane.normal, end) - movedDistanceFromOrigin;
 
                 if (startDistance > 0.0)
                     startsOutside = true;
@@ -70,7 +77,14 @@ namespace Abomination::World
                 if (startDistance > endDistance)
                 {
                     // Entering the brush. The stopping point is moved SurfaceEpsilon back, in front of the surface.
-                    const double fraction = (startDistance - SurfaceEpsilon) / (startDistance - endDistance);
+                    //
+                    // A box that starts closer to the surface than SurfaceEpsilon would have to stop behind its start:
+                    // the fraction is negative, and can even be below -1 (start 0.00001 m away, moving 0.001 m into the
+                    // wall: (0.00001 - 0.00098) / 0.001 = -0.97, a bit slower and it is below -1). Such a fraction is
+                    // made 0 (do not move) before it is compared, as in Quake 3. Compared first, a fraction below -1
+                    // lost against the starting enterFraction of -1: the wall was not found, and the box moved into it.
+                    // (Found on the test map: jumping next to a wall pushed the player out of it every few ticks.)
+                    const double fraction = std::max((startDistance - SurfaceEpsilon) / (startDistance - endDistance), 0.0);
                     if (fraction > enterFraction)
                     {
                         enterFraction = fraction;
@@ -102,7 +116,7 @@ namespace Abomination::World
             // A hit if the line enters the brush before it leaves it, and earlier than any hit found before.
             if (hitPlane != nullptr && enterFraction < leaveFraction && enterFraction < result.fraction)
             {
-                result.fraction = std::max(enterFraction, 0.0);
+                result.fraction = enterFraction;
                 result.hitNormal = hitPlane->normal;
             }
         }
@@ -111,6 +125,9 @@ namespace Abomination::World
     TraceResult TraceBox(std::span<const CollisionBrush> brushes, const glm::dvec3& start, const glm::dvec3& end,
                          const glm::dvec3& halfExtents)
     {
+        // A negative half size would move the planes into the brush instead of out of it. 0 is fine: a point, a ray.
+        assert(glm::all(glm::greaterThanEqual(halfExtents, glm::dvec3(0.0))));
+
         TraceResult result;
 
         for (const CollisionBrush& brush : brushes)

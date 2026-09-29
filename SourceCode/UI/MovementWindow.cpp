@@ -1,5 +1,6 @@
 #include "UI/MovementWindow.h"
 
+#include "Core/Math/Units.h"
 #include "Physics/CharacterBody.h"
 #include "Physics/CharacterMovement.h"
 #include "UI/UIScale.h"
@@ -17,9 +18,6 @@ namespace Abomination::UI
 
         // The width of the sliders in pixels at 100% scale.
         constexpr float SliderWidth = 180.0f;
-
-        // Map units per meter, to show speeds in the units of Quake too (a speed of 320 is "Quake speed").
-        constexpr float UnitsPerMeter = 32.0f;
 
         // A slider for a setting; the tooltip explains it. Returns nothing: the value is changed in place.
         void DrawSlider(const char* label, float& value, float minimum, float maximum, const char* format,
@@ -41,10 +39,11 @@ namespace Abomination::UI
             return;
         }
 
-        // The speedometer: the horizontal speed is what running feels like; falling and jumping are shown apart.
+        // The speedometer: the horizontal speed is what running feels like; falling and jumping are shown apart. It is
+        // shown in the units of Quake too, to compare with it (320 units/s is running in Quake).
         const float horizontalSpeed = glm::length(glm::vec2(playerBody.velocity.x, playerBody.velocity.z));
         ImGui::SeparatorText("Player");
-        ImGui::Text("Speed:      %5.2f m/s (%3.0f units/s)", horizontalSpeed, horizontalSpeed * UnitsPerMeter);
+        ImGui::Text("Speed:      %5.2f m/s (%3.0f units/s)", horizontalSpeed, Core::MetersToMapUnits(horizontalSpeed));
         ImGui::Text("Vertical:   %5.2f m/s", playerBody.velocity.y);
         ImGui::Text("On ground:  %s", playerBody.isOnGround ? "yes" : "no");
         ImGui::Text("In solid:   %s", playerBody.isInSolid ? "YES (see the log)" : "no");

@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Gameplay/FreeFlyCamera.h"
 #include "Gameplay/MouseLook.h"
 
 #include <entt/entt.hpp>
@@ -34,13 +33,12 @@ namespace Abomination::Gameplay
         // How many times faster the camera flies while MoveFaster is active.
         float fastMoveMultiplier = 4.0f;
 
-        // Radians the camera turns per pixel of mouse movement: 0.0025 is about 0.14 degrees,
-        // so moving the mouse by 630 pixels turns the camera by 90 degrees.
-        float mouseSensitivity = 0.0025f;
+        // Radians the camera turns per pixel of mouse movement (see DefaultMouseSensitivity).
+        float mouseSensitivity = DefaultMouseSensitivity;
     };
 
     // Creates a free-fly camera entity at position, turned by yaw (radians, 0 looks along -Z): Name, Transform,
-    // PreviousTransform (it moves in ticks, so it is interpolated), Renderer::CameraLens and FreeFlyCamera.
+    // PreviousTransform (it moves in ticks, so it is interpolated), Renderer::CameraLens and LookAngles.
     entt::entity SpawnFreeFlyCamera(entt::registry& registry, glm::vec3 position, float yaw = 0.0f);
 
     // Moves a camera like the free camera of the Unity and Unreal editors (a debug "noclip" camera):
@@ -64,7 +62,7 @@ namespace Abomination::Gameplay
 
         // Turns the camera by the mouse movement of this frame while LookAroundMode is active: changes the angles
         // (see TurnByMouse) and sets the rotation of the transform from them.
-        void UpdateRotation(FreeFlyCamera& camera, Core::Transform& transform, const Input::ActionStates& actions,
+        void UpdateRotation(LookAngles& look, Core::Transform& transform, const Input::ActionStates& actions,
                             const Input::Mouse& mouse) const;
 
         // Moves the camera transform for one tick. deltaTime is the duration of the tick in seconds.

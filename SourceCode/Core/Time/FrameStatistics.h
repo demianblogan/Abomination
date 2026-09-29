@@ -13,15 +13,18 @@ namespace Abomination::Core
     //    of ReportInterval seconds and change only when an interval ends. Numbers that changed every frame would be
     //    unreadable at high frame rates: at 1700 FPS the last digits flicker hundreds of times per second.
     //
-    // 2. The durations of the last MaxSampleCount frames, for the frame time graph, where every frame matters. They are
-    //    stored in a ring buffer: a fixed array where every new frame overwrites the oldest one. Once the array is full,
-    //    the next sample goes to index 0 again, then 1, and so on, so no memory is ever moved.
+    // 2. The durations of the last MaxSampleCount frames, for the frame time graph, where every frame matters. Each of
+    //    them is a sample: one measured value, like a sample of sound is the loudness at one moment. Here there is one
+    //    sample per frame, its duration in seconds (0.0069 at 144 FPS). The samples are stored in a ring buffer: a fixed
+    //    array where every new sample overwrites the oldest one. Once the array is full, the next sample goes to index 0
+    //    again, then 1, and so on, so no memory is ever moved.
     //
     //   after 5 frames (capacity 4):   [ f5 | f2 | f3 | f4 ]    next write -> index 1, oldest sample -> index 1
+    //                                  (f5 is the duration of frame 5)
     class FrameStatistics
     {
     public:
-        // How many of the last frames the graph shows. About 2 seconds at 60 FPS.
+        // How many samples (frame durations) the graph remembers: those of the last 120 frames, about 2 seconds at 60 FPS.
         static constexpr std::size_t MaxSampleCount = 120;
 
         // How often, in seconds, the numbers to read are updated: twice per second.
@@ -48,7 +51,8 @@ namespace Abomination::Core
         // Together with GetOldestSampleIndex() this is exactly what ImGui::PlotLines expects for a ring buffer.
         [[nodiscard]] std::span<const float> GetFrameTimeSamples() const noexcept;
 
-        // Index in GetFrameTimeSamples() of the oldest remembered frame: the graph starts there.
+        // Index in GetFrameTimeSamples() of the oldest sample (the duration of the oldest remembered frame): the graph
+        // starts there.
         [[nodiscard]] std::size_t GetOldestSampleIndex() const noexcept;
 
     private:

@@ -127,7 +127,7 @@ A module may depend only on modules **below** it in this diagram.
 | `World`       | `.map` parsing, brush geometry, the level, collision brushes and box traces (see section 11); level compiler later | 0.2 |
 | `Physics`     | Characters moving through the level like in Quake: gravity, sliding along walls, steps, walking, jumping, air control, on top of the box traces of `World` (see section 12) | 0.2 |
 | `AI`          | Enemy behaviour, pathfinding                                    | Planned |
-| `Audio`       | Sounds and music (miniaudio)                                    | Planned |
+| `Audio`       | Sounds (miniaudio): sound store, voices, 2D and 3D sound; music later | 0.3 |
 | `Gameplay`    | Game rules: the player (entity, controller, view), free-fly camera, mouse look, spin (0.1–0.2); weapons, enemies | 0.1 |
 | `UI`          | Dear ImGui debug overlay: menu bar, performance, assets, entity inspector, renderer, collision, movement, in-game console (0.1–0.2); HUD and menus (later) | 0.1 |
 | `Save`        | Serialization of the game state                                 | Planned |
@@ -611,10 +611,22 @@ Renderer::RenderAssets                     all graphics stores, owned by Applica
   `Renderer::TextureStore`, `Renderer::ShaderStore`, `Renderer::MeshStore`
   (meshes built by code now, named like paths: the level meshes as
   `"Maps/Test.map#Episode1/Wall_MossyBrick"`, one per texture; loaded from
-  model files in 0.3); later the material store (0.3) and the sound store in
-  `Audio`. There is no single
-  class that knows all asset types, so OpenGL stays in `Renderer` and sound in
-  `Audio`.
+  model files in 0.3), `Audio::SoundStore`; later the material store (0.3).
+  There is no single class that knows all asset types, so OpenGL stays in
+  `Renderer` and sound in `Audio`.
+- **Sounds** are decoded whole into memory when loaded, always as mono
+  (`Audio::SoundClip`): a sound placed in the world must come from one point,
+  and short effects gain nothing from stereo. `Audio::AudioEngine` owns the
+  sound store and the miniaudio engine with 32 voices; a voice reads the
+  samples of its clip in place, so sounds are removed only after every voice
+  is stopped (`AudioEngine::RemoveSounds`). The game plays **sound events**
+  (`Audio::SoundEvent`): a few variants chosen at random, a random pitch
+  (±5%) and a limit of copies playing at once (`ChooseVoice`: the oldest copy
+  makes room). A sound plays in 2D, "in the head" (the player's own body), or
+  in 3D at a position; the listener is put at the eyes of the camera every
+  frame. Without a sound card the game runs silently. A missing sound file
+  becomes a short beep, the audible magenta texture. Audio window: View >
+  Engine > Audio (volume, voices, sounds, a repeating 3D test sound).
 - `Renderer::RenderAssets` groups the stores of all graphics assets. Code that
   draws gets it as one parameter; a new graphics asset type adds a member.
 - **Fallbacks:** a missing or broken texture becomes a magenta and black
@@ -637,8 +649,8 @@ Renderer::RenderAssets                     all graphics stores, owned by Applica
 
 **Planned:**
 
-- Meshes from model files and materials (0.3); sounds in `Audio` (0.3); music is
-  streamed, not loaded whole (0.8).
+- Meshes from model files and materials (0.3); music is streamed, not loaded
+  whole (0.8); sound occlusion by walls (0.4) and reverb zones (0.5).
 - Hot reload of shaders and textures (0.5), packed archives with a virtual
   file system (near 1.0).
 

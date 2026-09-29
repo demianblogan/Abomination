@@ -155,6 +155,8 @@ set(LIBRARY_SOURCES
 
     UI/AssetsWindow.h
     UI/AssetsWindow.cpp
+    UI/AudioWindow.h
+    UI/AudioWindow.cpp
     UI/CollisionWindow.h
     UI/CollisionWindow.cpp
     UI/ConsoleWindow.h

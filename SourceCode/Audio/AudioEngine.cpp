@@ -84,6 +84,10 @@ namespace Abomination::Audio
 
         float masterVolume = 1.0f;
 
+        // The last listener given to SetListener(); looks along -Z like a new miniaudio listener.
+        glm::vec3 listenerPosition{0.0f};
+        glm::vec3 listenerForward{0.0f, 0.0f, -1.0f};
+
         // Chooses the variants and the pitch.
         Core::Random random;
     };
@@ -201,6 +205,8 @@ namespace Abomination::Audio
 
     void AudioEngine::SetListener(const glm::vec3& position, const glm::vec3& forward)
     {
+        m_implementation->listenerPosition = position;
+        m_implementation->listenerForward = forward;
         if (!m_implementation->hasDevice)
             return;
 
@@ -210,6 +216,16 @@ namespace Abomination::Audio
         ma_engine_listener_set_position(engine, 0, position.x, position.y, position.z);
         ma_engine_listener_set_direction(engine, 0, forward.x, forward.y, forward.z);
         ma_engine_listener_set_world_up(engine, 0, 0.0f, 1.0f, 0.0f);
+    }
+
+    glm::vec3 AudioEngine::GetListenerPosition() const noexcept
+    {
+        return m_implementation->listenerPosition;
+    }
+
+    glm::vec3 AudioEngine::GetListenerForward() const noexcept
+    {
+        return m_implementation->listenerForward;
     }
 
     void AudioEngine::SetMasterVolume(float volume)

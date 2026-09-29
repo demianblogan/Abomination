@@ -318,6 +318,7 @@ namespace Abomination
             .physicsSettings = m_gameplay.physicsSettings,
             .movementSettings = m_gameplay.movementSettings,
             .playerBody = m_registry.get<Physics::CharacterBody>(m_gameplay.player),
+            .audio = m_audio,
         });
 
         m_window.SwapBuffers();

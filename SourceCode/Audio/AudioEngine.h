@@ -73,6 +73,10 @@ namespace Abomination::Audio
         // (+Y up). Called every frame with the view of the camera.
         void SetListener(const glm::vec3& position, const glm::vec3& forward);
 
+        // The last values given to SetListener() (for debug tools that place sounds around the listener).
+        [[nodiscard]] glm::vec3 GetListenerPosition() const noexcept;
+        [[nodiscard]] glm::vec3 GetListenerForward() const noexcept;
+
         // The volume of everything, 0 (silence) to 1.
         void SetMasterVolume(float volume);
         [[nodiscard]] float GetMasterVolume() const noexcept;

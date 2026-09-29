@@ -159,7 +159,7 @@ with Quake-style movement.
 |:-------:|------------------------|:------:|
 | 0.1     | Foundation             | ✅     |
 | 0.2     | First Steps            | ✅     |
-| 0.3     | Boomstick              | ⏳     |
+| 0.3     | Boomstick              | 🔨     |
 | 0.4     | It Moves               | ⏳     |
 | 0.5     | Lights                 | ⏳     |
 | 0.6     | Game Loop              | ⏳     |

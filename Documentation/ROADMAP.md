@@ -23,7 +23,7 @@ we now* and *what comes next*.
 |---------|------------------------|--------|-------------------------------------------------------|----------------------------------------------------------|
 | 0.1     | Foundation             | ✅     | Free-fly (noclip) camera                              | Window, OpenGL 4.6 context, debug output, textured cube, ImGui overlay |
 | 0.2     | First Steps            | ✅     | Quake-style movement, collision with the level        | EnTT, resource manager, TrenchBroom map loading, brush texturing |
-| 0.3     | Boomstick              | ⏳     | First hitscan weapon, damage, sound                   | View model with sway/bob/recoil, muzzle flash, particles, decals, glTF loading |
+| 0.3     | Boomstick              | 🔨     | First hitscan weapon, damage, sound                   | View model with sway/bob/recoil, muzzle flash, particles, decals, glTF loading |
 | 0.4     | It Moves               | ⏳     | First enemy: AI, navmesh, health, death, HUD          | Skeletal animation, text rendering                       |
 | 0.5     | Lights                 | ⏳     | Glowing projectiles, dynamic light in combat          | Lightmap baking, shadows, HDR, bloom, gamma              |
 | 0.6     | Game Loop              | ⏳     | Pickups, armor, doors, buttons, plates, level exit, stats screen, level transitions — first complete level | Moving brushes, data-driven configs |
@@ -79,6 +79,33 @@ seen (collision, map geometry) get debug visualizations in the overlay.
 walks, runs and jumps on it and collides with its walls, movement behaves the
 same at any frame rate.
 
+![0.2 First Steps: the textured test level](Screenshots/v0.2.0/TestLevel.png)
+
+## 0.3 — Boomstick 🔨
+
+**Goal:** a shotgun in the hands of the player: hitscan shots with a spread of
+pellets, sound, recoil, damage to targets, a muzzle flash, particles and
+marks on the walls.
+
+Models and sounds come from CC0 packs (Quaternius, Kenney, CC0 sounds on
+freesound) for now; own, bought or generated assets can replace them later.
+Every asset is listed in `ASSETS.md` before it is committed.
+
+| # | Branch                          | Status | Content                                                                 |
+|---|---------------------------------|--------|-------------------------------------------------------------------------|
+| 1 | `refactor/gameplay-systems`     | 🔨     | The switching between the player and the free-fly camera and their updates move from `Application` into Gameplay systems, so the weapon has a place to plug in |
+| 2 | `feat/audio`                    | ⏳     | New `Audio` module on miniaudio, sound store in the asset cache; footsteps, jump and landing sounds; Audio window (volume, playing voices) |
+| 3 | `feat/gltf-models`              | ⏳     | glTF (`.glb`) loading: meshes, materials, textures; material store; a CC0 model standing in the test room |
+| 4 | `feat/view-model`               | ⏳     | The shotgun in the hands: drawn in its own pass with its own field of view (never inside walls), bob while walking, sway behind the mouse; window with sliders |
+| 5 | `feat/hitscan`                  | ⏳     | Fire action (left mouse button), single-barrel shotgun: pellets with a random spread, time between shots, recoil of the view and the model, shot sound; debug lines of the pellets; random numbers in `Core/Math`; unlimited ammo |
+| 6 | `feat/damage`                   | ⏳     | `Health` component; target dummies placed in TrenchBroom (`target_dummy`); traces against entities, not only walls; damage, hit sound, a destroyed target disappears; knockback from shots |
+| 7 | `feat/impact-effects`           | ⏳     | Muzzle flash sprite; particles (sparks and dust at hits, smoke); decals (pellet marks on walls, a limited number) |
+| 8 | `refactor/review-0.3`           | ⏳     | A review of the project and a guided walkthrough of what changed since the last one; screenshots; release v0.3.0 |
+
+**Done when:** the player shoots the shotgun at target dummies in the test
+level, the pellets spread, the targets take damage and are destroyed, every
+shot is heard and leaves a flash, particles and marks on the walls.
+
 ## Later milestones
 
 Detailed branch plans are written when a milestone starts. Notes collected so
@@ -90,12 +117,10 @@ far:
   The free-fly camera becomes a debug noclip mode next to the player camera
   (branch 10). A search field above the entity list of the inspector once a
   map brings hundreds of entities.
-- **0.3** — asset pipeline decision: where models come from (generated,
-  downloaded, bought) and how they are imported. Audio via miniaudio.
-  `Application` holds the switching between the player and the free-fly
-  camera and their updates (about 400 lines after 0.2); when the weapon adds
-  its own update and view, move this into Gameplay (a player system and a
-  camera system), guided by what the weapon needs.
+- **0.3 → later** — ammo counter and the HUD (0.4), ammo pickups (0.6); the
+  muzzle flash lights the walls (0.5); weapon animations such as drawing and
+  reloading with skeletal animation (0.4); the double-barreled shotgun with
+  weapon switching (0.7).
 - **0.4** — navmesh via Recast/Detour for ground enemies; flying enemies need
   a separate approach. Frustum culling of entities (a bounding sphere tested
   against the six planes of the view) once enemies, pickups and effects bring

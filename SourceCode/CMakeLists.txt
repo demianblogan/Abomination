@@ -55,14 +55,22 @@ set(LIBRARY_SOURCES
 
     Gameplay/FreeFlyCameraController.h
     Gameplay/FreeFlyCameraController.cpp
+    Gameplay/FreeFlyCameraSystem.h
+    Gameplay/FreeFlyCameraSystem.cpp
+    Gameplay/GameplayState.h
+    Gameplay/GameplayState.cpp
     Gameplay/MouseLook.h
     Gameplay/MouseLook.cpp
     Gameplay/Player.h
     Gameplay/Player.cpp
     Gameplay/PlayerController.h
     Gameplay/PlayerController.cpp
+    Gameplay/PlayerSystem.h
+    Gameplay/PlayerSystem.cpp
     Gameplay/Spin.h
     Gameplay/Spin.cpp
+    Gameplay/ViewSystem.h
+    Gameplay/ViewSystem.cpp
 
     Input/Action.h
     Input/ActionStates.h

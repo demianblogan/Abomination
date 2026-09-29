@@ -7,8 +7,8 @@ namespace Abomination::Core
     void FrameStatistics::AddFrame(float frameTime, int tickCount) noexcept
     {
         // The graph: write into the ring buffer, then move to the next slot; after the last slot go back to the first one.
-        m_frameTimeSamples[m_nextIndex] = frameTime;
-        m_nextIndex = (m_nextIndex + 1) % MaxSampleCount;
+        m_frameTimeSamples[m_nextSampleIndex] = frameTime;
+        m_nextSampleIndex = (m_nextSampleIndex + 1) % MaxSampleCount;
         m_storedSampleCount = std::min(m_storedSampleCount + 1, MaxSampleCount);
 
         // The numbers to read: the frame joins the current interval.
@@ -86,6 +86,6 @@ namespace Abomination::Core
         if (m_storedSampleCount < MaxSampleCount)
             return 0;
 
-        return m_nextIndex;
+        return m_nextSampleIndex;
     }
 }

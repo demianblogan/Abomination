@@ -59,8 +59,8 @@ namespace Abomination::Core
         // --- The graph ---
         std::array<float, MaxSampleCount> m_frameTimeSamples{};
 
-        // Where the next sample will be written.
-        std::size_t m_nextIndex = 0;
+        // The index in m_frameTimeSamples where the next sample will be written.
+        std::size_t m_nextSampleIndex = 0;
 
         // How many samples are stored: grows up to MaxSampleCount and then stays there.
         std::size_t m_storedSampleCount = 0;

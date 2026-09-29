@@ -362,8 +362,8 @@ Inside the renderer:
   darker by the direction the surface faces — half-Lambert shading with a
   fixed made-up light direction, not real lighting, so walls facing different
   ways stay apart until lightmaps in 0.5) and `Wireframe` (one line color).
-- `TextureStore`, `ShaderStore`, `MeshStore`, grouped in `RenderAssets` — load
-  every texture, shader program and mesh once and hand out handles (see
+- `TextureStore`, `ShaderStore`, `MeshStore`, `ModelStore`, grouped in `RenderAssets` — load
+  every texture, shader program, mesh and model once and hand out handles (see
   section 9).
 - Explicit `layout(location)` / `layout(binding)` everywhere: C++ constants
   and shaders agree on the numbers in advance, nothing is queried at run time.
@@ -610,8 +610,16 @@ Renderer::RenderAssets                     all graphics stores, owned by Applica
 - The **stores** of each asset type load files and use a cache inside:
   `Renderer::TextureStore`, `Renderer::ShaderStore`, `Renderer::MeshStore`
   (meshes built by code now, named like paths: the level meshes as
-  `"Maps/Test.map#Episode1/Wall_MossyBrick"`, one per texture; loaded from
-  model files in 0.3), `Audio::SoundStore`; later the material store (0.3).
+  `"Maps/Test.map#Episode1/Wall_MossyBrick"`, one per texture),
+  `Renderer::ModelStore`, `Audio::SoundStore`; later a material store.
+- **Models** are glTF 2.0 files (`.glb`), read with cgltf (`LoadGLTFFile`,
+  CPU data in `ModelData`, testable without OpenGL). A model keeps its parts
+  apart (the pump of the shotgun can move later): every part is a mesh and a
+  texture in their stores, named after the file
+  (`"Models/Weapons/Shotgun.glb#Pump_low_Shotgun_0"`, `"...#image0"`), with
+  the transform of its node chain. Only the base color texture is used, and
+  only images the parts use are uploaded. `ModelRenderer` draws a model at an
+  entity; maps place models with `misc_model` (Level lifetime).
   There is no single class that knows all asset types, so OpenGL stays in
   `Renderer` and sound in `Audio`.
 - **Sounds** are decoded whole into memory when loaded, always as mono
@@ -649,7 +657,7 @@ Renderer::RenderAssets                     all graphics stores, owned by Applica
 
 **Planned:**
 
-- Meshes from model files and materials (0.3); music is streamed, not loaded
+- Materials (normal and metalness maps, with lighting in 0.5); music is streamed, not loaded
   whole (0.8); sound occlusion by walls (0.4) and reverb zones (0.5).
 - Hot reload of shaders and textures (0.5), packed archives with a virtual
   file system (near 1.0).

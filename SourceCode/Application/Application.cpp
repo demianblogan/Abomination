@@ -73,6 +73,7 @@ namespace Abomination
             .textures = Renderer::TextureStore(assetsDirectory),
             .shaders = std::move(*shaders),
             .meshes = Renderer::MeshStore(),
+            .models = Renderer::ModelStore(assetsDirectory),
         };
 
         // The map is only read here; its entities are created in the constructor, where the registry exists.

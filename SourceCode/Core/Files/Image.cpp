@@ -31,6 +31,11 @@ namespace Abomination::Core
         if (!fileContents.has_value())
             return std::unexpected(fileContents.error());
 
+        return DecodeImage(*fileContents, ToUTF8String(path));
+    }
+
+    std::expected<Image, std::string> DecodeImage(std::span<const std::byte> bytes, std::string_view name)
+    {
         // Flip the rows while decoding, so the bottom row of the picture comes first (see Image).
         // The "_thread" version changes the setting only for the current thread, not for the whole program.
         stbi_set_flip_vertically_on_load_thread(1);
@@ -42,16 +47,14 @@ namespace Abomination::Core
         // Decodes the bytes of the file into pixels: returns width * height * 4 bytes (nullptr if the file is broken) and
         // writes the size and the number of channels in the file into the three variables above. The last argument asks
         // for 4 channels in the result, whatever the file contains: RGB images get alpha 255.
-        stbi_uc* pixels = stbi_load_from_memory(reinterpret_cast<const stbi_uc*>(fileContents->data()),
-                                                static_cast<int>(fileContents->size()), &width, &height,
-                                                &channelCountInFile, ImageChannelCount);
+        stbi_uc* pixels = stbi_load_from_memory(reinterpret_cast<const stbi_uc*>(bytes.data()), static_cast<int>(bytes.size()),
+                                                &width, &height, &channelCountInFile, ImageChannelCount);
 
         // From here on the pixels are freed automatically on every way out of the function (nothing happens for nullptr).
         const STBPixels decodedPixels(pixels, &stbi_image_free);
 
         if (decodedPixels == nullptr)
-            return std::unexpected(
-                std::format("Failed to decode the image \"{}\": {}", ToUTF8String(path), stbi_failure_reason()));
+            return std::unexpected(std::format("Failed to decode the image \"{}\": {}", name, stbi_failure_reason()));
 
         const std::size_t byteCount = static_cast<std::size_t>(width) * static_cast<std::size_t>(height) * ImageChannelCount;
 

@@ -3,6 +3,7 @@
 #include "Core/Assets/AssetCache.h"
 #include "Core/Assets/AssetHandle.h"
 #include "Core/Assets/AssetLifetime.h"
+#include "Core/Files/Image.h"
 #include "Renderer/OpenGL/GLTexture.h"
 
 #include <cstddef>
@@ -31,6 +32,11 @@ namespace Abomination::Renderer
         // and uses forward slashes: "Textures/Episode1/Crate_Rotten.png". The same path always gives the same handle.
         // The texture stays loaded for the lifetime (the longer one if it is asked for again with another lifetime).
         [[nodiscard]] TextureHandle Load(const std::string& path, Core::AssetLifetime lifetime);
+
+        // Stores a texture made of an image already in memory (a texture inside a model file) under name, named like a
+        // path: "Models/Weapons/Shotgun.glb#image0". If a texture with this name is loaded, it is returned as it is. An
+        // empty image (one that could not be decoded) gives the checkerboard, like a missing file.
+        [[nodiscard]] TextureHandle Add(const std::string& name, const Core::Image& image, Core::AssetLifetime lifetime);
 
         // Removes every texture of the lifetime group from video memory; their handles become invalid.
         void RemoveAll(Core::AssetLifetime lifetime);

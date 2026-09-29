@@ -4,7 +4,8 @@ find_package(imgui CONFIG REQUIRED)
 find_package(SDL3 CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
 find_package(Stb REQUIRED)  # Header-only: provides only Stb_INCLUDE_DIR, no target
-find_path(MINIAUDIO_INCLUDE_DIR miniaudio.h REQUIRED)  # Header-only, and vcpkg installs no CMake package for it
+find_path(CGLTF_INCLUDE_DIR cgltf.h REQUIRED)  # Header-only, and vcpkg installs no CMake package for it
+find_path(MINIAUDIO_INCLUDE_DIR miniaudio.h REQUIRED)  # The same
 
 # --- Generated sources -------------------------------------------------------
 # The version lives only in project(... VERSION ...) of the root CMakeLists.txt.
@@ -115,9 +116,12 @@ set(LIBRARY_SOURCES
     Renderer/ImGuiRendererBackend.h
     Renderer/ImGuiRendererBackend.cpp
     Renderer/MeshRenderer.h
+    Renderer/ModelRenderer.h
     Renderer/RenderSettings.h
     Renderer/RenderSystem.h
     Renderer/RenderSystem.cpp
+    Renderer/Assets/GLTFLoader.h
+    Renderer/Assets/GLTFLoader.cpp
     Renderer/Assets/Mesh.h
     Renderer/Assets/Mesh.cpp
     Renderer/Assets/MeshData.h
@@ -125,6 +129,9 @@ set(LIBRARY_SOURCES
     Renderer/Assets/MeshPrimitives.cpp
     Renderer/Assets/MeshStore.h
     Renderer/Assets/MeshStore.cpp
+    Renderer/Assets/ModelData.h
+    Renderer/Assets/ModelStore.h
+    Renderer/Assets/ModelStore.cpp
     Renderer/Assets/RenderAssets.h
     Renderer/Assets/ShaderStore.h
     Renderer/Assets/ShaderStore.cpp
@@ -206,6 +213,7 @@ add_library(AbominationCore STATIC
 target_include_directories(AbominationCore PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_include_directories(AbominationCore SYSTEM PRIVATE ${Stb_INCLUDE_DIR})  # Only Core/Files/Image.cpp includes stb
 target_include_directories(AbominationCore SYSTEM PRIVATE ${MINIAUDIO_INCLUDE_DIR})  # Only Audio/*.cpp include miniaudio
+target_include_directories(AbominationCore SYSTEM PRIVATE ${CGLTF_INCLUDE_DIR})  # Only Renderer/Assets/GLTFLoader.cpp includes cgltf
 target_link_libraries(AbominationCore
     PUBLIC
         EnTT                  # Header-only; game headers hold entt::registry and entities, so it is public

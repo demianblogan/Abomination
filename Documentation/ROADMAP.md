@@ -95,7 +95,7 @@ Every asset is listed in `ASSETS.md` before it is committed.
 |---|---------------------------------|--------|-------------------------------------------------------------------------|
 | 1 | `refactor/gameplay-systems`     | ✅     | The switching between the player and the free-fly camera and their updates move from `Application` into Gameplay systems, so the weapon has a place to plug in |
 | 2 | `feat/audio`                    | ✅     | New `Audio` module on miniaudio, sound store in the asset cache, voices with a limit per sound, random pitch and variants; jump and landing sounds; Audio window (volume, playing voices, a test sound in 3D where the camera looks) |
-| 3 | `feat/gltf-models`              | ⏳     | glTF (`.glb`) loading: meshes, materials, textures; material store; a CC0 model standing in the test room |
+| 3 | `feat/gltf-models`              | ✅     | glTF (`.glb`) loading: meshes, materials, textures; material store; a CC0 model standing in the test room |
 | 4 | `feat/view-model`               | ⏳     | The shotgun in the hands: drawn in its own pass with its own field of view (never inside walls), bob while walking, sway behind the mouse; window with sliders |
 | 5 | `feat/hitscan`                  | ⏳     | Fire action (left mouse button), single-barrel shotgun: pellets with a random spread, time between shots, recoil of the view and the model, shot sound; debug lines of the pellets; random numbers in `Core/Math`; unlimited ammo |
 | 6 | `feat/damage`                   | ⏳     | `Health` component; target dummies placed in TrenchBroom (`target_dummy`); traces against entities, not only walls; damage, hit sound, a destroyed target disappears; knockback from shots |

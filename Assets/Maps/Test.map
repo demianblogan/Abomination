@@ -173,3 +173,10 @@
 "origin" "-48 -176 88"
 "angle" "180"
 }
+// entity 2
+{
+"classname" "misc_model"
+"origin" "-128 -176 68"
+"model" "Models/Weapons/Shotgun.glb"
+"angle" "90"
+}

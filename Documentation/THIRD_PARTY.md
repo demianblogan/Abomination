@@ -15,6 +15,7 @@ line there.
 
 | Library | Version | License | Purpose                                  | Website                          |
 |---------|---------|---------|------------------------------------------|----------------------------------|
+| cgltf   | 1.15    | MIT     | Reading glTF 2.0 models (`Renderer/Assets/GLTFLoader`, header-only) | https://github.com/jkuhlmann/cgltf |
 | Dear ImGui | 1.92.9b | MIT  | Debug overlay (developer tools only), SDL3 and OpenGL3 backends | https://github.com/ocornut/imgui |
 | EnTT    | 4.0.0   | MIT     | Entity-component-system: entities, components, views (header-only, single header in `ThirdParty/EnTT`; vcpkg has only 3.16) | https://github.com/skypjack/entt |
 | GLAD    | 2.0.8   | (WTFPL OR CC0-1.0) AND Apache-2.0 | OpenGL 4.6 Core loader, generated into `ThirdParty/GLAD` | https://gen.glad.sh |

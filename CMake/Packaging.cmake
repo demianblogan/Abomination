@@ -43,6 +43,7 @@ function(abomination_install_vcpkg_license port libraryName)
     install(FILES ${VCPKG_SHARE_DIR}/${port}/copyright DESTINATION Licenses RENAME ${libraryName}.txt)
 endfunction()
 
+abomination_install_vcpkg_license(cgltf cgltf)
 abomination_install_vcpkg_license(glm glm)
 abomination_install_vcpkg_license(imgui DearImGui)
 abomination_install_vcpkg_license(miniaudio miniaudio)

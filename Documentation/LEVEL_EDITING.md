@@ -60,7 +60,9 @@ can be placed. This is described by two files kept in the repository:
    a staircase of 4–6 steps against a wall.
 6. **Player start.** In the entity browser (right panel) drag
    `info_player_start` onto the floor.
-7. Save as `Assets/Maps/Test.map`.
+7. **Model.** Drag `misc_model` into the room: it shows the model of its
+   `model` property (a `.glb` file in `Assets`, the shotgun by default).
+8. Save as `Assets/Maps/Test.map`.
 
 ## Seeing the map in the game
 

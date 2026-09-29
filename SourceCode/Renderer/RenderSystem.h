@@ -31,7 +31,8 @@ namespace Abomination::Renderer
     // Loads the system shaders. Called once at startup, after the stores are created.
     [[nodiscard]] SystemShaders LoadSystemShaders(ShaderStore& shaders);
 
-    // The render system: draws every entity that has a Core::Transform and a MeshRenderer, as seen from the view.
+    // The render system: draws every entity that has a Core::Transform and a MeshRenderer or a ModelRenderer, as seen from
+    // the view.
     // Entities with a Core::PreviousTransform are drawn at fraction interpolationFactor of the way from their previous
     // to their current transform (see Core/Scene/TransformInterpolation.h); the others at their current transform.
     // settings choose how to draw: filled, with the shader of every entity, or as a wireframe, with the wireframe shader

@@ -84,6 +84,8 @@ set(LIBRARY_SOURCES
     Gameplay/PlayerSystem.cpp
     Gameplay/Spin.h
     Gameplay/Spin.cpp
+    Gameplay/ViewModel.h
+    Gameplay/ViewModel.cpp
     Gameplay/ViewSystem.h
     Gameplay/ViewSystem.cpp
 

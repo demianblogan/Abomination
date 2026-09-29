@@ -12,6 +12,11 @@ namespace Abomination::Audio
     class AudioEngine;
 }
 
+namespace Abomination::Renderer
+{
+    struct RenderAssets;
+}
+
 namespace Abomination::World
 {
     struct PlayerStart;
@@ -64,7 +69,8 @@ namespace Abomination::Gameplay
     };
 
     // Creates the player at the player start of the level and the free-fly camera waiting at their eyes, looking the
-    // same way, and loads the sounds of the player. The player is controlled first.
+    // same way, loads the sounds of the player and gives them the shotgun in their hands (see ViewModel). The player is
+    // controlled first.
     [[nodiscard]] GameplayState CreateGameplayState(entt::registry& registry, const World::PlayerStart& playerStart,
-                                                    Audio::AudioEngine& audio);
+                                                    Audio::AudioEngine& audio, Renderer::RenderAssets& renderAssets);
 }

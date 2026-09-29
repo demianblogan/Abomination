@@ -41,4 +41,12 @@ namespace Abomination::Renderer
     RenderStatistics DrawMeshes(const entt::registry& registry, const View& view, float interpolationFactor,
                                 const RenderAssets& assets, const SystemShaders& systemShaders,
                                 const RenderSettings& settings);
+
+    // Draws the weapon in the hands of the player (a "view model"), after the world: over everything drawn before, with
+    // its own field of view (verticalFOV, radians), so it never goes into walls and a wider field of view of the world
+    // does not stretch it. eyeSpaceMatrix places the model relative to the eyes: meters, +X to the right, +Y up, -Z
+    // forward (the direction the player looks). aspectRatio is that of the window (above 0).
+    RenderStatistics DrawViewModel(ModelHandle model, const glm::mat4& eyeSpaceMatrix, float verticalFOV, float aspectRatio,
+                                   const RenderAssets& assets, ShaderHandle shader, const SystemShaders& systemShaders,
+                                   const RenderSettings& settings);
 }

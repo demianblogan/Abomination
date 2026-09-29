@@ -57,8 +57,8 @@ namespace Abomination::UI
                              "in the center it is ignored.");
         DrawCentimeterSlider("Up", viewModel.offset.y, -50.0f, 10.0f, "Negative: below the eyes.");
         DrawCentimeterSlider("Forward", viewModel.offset.z, -100.0f, 0.0f,
-                             "Negative: in front of the eyes. The middle of the shotgun: it is 1.1 m long, so at -42 cm\n"
-                             "its muzzle is about 1 m in front of the eyes and its stock just behind them.");
+                             "Negative: in front of the eyes. The middle of the shotgun: it is 1.1 m long, so at -35 cm\n"
+                             "its muzzle is about 90 cm in front of the eyes and its stock behind them.");
 
         ImGui::SeparatorText("Lens");
         float fovDegrees = glm::degrees(viewModel.verticalFOV);

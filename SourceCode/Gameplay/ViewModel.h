@@ -33,12 +33,13 @@ namespace Abomination::Gameplay
 
         // Where the middle of the model is relative to the eyes when held on the right: meters to the right, up (negative:
         // down) and forward (negative: in front, the eyes look along -Z). The model points forward along -Z.
-        glm::vec3 offset{0.14f, -0.16f, -0.42f};
+        glm::vec3 offset{0.082f, -0.176f, -0.355f};
 
         ViewModelSide side = ViewModelSide::Right;
 
-        // The field of view the weapon is drawn with, apart from that of the world (radians, vertical).
-        float verticalFOV = glm::radians(55.0f);
+        // The field of view the weapon is drawn with, apart from that of the world (radians, vertical). Narrower than the
+        // world's 60 degrees: the weapon looks less stretched in depth, the way it is seen when held.
+        float verticalFOV = glm::radians(34.0f);
     };
 
     // The matrix that places the model relative to the eyes (see Renderer::DrawViewModel): the offset, with its

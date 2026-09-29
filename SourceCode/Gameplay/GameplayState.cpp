@@ -38,8 +38,8 @@ namespace Abomination::Gameplay
         const glm::vec3 eyePosition = playerStart.boxCenter + glm::vec3(0.0f, PlayerEyeHeight, 0.0f);
         state.freeFlyCamera = SpawnFreeFlyCamera(registry, eyePosition, playerStart.yaw);
 
-        state.playerSounds.jump = LoadPlayerSoundEvent(audio, "Jump", 3);
-        state.playerSounds.jump.volume = 0.5f;
+        // A jump itself makes no sound: the feet only push off. The jump will be the voice of the player (a short effort
+        // sound), recorded separately; until then the jump event has no variants and plays nothing.
         state.playerSounds.land = LoadPlayerSoundEvent(audio, "Land", 3);
 
         return state;

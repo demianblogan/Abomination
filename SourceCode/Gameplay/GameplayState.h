@@ -26,9 +26,10 @@ namespace Abomination::Gameplay
         FreeFlyCamera,
     };
 
-    // The sounds of the player's own body and what is needed to notice when to play them (see UpdatePlayerSounds).
+    // The sounds of the player and what is needed to notice when to play them (see UpdatePlayerSounds).
     struct PlayerSounds
     {
+        // The voice of the player jumping (an effort sound) and the feet landing on the ground.
         Audio::SoundEvent jump;
         Audio::SoundEvent land;
 

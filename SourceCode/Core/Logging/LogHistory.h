@@ -21,17 +21,17 @@ namespace Abomination::Core
     };
 
     // How many messages the history keeps by default: a few minutes of a normal run.
-    inline constexpr std::size_t DefaultLogHistoryCapacity = 2000;
+    inline constexpr std::size_t DefaultMaxLogEntryCount = 2000;
 
-    // The last messages of the log, in memory, for the in-game console. When it is full, a new message pushes out the
-    // oldest one, so it never grows beyond its capacity.
+    // The last messages of the log, in memory, for the in-game console. When it holds maxEntryCount messages, a new one
+    // pushes out the oldest one, so it never grows beyond that.
     //
     // Log writes to it (see LogSettings::history) and the debug overlay reads it. Messages may be written from any
     // thread, so every access is guarded by a mutex: one thread at a time.
     class LogHistory
     {
     public:
-        explicit LogHistory(std::size_t capacity = DefaultLogHistoryCapacity);
+        explicit LogHistory(std::size_t maxEntryCount = DefaultMaxLogEntryCount);
 
         void Add(LogEntry entry);
         void Clear();
@@ -42,11 +42,11 @@ namespace Abomination::Core
         template <typename Reader>
         void ReadEntries(Reader&& reader) const;
 
-        [[nodiscard]] std::size_t GetCount() const;
+        [[nodiscard]] std::size_t GetEntryCount() const;
 
         // How many messages were ever added (not reduced by pushing out or Clear()). The console scrolls to the bottom
         // when it changes.
-        [[nodiscard]] std::uint64_t GetAddedCount() const;
+        [[nodiscard]] std::uint64_t GetAddedEntryCount() const;
 
     private:
         // mutable: const functions lock it too; locking changes the mutex, not what the history holds.
@@ -54,8 +54,12 @@ namespace Abomination::Core
 
         // A deque removes from the front as cheaply as it adds to the back: the oldest message leaves in O(1).
         std::deque<LogEntry> m_entries;
-        std::size_t m_capacity = 0;
-        std::uint64_t m_addedCount = 0;
+
+        // The most messages m_entries holds at once.
+        std::size_t m_maxEntryCount = 0;
+
+        // How many messages were ever added (see GetAddedEntryCount).
+        std::uint64_t m_addedEntryCount = 0;
     };
 
     template <typename Reader>

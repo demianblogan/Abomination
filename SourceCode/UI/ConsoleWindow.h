@@ -56,10 +56,10 @@ namespace Abomination::UI
         LevelFlags m_visibleLevels = MakeAllTrue<LevelFlags>();
         CategoryFlags m_visibleCategories = MakeAllTrue<CategoryFlags>();
 
-        // Keep the newest message in sight: scroll to the bottom when a message arrives. m_seenAddedCount is the count of
-        // messages added (LogHistory::GetAddedCount) the last time the console was drawn.
+        // Keep the newest message in sight: scroll to the bottom when a message arrives. m_seenAddedEntryCount is the
+        // count of messages added (LogHistory::GetAddedEntryCount) the last time the console was drawn.
         bool m_isAutoScrollEnabled = true;
-        std::uint64_t m_seenAddedCount = 0;
+        std::uint64_t m_seenAddedEntryCount = 0;
 
         // The positions of the shown messages in the history, rebuilt every frame (kept to reuse the memory).
         std::vector<std::size_t> m_shownIndices;

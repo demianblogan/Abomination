@@ -111,7 +111,7 @@ namespace Abomination::UI
         if (!m_isOpen)
         {
             // Forget the messages seen, so the console scrolls to the newest one as soon as it opens again.
-            m_seenAddedCount = 0;
+            m_seenAddedEntryCount = 0;
             return;
         }
 
@@ -227,10 +227,10 @@ namespace Abomination::UI
         });
 
         // A new message arrived since the last frame: scroll to the very bottom, where it is.
-        const std::uint64_t addedCount = history.GetAddedCount();
-        if (m_isAutoScrollEnabled && addedCount != m_seenAddedCount)
+        const std::uint64_t addedEntryCount = history.GetAddedEntryCount();
+        if (m_isAutoScrollEnabled && addedEntryCount != m_seenAddedEntryCount)
             ImGui::SetScrollHereY(1.0f);
-        m_seenAddedCount = addedCount;
+        m_seenAddedEntryCount = addedEntryCount;
 
         ImGui::EndChild();
     }

@@ -4,22 +4,22 @@
 
 namespace Abomination::Core
 {
-    LogHistory::LogHistory(std::size_t capacity)
-        : m_capacity(capacity)
+    LogHistory::LogHistory(std::size_t maxEntryCount)
+        : m_maxEntryCount(maxEntryCount)
     {}
 
     void LogHistory::Add(LogEntry entry)
     {
         const std::lock_guard lock(m_mutex);
 
-        if (m_capacity == 0)
+        if (m_maxEntryCount == 0)
             return;
 
-        if (m_entries.size() == m_capacity)
+        if (m_entries.size() == m_maxEntryCount)
             m_entries.pop_front();
 
         m_entries.push_back(std::move(entry));
-        ++m_addedCount;
+        ++m_addedEntryCount;
     }
 
     void LogHistory::Clear()
@@ -28,17 +28,17 @@ namespace Abomination::Core
         m_entries.clear();
     }
 
-    std::size_t LogHistory::GetCount() const
+    std::size_t LogHistory::GetEntryCount() const
     {
         const std::lock_guard lock(m_mutex);
 
         return m_entries.size();
     }
 
-    std::uint64_t LogHistory::GetAddedCount() const
+    std::uint64_t LogHistory::GetAddedEntryCount() const
     {
         const std::lock_guard lock(m_mutex);
 
-        return m_addedCount;
+        return m_addedEntryCount;
     }
 }

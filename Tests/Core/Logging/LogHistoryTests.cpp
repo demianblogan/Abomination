@@ -37,7 +37,7 @@ namespace Abomination::Core
         history.Add(CreateEntry("second"));
 
         EXPECT_EQ(GetMessages(history), (std::vector<std::string>{"first", "second"}));
-        EXPECT_EQ(history.GetCount(), 2u);
+        EXPECT_EQ(history.GetEntryCount(), 2u);
     }
 
     TEST(LogHistory, FullHistoryDropsOldestEntry)
@@ -60,7 +60,7 @@ namespace Abomination::Core
 
         history.Clear();
 
-        EXPECT_EQ(history.GetCount(), 0u);
-        EXPECT_EQ(history.GetAddedCount(), 3u);
+        EXPECT_EQ(history.GetEntryCount(), 0u);
+        EXPECT_EQ(history.GetAddedEntryCount(), 3u);
     }
 }

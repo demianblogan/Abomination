@@ -8,7 +8,8 @@
 
 namespace Abomination::Core
 {
-    // A flat convex polygon in 3D: its corners in order around the edge. Faces of brushes are such polygons.
+    // A flat convex polygon in 3D: its corners in order around the edge. Faces of brushes (the convex solids
+    // a level is built of, see Plane.h) are such polygons.
     using ConvexPolygon = std::vector<glm::dvec3>;
 
     // Points closer to a plane than this (in map units) count as lying on it. Map points and the intersections

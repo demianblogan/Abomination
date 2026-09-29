@@ -30,7 +30,10 @@ namespace Abomination::World
 
     Core::Plane ConvertMapPlane(const Core::Plane& mapPlane)
     {
-        return {.normal = TurnMapAxes(mapPlane.normal), .distance = Core::MapUnitsToMeters(mapPlane.distance)};
+        return {
+            .normal = TurnMapAxes(mapPlane.normal),
+            .distanceFromOrigin = Core::MapUnitsToMeters(mapPlane.distanceFromOrigin),
+        };
     }
 
     float ConvertMapAngleToYaw(double mapAngleDegrees)

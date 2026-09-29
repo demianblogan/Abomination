@@ -41,7 +41,7 @@ namespace Abomination::World
             const bool facesPositive = direction.x + direction.y + direction.z > 0.0;
             const glm::dvec3& corner = facesPositive ? box.maximum : box.minimum;
 
-            return {.normal = direction, .distance = glm::dot(direction, corner)};
+            return {.normal = direction, .distanceFromOrigin = glm::dot(direction, corner)};
         }
     }
 

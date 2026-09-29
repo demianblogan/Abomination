@@ -54,9 +54,9 @@ namespace Abomination::World
             for (const Core::Plane& plane : brush.planes)
             {
                 // Signed distances of the start and the end from the plane moved out for the box: positive in front.
-                const double movedDistance = plane.distance + CalculateReach(plane.normal, halfExtents);
-                const double startDistance = glm::dot(plane.normal, start) - movedDistance;
-                const double endDistance = glm::dot(plane.normal, end) - movedDistance;
+                const double movedDistanceFromOrigin = plane.distanceFromOrigin + CalculateReach(plane.normal, halfExtents);
+                const double startDistance = glm::dot(plane.normal, start) - movedDistanceFromOrigin;
+                const double endDistance = glm::dot(plane.normal, end) - movedDistanceFromOrigin;
 
                 if (startDistance > 0.0)
                     startsOutside = true;

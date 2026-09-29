@@ -11,7 +11,7 @@ namespace Abomination::Core
         const ConvexPolygon Square{{-1.0, -1.0, 0.0}, {1.0, -1.0, 0.0}, {1.0, 1.0, 0.0}, {-1.0, 1.0, 0.0}};
 
         // The plane x = 0 facing +X: its front is the right half of the square.
-        const Plane VerticalPlaneThroughCenter{.normal = {1.0, 0.0, 0.0}, .distance = 0.0};
+        const Plane VerticalPlaneThroughCenter{.normal = {1.0, 0.0, 0.0}, .distanceFromOrigin = 0.0};
     }
 
     TEST(ConvexPolygon, KeepsPartBehindPlane)
@@ -27,7 +27,7 @@ namespace Abomination::Core
     TEST(ConvexPolygon, CrossingPointFollowsDistances)
     {
         // The plane x = 0.5: distances of the bottom edge ends are -1.5 and 0.5, so the crossing is at 3/4 of the edge.
-        const Plane plane{.normal = {1.0, 0.0, 0.0}, .distance = 0.5};
+        const Plane plane{.normal = {1.0, 0.0, 0.0}, .distanceFromOrigin = 0.5};
 
         const ConvexPolygon result = ClipPolygon(Square, plane);
 
@@ -38,14 +38,14 @@ namespace Abomination::Core
 
     TEST(ConvexPolygon, PolygonBehindPlaneStaysWhole)
     {
-        const Plane planeFarRight{.normal = {1.0, 0.0, 0.0}, .distance = 5.0};
+        const Plane planeFarRight{.normal = {1.0, 0.0, 0.0}, .distanceFromOrigin = 5.0};
 
         EXPECT_EQ(ClipPolygon(Square, planeFarRight), Square);
     }
 
     TEST(ConvexPolygon, PolygonInFrontOfPlaneDisappears)
     {
-        const Plane planeFarLeft{.normal = {1.0, 0.0, 0.0}, .distance = -5.0};
+        const Plane planeFarLeft{.normal = {1.0, 0.0, 0.0}, .distanceFromOrigin = -5.0};
 
         EXPECT_TRUE(ClipPolygon(Square, planeFarLeft).empty());
     }
@@ -54,7 +54,7 @@ namespace Abomination::Core
     {
         // The diagonal plane through the corners (1, -1) and (-1, 1), facing towards (1, 1): the corner (1, 1) is in
         // front, the two corners on the plane stay without duplicates, and a triangle is left.
-        const Plane diagonal{.normal = {0.70710678118654752, 0.70710678118654752, 0.0}, .distance = 0.0};
+        const Plane diagonal{.normal = {0.70710678118654752, 0.70710678118654752, 0.0}, .distanceFromOrigin = 0.0};
 
         const ConvexPolygon result = ClipPolygon(Square, diagonal);
 

@@ -7,12 +7,13 @@
 namespace Abomination::Core
 {
     // An infinite flat surface, stored as its normal and its distance from the origin: the points p on the plane are
-    // exactly those with dot(normal, p) == distance. The normal (length 1) points to the "front" side.
+    // exactly those with dot(normal, p) == distanceFromOrigin. The normal (length 1) points to the "front" side.
     //
-    // The normal alone gives only the direction: all parallel planes share it. The distance picks one of them: how far
-    // the plane is from the origin, measured along the normal (the point of the plane closest to the origin is
-    // normal * distance; a negative distance puts the plane behind the origin). Moving a plane along its normal changes
-    // only the distance, which is what TraceBox does to grow a brush by the size of a box.
+    // The normal alone gives only the direction: all parallel planes share it. distanceFromOrigin picks one of them:
+    // stand at the origin, face along the normal and walk that far, and the plane passes through where you stop,
+    // perpendicular to the way you walked (that point, normal * distanceFromOrigin, is the point of the plane closest to
+    // the origin; a negative value means walking backwards, and the plane lies behind the origin). Moving a plane along
+    // its normal changes only this number, which is what TraceBox does to grow a brush by the size of a box.
     //
     // Planes are the faces of brushes. A brush (a term of Quake and its level editors, not a painting brush) is one
     // convex solid of a level: a wall, a floor, a box, a ramp, a column. A map file stores a brush only as the planes of
@@ -23,7 +24,7 @@ namespace Abomination::Core
     struct Plane
     {
         glm::dvec3 normal{0.0, 0.0, 1.0};
-        double distance = 0.0;
+        double distanceFromOrigin = 0.0;
     };
 
     // The plane through three points, with the normal cross(first - second, third - second): the order of the points

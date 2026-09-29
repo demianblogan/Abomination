@@ -30,7 +30,7 @@ namespace Abomination::World
             // right and "up" points up, so the corners below (left-down, right-down, right-up, left-up) go counter-clockwise.
             const glm::dvec3 up = glm::cross(plane.normal, right);
 
-            const glm::dvec3 center = plane.normal * plane.distance;
+            const glm::dvec3 center = plane.normal * plane.distanceFromOrigin;
             const glm::dvec3 toRight = right * HugeSquareHalfSize;
             const glm::dvec3 toUp = up * HugeSquareHalfSize;
 

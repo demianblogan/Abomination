@@ -62,10 +62,11 @@ namespace Abomination::World
             EXPECT_NEAR(actual.z, expected.z, Tolerance);
         }
 
-        bool HasPlane(const CollisionBrush& brush, const glm::dvec3& normal, double distance)
+        bool HasPlane(const CollisionBrush& brush, const glm::dvec3& normal, double distanceFromOrigin)
         {
             for (const Core::Plane& plane : brush.planes)
-                if (glm::length(plane.normal - normal) < Tolerance && std::abs(plane.distance - distance) < Tolerance)
+                if (glm::length(plane.normal - normal) < Tolerance &&
+                    std::abs(plane.distanceFromOrigin - distanceFromOrigin) < Tolerance)
                     return true;
 
             return false;

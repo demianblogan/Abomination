@@ -27,8 +27,8 @@ namespace Abomination::Physics
             const std::array<glm::dvec3, 3> axes = {glm::dvec3(1, 0, 0), glm::dvec3(0, 1, 0), glm::dvec3(0, 0, 1)};
             for (const glm::dvec3& axis : axes)
             {
-                brush.planes.push_back({.normal = axis, .distance = glm::dot(axis, maximum)});
-                brush.planes.push_back({.normal = -axis, .distance = glm::dot(-axis, minimum)});
+                brush.planes.push_back({.normal = axis, .distanceFromOrigin = glm::dot(axis, maximum)});
+                brush.planes.push_back({.normal = -axis, .distanceFromOrigin = glm::dot(-axis, minimum)});
             }
 
             return brush;
@@ -122,7 +122,8 @@ namespace Abomination::Physics
         {
             const double angle = angleDegrees * 3.14159265358979 / 180.0;
             World::CollisionBrush slope = CreateBoxBrush({-10.0, -10.0, -10.0}, {10.0, 0.0, 10.0});
-            slope.planes[2] = {.normal = {std::sin(angle), std::cos(angle), 0.0}, .distance = 0.0}; // replaces the top
+            // Replaces the top.
+            slope.planes[2] = {.normal = {std::sin(angle), std::cos(angle), 0.0}, .distanceFromOrigin = 0.0};
             return std::vector<World::CollisionBrush>{slope};
         };
 

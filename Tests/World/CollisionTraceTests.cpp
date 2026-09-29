@@ -62,7 +62,7 @@ namespace Abomination::World
         CollisionBrush MoveBrush(CollisionBrush brush, const glm::dvec3& offset)
         {
             for (Core::Plane& plane : brush.planes)
-                plane.distance += glm::dot(plane.normal, offset);
+                plane.distanceFromOrigin += glm::dot(plane.normal, offset);
             brush.bounds.minimum += offset;
             brush.bounds.maximum += offset;
 

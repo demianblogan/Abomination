@@ -25,7 +25,7 @@ namespace Abomination::Core
         EXPECT_NEAR(plane->normal.z, 0.0, Tolerance);
 
         // dot((-1, 0, 0), (48, ...)) = -48.
-        EXPECT_NEAR(plane->distance, -48.0, Tolerance);
+        EXPECT_NEAR(plane->distanceFromOrigin, -48.0, Tolerance);
     }
 
     TEST(Plane, SwappingTwoPointsTurnsNormalAround)
@@ -46,7 +46,7 @@ namespace Abomination::Core
     TEST(Plane, SignedDistanceTellsSideAndDistance)
     {
         // The plane z = 10, facing up.
-        const Plane plane{.normal = {0.0, 0.0, 1.0}, .distance = 10.0};
+        const Plane plane{.normal = {0.0, 0.0, 1.0}, .distanceFromOrigin = 10.0};
 
         EXPECT_DOUBLE_EQ(CalculateSignedDistance(plane, {3.0, 4.0, 25.0}), 15.0);  // 15 units in front
         EXPECT_DOUBLE_EQ(CalculateSignedDistance(plane, {0.0, 0.0, 4.0}), -6.0);   // 6 units behind

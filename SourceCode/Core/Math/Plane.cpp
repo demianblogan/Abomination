@@ -24,13 +24,17 @@ namespace Abomination::Core
         plane.normal = cross / crossLength;
 
         // The first point lies on the plane, so dot(normal, first) is the plane's distance from the origin.
-        plane.distance = glm::dot(plane.normal, first);
+        plane.distanceFromOrigin = glm::dot(plane.normal, first);
 
         return plane;
     }
 
     double CalculateSignedDistance(const Plane& plane, const glm::dvec3& point)
     {
-        return glm::dot(plane.normal, point) - plane.distance;
+        // Both are measured the same way: from the origin, along the normal. Their difference is how far the point is in
+        // front of the plane (behind it when negative). For the plane x = 5 and the point (7, 3, 0): 7 - 5 = 2.
+        const double pointDistanceFromOrigin = glm::dot(plane.normal, point);
+
+        return pointDistanceFromOrigin - plane.distanceFromOrigin;
     }
 }

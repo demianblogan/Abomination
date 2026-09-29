@@ -12,9 +12,9 @@ namespace Abomination::Gameplay
     struct ViewRecoil
     {
         // How hard a shot turns the view up (radians per second of its own motion) and how stiff the spring is that
-        // brings it back (see UpdateDampedSpring). With the defaults a shot turns the view up by about 2.5 degrees.
-        float kick = 0.5f;
-        float springStiffness = 150.0f;
+        // brings it back (see UpdateDampedSpring). With the defaults a shot turns the view up by about 3 degrees.
+        float kick = 1.5f;
+        float springStiffness = 200.0f;
 
         // How far the view is turned up now (radians) and how fast it turns.
         float pitch = 0.0f;

@@ -41,6 +41,10 @@ namespace Abomination::Gameplay
 
             const float targetWeight = input.isOnGround ? glm::clamp(input.horizontalSpeed / input.maxSpeed, 0.0f, 1.0f) : 0.0f;
             motion.bobWeight += (targetWeight - motion.bobWeight) * CalculateApproachFactor(BobFadeRate, deltaTime);
+
+            // The breathing goes on all the time and repeats every two breaths (see CalculateViewModelMotionOffset);
+            // keeping the time within that span keeps it a small number, which a float holds precisely.
+            motion.idleTime = std::fmod(motion.idleTime + deltaTime, 2.0f * settings.idleBreathDuration);
         }
 
         void UpdateSway(ViewModelMotion& motion, const ViewModelMotionSettings& settings, const ViewModelMotionInput& input,
@@ -129,6 +133,13 @@ namespace Abomination::Gameplay
         const float bob = settings.bobAmount * motion.bobWeight;
         const glm::vec3 bobOffset(std::sin(motion.bobPhase) * bob, std::sin(2.0f * motion.bobPhase) * bob * 0.5f, 0.0f);
 
-        return bobOffset + glm::vec3(motion.sway, 0.0f) + glm::vec3(0.0f, motion.inertiaOffset, motion.recoilBack);
+        // The breath: up and down once per breath, and to the sides once per two breaths, so the two never line up into
+        // a mechanical circle. Strong while standing, gone at full speed, where the bob takes over.
+        const float breathAngle = 2.0f * std::numbers::pi_v<float> * motion.idleTime / settings.idleBreathDuration;
+        const float idle = settings.idleAmount * (1.0f - motion.bobWeight);
+        const glm::vec3 idleOffset(std::sin(breathAngle * 0.5f) * idle * 0.6f, std::sin(breathAngle) * idle, 0.0f);
+
+        return idleOffset + bobOffset + glm::vec3(motion.sway, 0.0f) +
+               glm::vec3(0.0f, motion.inertiaOffset, motion.recoilBack);
     }
 }

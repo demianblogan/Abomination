@@ -78,7 +78,7 @@ namespace Abomination::UI
 
         ImGui::SeparatorText("Recoil of the weapon in the hands");
         ImGui::SetNextItemWidth(ScaleToUI(SliderWidth));
-        ImGui::SliderFloat("Kick back", &viewModelMotion.recoilKickBack, 0.0f, 2.0f, "%.2f m/s");
+        ImGui::SliderFloat("Kick back", &viewModelMotion.recoilKickBack, 0.0f, 5.0f, "%.2f m/s");
         ImGui::SetItemTooltip("How hard a shot pushes the weapon back towards the eyes.");
         ImGui::SetNextItemWidth(ScaleToUI(SliderWidth));
         ImGui::SliderFloat("Kick up", &viewModelMotion.recoilKickUp, 0.0f, 5.0f, "%.2f rad/s");

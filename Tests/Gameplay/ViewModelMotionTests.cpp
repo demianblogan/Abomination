@@ -3,6 +3,7 @@
 #include <glm/geometric.hpp>
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <cmath>
 
 namespace Abomination::Gameplay
@@ -18,10 +19,28 @@ namespace Abomination::Gameplay
         }
     }
 
-    TEST(ViewModelMotion, StandingStillDoesNotMove)
+    TEST(ViewModelMotion, StandingStillOnlyBreathes)
     {
         ViewModelMotion motion;
         const ViewModelMotionSettings settings;
+
+        // Over two breaths the weapon moves, but never farther than the breath reaches.
+        float largestOffset = 0.0f;
+        for (int frame = 0; frame < 480; ++frame)
+        {
+            UpdateViewModelMotion(motion, settings, ViewModelMotionInput{}, 1.0f / 60.0f);
+            largestOffset = std::max(largestOffset, glm::length(CalculateViewModelMotionOffset(motion, settings)));
+        }
+
+        EXPECT_GT(largestOffset, settings.idleAmount * 0.5f);
+        EXPECT_LE(largestOffset, settings.idleAmount * 1.2f);
+    }
+
+    TEST(ViewModelMotion, NoBreathingWhenIdleIsOff)
+    {
+        ViewModelMotion motion;
+        ViewModelMotionSettings settings;
+        settings.idleAmount = 0.0f;
 
         RunFrames(motion, settings, ViewModelMotionInput{}, 120, 1.0f / 60.0f);
 

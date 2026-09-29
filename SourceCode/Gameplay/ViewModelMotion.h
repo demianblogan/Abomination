@@ -5,7 +5,8 @@
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
 
-// The movement of the weapon in the hands, which makes it feel held instead of glued to the screen. Three motions add up:
+// The movement of the weapon in the hands, which makes it feel held instead of glued to the screen. The motions add up:
+//   idle    - it rises and falls slowly with the breath while the player stands;
 //   bob     - it swings in a figure eight while walking, faster and wider the faster the player runs;
 //   sway    - it lags behind the view when the mouse turns it, then catches up;
 //   inertia - it dips when the body leaves the ground in a jump and when it lands, and springs back.
@@ -19,6 +20,12 @@ namespace Abomination::Gameplay
         // walks during one whole figure eight (two steps, meters).
         float bobAmount = 0.016f;
         float bobStrideLength = 5.0f;
+
+        // Idle: while the player stands, the weapon rises and falls slowly with the breath and drifts a little to the
+        // sides, like in real hands. How far (meters) and how long one breath takes (seconds). It fades out as the bob
+        // fades in.
+        float idleAmount = 0.003f;
+        float idleBreathDuration = 4.0f;
 
         // Sway: how far the weapon lags per radian the view turns (meters), at most how far (meters), and how fast it
         // catches up (per second: 10 closes 63% of the gap in a tenth of a second).
@@ -34,11 +41,11 @@ namespace Abomination::Gameplay
         float springStiffness = 150.0f;
 
         // Recoil of a shot: how hard it pushes the weapon back towards the eyes (meters per second) and turns its muzzle
-        // up (radians per second), and how stiff the springs are that bring it back. With the default stiffness the kicks
-        // move it about 5 cm back and 6 degrees up.
-        float recoilKickBack = 0.6f;
-        float recoilKickUp = 1.3f;
-        float recoilStiffness = 150.0f;
+        // up (radians per second), and how stiff the springs are that bring it back. With the defaults a shot moves it
+        // about 20 cm back (a hard shotgun kick) and 4.5 degrees up.
+        float recoilKickBack = 5.0f;
+        float recoilKickUp = 2.0f;
+        float recoilStiffness = 140.0f;
     };
 
     // What the motion needs to know about the player each frame.
@@ -64,6 +71,9 @@ namespace Abomination::Gameplay
         // speed): it fades in and out instead of starting and stopping at once.
         float bobPhase = 0.0f;
         float bobWeight = 0.0f;
+
+        // Seconds of breathing (see idleAmount); goes around every two breaths.
+        float idleTime = 0.0f;
 
         // How far the weapon lags behind the view (meters, +X to the right, +Y up).
         glm::vec2 sway{0.0f};

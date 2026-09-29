@@ -94,7 +94,7 @@ Every asset is listed in `ASSETS.md` before it is committed.
 | # | Branch                          | Status | Content                                                                 |
 |---|---------------------------------|--------|-------------------------------------------------------------------------|
 | 1 | `refactor/gameplay-systems`     | ✅     | The switching between the player and the free-fly camera and their updates move from `Application` into Gameplay systems, so the weapon has a place to plug in |
-| 2 | `feat/audio`                    | ⏳     | New `Audio` module on miniaudio, sound store in the asset cache; footsteps, jump and landing sounds; Audio window (volume, playing voices) |
+| 2 | `feat/audio`                    | ✅     | New `Audio` module on miniaudio, sound store in the asset cache, voices with a limit per sound, random pitch and variants; jump and landing sounds; Audio window (volume, playing voices, a test sound in 3D where the camera looks) |
 | 3 | `feat/gltf-models`              | ⏳     | glTF (`.glb`) loading: meshes, materials, textures; material store; a CC0 model standing in the test room |
 | 4 | `feat/view-model`               | ⏳     | The shotgun in the hands: drawn in its own pass with its own field of view (never inside walls), bob while walking, sway behind the mouse; window with sliders |
 | 5 | `feat/hitscan`                  | ⏳     | Fire action (left mouse button), single-barrel shotgun: pellets with a random spread, time between shots, recoil of the view and the model, shot sound; debug lines of the pellets; random numbers in `Core/Math`; unlimited ammo |
@@ -168,3 +168,8 @@ Ideas that are not assigned to a milestone yet.
   a bug is reproduced and off again, without rebuilding. Worth doing together
   with the first real Trace messages (the AI in 0.4); today only OpenGL
   notifications are written at Trace.
+- **Footsteps that depend on the surface** (stone, wood, …): a table from
+  textures to surface materials, the material of every brush plane kept for
+  collision, traces report the material they hit, the character body keeps
+  the material under its feet; steps by the distance walked. Postponed in 0.3:
+  in a fast shooter steps may be more annoying than useful.

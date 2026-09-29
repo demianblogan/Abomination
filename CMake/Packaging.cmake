@@ -45,6 +45,7 @@ endfunction()
 
 abomination_install_vcpkg_license(glm glm)
 abomination_install_vcpkg_license(imgui DearImGui)
+abomination_install_vcpkg_license(miniaudio miniaudio)
 abomination_install_vcpkg_license(sdl3 SDL3)
 abomination_install_vcpkg_license(spdlog spdlog)
 abomination_install_vcpkg_license(stb stb)

@@ -19,9 +19,10 @@ line there.
 | EnTT    | 4.0.0   | MIT     | Entity-component-system: entities, components, views (header-only, single header in `ThirdParty/EnTT`; vcpkg has only 3.16) | https://github.com/skypjack/entt |
 | GLAD    | 2.0.8   | (WTFPL OR CC0-1.0) AND Apache-2.0 | OpenGL 4.6 Core loader, generated into `ThirdParty/GLAD` | https://gen.glad.sh |
 | glm     | 1.0.3   | MIT     | Math: vectors, matrices (header-only)    | https://github.com/g-truc/glm    |
+| miniaudio | 0.11.25 | Unlicense OR MIT-0 | Sound: decoding OGG/WAV/MP3/FLAC, mixing in its own thread, 3D sound (`Audio`, header-only) | https://miniaud.io |
 | SDL3    | 3.4.16  | Zlib    | Window, OpenGL context, events, input    | https://www.libsdl.org           |
 | spdlog  | 1.17.0  | MIT     | Logging (`Core/Log`), built without fmt  | https://github.com/gabime/spdlog |
-| stb_image | 2.30  | MIT or Public Domain | Decoding PNG/JPG/TGA/BMP (`Core/Image`); stb_image_write in tests only | https://github.com/nothings/stb |
+| stb_image, stb_vorbis | 2.30, 1.22 | MIT or Public Domain | Decoding PNG/JPG/TGA/BMP (`Core/Image`); OGG Vorbis sounds through miniaudio (`Audio`); stb_image_write in tests only | https://github.com/nothings/stb |
 
 ## Development only
 

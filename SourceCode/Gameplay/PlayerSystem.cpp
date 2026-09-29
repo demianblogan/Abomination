@@ -1,5 +1,6 @@
 #include "Gameplay/PlayerSystem.h"
 
+#include "Audio/AudioEngine.h"
 #include "Core/Scene/Transform.h"
 #include "Core/Scene/TransformInterpolation.h"
 #include "Gameplay/Player.h"
@@ -7,7 +8,10 @@
 #include "Physics/CharacterMovement.h"
 #include "Renderer/Debug/DebugLines.h"
 
+#include <glm/common.hpp>
 #include <glm/vec3.hpp>
+
+#include <optional>
 
 namespace Abomination::Gameplay
 {
@@ -39,6 +43,49 @@ namespace Abomination::Gameplay
         Physics::UpdateCharacter(body, registry.get<Core::Transform>(state.player), brushes, state.physicsSettings,
                                  state.movementSettings, command, tickDuration);
         UpdateStepSmoothing(registry.get<PlayerStepSmoothing>(state.player), body.steppedUpHeight, tickDuration);
+    }
+
+    float CalculateLandingVolume(float fallSpeed)
+    {
+        if (fallSpeed < MinimumLandingSoundSpeed)
+            return 0.0f;
+
+        // 0 at the quietest audible landing, 1 at FullLandingSoundSpeed and faster.
+        const float loudness = glm::clamp((fallSpeed - MinimumLandingSoundSpeed) /
+                                          (FullLandingSoundSpeed - MinimumLandingSoundSpeed), 0.0f, 1.0f);
+        constexpr float QuietestVolume = 1.0f / 3.0f;
+
+        return glm::mix(QuietestVolume, 1.0f, loudness);
+    }
+
+    void UpdatePlayerSounds(GameplayState& state, const entt::registry& registry, Audio::AudioEngine& audio)
+    {
+        PlayerSounds& sounds = state.playerSounds;
+        const Physics::CharacterBody& body = registry.get<Physics::CharacterBody>(state.player);
+
+        // "In the head" while the player is controlled, at the player otherwise.
+        const std::optional<glm::vec3> position =
+            state.controlMode == ControlMode::Player
+                ? std::nullopt
+                : std::optional<glm::vec3>(registry.get<Core::Transform>(state.player).position);
+
+        // A jump leaves the ground upwards; walking off an edge leaves it with no upward speed.
+        if (sounds.wasOnGround && !body.isOnGround && body.velocity.y > 0.0f)
+            audio.Play(sounds.jump, position);
+
+        if (!sounds.wasOnGround && body.isOnGround)
+        {
+            const float volume = CalculateLandingVolume(-sounds.previousVerticalSpeed);
+            if (volume > 0.0f)
+            {
+                Audio::SoundEvent landing = sounds.land;
+                landing.volume *= volume;
+                audio.Play(landing, position);
+            }
+        }
+
+        sounds.wasOnGround = body.isOnGround;
+        sounds.previousVerticalSpeed = body.velocity.y;
     }
 
     void AddPlayerDebugBox(const GameplayState& state, const entt::registry& registry, float interpolationFactor,

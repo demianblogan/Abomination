@@ -86,15 +86,19 @@ namespace Abomination
         if (!debugOverlay.has_value())
             return std::unexpected(debugOverlay.error());
 
-        return Application(std::move(*SDLLibrary), std::move(*window), std::move(renderAssets), *map,
+        // Without a sound card the engine still works, silently (see Audio::AudioEngine), so it cannot stop the start.
+        Audio::AudioEngine audio(assetsDirectory);
+
+        return Application(std::move(*SDLLibrary), std::move(*window), std::move(audio), std::move(renderAssets), *map,
                            std::move(*debugOverlay), assetsDirectory, logHistory);
     }
 
-    Application::Application(Platform::SDLLibrary SDLLibrary, Platform::Window window, Renderer::RenderAssets renderAssets,
-                             const World::MapData& map, UI::DebugOverlay debugOverlay,
+    Application::Application(Platform::SDLLibrary SDLLibrary, Platform::Window window, Audio::AudioEngine audio,
+                             Renderer::RenderAssets renderAssets, const World::MapData& map, UI::DebugOverlay debugOverlay,
                              std::filesystem::path assetsDirectory, Core::LogHistory& logHistory)
         : m_SDLLibrary(std::move(SDLLibrary))
         , m_window(std::move(window))
+        , m_audio(std::move(audio))
         , m_renderAssets(std::move(renderAssets))
         , m_assetsDirectory(std::move(assetsDirectory))
         , m_logHistory(&logHistory)
@@ -107,7 +111,7 @@ namespace Abomination
         m_level = World::Level::Create(m_registry, m_renderAssets, map, StartMapPath);
 
         // The player appears where the map puts them. The free-fly camera waits at their eyes; F2 switches to it.
-        m_gameplay = Gameplay::CreateGameplayState(m_registry, m_level.GetPlayerStart());
+        m_gameplay = Gameplay::CreateGameplayState(m_registry, m_level.GetPlayerStart(), m_audio);
     }
 
     int Application::Run()
@@ -221,6 +225,7 @@ namespace Abomination
 
         const std::span<const World::CollisionBrush> brushes = m_level.GetCollisionBrushes();
         Gameplay::UpdatePlayer(m_gameplay, m_registry, m_actionStates, brushes, tickDuration);
+        Gameplay::UpdatePlayerSounds(m_gameplay, m_registry, m_audio);
         Gameplay::UpdateFreeFlyCamera(m_gameplay, m_registry, m_actionStates, brushes,
                                       m_collisionSettings.doesCameraCollide, tickDuration);
         Gameplay::UpdateSpinningEntities(m_registry, tickDuration);
@@ -260,9 +265,13 @@ namespace Abomination
             const float aspectRatio = static_cast<float>(widthInPixels) / static_cast<float>(heightInPixels);
 
             // The camera is drawn from where it is between the last two ticks, like every other interpolated entity.
-            const Core::Transform cameraTransform = Gameplay::CalculateViewTransform(m_gameplay, m_registry, interpolationFactor);
+            const Core::Transform cameraTransform =
+                Gameplay::CalculateViewTransform(m_gameplay, m_registry, interpolationFactor);
             const Renderer::View view =
                 Renderer::CalculateView(cameraTransform, Gameplay::GetViewLens(m_gameplay, m_registry), aspectRatio);
+
+            // The ears are where the eyes are: 3D sounds are heard from the place the scene is seen from.
+            m_audio.SetListener(cameraTransform.position, cameraTransform.rotation * Core::LocalForward);
 
             m_renderStatistics = Renderer::DrawMeshes(m_registry, view, interpolationFactor, m_renderAssets,
                                                       m_systemShaders, m_renderSettings);
@@ -309,6 +318,7 @@ namespace Abomination
             .physicsSettings = m_gameplay.physicsSettings,
             .movementSettings = m_gameplay.movementSettings,
             .playerBody = m_registry.get<Physics::CharacterBody>(m_gameplay.player),
+            .audio = m_audio,
         });
 
         m_window.SwapBuffers();

@@ -36,7 +36,8 @@ namespace Abomination::Gameplay
         state.controlMode = ControlMode::FreeFlyCamera;
     }
 
-    Core::Transform CalculateViewTransform(const GameplayState& state, const entt::registry& registry, float interpolationFactor)
+    Core::Transform CalculateViewTransform(const GameplayState& state, const entt::registry& registry,
+                                           float interpolationFactor)
     {
         const entt::entity viewEntity = GetViewEntity(state);
         const Core::Transform interpolated = Core::InterpolateTransform(

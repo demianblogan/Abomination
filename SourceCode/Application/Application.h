@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Audio/AudioEngine.h"
 #include "Core/Time/FixedTimestep.h"
 #include "Core/Time/FrameLimiter.h"
 #include "Gameplay/GameplayState.h"
@@ -53,9 +54,9 @@ namespace Abomination
 
     private:
         // map: the parsed start map, whose entities the constructor creates. assetsDirectory is kept for loading maps later.
-        Application(Platform::SDLLibrary SDLLibrary, Platform::Window window, Renderer::RenderAssets renderAssets,
-                    const World::MapData& map, UI::DebugOverlay debugOverlay, std::filesystem::path assetsDirectory,
-                    Core::LogHistory& logHistory);
+        Application(Platform::SDLLibrary SDLLibrary, Platform::Window window, Audio::AudioEngine audio,
+                    Renderer::RenderAssets renderAssets, const World::MapData& map, UI::DebugOverlay debugOverlay,
+                    std::filesystem::path assetsDirectory, Core::LogHistory& logHistory);
 
         // The two kinds of updates of the main loop, named like in Unity:
         //   Update()      - once per frame: what must react immediately and does not depend on time
@@ -78,6 +79,9 @@ namespace Abomination
         // then the window, then SDL, which the window needs.
         Platform::SDLLibrary m_SDLLibrary;
         Platform::Window m_window;
+
+        // The sound card, the loaded sounds and the voices that play them.
+        Audio::AudioEngine m_audio;
 
         // Every graphics asset of the game, loaded once.
         Renderer::RenderAssets m_renderAssets;

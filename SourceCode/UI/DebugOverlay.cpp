@@ -109,6 +109,9 @@ namespace Abomination::UI
             if (m_isAssetsWindowOpen)
                 DrawAssetsWindow(&m_isAssetsWindowOpen, context.renderAssets);
 
+            if (m_isAudioWindowOpen)
+                m_audioWindow.Draw(&m_isAudioWindowOpen, context.audio);
+
             if (m_isEntitiesWindowOpen)
                 m_entitiesWindow.Draw(&m_isEntitiesWindowOpen, context.registry, context.renderAssets);
 
@@ -176,6 +179,7 @@ namespace Abomination::UI
             {
                 ImGui::MenuItem("Entities", nullptr, &m_isEntitiesWindowOpen);
                 ImGui::MenuItem("Assets", nullptr, &m_isAssetsWindowOpen);
+                ImGui::MenuItem("Audio", nullptr, &m_isAudioWindowOpen);
                 ImGui::EndMenu();
             }
 

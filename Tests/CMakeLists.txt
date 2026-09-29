@@ -38,6 +38,7 @@ set(TEST_SOURCES
 
     Platform/WindowSizingTests.cpp
 
+    Renderer/Assets/GLTFLoaderTests.cpp
     Renderer/Assets/MeshPrimitivesTests.cpp
     Renderer/Camera/ViewTests.cpp
     Renderer/Debug/DebugLinesTests.cpp

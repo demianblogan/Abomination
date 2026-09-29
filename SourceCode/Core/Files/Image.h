@@ -1,9 +1,12 @@
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
 #include <expected>
 #include <filesystem>
+#include <span>
 #include <string>
+#include <string_view>
 #include <vector>
 
 namespace Abomination::Core
@@ -25,4 +28,8 @@ namespace Abomination::Core
     // Reads and decodes an image file. Returns an error message if the file cannot be read or is not an image.
     // (Not called LoadImage: windows.h defines a macro with that name.)
     [[nodiscard]] std::expected<Image, std::string> LoadImageFile(const std::filesystem::path& path);
+
+    // Decodes an image that is already in memory, for example a texture stored inside a model file. name only goes into
+    // the error message ("Models/Shotgun.glb#image0").
+    [[nodiscard]] std::expected<Image, std::string> DecodeImage(std::span<const std::byte> bytes, std::string_view name);
 }

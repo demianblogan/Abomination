@@ -12,6 +12,7 @@
 #include "Gameplay/LandingDip.h"
 #include "Gameplay/ViewModel.h"
 #include "Gameplay/ViewSystem.h"
+#include "Gameplay/WeaponSystem.h"
 #include "Physics/CharacterBody.h"
 #include "Platform/SystemServices.h"
 #include "Renderer/Camera/View.h"
@@ -224,6 +225,10 @@ namespace Abomination
         Gameplay::UpdatePlayerLook(m_gameplay, m_registry, m_actionStates,
                                    doesMouseTurnPlayer ? m_inputDevices.mouse.GetMovement() : glm::vec2(0.0f));
         Gameplay::UpdateFreeFlyCameraLook(m_gameplay, m_registry, m_actionStates, m_inputDevices.mouse);
+
+        // The player shoots only while playing: a click on the debug overlay or in the console is not a shot.
+        m_canPlayerShoot = isPlaying;
+        Gameplay::CollectWeaponInput(m_gameplay, m_registry, m_actionStates, m_canPlayerShoot);
     }
 
     void Application::FixedUpdate(float tickDuration)
@@ -234,6 +239,7 @@ namespace Abomination
         const std::span<const World::CollisionBrush> brushes = m_level.GetCollisionBrushes();
         Gameplay::UpdatePlayer(m_gameplay, m_registry, m_actionStates, brushes, tickDuration);
         Gameplay::UpdatePlayerSounds(m_gameplay, m_registry, m_audio);
+        Gameplay::UpdateWeapon(m_gameplay, m_registry, m_actionStates, m_canPlayerShoot, brushes, m_audio, tickDuration);
         Gameplay::UpdateFreeFlyCamera(m_gameplay, m_registry, m_actionStates, brushes,
                                       m_collisionSettings.doesCameraCollide, tickDuration);
         Gameplay::UpdateSpinningEntities(m_registry, tickDuration);
@@ -288,6 +294,7 @@ namespace Abomination
                                                        cameraTransform, m_debugLines);
 
             Gameplay::AddPlayerDebugBox(m_gameplay, m_registry, interpolationFactor, m_debugLines);
+            Gameplay::AddWeaponDebugLines(m_gameplay, m_registry, m_debugLines);
 
             if (m_renderSettings.areWorldAxesVisible)
             {

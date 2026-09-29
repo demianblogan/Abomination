@@ -25,6 +25,7 @@ namespace Abomination::Input
         LookAroundMode,
 
         // Player
+        Fire,
         Jump,
 
         // Application

@@ -92,6 +92,10 @@ set(LIBRARY_SOURCES
     Gameplay/ViewModelMotion.cpp
     Gameplay/ViewSystem.h
     Gameplay/ViewSystem.cpp
+    Gameplay/Weapon.h
+    Gameplay/Weapon.cpp
+    Gameplay/WeaponSystem.h
+    Gameplay/WeaponSystem.cpp
 
     Input/Action.h
     Input/ActionStates.h

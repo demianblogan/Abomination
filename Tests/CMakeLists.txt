@@ -30,6 +30,7 @@ set(TEST_SOURCES
     Gameplay/SpinTests.cpp
     Gameplay/ViewModelMotionTests.cpp
     Gameplay/ViewModelTests.cpp
+    Gameplay/WeaponTests.cpp
 
     Input/ActionStatesTests.cpp
     Input/InputBindingsTests.cpp

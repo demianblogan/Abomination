@@ -3,8 +3,13 @@
 #include "Core/Logging/Log.h"
 #include "Renderer/Assets/GLTFLoader.h"
 
+#include <glm/common.hpp>
+#include <glm/ext/matrix_transform.hpp>
+#include <glm/vec4.hpp>
+
 #include <algorithm>
 #include <expected>
+#include <limits>
 #include <format>
 #include <optional>
 #include <utility>
@@ -63,9 +68,36 @@ namespace Abomination::Renderer
             });
         }
 
-        const auto usedImageCount = std::ranges::count_if(imageTextures, [](const auto& texture) { return texture.has_value(); });
-        Core::Log::Write(LogCategory::Renderer, LogLevel::Debug, "Model loaded: {} ({} parts, {} of {} images used)", path,
-                         model.parts.size(), usedImageCount, imageTextures.size());
+        // The box around the whole model, in its own coordinates: a model exported in centimeters, or far from its origin,
+        // is easy to notice in the log (it would be invisible in the game: too big, too small, or somewhere else).
+        glm::vec3 minimum(std::numeric_limits<float>::max());
+        glm::vec3 maximum(std::numeric_limits<float>::lowest());
+        for (const ModelPartData& partData : data->parts)
+        {
+            for (const MeshVertex& vertex : partData.mesh.vertices)
+            {
+                const glm::vec3 position(partData.transform * glm::vec4(vertex.position, 1.0f));
+                minimum = glm::min(minimum, position);
+                maximum = glm::max(maximum, position);
+            }
+        }
+        const glm::vec3 size = maximum - minimum;
+        const glm::vec3 center = (minimum + maximum) * 0.5f;
+
+        // Models from the internet often lie far from their origin (the shotgun was 50 m away from it), and an entity
+        // places the origin of its model: such a model would stand far from the entity. So every model is moved to have
+        // the center of its box at its origin; a map entity or a hand then places the middle of the model.
+        const glm::mat4 centering = glm::translate(glm::mat4(1.0f), -center);
+        for (ModelPart& part : model.parts)
+            part.transform = centering * part.transform;
+
+        const auto usedImageCount =
+            std::ranges::count_if(imageTextures, [](const auto& texture) { return texture.has_value(); });
+        Core::Log::Write(LogCategory::Renderer, LogLevel::Debug,
+                         "Model loaded: {} ({} parts, {} of {} images used, size {:.2f} x {:.2f} x {:.2f} m, "
+                         "center moved from ({:.2f}, {:.2f}, {:.2f}))",
+                         path, model.parts.size(), usedImageCount, imageTextures.size(), size.x, size.y, size.z, center.x,
+                         center.y, center.z);
 
         return m_cache.Add(path, std::move(model), lifetime);
     }

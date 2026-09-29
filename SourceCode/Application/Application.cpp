@@ -9,6 +9,7 @@
 #include "Gameplay/FreeFlyCameraSystem.h"
 #include "Gameplay/PlayerSystem.h"
 #include "Gameplay/Spin.h"
+#include "Gameplay/LandingDip.h"
 #include "Gameplay/ViewModel.h"
 #include "Gameplay/ViewSystem.h"
 #include "Physics/CharacterBody.h"
@@ -149,6 +150,7 @@ namespace Abomination
             // The weapon in the hands swings with what the ticks of this frame did to the player (a landing, the speed)
             // and with the view turned in Update(): every frame, so it moves as smoothly as the view.
             Gameplay::UpdateViewModel(m_gameplay, m_registry, frameTimer.GetDeltaTime());
+            Gameplay::UpdatePlayerLandingDip(m_gameplay, m_registry, frameTimer.GetDeltaTime());
 
             frameStatistics.AddFrame(frameTimer.GetDeltaTime(), tickCount);
 
@@ -338,6 +340,7 @@ namespace Abomination
             .playerBody = m_registry.get<Physics::CharacterBody>(m_gameplay.player),
             .audio = m_audio,
             .viewModel = m_registry.get<Gameplay::ViewModel>(m_gameplay.player),
+            .landingDip = m_registry.get<Gameplay::LandingDip>(m_gameplay.player),
         });
 
         m_window.SwapBuffers();

@@ -1,6 +1,7 @@
 #include "Gameplay/GameplayState.h"
 
 #include "Audio/AudioEngine.h"
+#include "Gameplay/LandingDip.h"
 #include "Gameplay/Player.h"
 #include "Gameplay/ViewModel.h"
 #include "Renderer/Assets/RenderAssets.h"
@@ -50,6 +51,8 @@ namespace Abomination::Gameplay
             .model = renderAssets.LoadModel("Models/Weapons/Shotgun.glb", Core::AssetLifetime::Global),
             .shaderProgram = renderAssets.shaders.Load("Shaders/TexturedShaded"),
         });
+
+        registry.emplace<LandingDip>(state.player);
 
         return state;
     }

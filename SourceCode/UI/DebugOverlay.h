@@ -30,6 +30,7 @@ namespace Abomination::Platform
 
 namespace Abomination::Gameplay
 {
+    struct LandingDip;
     struct ViewModel;
 }
 
@@ -80,6 +81,7 @@ namespace Abomination::UI
         const Physics::CharacterBody& playerBody;
         Audio::AudioEngine& audio;
         Gameplay::ViewModel& viewModel;
+        Gameplay::LandingDip& landingDip;
     };
 
     // Developer overlay drawn with Dear ImGui on top of the game: a menu bar with debug windows and settings.

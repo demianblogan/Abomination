@@ -74,6 +74,8 @@ set(LIBRARY_SOURCES
     Gameplay/FreeFlyCameraSystem.cpp
     Gameplay/GameplayState.h
     Gameplay/GameplayState.cpp
+    Gameplay/LandingDip.h
+    Gameplay/LandingDip.cpp
     Gameplay/MouseLook.h
     Gameplay/MouseLook.cpp
     Gameplay/Player.h

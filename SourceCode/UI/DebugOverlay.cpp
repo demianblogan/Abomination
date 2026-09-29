@@ -129,7 +129,7 @@ namespace Abomination::UI
                                    context.playerBody);
 
             if (m_isViewModelWindowOpen)
-                DrawViewModelWindow(&m_isViewModelWindowOpen, context.viewModel);
+                DrawViewModelWindow(&m_isViewModelWindowOpen, context.viewModel, context.landingDip);
         }
 
         // The console is drawn even while the rest of the overlay is hidden: it has its own key.

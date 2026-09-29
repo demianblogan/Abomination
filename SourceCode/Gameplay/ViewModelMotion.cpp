@@ -82,23 +82,27 @@ namespace Abomination::Gameplay
             motion.wasOnGround = input.isOnGround;
             motion.previousVerticalSpeed = input.verticalSpeed;
 
-            // A damped spring pulls the weapon back to where it is held: the spring accelerates it towards 0 in
-            // proportion to how far away it is (stiffness), the damping brakes it in proportion to its speed. Damping of
-            // 1.4 * sqrt(stiffness) is a little below the value at which it would creep back without any swing (2 *
-            // sqrt(stiffness)), so it swings past 0 once, slightly, like a real hand catching the weight.
-            const float damping = 1.4f * std::sqrt(settings.springStiffness);
-            float remainingTime = deltaTime;
-            while (remainingTime > 0.0f)
-            {
-                const float step = std::min(remainingTime, SpringStepDuration);
-                const float acceleration = -settings.springStiffness * motion.inertiaOffset - damping * motion.inertiaVelocity;
+            UpdateDampedSpring(motion.inertiaOffset, motion.inertiaVelocity, settings.springStiffness, deltaTime);
+        }
+    }
 
-                // Semi-implicit Euler: the new velocity moves the position. Unlike the plain order, it does not add energy
-                // to a spring, so the swing does not grow by itself.
-                motion.inertiaVelocity += acceleration * step;
-                motion.inertiaOffset += motion.inertiaVelocity * step;
-                remainingTime -= step;
-            }
+    void UpdateDampedSpring(float& offset, float& velocity, float stiffness, float deltaTime)
+    {
+        // The spring accelerates towards 0 in proportion to how far away it is (stiffness), the damping brakes in
+        // proportion to the speed. Damping of 1.4 * sqrt(stiffness) is a little below the value at which it would creep
+        // back without any swing (2 * sqrt(stiffness)), so it swings past 0 once, slightly, like a hand catching a weight.
+        const float damping = 1.4f * std::sqrt(stiffness);
+        float remainingTime = deltaTime;
+        while (remainingTime > 0.0f)
+        {
+            const float step = std::min(remainingTime, SpringStepDuration);
+            const float acceleration = -stiffness * offset - damping * velocity;
+
+            // Semi-implicit Euler: the new velocity moves the position. Unlike the plain order, it does not add energy to
+            // the spring, so the swing does not grow by itself.
+            velocity += acceleration * step;
+            offset += velocity * step;
+            remainingTime -= step;
         }
     }
 

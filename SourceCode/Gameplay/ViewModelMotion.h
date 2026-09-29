@@ -17,20 +17,20 @@ namespace Abomination::Gameplay
     {
         // Bob: how far the weapon swings to each side and up and down at full speed (meters), and how far the player
         // walks during one whole figure eight (two steps, meters).
-        float bobAmount = 0.012f;
-        float bobStrideLength = 2.4f;
+        float bobAmount = 0.016f;
+        float bobStrideLength = 5.0f;
 
         // Sway: how far the weapon lags per radian the view turns (meters), at most how far (meters), and how fast it
         // catches up (per second: 10 closes 63% of the gap in a tenth of a second).
-        float swayAmount = 0.03f;
-        float swayMaximum = 0.04f;
+        float swayAmount = 0.045f;
+        float swayMaximum = 0.05f;
         float swayReturnRate = 10.0f;
 
         // Inertia: how much the weapon is pushed down by a jump (meters per second of its own motion), how much by a
         // landing per meter per second of the fall, and how stiff the spring is that brings it back (per second squared:
         // stiffer returns faster). The spring is damped so it settles after one small swing.
-        float jumpKick = 0.25f;
-        float landingKickPerFallSpeed = 0.03f;
+        float jumpKick = 0.38f;
+        float landingKickPerFallSpeed = 0.085f;
         float springStiffness = 150.0f;
     };
 
@@ -76,6 +76,11 @@ namespace Abomination::Gameplay
     // the view, which moves every frame. Frame rate independent: the same movement gives the same motion at any FPS.
     void UpdateViewModelMotion(ViewModelMotion& motion, const ViewModelMotionSettings& settings,
                                const ViewModelMotionInput& input, float deltaTime);
+
+    // Moves a damped spring by deltaTime (seconds): offset is pulled back to 0 and settles after one slight swing past
+    // it; a kick is a change of velocity. stiffness is per second squared: stiffer returns faster. Stable at any frame
+    // rate: a long frame is moved in small steps. Shared by the inertia of the weapon and the landing dip of the view.
+    void UpdateDampedSpring(float& offset, float& velocity, float stiffness, float deltaTime);
 
     // How far the motion moves the weapon now, relative to where it is held (meters, eye space: +X right, +Y up).
     [[nodiscard]] glm::vec3 CalculateViewModelMotionOffset(const ViewModelMotion& motion,

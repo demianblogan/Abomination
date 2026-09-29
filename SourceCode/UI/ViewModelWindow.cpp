@@ -1,5 +1,6 @@
 #include "UI/ViewModelWindow.h"
 
+#include "Gameplay/LandingDip.h"
 #include "Gameplay/ViewModel.h"
 #include "UI/UIScale.h"
 
@@ -30,7 +31,7 @@ namespace Abomination::UI
         }
     }
 
-    void DrawViewModelWindow(bool* isOpen, Gameplay::ViewModel& viewModel)
+    void DrawViewModelWindow(bool* isOpen, Gameplay::ViewModel& viewModel, Gameplay::LandingDip& landingDip)
     {
         ImGui::SetNextWindowPos(ScaleToUI(InitialPosition), ImGuiCond_FirstUseEver);
         if (!ImGui::Begin("View Model", isOpen, ImGuiWindowFlags_AlwaysAutoResize))
@@ -95,6 +96,14 @@ namespace Abomination::UI
         ImGui::SliderFloat("Spring stiffness", &motion.springStiffness, 20.0f, 500.0f, "%.0f");
         ImGui::SetItemTooltip("How fast the weapon comes back after a kick. Bigger: quicker and smaller dips.");
 
+        ImGui::SeparatorText("Camera landing dip");
+        ImGui::SetNextItemWidth(ScaleToUI(SliderWidth));
+        ImGui::SliderFloat("Dip kick", &landingDip.kickPerFallSpeed, 0.0f, 0.2f, "%.3f");
+        ImGui::SetItemTooltip("How far the view dips after a landing, per m/s of the fall. 0 turns it off.");
+        ImGui::SetNextItemWidth(ScaleToUI(SliderWidth));
+        ImGui::SliderFloat("Dip stiffness", &landingDip.springStiffness, 20.0f, 500.0f, "%.0f");
+        ImGui::SetItemTooltip("How fast the view comes back up. Bigger: quicker and smaller dips.");
+
         if (ImGui::Button("Reset"))
         {
             // Only the settings go back to the defaults; the model, the shader and the current motion stay.
@@ -103,6 +112,10 @@ namespace Abomination::UI
             viewModel.side = defaults.side;
             viewModel.verticalFOV = defaults.verticalFOV;
             viewModel.motionSettings = defaults.motionSettings;
+
+            const Gameplay::LandingDip dipDefaults;
+            landingDip.kickPerFallSpeed = dipDefaults.kickPerFallSpeed;
+            landingDip.springStiffness = dipDefaults.springStiffness;
         }
 
         ImGui::End();

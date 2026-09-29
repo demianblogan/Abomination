@@ -74,6 +74,8 @@ set(LIBRARY_SOURCES
     Gameplay/FreeFlyCameraSystem.cpp
     Gameplay/GameplayState.h
     Gameplay/GameplayState.cpp
+    Gameplay/LandingDip.h
+    Gameplay/LandingDip.cpp
     Gameplay/MouseLook.h
     Gameplay/MouseLook.cpp
     Gameplay/Player.h
@@ -84,6 +86,10 @@ set(LIBRARY_SOURCES
     Gameplay/PlayerSystem.cpp
     Gameplay/Spin.h
     Gameplay/Spin.cpp
+    Gameplay/ViewModel.h
+    Gameplay/ViewModel.cpp
+    Gameplay/ViewModelMotion.h
+    Gameplay/ViewModelMotion.cpp
     Gameplay/ViewSystem.h
     Gameplay/ViewSystem.cpp
 
@@ -182,6 +188,8 @@ set(LIBRARY_SOURCES
     UI/RendererWindow.cpp
     UI/UIScale.h
     UI/UIScale.cpp
+    UI/ViewModelWindow.h
+    UI/ViewModelWindow.cpp
 
     World/BrushGeometry.h
     World/BrushGeometry.cpp

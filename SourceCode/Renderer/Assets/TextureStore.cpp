@@ -102,6 +102,11 @@ namespace Abomination::Renderer
         return m_cache.Add(name, GLTexture::CreateFromImage(image), lifetime);
     }
 
+    void TextureStore::ExtendLifetime(TextureHandle handle, Core::AssetLifetime lifetime)
+    {
+        m_cache.ExtendLifetime(handle, lifetime);
+    }
+
     void TextureStore::RemoveAll(Core::AssetLifetime lifetime)
     {
         // A removed path may be loaded again later, and its file may exist by then: it is no longer a fallback.

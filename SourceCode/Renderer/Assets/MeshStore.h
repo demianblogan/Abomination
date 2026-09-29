@@ -31,6 +31,9 @@ namespace Abomination::Renderer
         // a warning.
         MeshHandle Add(const std::string& name, const MeshData& data, Core::AssetLifetime lifetime);
 
+        // Moves the mesh to the longer of its lifetime and the given one (see AssetCache::ExtendLifetime).
+        void ExtendLifetime(MeshHandle handle, Core::AssetLifetime lifetime);
+
         // Removes every mesh of the lifetime group from video memory; their handles become invalid.
         void RemoveAll(Core::AssetLifetime lifetime);
 

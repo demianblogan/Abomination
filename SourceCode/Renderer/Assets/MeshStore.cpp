@@ -30,6 +30,11 @@ namespace Abomination::Renderer
         return m_cache.Add(name, Mesh::Create(data), lifetime);
     }
 
+    void MeshStore::ExtendLifetime(MeshHandle handle, Core::AssetLifetime lifetime)
+    {
+        m_cache.ExtendLifetime(handle, lifetime);
+    }
+
     void MeshStore::RemoveAll(Core::AssetLifetime lifetime)
     {
         // The returned names are not needed: unlike the texture store, this one remembers nothing else about its meshes.

@@ -1,6 +1,7 @@
 #include "Gameplay/ViewSystem.h"
 
 #include "Core/Scene/TransformInterpolation.h"
+#include "Gameplay/LandingDip.h"
 #include "Gameplay/MouseLook.h"
 #include "Gameplay/Player.h"
 #include "Renderer/Camera/CameraLens.h"
@@ -51,7 +52,12 @@ namespace Abomination::Gameplay
             // The step smoothing moves in ticks too, so it is drawn between its last two values like the transform.
             const auto& smoothing = registry.get<PlayerStepSmoothing>(state.player);
             const float stepOffset = glm::mix(smoothing.previousOffset, smoothing.offset, interpolationFactor);
-            return CalculatePlayerEyeTransform(interpolated, registry.get<LookAngles>(state.player), stepOffset);
+
+            // The landing dip moves every frame, not in ticks, so it is used as it is.
+            const LandingDip* dip = registry.try_get<LandingDip>(state.player);
+            const float dipOffset = dip != nullptr ? dip->offset : 0.0f;
+
+            return CalculatePlayerEyeTransform(interpolated, registry.get<LookAngles>(state.player), stepOffset + dipOffset);
         }
 
         return interpolated;

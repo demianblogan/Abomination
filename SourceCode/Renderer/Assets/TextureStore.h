@@ -38,6 +38,9 @@ namespace Abomination::Renderer
         // empty image (one that could not be decoded) gives the checkerboard, like a missing file.
         [[nodiscard]] TextureHandle Add(const std::string& name, const Core::Image& image, Core::AssetLifetime lifetime);
 
+        // Moves the texture to the longer of its lifetime and the given one (see AssetCache::ExtendLifetime).
+        void ExtendLifetime(TextureHandle handle, Core::AssetLifetime lifetime);
+
         // Removes every texture of the lifetime group from video memory; their handles become invalid.
         void RemoveAll(Core::AssetLifetime lifetime);
 

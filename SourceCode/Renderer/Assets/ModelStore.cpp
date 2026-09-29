@@ -28,7 +28,14 @@ namespace Abomination::Renderer
     {
         if (const std::optional<ModelHandle> loadedHandle = m_cache.Find(path); loadedHandle.has_value())
         {
+            // The meshes and textures of the model get the longer lifetime too: a level model that the weapon in the hands
+            // asks for with Global must not lose its parts when the level is unloaded.
             m_cache.ExtendLifetime(*loadedHandle, lifetime);
+            for (const ModelPart& part : Get(*loadedHandle).parts)
+            {
+                meshes.ExtendLifetime(part.mesh, lifetime);
+                textures.ExtendLifetime(part.texture, lifetime);
+            }
 
             return *loadedHandle;
         }

@@ -9,6 +9,8 @@
 #include "Gameplay/FreeFlyCameraSystem.h"
 #include "Gameplay/PlayerSystem.h"
 #include "Gameplay/Spin.h"
+#include "Gameplay/LandingDip.h"
+#include "Gameplay/ViewModel.h"
 #include "Gameplay/ViewSystem.h"
 #include "Physics/CharacterBody.h"
 #include "Platform/SystemServices.h"
@@ -112,7 +114,7 @@ namespace Abomination
         m_level = World::Level::Create(m_registry, m_renderAssets, map, StartMapPath);
 
         // The player appears where the map puts them. The free-fly camera waits at their eyes; F2 switches to it.
-        m_gameplay = Gameplay::CreateGameplayState(m_registry, m_level.GetPlayerStart(), m_audio);
+        m_gameplay = Gameplay::CreateGameplayState(m_registry, m_level.GetPlayerStart(), m_audio, m_renderAssets);
     }
 
     int Application::Run()
@@ -144,6 +146,11 @@ namespace Abomination
             const int tickCount = m_fixedTimestep.Advance(frameTimer.GetDeltaTime());
             for (int tick = 0; tick < tickCount; ++tick)
                 FixedUpdate(m_fixedTimestep.GetTickDuration());
+
+            // The weapon in the hands swings with what the ticks of this frame did to the player (a landing, the speed)
+            // and with the view turned in Update(): every frame, so it moves as smoothly as the view.
+            Gameplay::UpdateViewModel(m_gameplay, m_registry, frameTimer.GetDeltaTime());
+            Gameplay::UpdatePlayerLandingDip(m_gameplay, m_registry, frameTimer.GetDeltaTime());
 
             frameStatistics.AddFrame(frameTimer.GetDeltaTime(), tickCount);
 
@@ -295,6 +302,18 @@ namespace Abomination
             const glm::vec2 viewportSize(static_cast<float>(widthInPixels), static_cast<float>(heightInPixels));
             m_debugLineRenderer.Draw(m_debugLines, view, m_renderAssets.shaders.Get(m_systemShaders.debugLines), viewportSize,
                                      DebugLineWidth * m_window.GetDisplayScale());
+
+            // The weapon in the hands comes last, over the world and the debug lines. Only while the player is controlled:
+            // the free-fly camera has no hands.
+            if (const auto* viewModel = m_registry.try_get<Gameplay::ViewModel>(m_gameplay.player);
+                viewModel != nullptr && m_gameplay.controlMode == Gameplay::ControlMode::Player)
+            {
+                const Renderer::RenderStatistics viewModelStatistics = Renderer::DrawViewModel(
+                    viewModel->model, Gameplay::CalculateViewModelMatrix(*viewModel), viewModel->verticalFOV, aspectRatio,
+                    m_renderAssets, viewModel->shaderProgram, m_systemShaders, m_renderSettings);
+                m_renderStatistics.drawCallCount += viewModelStatistics.drawCallCount;
+                m_renderStatistics.triangleCount += viewModelStatistics.triangleCount;
+            }
         }
 
         // The lines of this frame are drawn (or, in a minimized window, dropped); the next frame adds its own.
@@ -320,6 +339,8 @@ namespace Abomination
             .movementSettings = m_gameplay.movementSettings,
             .playerBody = m_registry.get<Physics::CharacterBody>(m_gameplay.player),
             .audio = m_audio,
+            .viewModel = m_registry.get<Gameplay::ViewModel>(m_gameplay.player),
+            .landingDip = m_registry.get<Gameplay::LandingDip>(m_gameplay.player),
         });
 
         m_window.SwapBuffers();

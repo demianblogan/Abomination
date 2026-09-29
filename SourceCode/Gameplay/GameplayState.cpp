@@ -1,7 +1,10 @@
 #include "Gameplay/GameplayState.h"
 
 #include "Audio/AudioEngine.h"
+#include "Gameplay/LandingDip.h"
 #include "Gameplay/Player.h"
+#include "Gameplay/ViewModel.h"
+#include "Renderer/Assets/RenderAssets.h"
 #include "World/PlayerStart.h"
 
 #include <glm/vec3.hpp>
@@ -30,7 +33,7 @@ namespace Abomination::Gameplay
     }
 
     GameplayState CreateGameplayState(entt::registry& registry, const World::PlayerStart& playerStart,
-                                      Audio::AudioEngine& audio)
+                                      Audio::AudioEngine& audio, Renderer::RenderAssets& renderAssets)
     {
         GameplayState state;
         state.player = SpawnPlayer(registry, playerStart);
@@ -41,6 +44,15 @@ namespace Abomination::Gameplay
         // A jump itself makes no sound: the feet only push off. The jump will be the voice of the player (a short effort
         // sound), recorded separately; until then the jump event has no variants and plays nothing.
         state.playerSounds.land = LoadPlayerSoundEvent(audio, "Land", 3);
+
+        // The shotgun in the hands, for the whole game (the pickups and weapon switching of later versions will change
+        // which model it is).
+        registry.emplace<ViewModel>(state.player, ViewModel{
+            .model = renderAssets.LoadModel("Models/Weapons/Shotgun.glb", Core::AssetLifetime::Global),
+            .shaderProgram = renderAssets.shaders.Load("Shaders/TexturedShaded"),
+        });
+
+        registry.emplace<LandingDip>(state.player);
 
         return state;
     }

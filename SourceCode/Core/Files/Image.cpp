@@ -14,6 +14,15 @@
 
 namespace Abomination::Core
 {
+    namespace
+    {
+        // Owns the pixels stb_image decoded. stb_image allocates them with malloc, so they must be freed with
+        // stbi_image_free (which calls free), not with delete, which unique_ptr would call by default: the second
+        // template argument is the type of the function that frees them instead (a pointer to a function taking void*).
+        // std::make_unique cannot be used: it creates a new object with new, while here the memory already exists.
+        using STBPixels = std::unique_ptr<stbi_uc, decltype(&stbi_image_free)>;
+    }
+
     std::expected<Image, std::string> LoadImageFile(const std::filesystem::path& path)
     {
         // The file is read by our own function (it handles any path, including non-English characters),
@@ -30,13 +39,15 @@ namespace Abomination::Core
         int height = 0;
         int channelCountInFile = 0;
 
-        // The last argument asks for 4 channels in the result, whatever the file contains: RGB images get alpha 255.
-        // stb_image allocates the pixels with malloc; unique_ptr with stbi_image_free releases them automatically.
-        std::unique_ptr<stbi_uc, decltype(&stbi_image_free)> decodedPixels(
-            stbi_load_from_memory(reinterpret_cast<const stbi_uc*>(fileContents->data()),
-                                  static_cast<int>(fileContents->size()), &width, &height, &channelCountInFile,
-                                  ImageChannelCount),
-            &stbi_image_free);
+        // Decodes the bytes of the file into pixels: returns width * height * 4 bytes (nullptr if the file is broken) and
+        // writes the size and the number of channels in the file into the three variables above. The last argument asks
+        // for 4 channels in the result, whatever the file contains: RGB images get alpha 255.
+        stbi_uc* pixels = stbi_load_from_memory(reinterpret_cast<const stbi_uc*>(fileContents->data()),
+                                                static_cast<int>(fileContents->size()), &width, &height,
+                                                &channelCountInFile, ImageChannelCount);
+
+        // From here on the pixels are freed automatically on every way out of the function (nothing happens for nullptr).
+        const STBPixels decodedPixels(pixels, &stbi_image_free);
 
         if (decodedPixels == nullptr)
             return std::unexpected(

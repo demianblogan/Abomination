@@ -56,6 +56,9 @@ namespace Abomination::Gameplay
         std::vector<PelletTrace> lastShotPellets;
         float secondsSinceLastShot = 1000.0f;
 
+        // The debug lines of the last shot are drawn (switched in the Weapon window of the debug overlay).
+        bool areShotLinesVisible = true;
+
         // Chooses the directions of the pellets.
         Core::Random random;
     };

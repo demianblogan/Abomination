@@ -25,7 +25,10 @@ namespace Abomination::Gameplay
 
         position += CalculateViewModelMotionOffset(viewModel.motion, viewModel.motionSettings);
 
-        return glm::translate(glm::mat4(1.0f), position);
+        // The recoil turns the muzzle up around the middle of the model: a positive angle around +X (the right) turns -Z
+        // (forward) towards +Y (up).
+        const glm::mat4 placed = glm::translate(glm::mat4(1.0f), position);
+        return glm::rotate(placed, viewModel.motion.recoilPitch, glm::vec3(1.0f, 0.0f, 0.0f));
     }
 
     void UpdateViewModel(const GameplayState& state, entt::registry& registry, float deltaTime)

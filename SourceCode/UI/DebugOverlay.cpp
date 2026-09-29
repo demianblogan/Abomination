@@ -1,6 +1,7 @@
 #include "UI/DebugOverlay.h"
 
 #include "Core/Time/FrameLimiter.h"
+#include "Gameplay/ViewModel.h"
 #include "Platform/Window.h"
 #include "Renderer/OpenGL/OpenGLLoader.h"
 #include "UI/AssetsWindow.h"
@@ -9,6 +10,7 @@
 #include "UI/PerformanceWindow.h"
 #include "UI/RendererWindow.h"
 #include "UI/ViewModelWindow.h"
+#include "UI/WeaponWindow.h"
 
 #include <imgui.h>
 
@@ -130,6 +132,9 @@ namespace Abomination::UI
 
             if (m_isViewModelWindowOpen)
                 DrawViewModelWindow(&m_isViewModelWindowOpen, context.viewModel, context.landingDip);
+
+            if (m_isWeaponWindowOpen)
+                DrawWeaponWindow(&m_isWeaponWindowOpen, context.weapon, context.viewRecoil, context.viewModel.motionSettings);
         }
 
         // The console is drawn even while the rest of the overlay is hidden: it has its own key.
@@ -203,6 +208,7 @@ namespace Abomination::UI
             if (ImGui::BeginMenu("Gameplay"))
             {
                 ImGui::MenuItem("View Model", nullptr, &m_isViewModelWindowOpen);
+                ImGui::MenuItem("Weapon", nullptr, &m_isWeaponWindowOpen);
                 ImGui::EndMenu();
             }
 

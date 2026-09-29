@@ -112,6 +112,14 @@ namespace Abomination::Gameplay
         UpdateBob(motion, settings, input, deltaTime);
         UpdateSway(motion, settings, input, deltaTime);
         UpdateInertia(motion, settings, input, deltaTime);
+        UpdateDampedSpring(motion.recoilBack, motion.recoilBackVelocity, settings.recoilStiffness, deltaTime);
+        UpdateDampedSpring(motion.recoilPitch, motion.recoilPitchVelocity, settings.recoilStiffness, deltaTime);
+    }
+
+    void KickViewModelRecoil(ViewModelMotion& motion, const ViewModelMotionSettings& settings)
+    {
+        motion.recoilBackVelocity += settings.recoilKickBack;
+        motion.recoilPitchVelocity += settings.recoilKickUp;
     }
 
     glm::vec3 CalculateViewModelMotionOffset(const ViewModelMotion& motion, const ViewModelMotionSettings& settings)
@@ -121,6 +129,6 @@ namespace Abomination::Gameplay
         const float bob = settings.bobAmount * motion.bobWeight;
         const glm::vec3 bobOffset(std::sin(motion.bobPhase) * bob, std::sin(2.0f * motion.bobPhase) * bob * 0.5f, 0.0f);
 
-        return bobOffset + glm::vec3(motion.sway, 0.0f) + glm::vec3(0.0f, motion.inertiaOffset, 0.0f);
+        return bobOffset + glm::vec3(motion.sway, 0.0f) + glm::vec3(0.0f, motion.inertiaOffset, motion.recoilBack);
     }
 }

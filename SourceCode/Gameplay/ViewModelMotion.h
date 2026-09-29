@@ -32,6 +32,13 @@ namespace Abomination::Gameplay
         float jumpKick = 0.38f;
         float landingKickPerFallSpeed = 0.085f;
         float springStiffness = 150.0f;
+
+        // Recoil of a shot: how hard it pushes the weapon back towards the eyes (meters per second) and turns its muzzle
+        // up (radians per second), and how stiff the springs are that bring it back. With the default stiffness the kicks
+        // move it about 5 cm back and 6 degrees up.
+        float recoilKickBack = 0.6f;
+        float recoilKickUp = 1.3f;
+        float recoilStiffness = 150.0f;
     };
 
     // What the motion needs to know about the player each frame.
@@ -65,6 +72,13 @@ namespace Abomination::Gameplay
         float inertiaOffset = 0.0f;
         float inertiaVelocity = 0.0f;
 
+        // The recoil: how far the weapon is pushed back (meters, positive: towards the eyes) and its muzzle turned up
+        // (radians), and how fast each of them moves.
+        float recoilBack = 0.0f;
+        float recoilBackVelocity = 0.0f;
+        float recoilPitch = 0.0f;
+        float recoilPitchVelocity = 0.0f;
+
         // The input of the last frame, to see what changed.
         bool wasOnGround = true;
         float previousVerticalSpeed = 0.0f;
@@ -82,7 +96,11 @@ namespace Abomination::Gameplay
     // rate: a long frame is moved in small steps. Shared by the inertia of the weapon and the landing dip of the view.
     void UpdateDampedSpring(float& offset, float& velocity, float stiffness, float deltaTime);
 
-    // How far the motion moves the weapon now, relative to where it is held (meters, eye space: +X right, +Y up).
+    // A shot: kicks the weapon back and its muzzle up (see recoilKickBack); the springs bring it back.
+    void KickViewModelRecoil(ViewModelMotion& motion, const ViewModelMotionSettings& settings);
+
+    // How far the motion moves the weapon now, relative to where it is held (meters, eye space: +X right, +Y up, +Z
+    // towards the eyes).
     [[nodiscard]] glm::vec3 CalculateViewModelMotionOffset(const ViewModelMotion& motion,
                                                            const ViewModelMotionSettings& settings);
 }

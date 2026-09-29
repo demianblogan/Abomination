@@ -4,6 +4,8 @@
 #include "Core/Scene/Transform.h"
 #include "Gameplay/MouseLook.h"
 #include "Gameplay/Player.h"
+#include "Gameplay/ViewModel.h"
+#include "Gameplay/ViewRecoil.h"
 #include "Gameplay/Weapon.h"
 #include "Input/ActionStates.h"
 #include "Renderer/Debug/DebugLines.h"
@@ -80,13 +82,19 @@ namespace Abomination::Gameplay
 
         audio.Play(weapon->fireSound);
 
+        // The recoil: the view and the weapon in the hands jerk, and their springs bring them back.
+        if (ViewRecoil* viewRecoil = registry.try_get<ViewRecoil>(state.player); viewRecoil != nullptr)
+            KickViewRecoil(*viewRecoil);
+        if (ViewModel* viewModel = registry.try_get<ViewModel>(state.player); viewModel != nullptr)
+            KickViewModelRecoil(viewModel->motion, viewModel->motionSettings);
+
         return true;
     }
 
     void AddWeaponDebugLines(const GameplayState& state, const entt::registry& registry, Renderer::DebugLines& debugLines)
     {
         const Weapon* weapon = registry.try_get<Weapon>(state.player);
-        if (weapon == nullptr || weapon->secondsSinceLastShot > ShotLineDuration)
+        if (weapon == nullptr || !weapon->areShotLinesVisible || weapon->secondsSinceLastShot > ShotLineDuration)
             return;
 
         for (const PelletTrace& pellet : weapon->lastShotPellets)

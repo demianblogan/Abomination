@@ -4,6 +4,7 @@
 #include "Gameplay/LandingDip.h"
 #include "Gameplay/MouseLook.h"
 #include "Gameplay/Player.h"
+#include "Gameplay/ViewRecoil.h"
 #include "Renderer/Camera/CameraLens.h"
 
 #include <glm/common.hpp>
@@ -57,7 +58,12 @@ namespace Abomination::Gameplay
             const LandingDip* dip = registry.try_get<LandingDip>(state.player);
             const float dipOffset = dip != nullptr ? dip->offset : 0.0f;
 
-            return CalculatePlayerEyeTransform(interpolated, registry.get<LookAngles>(state.player), stepOffset + dipOffset);
+            // The recoil of a shot turns only the picture up, on top of the look angles (see ViewRecoil).
+            LookAngles look = registry.get<LookAngles>(state.player);
+            if (const ViewRecoil* recoil = registry.try_get<ViewRecoil>(state.player); recoil != nullptr)
+                look.pitch += recoil->pitch;
+
+            return CalculatePlayerEyeTransform(interpolated, look, stepOffset + dipOffset);
         }
 
         return interpolated;

@@ -11,7 +11,9 @@
 #include "Gameplay/Spin.h"
 #include "Gameplay/LandingDip.h"
 #include "Gameplay/ViewModel.h"
+#include "Gameplay/ViewRecoil.h"
 #include "Gameplay/ViewSystem.h"
+#include "Gameplay/Weapon.h"
 #include "Gameplay/WeaponSystem.h"
 #include "Physics/CharacterBody.h"
 #include "Platform/SystemServices.h"
@@ -152,6 +154,7 @@ namespace Abomination
             // and with the view turned in Update(): every frame, so it moves as smoothly as the view.
             Gameplay::UpdateViewModel(m_gameplay, m_registry, frameTimer.GetDeltaTime());
             Gameplay::UpdatePlayerLandingDip(m_gameplay, m_registry, frameTimer.GetDeltaTime());
+            Gameplay::UpdatePlayerViewRecoil(m_gameplay, m_registry, frameTimer.GetDeltaTime());
 
             frameStatistics.AddFrame(frameTimer.GetDeltaTime(), tickCount);
 
@@ -348,6 +351,8 @@ namespace Abomination
             .audio = m_audio,
             .viewModel = m_registry.get<Gameplay::ViewModel>(m_gameplay.player),
             .landingDip = m_registry.get<Gameplay::LandingDip>(m_gameplay.player),
+            .weapon = m_registry.get<Gameplay::Weapon>(m_gameplay.player),
+            .viewRecoil = m_registry.get<Gameplay::ViewRecoil>(m_gameplay.player),
         });
 
         m_window.SwapBuffers();

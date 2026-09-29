@@ -101,6 +101,21 @@ namespace Abomination::Gameplay
         EXPECT_LT(motion.inertiaOffset, 0.0f);
     }
 
+    TEST(ViewModelMotion, RecoilPushesBackTurnsUpAndReturns)
+    {
+        ViewModelMotion motion;
+        const ViewModelMotionSettings settings;
+
+        KickViewModelRecoil(motion, settings);
+        RunFrames(motion, settings, ViewModelMotionInput{}, 3, 1.0f / 60.0f);
+        EXPECT_GT(motion.recoilBack, 0.0f);
+        EXPECT_GT(motion.recoilPitch, 0.0f);
+
+        RunFrames(motion, settings, ViewModelMotionInput{}, 120, 1.0f / 60.0f);
+        EXPECT_NEAR(motion.recoilBack, 0.0f, 1e-4f);
+        EXPECT_NEAR(motion.recoilPitch, 0.0f, 1e-4f);
+    }
+
     TEST(ViewModelMotion, SameMotionAtAnyFrameRate)
     {
         // A landing seen at 30 and at 240 frames per second: 0.1 s after it the weapon is at the same place. The landing

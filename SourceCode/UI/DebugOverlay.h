@@ -32,6 +32,8 @@ namespace Abomination::Gameplay
 {
     struct LandingDip;
     struct ViewModel;
+    struct ViewRecoil;
+    struct Weapon;
 }
 
 namespace Abomination::Physics
@@ -82,6 +84,8 @@ namespace Abomination::UI
         Audio::AudioEngine& audio;
         Gameplay::ViewModel& viewModel;
         Gameplay::LandingDip& landingDip;
+        Gameplay::Weapon& weapon;
+        Gameplay::ViewRecoil& viewRecoil;
     };
 
     // Developer overlay drawn with Dear ImGui on top of the game: a menu bar with debug windows and settings.
@@ -139,6 +143,7 @@ namespace Abomination::UI
         bool m_isMovementWindowOpen = false;
         bool m_isAudioWindowOpen = false;
         bool m_isViewModelWindowOpen = false;
+        bool m_isWeaponWindowOpen = false;
 
         EntitiesWindow m_entitiesWindow;
         AudioWindow m_audioWindow;

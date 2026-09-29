@@ -18,7 +18,7 @@ namespace Abomination::Core
     {
         const ConvexPolygon result = ClipPolygon(Square, VerticalPlaneThroughCenter);
 
-        // The left half: two old corners and two new ones where the plane crosses the bottom and top edges,
+        // The left half: two old vertices and two new ones where the plane crosses the bottom and top edges,
         // in the same (counter-clockwise) order.
         const ConvexPolygon expected{{-1.0, -1.0, 0.0}, {0.0, -1.0, 0.0}, {0.0, 1.0, 0.0}, {-1.0, 1.0, 0.0}};
         EXPECT_EQ(result, expected);
@@ -50,10 +50,10 @@ namespace Abomination::Core
         EXPECT_TRUE(ClipPolygon(Square, planeFarLeft).empty());
     }
 
-    TEST(ConvexPolygon, CornerOnPlaneIsKeptOnce)
+    TEST(ConvexPolygon, VertexOnPlaneIsKeptOnce)
     {
-        // The diagonal plane through the corners (1, -1) and (-1, 1), facing towards (1, 1): the corner (1, 1) is in
-        // front, the two corners on the plane stay without duplicates, and a triangle is left.
+        // The diagonal plane through the vertices (1, -1) and (-1, 1), facing towards (1, 1): the vertex (1, 1) is in
+        // front, the two vertices on the plane stay without duplicates, and a triangle is left.
         const Plane diagonal{.normal = {0.70710678118654752, 0.70710678118654752, 0.0}, .distanceFromOrigin = 0.0};
 
         const ConvexPolygon result = ClipPolygon(Square, diagonal);

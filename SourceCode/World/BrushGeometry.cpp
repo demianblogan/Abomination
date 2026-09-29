@@ -16,7 +16,7 @@ namespace Abomination::World
         // intersections exact to well below 1e-6 units even at this size.
         constexpr double HugeSquareHalfSize = 1'000'000.0;
 
-        // A square around the point of the plane closest to the origin, lying in the plane, with its corners
+        // A square around the point of the plane closest to the origin, lying in the plane, with its vertices
         // counter-clockwise when looked at from the front (against the normal).
         Core::ConvexPolygon CreateHugeSquare(const Core::Plane& plane)
         {
@@ -27,7 +27,7 @@ namespace Abomination::World
             const glm::dvec3 right = glm::normalize(glm::cross(helper, plane.normal));
 
             // up = normal x right. With this order cross(right, up) equals the normal: seen from the front, "right" points
-            // right and "up" points up, so the corners below (left-down, right-down, right-up, left-up) go counter-clockwise.
+            // right and "up" points up, so the vertices below (left-down, right-down, right-up, left-up) go counter-clockwise.
             const glm::dvec3 up = glm::cross(plane.normal, right);
 
             const glm::dvec3 center = plane.normal * plane.distanceFromOrigin;

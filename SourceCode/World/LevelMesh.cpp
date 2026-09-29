@@ -33,14 +33,14 @@ namespace Abomination::World
                 const Core::ConvexPolygon& polygon = polygons[faceIndex];
                 const MapFace& face = brush.faces[faceIndex];
 
-                // A face that does not exist (a plane that misses the brush) has no corners.
+                // A face that does not exist (a plane that misses the brush) has no vertices.
                 if (polygon.empty())
                     continue;
 
                 // The normal of every vertex is the normal of the face's plane, turned into game axes. It is not
-                // calculated from the corners (the cross product of two edges): after clipping, two neighbouring corners
-                // can lie a hair apart, and such a short edge gives an inaccurate normal, or NaN when the corners are
-                // equal. The plane is exact. A face with corners always has a plane (BuildBrushPolygons skips the rest).
+                // calculated from the vertices (the cross product of two edges): after clipping, two neighbouring vertices
+                // can lie a hair apart, and such a short edge gives an inaccurate normal, or NaN when the vertices are
+                // equal. The plane is exact. A face with vertices always has a plane (BuildBrushPolygons skips the rest).
                 const std::optional<Core::Plane> mapPlane =
                     Core::CreatePlaneFromPoints(face.points[0], face.points[1], face.points[2]);
                 if (!mapPlane.has_value())
@@ -56,24 +56,24 @@ namespace Abomination::World
                     result.parts.push_back(LevelMeshPart{.textureName = face.textureName});
                 Renderer::MeshData& data = result.parts[entry->second].data;
 
-                // The corners of the face in game coordinates. Texture coordinates are calculated from the corner in map
+                // The vertices of the face in game coordinates. Texture coordinates are calculated from the vertex in map
                 // coordinates, the space the texture axes of the face are given in.
                 const glm::ivec2 textureSize = getTextureSize(face.textureName);
                 const auto firstVertex = static_cast<std::uint32_t>(data.vertices.size());
-                for (const glm::dvec3& corner : polygon)
+                for (const glm::dvec3& polygonVertex : polygon)
                     data.vertices.push_back(Renderer::MeshVertex{
-                        .position = ConvertMapPosition(corner),
-                        .texCoord = CalculateTextureCoordinates(face, corner, textureSize),
+                        .position = ConvertMapPosition(polygonVertex),
+                        .texCoord = CalculateTextureCoordinates(face, polygonVertex, textureSize),
                         .normal = normal,
                     });
 
-                // A convex polygon is cut into triangles like a fan: corner 0 with every pair of neighbours after it,
-                // (0, 1, 2), (0, 2, 3), (0, 3, 4), ... A polygon with N corners gives N - 2 triangles, all
+                // A convex polygon is cut into triangles like a fan: vertex 0 with every pair of neighbours after it,
+                // (0, 1, 2), (0, 2, 3), (0, 3, 4), ... A polygon with N vertices gives N - 2 triangles, all
                 // counter-clockwise like the polygon itself.
-                const auto cornerCount = static_cast<std::uint32_t>(polygon.size());
-                for (std::uint32_t corner = 1; corner + 1 < cornerCount; ++corner)
+                const auto polygonVertexCount = static_cast<std::uint32_t>(polygon.size());
+                for (std::uint32_t vertex = 1; vertex + 1 < polygonVertexCount; ++vertex)
                 {
-                    data.indices.insert(data.indices.end(), {firstVertex, firstVertex + corner, firstVertex + corner + 1});
+                    data.indices.insert(data.indices.end(), {firstVertex, firstVertex + vertex, firstVertex + vertex + 1});
                     ++counts.triangleCount;
                 }
             }

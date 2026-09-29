@@ -877,5 +877,32 @@ Every gameplay component must be serializable. Rules to follow from 0.2:
 
 ## 15. Threading
 
-Single-threaded for now. Candidates for background threads later: asset
-loading, audio (miniaudio already runs its own thread), lightmap baking.
+**Single-threaded for now, on purpose.** The game runs at well over 1000 FPS
+on one thread while the monitor needs 60–144, so there is nothing to gain yet.
+Threads have a high price: a **data race** (two threads changing the same data
+at once) shows up rarely and at random, does not repeat under the debugger and
+breaks things far from its cause. OpenGL also works from one thread only (its
+context belongs to one thread), so drawing stays on the main thread; drawing
+from several threads would mean Vulkan or Direct3D 12.
+
+The only synchronized code today is `Core::LogHistory`: spdlog may write to it
+from any thread, so it is guarded by a `std::mutex`.
+
+**Where threads come in:**
+
+| Milestone | Where | Why | Difficulty |
+|-----------|-------|-----|------------|
+| 0.3 | Audio (miniaudio) | Sound must not stutter when a frame is slow. miniaudio runs its own thread; the game only sends it commands ("play the shot") | Low: the library owns the thread |
+| 0.5 | Lightmap baking (a tool, not the game) | Every surface of a level is calculated on its own, minutes of work; 8 cores make it 6–8 times faster | Low: the tasks share no data (the first thread code to write) |
+| 0.6 | Loading a level in the background | Level transitions without a frozen picture: images and models are decoded on a worker thread while the main thread shows a loading screen | Medium: decoding may run anywhere, but uploading to OpenGL only on the main thread |
+| 0.4+ | Navmesh and AI | Building the navigation mesh (Recast) when a level loads; path queries only if there are very many enemies | Only if the profiler shows the need |
+
+**Rules:**
+
+1. **Measure first.** A profiler shows what is slow; only then threads are
+   considered. "It will probably be faster" is not a reason.
+2. **Threads are for heavy, independent work**, where each task works on its
+   own data (baking surfaces, decoding files).
+3. **Hand data over instead of sharing it.** A worker loads a texture and
+   passes it to the main thread, which owns it from then on. That is safer
+   than shared data behind locks.

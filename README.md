@@ -79,32 +79,26 @@ the enemy AI — is built to be read and learned from.
 
 ## 📸 Screenshots
 
-<div align="center">
+Every picture has the same size; click one to open it in full resolution.
 
-<img src="Documentation/Screenshots/v0.2.0/TestLevel.png" alt="Version 0.2: the textured test level" width="720">
-
-<sub><b>0.2 First Steps</b> — a level built in TrenchBroom, with Quake-style running, jumping and collision</sub>
+### 0.2 — First Steps
 
 <table>
 <tr>
-<td width="33%"><img src="Documentation/Screenshots/v0.2.0/ConsoleAndPerformance.png" alt="The in-game console and the Performance, Entities and Assets windows"></td>
-<td width="33%"><img src="Documentation/Screenshots/v0.2.0/CollisionAndMovement.png" alt="Collider bounds, the player box and a box cast with the Renderer, Collisions and Movement windows"></td>
-<td width="33%"><img src="Documentation/Screenshots/v0.2.0/WireframeAndDisplay.png" alt="Wireframe mode and the Display settings"></td>
-</tr>
-<tr>
-<td align="center"><sub>In-game console, performance, entities and assets</sub></td>
-<td align="center"><sub>Collider bounds, player box and a box cast from the camera</sub></td>
-<td align="center"><sub>Wireframe mode and display settings</sub></td>
+<td align="center" valign="top" width="25%"><a href="Documentation/Screenshots/v0.2.0/TestLevel.png"><img src="Documentation/Screenshots/v0.2.0/TestLevel.png" alt="The textured test level" width="200" height="112"></a><br><sub>A level built in TrenchBroom</sub></td>
+<td align="center" valign="top" width="25%"><a href="Documentation/Screenshots/v0.2.0/ConsoleAndPerformance.png"><img src="Documentation/Screenshots/v0.2.0/ConsoleAndPerformance.png" alt="The in-game console and the Performance, Entities and Assets windows" width="200" height="112"></a><br><sub>Console, performance, entities and assets</sub></td>
+<td align="center" valign="top" width="25%"><a href="Documentation/Screenshots/v0.2.0/CollisionAndMovement.png"><img src="Documentation/Screenshots/v0.2.0/CollisionAndMovement.png" alt="Collider bounds, the player box and a box cast with the Renderer, Collisions and Movement windows" width="200" height="112"></a><br><sub>Collider bounds, player box and a box cast</sub></td>
+<td align="center" valign="top" width="25%"><a href="Documentation/Screenshots/v0.2.0/WireframeAndDisplay.png"><img src="Documentation/Screenshots/v0.2.0/WireframeAndDisplay.png" alt="Wireframe mode and the Display settings" width="200" height="112"></a><br><sub>Wireframe mode and display settings</sub></td>
 </tr>
 </table>
 
-<br>
+### 0.1 — Foundation
 
-<img src="Documentation/Screenshots/v0.1.0/RotatingCube.png" alt="Version 0.1: a rotating textured cube with the debug overlay" width="720">
-
-<sub><b>0.1 Foundation</b> — the first 3D image: a textured cube, a free-fly camera and the debug overlay</sub>
-
-</div>
+<table>
+<tr>
+<td align="center" valign="top" width="25%"><a href="Documentation/Screenshots/v0.1.0/RotatingCube.png"><img src="Documentation/Screenshots/v0.1.0/RotatingCube.png" alt="A rotating textured cube with the debug overlay" width="200" height="112"></a><br><sub>A textured cube and the debug overlay</sub></td>
+</tr>
+</table>
 
 ## 🛠️ Tech Stack
 

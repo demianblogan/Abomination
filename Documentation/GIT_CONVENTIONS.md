@@ -176,10 +176,11 @@ It is filled in automatically when a PR is opened on GitHub.
 
 1. All milestone branches are merged into `main` and CI is green.
 2. The last branch of the milestone also prepares the release:
-   - 1–3 screenshots of the milestone go to
+   - 1–4 screenshots of the milestone go to
      `Documentation/Screenshots/v<version>/` (for example
      `Documentation/Screenshots/v0.1.0/RotatingCube.png`) and are shown in the
-     README;
+     README: one row per version, the newest version first, every picture
+     200×112 with a caption under it and a link to the full-size file;
    - `Documentation/ROADMAP.md` and the README mark the milestone as done.
 3. An annotated tag is created on `main`:
    ```

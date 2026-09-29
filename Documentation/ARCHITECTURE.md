@@ -479,11 +479,15 @@ operation, so `Application` switches it when `LookAroundMode` starts/stops.
 
 There are two views, both ordinary entities: the **player** and the
 **free-fly camera** (a debug "noclip" view that flies through walls).
-`Application` keeps both entity numbers and a `ControlMode`: which one gets
-the input and whose eyes the scene is drawn through. **F2** switches; the
-free-fly camera then jumps to the eyes of the player, and the player is drawn
-as a green box (it has no model yet). The player keeps moving (falling) while
-the free-fly camera looks.
+`Gameplay::GameplayState` keeps both entity numbers, their controllers and
+movement settings, and a `ControlMode`: which one gets the input and whose
+eyes the scene is drawn through. `Application` owns the state and calls the
+gameplay systems in order, which are free functions like every other system:
+`PlayerSystem` (look every frame, movement every tick, the debug box),
+`FreeFlyCameraSystem` (the same for the camera) and `ViewSystem` (switching,
+the view transform and lens). **F2** switches; the free-fly camera then jumps
+to the eyes of the player, and the player is drawn as a green box (it has no
+model yet). The player keeps moving (falling) while the free-fly camera looks.
 
 ```
 player entity                                free-fly camera entity

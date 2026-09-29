@@ -1,18 +1,14 @@
 #pragma once
 
-#include "Core/Scene/Transform.h"
 #include "Core/Time/FixedTimestep.h"
 #include "Core/Time/FrameLimiter.h"
-#include "Gameplay/FreeFlyCameraController.h"
-#include "Gameplay/PlayerController.h"
+#include "Gameplay/GameplayState.h"
 #include "Input/ActionStates.h"
 #include "Input/InputBindings.h"
 #include "Input/InputDevices.h"
-#include "Physics/CharacterMovement.h"
 #include "Platform/SDLLibrary.h"
 #include "Platform/Window.h"
 #include "Renderer/Assets/RenderAssets.h"
-#include "Renderer/Camera/CameraLens.h"
 #include "Renderer/Debug/DebugLineRenderer.h"
 #include "Renderer/Debug/DebugLines.h"
 #include "Renderer/RenderSettings.h"
@@ -74,17 +70,6 @@ namespace Abomination
         // the new ones created. The camera stays where it is. If the map cannot be read, the old level stays.
         void ReloadLevel();
 
-        // Switches between the player and the free-fly camera. The free-fly camera starts at the eyes of the player, looking
-        // the same way, so the view does not jump.
-        void ToggleFreeFlyCamera();
-
-        // Where the scene is drawn from this frame: the eyes of the player or the free-fly camera, between their last two
-        // ticks (see Core::InterpolateTransform).
-        [[nodiscard]] Core::Transform CalculateViewTransform(float interpolationFactor) const;
-
-        // The camera lens of the entity the scene is drawn through.
-        [[nodiscard]] const Renderer::CameraLens& GetViewLens() const;
-
         // Draws the frame (the game, then the debug overlay on top) and shows it on the screen.
         // frameStatistics: the numbers for the overlay.
         void Render(const Core::FrameStatistics& frameStatistics);
@@ -130,31 +115,12 @@ namespace Abomination
         // stay valid when Application (and with it m_renderAssets) is moved out of Create().
         entt::registry m_registry;
 
-        // Who the input controls and whose eyes the scene is drawn through: the player, or the free-fly camera (F2).
-        enum class ControlMode
-        {
-            Player,
-            FreeFlyCamera,
-        };
-        ControlMode m_controlMode = ControlMode::Player;
-
-        // Gravity and other settings of the physical world.
-        Physics::PhysicsSettings m_physicsSettings;
-
-        // How the player walks (speed, acceleration, friction, steps).
-        Physics::MovementSettings m_movementSettings;
+        // The player, the free-fly camera, who of them is controlled and how they move (see Gameplay::GameplayState).
+        Gameplay::GameplayState m_gameplay;
 
         // The mouse is in relative mode (see Update).
         bool m_isMouseCaptured = false;
 
-        // The player entity (an entity number: its components live in m_registry) and the controller that turns input into
-        // what the player does.
-        entt::entity m_player = entt::null;
-        Gameplay::PlayerController m_playerController;
-
-        // The free-fly camera entity, a debug "noclip" view that flies through walls, and the controller that flies it.
-        entt::entity m_freeFlyCamera = entt::null;
-        Gameplay::FreeFlyCameraController m_freeFlyCameraController;
         UI::DebugOverlay m_debugOverlay;
 
         // State of the keyboard and the mouse for the current frame: the window fills it, the game reads it.

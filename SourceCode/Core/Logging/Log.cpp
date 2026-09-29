@@ -24,6 +24,7 @@ namespace Abomination::Core::Log
     namespace
     {
         constexpr std::array AllCategories{
+            LogCategory::Audio,
             LogCategory::Core,
             LogCategory::Platform,
             LogCategory::Physics,

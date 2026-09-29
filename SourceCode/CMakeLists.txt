@@ -4,6 +4,7 @@ find_package(imgui CONFIG REQUIRED)
 find_package(SDL3 CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
 find_package(Stb REQUIRED)  # Header-only: provides only Stb_INCLUDE_DIR, no target
+find_path(MINIAUDIO_INCLUDE_DIR miniaudio.h REQUIRED)  # Header-only, and vcpkg installs no CMake package for it
 
 # --- Generated sources -------------------------------------------------------
 # The version lives only in project(... VERSION ...) of the root CMakeLists.txt.
@@ -16,6 +17,17 @@ configure_file(Core/Version.cpp.in ${GENERATED_DIR}/Core/Version.cpp @ONLY)
 set(LIBRARY_SOURCES
     Application/Application.h
     Application/Application.cpp
+
+    Audio/AudioEngine.h
+    Audio/AudioEngine.cpp
+    Audio/MiniaudioImplementation.cpp
+    Audio/SoundClip.h
+    Audio/SoundClip.cpp
+    Audio/SoundEvent.h
+    Audio/SoundStore.h
+    Audio/SoundStore.cpp
+    Audio/VoiceSelection.h
+    Audio/VoiceSelection.cpp
 
     Core/BuildConfiguration.h
     Core/Version.h
@@ -37,6 +49,8 @@ set(LIBRARY_SOURCES
     Core/Math/ConvexPolygon.cpp
     Core/Math/Plane.h
     Core/Math/Plane.cpp
+    Core/Math/Random.h
+    Core/Math/Random.cpp
     Core/Math/Units.h
     Core/Scene/Name.h
     Core/Scene/Transform.h
@@ -189,6 +203,7 @@ add_library(AbominationCore STATIC
 )
 target_include_directories(AbominationCore PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_include_directories(AbominationCore SYSTEM PRIVATE ${Stb_INCLUDE_DIR})  # Only Core/Files/Image.cpp includes stb
+target_include_directories(AbominationCore SYSTEM PRIVATE ${MINIAUDIO_INCLUDE_DIR})  # Only Audio/*.cpp include miniaudio
 target_link_libraries(AbominationCore
     PUBLIC
         EnTT                  # Header-only; game headers hold entt::registry and entities, so it is public

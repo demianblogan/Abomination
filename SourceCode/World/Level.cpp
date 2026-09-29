@@ -4,11 +4,13 @@
 #include "Core/Scene/Name.h"
 #include "Core/Scene/Transform.h"
 #include "Renderer/MeshRenderer.h"
+#include "Renderer/ModelRenderer.h"
 #include "World/MapCoordinates.h"
+
+#include <glm/gtc/quaternion.hpp>
 
 #include <charconv>
 #include <optional>
-#include <system_error>
 
 namespace Abomination::World
 {
@@ -34,6 +36,16 @@ namespace Abomination::World
             return nullptr;
         }
 
+        // The yaw of the "angle" property of a point entity (0 if it has none or it is not a number).
+        float ReadEntityYaw(const MapEntity& entity)
+        {
+            double degrees = 0.0;
+            if (const std::string* angle = FindProperty(entity, "angle"); angle != nullptr)
+                std::from_chars(angle->data(), angle->data() + angle->size(), degrees);
+
+            return ConvertMapAngleToYaw(degrees);
+        }
+
         PlayerStart ReadPlayerStart(const MapData& map)
         {
             PlayerStart playerStart;
@@ -54,15 +66,40 @@ namespace Abomination::World
                     playerStart.boxCenter = ConvertMapPosition(*position + glm::dvec3(0.0, 0.0, PlayerBoxCenterAboveOrigin));
             }
 
-            if (const std::string* angle = FindProperty(*entity, "angle"); angle != nullptr)
-            {
-                double degrees = 0.0;
-                const char* end = angle->data() + angle->size();
-                if (std::from_chars(angle->data(), end, degrees).ec == std::errc())
-                    playerStart.yaw = ConvertMapAngleToYaw(degrees);
-            }
+            playerStart.yaw = ReadEntityYaw(*entity);
 
             return playerStart;
+        }
+
+        // A model standing in the level (misc_model): its file ("model"), origin and angle.
+        entt::entity CreateModelEntity(entt::registry& registry, Renderer::RenderAssets& assets, const MapEntity& mapEntity,
+                                       Renderer::ShaderHandle shaderProgram)
+        {
+            const std::string* modelPath = FindProperty(mapEntity, "model");
+            if (modelPath == nullptr)
+            {
+                Core::Log::Write(LogCategory::World, LogLevel::Warning, "A misc_model has no model property, skipped");
+
+                return entt::null;
+            }
+
+            Core::Transform transform;
+            if (const std::string* origin = FindProperty(mapEntity, "origin"); origin != nullptr)
+                if (const std::optional<glm::dvec3> position = ParseVectorProperty(*origin); position.has_value())
+                    transform.position = ConvertMapPosition(*position);
+
+            // The angle turns the model around the vertical axis (+Y in the game).
+            transform.rotation = glm::angleAxis(ReadEntityYaw(mapEntity), glm::vec3(0.0f, 1.0f, 0.0f));
+
+            const entt::entity entity = registry.create();
+            registry.emplace<Core::Name>(entity, "Model: " + *modelPath);
+            registry.emplace<Core::Transform>(entity, transform);
+            registry.emplace<Renderer::ModelRenderer>(entity, Renderer::ModelRenderer{
+                .model = assets.LoadModel(*modelPath, Core::AssetLifetime::Level),
+                .shaderProgram = shaderProgram,
+            });
+
+            return entity;
         }
     }
 
@@ -107,7 +144,18 @@ namespace Abomination::World
                 .texture = assets.textures.Load(MakeTexturePath(part.textureName), Core::AssetLifetime::Level),
                 .shaderProgram = shaderProgram,
             });
-            level.m_geometryEntities.push_back(entity);
+            level.m_entities.push_back(entity);
+        }
+
+        // Models standing in the level. Like the textures and meshes, they belong to the Level lifetime group.
+        for (const MapEntity& mapEntity : map.entities)
+        {
+            const std::string* className = FindProperty(mapEntity, "classname");
+            if (className == nullptr || *className != "misc_model")
+                continue;
+
+            if (const entt::entity entity = CreateModelEntity(registry, assets, mapEntity, shaderProgram); entity != entt::null)
+                level.m_entities.push_back(entity);
         }
 
         Core::Log::Write(LogCategory::World, LogLevel::Info,
@@ -122,7 +170,7 @@ namespace Abomination::World
     {
         // The entities first: their components hold handles to the assets removed below. A removed handle would only
         // draw the fallback, but nothing should be left referring to a level that is gone.
-        for (const entt::entity entity : m_geometryEntities)
+        for (const entt::entity entity : m_entities)
             if (registry.valid(entity))
                 registry.destroy(entity);
 

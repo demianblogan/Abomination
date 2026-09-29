@@ -148,6 +148,41 @@ namespace Abomination::UI
             ImGui::EndTable();
         }
 
+        void DrawModelSection(const Renderer::ModelStore& models)
+        {
+            const std::string header = std::format("Models: {}###Models", models.GetCount());
+            if (!ImGui::CollapsingHeader(header.c_str(), ImGuiTreeNodeFlags_DefaultOpen))
+                return;
+
+            if (!ImGui::BeginTable("ModelTable", 4, ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders))
+                return;
+
+            // The meshes and textures of a model are listed in their own sections, named after the model file.
+            ImGui::TableSetupColumn("Path", ImGuiTableColumnFlags_WidthStretch);
+            ImGui::TableSetupColumn("Parts", ImGuiTableColumnFlags_WidthFixed);
+            ImGui::TableSetupColumn("Status", ImGuiTableColumnFlags_WidthFixed);
+            ImGui::TableSetupColumn("Lifetime", ImGuiTableColumnFlags_WidthFixed);
+            ImGui::TableHeadersRow();
+
+            models.VisitModels([](const std::string& path, const Renderer::Model& model, bool isFallback,
+                                  Core::AssetLifetime lifetime)
+            {
+                ImGui::TableNextColumn();
+                ImGui::TextUnformatted(path.c_str());
+
+                ImGui::TableNextColumn();
+                ImGui::TextUnformatted(std::format("{}", model.parts.size()).c_str());
+
+                ImGui::TableNextColumn();
+                DrawAssetStatus(isFallback);
+
+                ImGui::TableNextColumn();
+                ImGui::TextUnformatted(Core::GetAssetLifetimeName(lifetime).data());
+            });
+
+            ImGui::EndTable();
+        }
+
         void DrawShaderProgramSection(const Renderer::ShaderStore& shaders)
         {
             const std::string header = std::format("Shader programs: {}###ShaderPrograms", shaders.GetCount());
@@ -185,6 +220,7 @@ namespace Abomination::UI
         {
             DrawTextureSection(assets.textures);
             DrawMeshSection(assets.meshes);
+            DrawModelSection(assets.models);
             DrawShaderProgramSection(assets.shaders);
         }
         ImGui::End();

@@ -26,6 +26,8 @@ namespace Abomination::World
         //   - the world (worldspawn): its brushes become one mesh per texture, stored in the mesh store under
         //     "mapPath#textureName", and one entity draws each of them (together they play the part of entity 0, the
         //     world, in Quake). Textures and meshes go to the Level lifetime group;
+        //   - the models (misc_model): one entity each, with the model file of the "model" property at the origin of the
+        //     map entity, turned by its angle; the model goes to the Level lifetime group;
         //   - the player start (info_player_start): not an entity, its position and angle are kept.
         // Problems (no world, no player start) are logged; the level is then partly or fully empty.
         [[nodiscard]] static Level Create(entt::registry& registry, Renderer::RenderAssets& assets, const MapData& map,
@@ -42,8 +44,8 @@ namespace Abomination::World
         [[nodiscard]] const std::vector<CollisionBrush>& GetCollisionBrushes() const noexcept;
 
     private:
-        // The entities that draw the static geometry, one per texture; empty if the map has no world.
-        std::vector<entt::entity> m_geometryEntities;
+        // The entities of the level: those that draw the static geometry (one per texture) and the models standing in it.
+        std::vector<entt::entity> m_entities;
 
         std::vector<CollisionBrush> m_collisionBrushes;
 

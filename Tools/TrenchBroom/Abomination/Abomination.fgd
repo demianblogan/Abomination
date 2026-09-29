@@ -10,3 +10,11 @@
 [
     angle(integer) : "Direction the player looks, in degrees around the vertical axis" : 0
 ]
+
+// A model standing in the level, drawn as it is (it does not move and cannot be picked up). The model is a glTF file
+// in Assets (.glb). TrenchBroom shows it too; models are made in meters, so the editor scales them by 32 to map units.
+@PointClass size(-8 -8 -8, 8 8 8) color(255 128 0) model({ "path": model, "scale": 32 }) = misc_model : "Model"
+[
+    model(string) : "Model file, relative to the Assets folder" : "Models/Weapons/Shotgun.glb"
+    angle(integer) : "Direction the model faces, in degrees around the vertical axis" : 0
+]

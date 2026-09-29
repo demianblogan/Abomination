@@ -116,6 +116,7 @@ set(LIBRARY_SOURCES
     Renderer/ImGuiRendererBackend.h
     Renderer/ImGuiRendererBackend.cpp
     Renderer/MeshRenderer.h
+    Renderer/ModelRenderer.h
     Renderer/RenderSettings.h
     Renderer/RenderSystem.h
     Renderer/RenderSystem.cpp
@@ -129,6 +130,8 @@ set(LIBRARY_SOURCES
     Renderer/Assets/MeshStore.h
     Renderer/Assets/MeshStore.cpp
     Renderer/Assets/ModelData.h
+    Renderer/Assets/ModelStore.h
+    Renderer/Assets/ModelStore.cpp
     Renderer/Assets/RenderAssets.h
     Renderer/Assets/ShaderStore.h
     Renderer/Assets/ShaderStore.cpp

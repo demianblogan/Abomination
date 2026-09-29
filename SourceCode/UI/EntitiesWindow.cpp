@@ -10,6 +10,7 @@
 #include "Renderer/Assets/RenderAssets.h"
 #include "Renderer/Camera/CameraLens.h"
 #include "Renderer/MeshRenderer.h"
+#include "Renderer/ModelRenderer.h"
 #include "UI/UIScale.h"
 
 #include <glm/gtc/quaternion.hpp>
@@ -217,6 +218,16 @@ namespace Abomination::UI
             ImGui::Text("Program: %s", FormatAssetName(assets.shaders.GetName(meshRenderer.shaderProgram)));
         }
 
+        void DrawModelRenderer(const Renderer::ModelRenderer& modelRenderer, const Renderer::RenderAssets& assets)
+        {
+            const Renderer::Model& model = assets.models.Get(modelRenderer.model);
+            ImGui::Text("Model:   %s", FormatAssetName(assets.models.GetPath(modelRenderer.model)));
+            ImGui::Text("Program: %s", FormatAssetName(assets.shaders.GetName(modelRenderer.shaderProgram)));
+            ImGui::Text("Parts:   %zu", model.parts.size());
+            for (const Renderer::ModelPart& part : model.parts)
+                ImGui::BulletText("%s", part.name.c_str());
+        }
+
         void DrawSpin(Gameplay::Spin& spin)
         {
             ImGui::DragFloat3("Axis", &spin.axis.x, SpinDragSpeed);
@@ -317,6 +328,12 @@ namespace Abomination::UI
                 if (DrawComponentHeader("Mesh Renderer", ComponentModule::Renderer,
                                         "which mesh, texture and program draw the entity."))
                     DrawMeshRenderer(*meshRenderer, assets);
+
+            if (const Renderer::ModelRenderer* modelRenderer = registry.try_get<Renderer::ModelRenderer>(entity);
+                modelRenderer != nullptr)
+                if (DrawComponentHeader("Model Renderer", ComponentModule::Renderer,
+                                        "which model (its parts, meshes and textures) and program draw the entity."))
+                    DrawModelRenderer(*modelRenderer, assets);
 
             if (Physics::CharacterBody* body = registry.try_get<Physics::CharacterBody>(entity); body != nullptr)
                 if (DrawComponentHeader("Character Body", ComponentModule::Physics,

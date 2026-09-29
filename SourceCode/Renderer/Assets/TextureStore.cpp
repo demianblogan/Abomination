@@ -80,6 +80,28 @@ namespace Abomination::Renderer
         return m_cache.Add(path, std::move(*texture), lifetime);
     }
 
+    TextureHandle TextureStore::Add(const std::string& name, const Core::Image& image, Core::AssetLifetime lifetime)
+    {
+        if (const std::optional<TextureHandle> loadedHandle = m_cache.Find(name); loadedHandle.has_value())
+        {
+            m_cache.ExtendLifetime(*loadedHandle, lifetime);
+
+            return *loadedHandle;
+        }
+
+        if (image.width == 0 || image.height == 0)
+        {
+            Core::Log::Write(LogCategory::Renderer, LogLevel::Warning, "Texture {} replaced by the fallback: no image", name);
+            m_fallbackPaths.insert(name);
+
+            return m_cache.Add(name, CreateFallbackTexture(), lifetime);
+        }
+
+        Core::Log::Write(LogCategory::Renderer, LogLevel::Debug, "Texture added: {} ({}x{})", name, image.width, image.height);
+
+        return m_cache.Add(name, GLTexture::CreateFromImage(image), lifetime);
+    }
+
     void TextureStore::RemoveAll(Core::AssetLifetime lifetime)
     {
         // A removed path may be loaded again later, and its file may exist by then: it is no longer a fallback.

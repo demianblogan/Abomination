@@ -180,7 +180,7 @@ It is filled in automatically when a PR is opened on GitHub.
      `Documentation/Screenshots/v<version>/` (for example
      `Documentation/Screenshots/v0.1.0/RotatingCube.png`) and are shown in the
      README: one row per version, the newest version first, every picture
-     200×112 with a caption under it and a link to the full-size file;
+     176×99 with a caption under it and a link to the full-size file;
    - `Documentation/ROADMAP.md` and the README mark the milestone as done.
 3. An annotated tag is created on `main`:
    ```

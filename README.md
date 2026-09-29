@@ -85,10 +85,10 @@ Every picture has the same size; click one to open it in full resolution.
 
 <table>
 <tr>
-<td align="center" valign="top" width="25%"><a href="Documentation/Screenshots/v0.2.0/TestLevel.png"><img src="Documentation/Screenshots/v0.2.0/TestLevel.png" alt="The textured test level" width="200" height="112"></a><br><sub>A level built in TrenchBroom</sub></td>
-<td align="center" valign="top" width="25%"><a href="Documentation/Screenshots/v0.2.0/ConsoleAndPerformance.png"><img src="Documentation/Screenshots/v0.2.0/ConsoleAndPerformance.png" alt="The in-game console and the Performance, Entities and Assets windows" width="200" height="112"></a><br><sub>Console, performance, entities and assets</sub></td>
-<td align="center" valign="top" width="25%"><a href="Documentation/Screenshots/v0.2.0/CollisionAndMovement.png"><img src="Documentation/Screenshots/v0.2.0/CollisionAndMovement.png" alt="Collider bounds, the player box and a box cast with the Renderer, Collisions and Movement windows" width="200" height="112"></a><br><sub>Collider bounds, player box and a box cast</sub></td>
-<td align="center" valign="top" width="25%"><a href="Documentation/Screenshots/v0.2.0/WireframeAndDisplay.png"><img src="Documentation/Screenshots/v0.2.0/WireframeAndDisplay.png" alt="Wireframe mode and the Display settings" width="200" height="112"></a><br><sub>Wireframe mode and display settings</sub></td>
+<td align="center" valign="top" width="25%"><a href="Documentation/Screenshots/v0.2.0/TestLevel.png"><img src="Documentation/Screenshots/v0.2.0/TestLevel.png" alt="The textured test level" width="176" height="99"></a><br><sub>A level built in TrenchBroom</sub></td>
+<td align="center" valign="top" width="25%"><a href="Documentation/Screenshots/v0.2.0/ConsoleAndPerformance.png"><img src="Documentation/Screenshots/v0.2.0/ConsoleAndPerformance.png" alt="The in-game console and the Performance, Entities and Assets windows" width="176" height="99"></a><br><sub>Console, performance, entities and assets</sub></td>
+<td align="center" valign="top" width="25%"><a href="Documentation/Screenshots/v0.2.0/CollisionAndMovement.png"><img src="Documentation/Screenshots/v0.2.0/CollisionAndMovement.png" alt="Collider bounds, the player box and a box cast with the Renderer, Collisions and Movement windows" width="176" height="99"></a><br><sub>Collider bounds, player box and a box cast</sub></td>
+<td align="center" valign="top" width="25%"><a href="Documentation/Screenshots/v0.2.0/WireframeAndDisplay.png"><img src="Documentation/Screenshots/v0.2.0/WireframeAndDisplay.png" alt="Wireframe mode and the Display settings" width="176" height="99"></a><br><sub>Wireframe mode and display settings</sub></td>
 </tr>
 </table>
 
@@ -96,7 +96,7 @@ Every picture has the same size; click one to open it in full resolution.
 
 <table>
 <tr>
-<td align="center" valign="top" width="25%"><a href="Documentation/Screenshots/v0.1.0/RotatingCube.png"><img src="Documentation/Screenshots/v0.1.0/RotatingCube.png" alt="A rotating textured cube with the debug overlay" width="200" height="112"></a><br><sub>A textured cube and the debug overlay</sub></td>
+<td align="center" valign="top" width="25%"><a href="Documentation/Screenshots/v0.1.0/RotatingCube.png"><img src="Documentation/Screenshots/v0.1.0/RotatingCube.png" alt="A rotating textured cube with the debug overlay" width="176" height="99"></a><br><sub>A textured cube and the debug overlay</sub></td>
 </tr>
 </table>
 

@@ -22,7 +22,9 @@ namespace Abomination::Audio
         // A frame is one sample of every channel, the sound of one moment.
         std::vector<float> samples;
 
-        // 1 (mono) or 2 (stereo). Sounds placed in the world must be mono: a stereo sound cannot come from one point.
+        // 1 (mono) or 2 (stereo). DecodeSoundFile always gives mono, whatever the file has: a sound placed in the world
+        // must come from one point, which a stereo sound cannot, and the short sounds of the game gain nothing from
+        // stereo. Music, which does, will be streamed separately (0.8).
         std::uint32_t channelCount = 1;
 
         // Frames per second, for example 44100 or 48000. miniaudio converts it to the rate of the sound card.
@@ -34,7 +36,8 @@ namespace Abomination::Audio
         }
     };
 
-    // Decodes a whole sound file (OGG Vorbis, WAV, MP3 or FLAC) into samples.
+    // Decodes a whole sound file (OGG Vorbis, WAV, MP3 or FLAC) into mono samples; the channels of a stereo file are
+    // mixed together.
     [[nodiscard]] std::expected<SoundClip, std::string> DecodeSoundFile(const std::filesystem::path& path);
 
     // A short high beep, used instead of a sound file that could not be loaded: like the magenta texture, it cannot be

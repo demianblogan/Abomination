@@ -1,10 +1,16 @@
 #pragma once
 
+#include "Audio/SoundEvent.h"
 #include "Gameplay/FreeFlyCameraController.h"
 #include "Gameplay/PlayerController.h"
 #include "Physics/CharacterMovement.h"
 
 #include <entt/entt.hpp>
+
+namespace Abomination::Audio
+{
+    class AudioEngine;
+}
 
 namespace Abomination::World
 {
@@ -18,6 +24,19 @@ namespace Abomination::Gameplay
     {
         Player,
         FreeFlyCamera,
+    };
+
+    // The sounds of the player's own body and what is needed to notice when to play them (see UpdatePlayerSounds).
+    struct PlayerSounds
+    {
+        Audio::SoundEvent jump;
+        Audio::SoundEvent land;
+
+        // The player stood on the ground in the last tick, and their vertical speed then (meters per second, negative
+        // while falling). A landing is noticed one tick later, when the physics has already stopped the fall, so the
+        // speed of the fall is taken from here.
+        bool wasOnGround = true;
+        float previousVerticalSpeed = 0.0f;
     };
 
     // What the gameplay systems share between frames: the entities the input controls, the controllers that turn input
@@ -39,9 +58,12 @@ namespace Abomination::Gameplay
         // steps). Changed in the Movement window of the debug overlay.
         Physics::PhysicsSettings physicsSettings;
         Physics::MovementSettings movementSettings;
+
+        PlayerSounds playerSounds;
     };
 
     // Creates the player at the player start of the level and the free-fly camera waiting at their eyes, looking the
-    // same way. The player is controlled first.
-    [[nodiscard]] GameplayState CreateGameplayState(entt::registry& registry, const World::PlayerStart& playerStart);
+    // same way, and loads the sounds of the player. The player is controlled first.
+    [[nodiscard]] GameplayState CreateGameplayState(entt::registry& registry, const World::PlayerStart& playerStart,
+                                                    Audio::AudioEngine& audio);
 }

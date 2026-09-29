@@ -24,6 +24,7 @@ set(TEST_SOURCES
     Core/Time/FrameTimerTests.cpp
 
     Gameplay/FreeFlyCameraControllerTests.cpp
+    Gameplay/PlayerSystemTests.cpp
     Gameplay/PlayerTests.cpp
     Gameplay/SpinTests.cpp
 

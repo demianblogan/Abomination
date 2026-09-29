@@ -37,3 +37,6 @@ the license check before a commercial release.
 | `Textures/Episode1/Floor_WetFlagstone.png` | Alone Bull | `Tools/TextureGenerator` (64×64) | Own work | — | Wet stone slabs with mud in the joints |
 | `Textures/Episode1/Floor_RottenPlanks.png` | Alone Bull | `Tools/TextureGenerator` (64×64) | Own work | — | Rotten wooden planks with nails (stairs, bridges) |
 | `Textures/Episode1/Crate_Rotten.png` | Alone Bull | `Tools/TextureGenerator` (64×64) | Own work | — | Dark wooden crate: frame, diagonal brace, rusty iron corners, cracks |
+| `Sounds/Player/Jump1.ogg` – `Jump3.ogg` | Kenney | [Impact Sounds 1.0](https://kenney.nl/assets/impact-sounds) | CC0 | Renamed from `footstep_concrete_000.ogg` – `002.ogg` | Jump of the player (a push off a stone floor) |
+| `Sounds/Player/Land1.ogg` – `Land3.ogg` | Kenney | Same pack | CC0 | Renamed from `impactSoft_heavy_000.ogg` – `002.ogg` | Landing of the player |
+| `Sounds/Debug/TestKnock.ogg` | Kenney | Same pack | CC0 | Renamed from `impactMetal_medium_000.ogg` | Test sound of the Audio window (3D sound in the world) |

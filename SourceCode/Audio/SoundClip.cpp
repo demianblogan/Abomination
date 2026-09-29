@@ -29,9 +29,9 @@ namespace Abomination::Audio
         if (!fileContents.has_value())
             return std::unexpected(fileContents.error());
 
-        // The decoder recognizes the format by the contents and gives 32-bit float samples in the channel count and sample
-        // rate of the file (0 means "keep what the file has").
-        const ma_decoder_config config = ma_decoder_config_init(ma_format_f32, 0, 0);
+        // The decoder recognizes the format by the contents and gives 32-bit float samples, mixed down to one channel (see
+        // SoundClip::channelCount), in the sample rate of the file (0 means "keep what the file has").
+        const ma_decoder_config config = ma_decoder_config_init(ma_format_f32, 1, 0);
         ma_decoder decoder;
         if (ma_decoder_init_memory(fileContents->data(), fileContents->size(), &config, &decoder) != MA_SUCCESS)
             return std::unexpected(std::format("unknown or broken sound format: {}", Core::ToUTF8String(path)));

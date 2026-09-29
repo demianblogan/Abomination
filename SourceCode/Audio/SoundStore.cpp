@@ -34,7 +34,8 @@ namespace Abomination::Audio
         std::expected<SoundClip, std::string> clip = DecodeSoundFile(fullPath);
         if (!clip.has_value())
         {
-            Core::Log::Write(LogCategory::Audio, LogLevel::Warning, "Sound {} replaced by the fallback: {}", path, clip.error());
+            Core::Log::Write(LogCategory::Audio, LogLevel::Warning, "Sound {} replaced by the fallback: {}", path,
+                             clip.error());
 
             m_fallbackPaths.insert(path);
 

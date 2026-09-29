@@ -136,3 +136,10 @@ Ideas that are not assigned to a milestone yet.
   numbers tuned in the running game become the game's settings.
 - **"Reset window positions"** in the View menu, for debug windows saved
   outside a smaller game window.
+- **Log level chosen in the running game** (*Settings > Log level* in the
+  debug overlay, or a console command): `Log::SetMinimumLevel()` instead of
+  the fixed level in `Main.cpp`. Trace messages (written every frame or tick:
+  physics traces, AI decisions, loaded assets) can then be switched on while
+  a bug is reproduced and off again, without rebuilding. Worth doing together
+  with the first real Trace messages (the AI in 0.4); today only OpenGL
+  notifications are written at Trace.

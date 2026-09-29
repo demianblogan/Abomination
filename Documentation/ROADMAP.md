@@ -96,7 +96,7 @@ Every asset is listed in `ASSETS.md` before it is committed.
 | 1 | `refactor/gameplay-systems`     | ✅     | The switching between the player and the free-fly camera and their updates move from `Application` into Gameplay systems, so the weapon has a place to plug in |
 | 2 | `feat/audio`                    | ✅     | New `Audio` module on miniaudio, sound store in the asset cache, voices with a limit per sound, random pitch and variants; jump and landing sounds; Audio window (volume, playing voices, a test sound in 3D where the camera looks) |
 | 3 | `feat/gltf-models`              | ✅     | glTF (`.glb`) loading: meshes, materials, textures; material store; a CC0 model standing in the test room |
-| 4 | `feat/view-model`               | ⏳     | The shotgun in the hands: drawn in its own pass with its own field of view (never inside walls), bob while walking, sway behind the mouse; window with sliders |
+| 4 | `feat/view-model`               | ✅     | The shotgun in the hands: drawn in its own pass with its own field of view (never inside walls), bob while walking, sway behind the mouse; window with sliders |
 | 5 | `feat/hitscan`                  | ⏳     | Fire action (left mouse button), single-barrel shotgun: pellets with a random spread, time between shots, recoil of the view and the model, shot sound; debug lines of the pellets; random numbers in `Core/Math`; unlimited ammo |
 | 6 | `feat/damage`                   | ⏳     | `Health` component; target dummies placed in TrenchBroom (`target_dummy`); traces against entities, not only walls; damage, hit sound, a destroyed target disappears; knockback from shots |
 | 7 | `feat/impact-effects`           | ⏳     | Muzzle flash sprite; particles (sparks and dust at hits, smoke); decals (pellet marks on walls, a limited number) |
@@ -141,10 +141,18 @@ far:
   The same settings file keeps the UI scale of the debug overlay and the
   screen mode, which are not saved between runs before that. *Display >
   Resolution* for exclusive fullscreen (the desktop resolution until then).
+  *Gameplay > Weapon position*: right, center or left (the debug window has
+  it since 0.3).
 
 ## Backlog
 
 Ideas that are not assigned to a milestone yet.
+
+- **The weapon pulls back near walls**: only a visual touch — close to a wall
+  the weapon in the hands slides a few centimeters back and down, while shots
+  still come from the middle of the screen (unlike Crysis, which raised the
+  weapon and stopped it from shooting). The weapon never goes into walls
+  anyway (it is drawn over the world); try it once shooting exists.
 
 - **Developer tools window** (ImGui): buttons and checkboxes instead of typing —
   list of levels to load, god mode, fly through walls, give weapons. Useful once

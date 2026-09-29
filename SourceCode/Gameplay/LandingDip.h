@@ -12,8 +12,8 @@ namespace Abomination::Gameplay
     {
         // How far the view is pushed down per meter per second of the fall (meters per second of its own motion), and
         // how stiff the spring is that brings it back (see UpdateDampedSpring).
-        float kickPerFallSpeed = 0.06f;
-        float springStiffness = 120.0f;
+        float kickPerFallSpeed = 0.8f;
+        float springStiffness = 170.0f;
 
         // How far the view is below the eyes now (meters, negative: down) and how fast it moves.
         float offset = 0.0f;

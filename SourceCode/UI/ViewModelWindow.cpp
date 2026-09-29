@@ -98,7 +98,7 @@ namespace Abomination::UI
 
         ImGui::SeparatorText("Camera landing dip");
         ImGui::SetNextItemWidth(ScaleToUI(SliderWidth));
-        ImGui::SliderFloat("Dip kick", &landingDip.kickPerFallSpeed, 0.0f, 0.2f, "%.3f");
+        ImGui::SliderFloat("Dip kick", &landingDip.kickPerFallSpeed, 0.0f, 1.0f, "%.3f");
         ImGui::SetItemTooltip("How far the view dips after a landing, per m/s of the fall. 0 turns it off.");
         ImGui::SetNextItemWidth(ScaleToUI(SliderWidth));
         ImGui::SliderFloat("Dip stiffness", &landingDip.springStiffness, 20.0f, 500.0f, "%.0f");

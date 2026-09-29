@@ -521,6 +521,19 @@ player entity                                free-fly camera entity
   while the right mouse button is held (looking around with the overlay
   open, or with the free-fly camera). The first frame of capturing is not
   used for turning: switching can report one big jump of movement.
+- **The weapon in the hands** (`Gameplay::ViewModel`, a component of the
+  player) is not in the world: `Renderer::DrawViewModel` draws it after the
+  world, after clearing the depth buffer, placed relative to the eyes, with
+  its own vertical field of view (34°) and near plane (1 cm). So it never
+  goes into walls, and a wider field of view of the world does not stretch
+  it; the aspect ratio still follows the window. Held on the right, in the
+  center or on the left (moved, not mirrored); hidden with the free-fly
+  camera. It moves every frame (`ViewModelMotion`): a figure-eight **bob**
+  tied to the distance walked, a **sway** that lags behind the view and
+  catches up, and **inertia** — one damped spring (`UpdateDampedSpring`)
+  kicked down by jumps and landings. The view itself **dips after landings**
+  on the same kind of spring (`LandingDip`). Everything is tuned in View >
+  Gameplay > View Model.
 
 - A camera looks along its **local −Z** axis; its local +X is its right side,
   local +Y the top of the screen. Its direction in the world is its rotation
@@ -538,7 +551,7 @@ player entity                                free-fly camera entity
   is held). It keeps yaw and pitch in `LookAngles` (mouse movement adds to
   them directly, pitch is clamped to ±89°, no roll) and builds the rotation
   from them (`CalculateCameraRotation`: `angleAxis(yaw, WorldUp) *
-  angleAxis(pitch, LocalRight)`). Planned: view bob and recoil for the player
+  angleAxis(pitch, LocalRight)`). Planned: recoil of the view and the weapon
   (0.3).
 - Controllers get the components they work with as parameters instead of
   storing references. Turning and moving are separate calls because they run

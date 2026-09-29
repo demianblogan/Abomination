@@ -333,6 +333,7 @@ namespace Abomination
             .movementSettings = m_gameplay.movementSettings,
             .playerBody = m_registry.get<Physics::CharacterBody>(m_gameplay.player),
             .audio = m_audio,
+            .viewModel = m_registry.get<Gameplay::ViewModel>(m_gameplay.player),
         });
 
         m_window.SwapBuffers();

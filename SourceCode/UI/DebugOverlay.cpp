@@ -8,6 +8,7 @@
 #include "UI/MovementWindow.h"
 #include "UI/PerformanceWindow.h"
 #include "UI/RendererWindow.h"
+#include "UI/ViewModelWindow.h"
 
 #include <imgui.h>
 
@@ -126,6 +127,9 @@ namespace Abomination::UI
             if (m_isMovementWindowOpen)
                 DrawMovementWindow(&m_isMovementWindowOpen, context.physicsSettings, context.movementSettings,
                                    context.playerBody);
+
+            if (m_isViewModelWindowOpen)
+                DrawViewModelWindow(&m_isViewModelWindowOpen, context.viewModel);
         }
 
         // The console is drawn even while the rest of the overlay is hidden: it has its own key.
@@ -193,6 +197,12 @@ namespace Abomination::UI
             {
                 ImGui::MenuItem("Collisions", nullptr, &m_isCollisionWindowOpen);
                 ImGui::MenuItem("Movement", nullptr, &m_isMovementWindowOpen);
+                ImGui::EndMenu();
+            }
+
+            if (ImGui::BeginMenu("Gameplay"))
+            {
+                ImGui::MenuItem("View Model", nullptr, &m_isViewModelWindowOpen);
                 ImGui::EndMenu();
             }
 

@@ -184,6 +184,8 @@ set(LIBRARY_SOURCES
     UI/RendererWindow.cpp
     UI/UIScale.h
     UI/UIScale.cpp
+    UI/ViewModelWindow.h
+    UI/ViewModelWindow.cpp
 
     World/BrushGeometry.h
     World/BrushGeometry.cpp

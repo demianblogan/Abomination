@@ -28,6 +28,11 @@ namespace Abomination::Platform
     class Window;
 }
 
+namespace Abomination::Gameplay
+{
+    struct ViewModel;
+}
+
 namespace Abomination::Physics
 {
     struct CharacterBody;
@@ -74,6 +79,7 @@ namespace Abomination::UI
         Physics::MovementSettings& movementSettings;
         const Physics::CharacterBody& playerBody;
         Audio::AudioEngine& audio;
+        Gameplay::ViewModel& viewModel;
     };
 
     // Developer overlay drawn with Dear ImGui on top of the game: a menu bar with debug windows and settings.
@@ -130,6 +136,7 @@ namespace Abomination::UI
         bool m_isCollisionWindowOpen = false;
         bool m_isMovementWindowOpen = false;
         bool m_isAudioWindowOpen = false;
+        bool m_isViewModelWindowOpen = false;
 
         EntitiesWindow m_entitiesWindow;
         AudioWindow m_audioWindow;

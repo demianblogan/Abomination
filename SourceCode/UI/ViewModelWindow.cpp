@@ -68,13 +68,41 @@ namespace Abomination::UI
         ImGui::SetItemTooltip("The field of view the weapon alone is drawn with. Smaller: the weapon looks bigger and\n"
                               "flatter; larger: smaller and more stretched in depth. The world is not affected.");
 
+        Gameplay::ViewModelMotionSettings& motion = viewModel.motionSettings;
+        ImGui::SeparatorText("Bob (walking)");
+        DrawCentimeterSlider("Bob amount", motion.bobAmount, 0.0f, 5.0f,
+                             "How far the weapon swings to the sides at full speed. 0 turns the bob off.");
+        ImGui::SetNextItemWidth(ScaleToUI(SliderWidth));
+        ImGui::SliderFloat("Stride length", &motion.bobStrideLength, 0.5f, 5.0f, "%.2f m");
+        ImGui::SetItemTooltip("How far the player walks during one whole swing (two steps). Shorter: faster swings.");
+
+        ImGui::SeparatorText("Sway (turning)");
+        DrawCentimeterSlider("Sway amount", motion.swayAmount, 0.0f, 10.0f,
+                             "How far the weapon lags per radian (57 degrees) the view turns. 0 turns the sway off.");
+        DrawCentimeterSlider("Sway maximum", motion.swayMaximum, 0.0f, 10.0f, "The farthest the weapon ever lags.");
+        ImGui::SetNextItemWidth(ScaleToUI(SliderWidth));
+        ImGui::SliderFloat("Sway return", &motion.swayReturnRate, 1.0f, 30.0f, "%.1f /s");
+        ImGui::SetItemTooltip("How fast the weapon catches up with the view. Bigger: quicker, stiffer.");
+
+        ImGui::SeparatorText("Inertia (jumping, landing)");
+        ImGui::SetNextItemWidth(ScaleToUI(SliderWidth));
+        ImGui::SliderFloat("Jump kick", &motion.jumpKick, 0.0f, 1.0f, "%.2f m/s");
+        ImGui::SetItemTooltip("How hard a jump pushes the weapon down. 0 turns it off.");
+        ImGui::SetNextItemWidth(ScaleToUI(SliderWidth));
+        ImGui::SliderFloat("Landing kick", &motion.landingKickPerFallSpeed, 0.0f, 0.1f, "%.3f");
+        ImGui::SetItemTooltip("How hard a landing pushes the weapon down, per m/s of the fall (a jump lands at 8.4 m/s).");
+        ImGui::SetNextItemWidth(ScaleToUI(SliderWidth));
+        ImGui::SliderFloat("Spring stiffness", &motion.springStiffness, 20.0f, 500.0f, "%.0f");
+        ImGui::SetItemTooltip("How fast the weapon comes back after a kick. Bigger: quicker and smaller dips.");
+
         if (ImGui::Button("Reset"))
         {
-            // Only the placement goes back to the defaults; the model and the shader stay.
+            // Only the settings go back to the defaults; the model, the shader and the current motion stay.
             const Gameplay::ViewModel defaults;
             viewModel.offset = defaults.offset;
             viewModel.side = defaults.side;
             viewModel.verticalFOV = defaults.verticalFOV;
+            viewModel.motionSettings = defaults.motionSettings;
         }
 
         ImGui::End();

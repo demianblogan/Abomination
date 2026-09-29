@@ -1,8 +1,11 @@
 #pragma once
 
+#include "Gameplay/GameplayState.h"
+#include "Gameplay/ViewModelMotion.h"
 #include "Renderer/Assets/ModelStore.h"
 #include "Renderer/Assets/ShaderStore.h"
 
+#include <entt/entt.hpp>
 #include <glm/mat4x4.hpp>
 #include <glm/trigonometric.hpp>
 #include <glm/vec3.hpp>
@@ -40,10 +43,18 @@ namespace Abomination::Gameplay
         // The field of view the weapon is drawn with, apart from that of the world (radians, vertical). Narrower than the
         // world's 60 degrees: the weapon looks less stretched in depth, the way it is seen when held.
         float verticalFOV = glm::radians(34.0f);
+
+        // How the weapon swings, lags and dips (see ViewModelMotion.h).
+        ViewModelMotionSettings motionSettings;
+        ViewModelMotion motion;
     };
 
     // The matrix that places the model relative to the eyes (see Renderer::DrawViewModel): the offset, with its
-    // sideways part taken to the left for ViewModelSide::Left and removed for ViewModelSide::Center. The model itself
-    // is not mirrored on the left: a mirrored weapon would have its parts on the wrong side.
+    // sideways part taken to the left for ViewModelSide::Left and removed for ViewModelSide::Center, plus the motion.
+    // The model itself is not mirrored on the left: a mirrored weapon would have its parts on the wrong side.
     [[nodiscard]] glm::mat4 CalculateViewModelMatrix(const ViewModel& viewModel);
+
+    // Once per frame (deltaTime, seconds): moves the motion of the player's weapon with what the player does (see
+    // UpdateViewModelMotion).
+    void UpdateViewModel(const GameplayState& state, entt::registry& registry, float deltaTime);
 }

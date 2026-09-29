@@ -146,6 +146,10 @@ namespace Abomination
             for (int tick = 0; tick < tickCount; ++tick)
                 FixedUpdate(m_fixedTimestep.GetTickDuration());
 
+            // The weapon in the hands swings with what the ticks of this frame did to the player (a landing, the speed)
+            // and with the view turned in Update(): every frame, so it moves as smoothly as the view.
+            Gameplay::UpdateViewModel(m_gameplay, m_registry, frameTimer.GetDeltaTime());
+
             frameStatistics.AddFrame(frameTimer.GetDeltaTime(), tickCount);
 
             // 4. Drawing and showing the frame.

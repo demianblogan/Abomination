@@ -27,6 +27,7 @@ set(TEST_SOURCES
     Gameplay/PlayerSystemTests.cpp
     Gameplay/PlayerTests.cpp
     Gameplay/SpinTests.cpp
+    Gameplay/ViewModelMotionTests.cpp
     Gameplay/ViewModelTests.cpp
 
     Input/ActionStatesTests.cpp

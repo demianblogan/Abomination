@@ -86,6 +86,8 @@ set(LIBRARY_SOURCES
     Gameplay/Spin.cpp
     Gameplay/ViewModel.h
     Gameplay/ViewModel.cpp
+    Gameplay/ViewModelMotion.h
+    Gameplay/ViewModelMotion.cpp
     Gameplay/ViewSystem.h
     Gameplay/ViewSystem.cpp
 

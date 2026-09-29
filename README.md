@@ -17,7 +17,7 @@ built from scratch with modern C++ and OpenGL 4.6.**
 [![CI](https://img.shields.io/github/actions/workflow/status/demianblogan/Abomination/CI.yml?branch=main&style=flat-square&label=CI&logo=githubactions&logoColor=white)](https://github.com/demianblogan/Abomination/actions/workflows/CI.yml)
 [![Release](https://img.shields.io/github/v/release/demianblogan/Abomination?style=flat-square&label=release&color=brightgreen)](https://github.com/demianblogan/Abomination/releases/latest)
 [![Status](https://img.shields.io/badge/status-early_development-orange?style=flat-square)](Documentation/ROADMAP.md)
-[![Milestone](https://img.shields.io/badge/milestone-0.2_First_Steps-blue?style=flat-square)](Documentation/ROADMAP.md)
+[![Milestone](https://img.shields.io/badge/milestone-0.3_Boomstick-blue?style=flat-square)](Documentation/ROADMAP.md)
 [![License](https://img.shields.io/badge/license-PolyForm_Noncommercial_1.0-lightgrey?style=flat-square)](LICENSE.md)
 
 [About](#-about) •
@@ -46,8 +46,8 @@ written from the ground up, and every system — from the OpenGL renderer to
 the enemy AI — is built to be read and learned from.
 
 > [!NOTE]
-> The game is in early development. **Version 0.1** is out: a free-fly camera around a test
-> cube — follow the [roadmap](Documentation/ROADMAP.md) to see what is being built next.
+> The game is in early development. **Version 0.2** is out: run and jump around a test level with
+> Quake-style movement — follow the [roadmap](Documentation/ROADMAP.md) to see what is being built next.
 
 ## 🎯 Features
 
@@ -80,6 +80,25 @@ the enemy AI — is built to be read and learned from.
 ## 📸 Screenshots
 
 <div align="center">
+
+<img src="Documentation/Screenshots/v0.2.0/TestLevel.png" alt="Version 0.2: the textured test level" width="720">
+
+<sub><b>0.2 First Steps</b> — a level built in TrenchBroom, with Quake-style running, jumping and collision</sub>
+
+<table>
+<tr>
+<td width="33%"><img src="Documentation/Screenshots/v0.2.0/ConsoleAndPerformance.png" alt="The in-game console and the Performance, Entities and Assets windows"></td>
+<td width="33%"><img src="Documentation/Screenshots/v0.2.0/CollisionAndMovement.png" alt="Collider bounds, the player box and a box cast with the Renderer, Collisions and Movement windows"></td>
+<td width="33%"><img src="Documentation/Screenshots/v0.2.0/WireframeAndDisplay.png" alt="Wireframe mode and the Display settings"></td>
+</tr>
+<tr>
+<td align="center"><sub>In-game console, performance, entities and assets</sub></td>
+<td align="center"><sub>Collider bounds, player box and a box cast from the camera</sub></td>
+<td align="center"><sub>Wireframe mode and display settings</sub></td>
+</tr>
+</table>
+
+<br>
 
 <img src="Documentation/Screenshots/v0.1.0/RotatingCube.png" alt="Version 0.1: a rotating textured cube with the debug overlay" width="720">
 
@@ -126,7 +145,7 @@ Full instructions, including the command line: **[BUILDING.md](Documentation/BUI
 
 ## 🎮 Controls
 
-The current build (milestone 0.2 in progress) lets you run and jump around a test level made in TrenchBroom,
+The current build (version 0.2) lets you run and jump around a test level made in TrenchBroom,
 with Quake-style movement.
 
 | Input | Action |
@@ -145,7 +164,7 @@ with Quake-style movement.
 | Version | Milestone              | Status |
 |:-------:|------------------------|:------:|
 | 0.1     | Foundation             | ✅     |
-| 0.2     | First Steps            | 🔨     |
+| 0.2     | First Steps            | ✅     |
 | 0.3     | Boomstick              | ⏳     |
 | 0.4     | It Moves               | ⏳     |
 | 0.5     | Lights                 | ⏳     |

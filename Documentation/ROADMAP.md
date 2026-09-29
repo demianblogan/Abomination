@@ -22,7 +22,7 @@ we now* and *what comes next*.
 | Version | Name                   | Status | Gameplay                                              | Visual / OpenGL                                          |
 |---------|------------------------|--------|-------------------------------------------------------|----------------------------------------------------------|
 | 0.1     | Foundation             | ✅     | Free-fly (noclip) camera                              | Window, OpenGL 4.6 context, debug output, textured cube, ImGui overlay |
-| 0.2     | First Steps            | 🔨     | Quake-style movement, collision with the level        | EnTT, resource manager, TrenchBroom map loading, brush texturing |
+| 0.2     | First Steps            | ✅     | Quake-style movement, collision with the level        | EnTT, resource manager, TrenchBroom map loading, brush texturing |
 | 0.3     | Boomstick              | ⏳     | First hitscan weapon, damage, sound                   | View model with sway/bob/recoil, muzzle flash, particles, decals, glTF loading |
 | 0.4     | It Moves               | ⏳     | First enemy: AI, navmesh, health, death, HUD          | Skeletal animation, text rendering                       |
 | 0.5     | Lights                 | ⏳     | Glowing projectiles, dynamic light in combat          | Lightmap baking, shadows, HDR, bloom, gamma              |
@@ -53,7 +53,7 @@ tests every PR.
 
 ![0.1 Foundation: a rotating textured cube with the debug overlay](Screenshots/v0.1.0/RotatingCube.png)
 
-## 0.2 — First Steps 🔨
+## 0.2 — First Steps ✅
 
 **Goal:** load a level built in TrenchBroom and run and jump around it with
 Quake-style movement.
@@ -73,7 +73,7 @@ seen (collision, map geometry) get debug visualizations in the overlay.
 | 8 | `feat/collision`                | ✅     | `World::Level` class; collision brushes (planes, bounding boxes, bevel planes); box trace through the brushes (Quake 2 style); debug lines (wide, depth-tested or on top, boxes and arrows) and world axes; Collision window: brush bounds, a trace from the camera, a colliding free-fly camera |
 | 9 | `feat/log-console`              | ✅     | Recent log messages kept in memory (a third spdlog sink); an in-game console at the bottom of the screen (the ~ key): level and module filters, colors, auto-scroll, opacity and height; the game runs without a console window |
 | 10 | `feat/player-movement`         | ✅     | The player as an entity (box, look angles, camera at the eyes) and F2 to switch to the free-fly camera; a new Physics module: gravity, sliding along walls, walking with Quake acceleration and friction, steps (also when landing on stairs) with smoothed view, jumping and air control, jumps between ticks kept; mouse captured while playing; stuck-in-wall detection and push-out; Movement window with a speedometer and sliders |
-| 11 | `refactor/review-0.2`          | 🔨     | A review of the whole project before the release: dead code removed, outdated comments fixed; map units (`Core/Math/Units.h`), shader locations (`Renderer/OpenGL/ShaderInterface.h`), the player box and start (`World/PlayerStart.h`) each defined once; one `LookAngles` component for the player and the free-fly camera, action axes, shared directions; player components in the entity inspector; one file per debug window and View submenus; magic numbers named; the colliding free-fly camera slides along walls; physics bugs found by a random walk on the map fixed (NaN at slanted faces, pushes out of walls); assertions for preconditions; Core and Renderer split into topic folders; then a guided walkthrough of the project; release v0.2.0 |
+| 11 | `refactor/review-0.2`          | ✅     | A review of the whole project before the release: dead code removed, outdated comments fixed; map units (`Core/Math/Units.h`), shader locations (`Renderer/OpenGL/ShaderInterface.h`), the player box and start (`World/PlayerStart.h`) each defined once; one `LookAngles` component for the player and the free-fly camera, action axes, shared directions; player components in the entity inspector; one file per debug window and View submenus; magic numbers named; the colliding free-fly camera slides along walls; physics bugs found by a random walk on the map fixed (NaN at slanted faces, pushes out of walls); assertions for preconditions; Core and Renderer split into topic folders; then a guided walkthrough of the project; release v0.2.0 |
 
 **Done when:** a level made in TrenchBroom loads with textures, the player
 walks, runs and jumps on it and collides with its walls, movement behaves the

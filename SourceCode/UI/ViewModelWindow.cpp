@@ -51,7 +51,8 @@ namespace Abomination::UI
         }
 
         ImGui::SeparatorText("Position from the eyes");
-        DrawCentimeterSlider("Right", viewModel.offset.x, 0.0f, 50.0f,
+        // Not called "Right": ImGui makes the ID of an item from its label, and the radio button above is "Right" already.
+        DrawCentimeterSlider("Sideways", viewModel.offset.x, 0.0f, 50.0f,
                              "How far to the side the middle of the weapon is. For the left side it goes to the left,\n"
                              "in the center it is ignored.");
         DrawCentimeterSlider("Up", viewModel.offset.y, -50.0f, 10.0f, "Negative: below the eyes.");

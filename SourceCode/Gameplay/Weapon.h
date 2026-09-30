@@ -26,13 +26,21 @@ namespace Abomination::Gameplay
 
         // Seconds from one shot to the next, the pump-action rhythm.
         float timeBetweenShots = 0.8f;
+
+        // What one pellet does to what it hits: the damage it takes from its Health, and how hard it pushes it away
+        // (meters per second added to its velocity along the pellet). All six pellets at close range: 60 damage.
+        float damagePerPellet = 10.0f;
+        float knockbackPerPellet = 0.8f;
     };
 
     // One pellet of the last shot, for the debug lines.
     struct PelletTrace
     {
         glm::vec3 end{0.0f};
+
+        // It hit a wall, or an entity with Health (then hasHit is true too).
         bool hasHit = false;
+        bool hasHitEntity = false;
     };
 
     // Component of the player: the weapon they shoot with. The weapon in their hands as they see it is the ViewModel;
@@ -42,6 +50,15 @@ namespace Abomination::Gameplay
         WeaponSettings settings;
 
         Audio::SoundEvent fireSound;
+
+        // Played once per shot that hurt something, and once per shot that killed something (instead of the hit).
+        Audio::SoundEvent hitSound;
+        Audio::SoundEvent killSound;
+
+        // How many shots so far hurt something and how many killed something. They only grow: whoever shows hit markers
+        // (the crosshair) remembers the numbers it has seen and starts a marker when one grows.
+        int hitCount = 0;
+        int killCount = 0;
 
         // Seconds until the next shot is possible; 0 or less: ready.
         float cooldown = 0.0f;

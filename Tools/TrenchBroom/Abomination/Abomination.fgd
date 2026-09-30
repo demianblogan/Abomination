@@ -18,3 +18,10 @@
     model(string) : "Model file, relative to the Assets folder" : "Models/Weapons/Shotgun.glb"
     angle(integer) : "Direction the model faces, in degrees around the vertical axis" : 0
 ]
+
+// A target to shoot at until the first enemy (0.3 only): it takes damage, is pushed by shots and comes back 3 seconds
+// after it is destroyed. The box is that of the player.
+@PointClass size(-16 -16 -24, 16 16 32) color(255 200 0) model({ "path": "Models/Enemies/Dummy.glb", "scale": 32 }) = target_dummy : "Target dummy"
+[
+    angle(integer) : "Direction the dummy faces, in degrees around the vertical axis" : 0
+]

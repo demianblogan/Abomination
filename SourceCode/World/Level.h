@@ -28,7 +28,9 @@ namespace Abomination::World
         //     world, in Quake). Textures and meshes go to the Level lifetime group;
         //   - the models (misc_model): one entity each, with the model file of the "model" property at the origin of the
         //     map entity, turned by its angle; the model goes to the Level lifetime group;
-        //   - the player start (info_player_start): not an entity, its position and angle are kept.
+        //   - the player start (info_player_start): not an entity, its position and angle are kept;
+        //   - the target dummies (target_dummy): not entities either, only their places are kept for the Gameplay module
+        //     (a temporary target to shoot at until the first enemy, 0.4).
         // Problems (no world, no player start) are logged; the level is then partly or fully empty.
         [[nodiscard]] static Level Create(entt::registry& registry, Renderer::RenderAssets& assets, const MapData& map,
                                           const std::string& mapPath);
@@ -40,6 +42,9 @@ namespace Abomination::World
         [[nodiscard]] const PlayerStart& GetPlayerStart() const noexcept;
         [[nodiscard]] const LevelMeshStatistics& GetStatistics() const noexcept;
 
+        // Where the target dummies of the map stand (their box is that of the player).
+        [[nodiscard]] const std::vector<PlayerStart>& GetTargetDummyStarts() const noexcept;
+
         // The solid brushes of the world, for collision (see CollisionBrush).
         [[nodiscard]] const std::vector<CollisionBrush>& GetCollisionBrushes() const noexcept;
 
@@ -50,6 +55,7 @@ namespace Abomination::World
         std::vector<CollisionBrush> m_collisionBrushes;
 
         PlayerStart m_playerStart;
+        std::vector<PlayerStart> m_targetDummyStarts;
         LevelMeshStatistics m_statistics;
     };
 }

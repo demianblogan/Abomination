@@ -74,6 +74,7 @@ set(LIBRARY_SOURCES
     Gameplay/FreeFlyCameraSystem.cpp
     Gameplay/GameplayState.h
     Gameplay/GameplayState.cpp
+    Gameplay/Health.h
     Gameplay/LandingDip.h
     Gameplay/LandingDip.cpp
     Gameplay/MouseLook.h
@@ -86,6 +87,8 @@ set(LIBRARY_SOURCES
     Gameplay/PlayerSystem.cpp
     Gameplay/Spin.h
     Gameplay/Spin.cpp
+    Gameplay/TargetDummy.h
+    Gameplay/TargetDummy.cpp
     Gameplay/ViewModel.h
     Gameplay/ViewModel.cpp
     Gameplay/ViewModelMotion.h

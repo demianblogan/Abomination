@@ -31,6 +31,10 @@ namespace Abomination::Renderer
     struct Model
     {
         std::vector<ModelPart> parts;
+
+        // The size of the box around the whole model (meters). The model is centered on its origin (see ModelStore), so
+        // the box goes from -size / 2 to size / 2. Used to scale a model to the size it must have in the game.
+        glm::vec3 size{1.0f};
     };
 
     using ModelHandle = Core::AssetHandle<Model>;

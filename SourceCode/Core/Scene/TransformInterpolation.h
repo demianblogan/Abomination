@@ -34,4 +34,8 @@ namespace Abomination::Core
     // The interpolation system, part 2: the transform at fraction alpha (0 to 1) of the way from previous to current.
     // Position and scale are blended in a straight line (glm::mix), the rotation along the shortest arc (glm::slerp).
     [[nodiscard]] Transform InterpolateTransform(const Transform& previous, const Transform& current, float alpha);
+
+    // Where an entity is drawn this frame: between its last two ticks if it has a PreviousTransform, otherwise at its
+    // Transform, which it must have.
+    [[nodiscard]] Transform CalculateDrawnTransform(const entt::registry& registry, entt::entity entity, float alpha);
 }

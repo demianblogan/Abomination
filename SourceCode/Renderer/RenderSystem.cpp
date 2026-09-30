@@ -94,13 +94,9 @@ namespace Abomination::Renderer
         BeginMeshPass(settings);
 
         // Where an entity is drawn this frame: between its last two ticks if it moves in ticks, otherwise where it is.
-        const auto calculateDrawnTransform = [&](entt::entity entity, const Core::Transform& transform)
+        const auto calculateDrawnTransform = [&](entt::entity entity)
         {
-            // try_get returns nullptr if the entity has no such component: only moving entities have a previous transform.
-            const Core::PreviousTransform* previousTransform = registry.try_get<Core::PreviousTransform>(entity);
-            Core::Transform drawn = previousTransform == nullptr
-                                        ? transform
-                                        : Core::InterpolateTransform(previousTransform->value, transform, interpolationFactor);
+            Core::Transform drawn = Core::CalculateDrawnTransform(registry, entity, interpolationFactor);
 
             // A character gliding up a stair is drawn below its body (see DrawOffset).
             if (const DrawOffset* drawOffset = registry.try_get<DrawOffset>(entity); drawOffset != nullptr)
@@ -117,21 +113,21 @@ namespace Abomination::Renderer
 
         // An EnTT view (not to be confused with the camera View): all entities that have both components (const: this
         // system only reads them). each() calls the function for every such entity; because the function asks for the
-        // entity as its first parameter, EnTT passes it too. Here it is needed to look for a component that is not part
-        // of the EnTT view.
+        // entity as its first parameter, EnTT passes it too. Here it is needed to look for components that are not part
+        // of the EnTT view (the previous transform, the draw offset).
         const auto meshEntities = registry.view<const Core::Transform, const MeshRenderer>();
-        meshEntities.each([&](entt::entity entity, const Core::Transform& transform, const MeshRenderer& meshRenderer)
+        meshEntities.each([&](entt::entity entity, const Core::Transform&, const MeshRenderer& meshRenderer)
         {
-            const glm::mat4 modelMatrix = Core::CalculateModelMatrix(calculateDrawnTransform(entity, transform));
+            const glm::mat4 modelMatrix = Core::CalculateModelMatrix(calculateDrawnTransform(entity));
             drawMesh(meshRenderer.shaderProgram, meshRenderer.texture, meshRenderer.mesh, modelMatrix);
         });
 
         // A model is drawn part by part: each part is first placed in the model (part.transform), then the model is placed
         // in the world. Matrices apply from right to left, so the part's transform is on the right.
         const auto modelEntities = registry.view<const Core::Transform, const ModelRenderer>();
-        modelEntities.each([&](entt::entity entity, const Core::Transform& transform, const ModelRenderer& modelRenderer)
+        modelEntities.each([&](entt::entity entity, const Core::Transform&, const ModelRenderer& modelRenderer)
         {
-            const glm::mat4 entityMatrix = Core::CalculateModelMatrix(calculateDrawnTransform(entity, transform));
+            const glm::mat4 entityMatrix = Core::CalculateModelMatrix(calculateDrawnTransform(entity));
             for (const ModelPart& part : assets.models.Get(modelRenderer.model).parts)
                 drawMesh(modelRenderer.shaderProgram, part.texture, part.mesh, entityMatrix * part.transform);
         });

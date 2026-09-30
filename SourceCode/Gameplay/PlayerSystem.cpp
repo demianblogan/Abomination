@@ -101,9 +101,7 @@ namespace Abomination::Gameplay
         if (state.controlMode != ControlMode::FreeFlyCamera)
             return;
 
-        const glm::vec3 center = Core::InterpolateTransform(registry.get<Core::PreviousTransform>(state.player).value,
-                                                            registry.get<Core::Transform>(state.player),
-                                                            interpolationFactor).position;
+        const glm::vec3 center = Core::CalculateDrawnTransform(registry, state.player, interpolationFactor).position;
         const glm::vec3 halfExtents(registry.get<Physics::CharacterBody>(state.player).halfExtents);
         debugLines.AddBox(center - halfExtents, center + halfExtents, PlayerBoxColor);
     }
@@ -117,10 +115,7 @@ namespace Abomination::Gameplay
                 continue;
 
             // Drawn where the character is drawn: between its last two ticks.
-            const Core::PreviousTransform* previous = registry.try_get<Core::PreviousTransform>(entity);
-            const glm::vec3 center =
-                previous == nullptr ? transform.position
-                                    : Core::InterpolateTransform(previous->value, transform, interpolationFactor).position;
+            const glm::vec3 center = Core::CalculateDrawnTransform(registry, entity, interpolationFactor).position;
             const glm::vec3 halfExtents(body.halfExtents);
             debugLines.AddBox(center - halfExtents, center + halfExtents, CharacterBoxColor);
         }

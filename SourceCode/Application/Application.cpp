@@ -305,6 +305,8 @@ namespace Abomination
                                                        cameraTransform, m_debugLines);
 
             Gameplay::AddPlayerDebugBox(m_gameplay, m_registry, interpolationFactor, m_debugLines);
+            if (m_collisionSettings.areColliderBoundsVisible)
+                Gameplay::AddCharacterDebugBoxes(m_gameplay, m_registry, interpolationFactor, m_debugLines);
             Gameplay::AddWeaponDebugLines(m_gameplay, m_registry, m_debugLines);
 
             if (m_renderSettings.areWorldAxesVisible)

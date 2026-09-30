@@ -49,19 +49,25 @@ namespace Abomination::Gameplay
 
         // The shotgun in the hands, for the whole game (the pickups and weapon switching of later versions will change
         // which model it is).
+        const Renderer::ModelHandle shotgun = renderAssets.LoadModel("Models/Weapons/Shotgun.glb", Core::AssetLifetime::Global);
         registry.emplace<ViewModel>(state.player, ViewModel{
-            .model = renderAssets.LoadModel("Models/Weapons/Shotgun.glb", Core::AssetLifetime::Global),
+            .model = shotgun,
             .shaderProgram = renderAssets.shaders.Load("Shaders/TexturedShaded"),
+
+            // The model points along -Z, so its front is the end of the barrel.
+            .muzzle = renderAssets.models.Get(shotgun).front,
         });
+
+        state.effects.textures = LoadEffectTextures(renderAssets.textures);
 
         registry.emplace<LandingDip>(state.player);
         registry.emplace<ViewRecoil>(state.player);
 
-        // The shotgun itself: what it shoots and how it sounds. One recording, its pitch changed a little every shot.
+        // The shotgun itself: what it shoots and how it sounds. One recording, its pitch changed by up to 5% every shot.
         Weapon& weapon = registry.emplace<Weapon>(state.player);
         weapon.fireSound = Audio::SoundEvent{
             .variants = {audio.LoadSound("Sounds/Weapons/Shotgun/Fire1.ogg", Core::AssetLifetime::Global)},
-            .pitchVariation = 0.03f,
+            .pitchVariation = 0.05f,
             .maxVoices = 2,
         };
 

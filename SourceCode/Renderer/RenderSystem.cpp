@@ -77,7 +77,13 @@ namespace Abomination::Renderer
         return SystemShaders{
             .wireframe = shaders.Load("Shaders/Wireframe"),
             .debugLines = shaders.Load("Shaders/DebugLines"),
+            .sprites = shaders.Load("Shaders/Sprite"),
         };
+    }
+
+    glm::mat4 CalculateViewModelProjection(float verticalFOV, float aspectRatio)
+    {
+        return glm::perspective(verticalFOV, aspectRatio, ViewModelNearPlane, ViewModelFarPlane);
     }
 
     RenderStatistics DrawMeshes(const entt::registry& registry, const View& view, float interpolationFactor,
@@ -149,7 +155,7 @@ namespace Abomination::Renderer
         // The weapon is placed relative to the eyes, so no view matrix is needed (the identity: the eyes are at the
         // origin, looking along -Z). Its projection has its own field of view: a wider field of view of the world does
         // not stretch the weapon. The aspect ratio is that of the window, so the weapon is not squeezed either.
-        const glm::mat4 projection = glm::perspective(verticalFOV, aspectRatio, ViewModelNearPlane, ViewModelFarPlane);
+        const glm::mat4 projection = CalculateViewModelProjection(verticalFOV, aspectRatio);
         for (const ModelPart& part : assets.models.Get(model).parts)
             DrawMesh(assets, systemShaders, settings, shader, part.texture, part.mesh, eyeSpaceMatrix * part.transform,
                      glm::mat4(1.0f), projection, statistics);

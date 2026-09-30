@@ -47,7 +47,18 @@ namespace Abomination::Gameplay
         // How the weapon swings, lags and dips (see ViewModelMotion.h).
         ViewModelMotionSettings motionSettings;
         ViewModelMotion motion;
+
+        // Where the muzzle is in the model (meters): the flash appears there.
+        glm::vec3 muzzle{0.0f};
+
+        // How much longer the muzzle flash is shown (seconds; 0 or less: not shown) and its rotation, new every shot.
+        float flashTimeLeft = 0.0f;
+        float flashRotation = 0.0f;
     };
+
+    // Where the muzzle of the weapon in the hands is relative to the eyes now (meters, eye space: see
+    // CalculateViewModelMatrix).
+    [[nodiscard]] glm::vec3 CalculateViewModelMuzzle(const ViewModel& viewModel);
 
     // The matrix that places the model relative to the eyes (see Renderer::DrawViewModel): the offset, with its
     // sideways part taken to the left for ViewModelSide::Left and removed for ViewModelSide::Center, plus the motion.

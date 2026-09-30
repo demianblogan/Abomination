@@ -64,6 +64,9 @@ namespace Abomination::Gameplay
         int hitCount = 0;
         int killCount = 0;
 
+        // How many shots so far, for the pulse of the crosshair (like hitCount).
+        int shotCount = 0;
+
         // Seconds until the next shot is possible; 0 or less: ready.
         float cooldown = 0.0f;
 
@@ -78,7 +81,7 @@ namespace Abomination::Gameplay
         float secondsSinceLastShot = 1000.0f;
 
         // The debug lines of the last shot are drawn (switched in the Weapon window of the debug overlay).
-        bool areShotLinesVisible = true;
+        bool areShotLinesVisible = false;
 
         // Chooses the directions of the pellets.
         Core::Random random;

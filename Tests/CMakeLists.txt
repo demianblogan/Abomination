@@ -26,6 +26,7 @@ set(TEST_SOURCES
     Gameplay/CrosshairTests.cpp
     Gameplay/FreeFlyCameraControllerTests.cpp
     Gameplay/LandingDipTests.cpp
+    Gameplay/ParticlesTests.cpp
     Gameplay/PlayerSystemTests.cpp
     Gameplay/PlayerTests.cpp
     Gameplay/SpinTests.cpp

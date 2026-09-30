@@ -26,6 +26,9 @@ namespace Abomination::Renderer
 
         // Draws DebugLines (see DebugLineRenderer).
         ShaderHandle debugLines;
+
+        // Draws sprites: particles, the muzzle flash, marks on walls (see SpriteRenderer).
+        ShaderHandle sprites;
     };
 
     // Loads the system shaders. Called once at startup, after the stores are created.
@@ -46,6 +49,10 @@ namespace Abomination::Renderer
     // its own field of view (verticalFOV, radians), so it never goes into walls and a wider field of view of the world
     // does not stretch it. eyeSpaceMatrix places the model relative to the eyes: meters, +X to the right, +Y up, -Z
     // forward (the direction the player looks). aspectRatio is that of the window (above 0).
+    // The projection the weapon in the hands is drawn with (see DrawViewModel): its own vertical field of view (radians)
+    // and near and far planes close to the eyes. Sprites drawn with the weapon (its muzzle flash) use it too.
+    [[nodiscard]] glm::mat4 CalculateViewModelProjection(float verticalFOV, float aspectRatio);
+
     RenderStatistics DrawViewModel(ModelHandle model, const glm::mat4& eyeSpaceMatrix, float verticalFOV, float aspectRatio,
                                    const RenderAssets& assets, ShaderHandle shader, const SystemShaders& systemShaders,
                                    const RenderSettings& settings);

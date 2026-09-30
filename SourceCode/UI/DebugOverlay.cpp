@@ -6,6 +6,7 @@
 #include "Renderer/OpenGL/OpenGLLoader.h"
 #include "UI/AssetsWindow.h"
 #include "UI/CollisionWindow.h"
+#include "UI/EffectsWindow.h"
 #include "UI/MovementWindow.h"
 #include "UI/PerformanceWindow.h"
 #include "UI/RendererWindow.h"
@@ -133,6 +134,9 @@ namespace Abomination::UI
             if (m_isViewModelWindowOpen)
                 DrawViewModelWindow(&m_isViewModelWindowOpen, context.viewModel, context.landingDip);
 
+            if (m_isEffectsWindowOpen)
+                DrawEffectsWindow(&m_isEffectsWindowOpen, context.effects);
+
             if (m_isWeaponWindowOpen)
                 DrawWeaponWindow(&m_isWeaponWindowOpen, context.weapon, context.viewRecoil, context.viewModel.motionSettings);
         }
@@ -213,6 +217,7 @@ namespace Abomination::UI
             {
                 ImGui::MenuItem("View Model", nullptr, &m_isViewModelWindowOpen);
                 ImGui::MenuItem("Weapon", nullptr, &m_isWeaponWindowOpen);
+                ImGui::MenuItem("Effects", nullptr, &m_isEffectsWindowOpen);
                 ImGui::EndMenu();
             }
 

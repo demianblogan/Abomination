@@ -61,6 +61,14 @@ namespace Abomination::UI
                              "Negative: in front of the eyes. The middle of the shotgun: it is 1.1 m long, so at -35 cm\n"
                              "its muzzle is about 90 cm in front of the eyes and its stock behind them.");
 
+        // Found from the model (the middle of the end of its barrel); fine-tuned here if the flash is off.
+        ImGui::SeparatorText("Muzzle (in the model)");
+        ImGui::PushID("Muzzle");
+        DrawCentimeterSlider("Sideways", viewModel.muzzle.x, -20.0f, 20.0f, "Where the flash and the smoke appear.");
+        DrawCentimeterSlider("Up", viewModel.muzzle.y, -20.0f, 20.0f, "Where the flash and the smoke appear.");
+        DrawCentimeterSlider("Forward", viewModel.muzzle.z, -80.0f, 0.0f, "Where the flash and the smoke appear.");
+        ImGui::PopID();
+
         ImGui::SeparatorText("Lens");
         float fovDegrees = glm::degrees(viewModel.verticalFOV);
         ImGui::SetNextItemWidth(ScaleToUI(SliderWidth));

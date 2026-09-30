@@ -99,7 +99,7 @@ Every asset is listed in `ASSETS.md` before it is committed.
 | 4 | `feat/view-model`               | ✅     | The shotgun in the hands: drawn in its own pass with its own field of view (never inside walls), bob while walking, sway behind the mouse; window with sliders |
 | 5 | `feat/hitscan`                  | ✅     | Fire action (left mouse button), single-barrel shotgun: pellets with a random spread, time between shots, recoil of the view and the model, shot sound; debug lines of the pellets; random numbers in `Core/Math`; unlimited ammo |
 | 6 | `feat/damage`                   | ✅     | `Health` component; target dummies placed in TrenchBroom (`target_dummy`); traces against entities, not only walls; damage, hit sound, a destroyed target disappears; knockback from shots; a crosshair in the middle of the screen (its look set by the weapon), hit markers for hits and a different one for kills |
-| 7 | `feat/impact-effects`           | ⏳     | Muzzle flash sprite; particles (sparks and dust at hits, smoke); decals (pellet marks on walls, a limited number) |
+| 7 | `feat/impact-effects`           | ✅     | Muzzle flash sprite; particles (sparks and dust at hits, smoke, blood on characters); decals (pellet marks on walls, a limited number); effect textures from the texture generator; the crosshair pulses with every shot; Effects window |
 | 8 | `refactor/review-0.3`           | ⏳     | A review of the project and a guided walkthrough of what changed since the last one; screenshots; release v0.3.0 |
 
 **Done when:** the player shoots the shotgun at target dummies in the test
@@ -120,7 +120,10 @@ far:
 - **0.3 → later** — ammo counter and the HUD (0.4), ammo pickups (0.6); the
   muzzle flash lights the walls (0.5); weapon animations such as drawing and
   reloading with skeletal animation (0.4); the double-barreled shotgun with
-  weapon switching (0.7).
+  weapon switching (0.7); tracers from the muzzle to the hit for weapons whose
+  bullets glow (machine gun, 0.7; a shotgun's pellets are not seen); a
+  different mark and impact per surface (stone, wood, metal) together with the
+  surface materials of the footsteps (backlog).
 - **0.4** — navmesh via Recast/Detour for ground enemies; flying enemies need
   a separate approach. Frustum culling of entities (a bounding sphere tested
   against the six planes of the view) once enemies, pickups and effects bring

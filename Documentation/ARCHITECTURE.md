@@ -560,6 +560,17 @@ player entity                                free-fly camera entity
   (`GatherCollisionBrushes`, `World::CreateBoxCollisionBrush`). A character
   stepping up a stair is drawn gliding after its body (`StepSmoothing` for
   every character, `Renderer::DrawOffset`).
+- **Effects** (`Gameplay/Effects`, `Gameplay/Particles`): sprites drawn by
+  `Renderer::SpriteRenderer` from a `SpriteBatch` of the frame — billboards
+  (turned to the camera) and flat quads (marks on walls); depth-tested but not
+  written, alpha sprites sorted back to front, additive ones (fire, sparks)
+  in any order. Particles move every frame (not in ticks), up to 2000.
+  A shot flashes at the muzzle of the weapon in the hands (drawn in its pass,
+  with its projection; the muzzle is the front of the model) and smokes into
+  the world; a wall hit throws sparks and dust and leaves a mark (the last 64
+  stay); a character hit throws blood. Textures come from
+  `Tools/TextureGenerator`. Tuned in View > Gameplay > Effects. The crosshair
+  pulses with every shot.
 - **Target dummies** (`Gameplay/TargetDummy`, 0.3 only): characters with
   health placed with `target_dummy` in TrenchBroom; destroyed, they come back
   after 3 s once their place is free. Removed with the first enemy (0.4).

@@ -34,6 +34,11 @@ namespace Abomination::Gameplay
         // The dot in the middle (0: none).
         float dotRadius = 1.5f;
 
+        // The pulse of a shot: the circle widens and springs back. How hard a shot kicks it (the part of its radius per
+        // second: 3 widens it by about a tenth) and how stiff the spring is (see UpdateDampedSpring).
+        float pulseKick = 3.0f;
+        float pulseStiffness = 200.0f;
+
         // The markers of a shot that hurt and of one that killed.
         HitMarkerSettings hitMarker;
         HitMarkerSettings killMarker{

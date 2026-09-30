@@ -34,5 +34,10 @@ namespace Abomination::UI
         int m_seenKillCount = 0;
         float m_secondsSinceHit = 1000.0f;
         float m_secondsSinceKill = 1000.0f;
+
+        // The pulse of the circle after a shot: how much wider it is (a part of its radius) and how fast that changes.
+        int m_seenShotCount = 0;
+        float m_pulse = 0.0f;
+        float m_pulseVelocity = 0.0f;
     };
 }

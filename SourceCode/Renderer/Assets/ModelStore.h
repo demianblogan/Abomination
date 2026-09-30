@@ -35,7 +35,14 @@ namespace Abomination::Renderer
         // The size of the box around the whole model (meters). The model is centered on its origin (see ModelStore), so
         // the box goes from -size / 2 to size / 2. Used to scale a model to the size it must have in the game.
         glm::vec3 size{1.0f};
+
+        // The middle of the front of the model (its -Z end): the average of the vertices within FrontDepth of its
+        // frontmost point. For a weapon pointing forward it is the muzzle, where the flash appears.
+        glm::vec3 front{0.0f};
     };
+
+    // How deep the front of a model is taken (meters, see Model::front).
+    inline constexpr float ModelFrontDepth = 0.01f;
 
     using ModelHandle = Core::AssetHandle<Model>;
 

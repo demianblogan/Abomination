@@ -437,6 +437,118 @@ public static class TextureGen
     }
 
     // Writes every texture of the game made by this generator into texturesDirectory (Assets/Textures), a preview sheet
+    // ---------- effects ----------
+    // Sprites of particles and decals: not tileable, with transparency. Small (16 or 32 pixels) and drawn with the same
+    // crisp nearest filtering as the walls, so they look pixelated like the rest of the game.
+
+    // A color with transparency, posterized like ToColor; alpha is quantized to steps of 1/8, which keeps soft edges
+    // pixelated instead of smooth.
+    static Color ToColorAlpha(double[] c, double alpha)
+    {
+        Color opaque = ToColor(c);
+        int a = (int)Math.Round(Math.Max(0, Math.Min(1, alpha)) * 8) * 32;
+        return Color.FromArgb(Math.Min(255, a), opaque.R, opaque.G, opaque.B);
+    }
+
+    // Distance of a pixel center from the middle of a size x size sprite, 0 in the middle and 1 at the edge of the
+    // inscribed circle, and the angle around the middle.
+    static double Radius(int x, int y, int size) { double h = size / 2.0; return Math.Sqrt((x + 0.5 - h) * (x + 0.5 - h) + (y + 0.5 - h) * (y + 0.5 - h)) / h; }
+    static double Angle(int x, int y, int size) { double h = size / 2.0; return Math.Atan2(y + 0.5 - h, x + 0.5 - h); }
+
+    // The flash at the muzzle: a white-hot core with five uneven flame tongues, yellow to orange, fading at the tips.
+    static Bitmap MuzzleFlash(int seed)
+    {
+        const int size = 32;
+        Bitmap bmp = new Bitmap(size, size, PixelFormat.Format32bppArgb);
+        double[] white = Hex("#FFF6D8"), yellow = Hex("#FFD23C"), orange = Hex("#E8741E");
+        for (int y = 0; y < size; y++)
+            for (int x = 0; x < size; x++)
+            {
+                double r = Radius(x, y, size), a = Angle(x, y, size);
+
+                // The edge of the flame: a core of 0.35 plus tongues that reach out where |cos(2.5 * angle)| is large,
+                // each a little longer or shorter (noise along the angle).
+                double tongues = Math.Pow(Math.Abs(Math.Cos(2.5 * a)), 3.0);
+                double jitter = 0.75 + 0.5 * Rand((int)((a + Math.PI) * 4), 0, seed);
+                double edge = 0.35 + 0.6 * tongues * jitter;
+                if (r > edge) { bmp.SetPixel(x, y, Color.FromArgb(0, 0, 0, 0)); continue; }
+
+                double t = r / edge; // 0 in the middle, 1 at the edge of the flame
+                double[] c = t < 0.35 ? Mix(white, yellow, t / 0.35) : Mix(yellow, orange, (t - 0.35) / 0.65);
+                bmp.SetPixel(x, y, ToColorAlpha(c, 1.0 - t * t * 0.7));
+            }
+        return bmp;
+    }
+
+    // A spark: a tiny bright dot with a soft yellow glow around it.
+    static Bitmap Spark()
+    {
+        const int size = 16;
+        Bitmap bmp = new Bitmap(size, size, PixelFormat.Format32bppArgb);
+        double[] white = Hex("#FFFBE8"), yellow = Hex("#FFC43A");
+        for (int y = 0; y < size; y++)
+            for (int x = 0; x < size; x++)
+            {
+                double r = Radius(x, y, size);
+                if (r > 1.0) { bmp.SetPixel(x, y, Color.FromArgb(0, 0, 0, 0)); continue; }
+                bmp.SetPixel(x, y, ToColorAlpha(Mix(white, yellow, r * 1.5), Math.Pow(1.0 - r, 1.5)));
+            }
+        return bmp;
+    }
+
+    // A puff of smoke or dust: a lumpy round cloud, denser in the middle, in the given color.
+    static Bitmap Puff(double[] light, double[] dark, int seed)
+    {
+        const int size = 32;
+        Bitmap bmp = new Bitmap(size, size, PixelFormat.Format32bppArgb);
+        for (int y = 0; y < size; y++)
+            for (int x = 0; x < size; x++)
+            {
+                // The noise works on 64 x 64 coordinates: the sprite is spread over it twice as wide.
+                double lumps = Fbm(x * 2, y * 2, 4, 4, 3, seed);
+                double density = (1.0 - Radius(x, y, size)) * 1.6 - 0.35 + (lumps - 0.5) * 0.9;
+                if (density <= 0) { bmp.SetPixel(x, y, Color.FromArgb(0, 0, 0, 0)); continue; }
+                bmp.SetPixel(x, y, ToColorAlpha(Mix(dark, light, lumps), Math.Min(1.0, density) * 0.85));
+            }
+        return bmp;
+    }
+
+    // The mark a pellet leaves on a wall: a black hole with a ragged dark ring of chipped surface around it.
+    static Bitmap PelletMark(int seed)
+    {
+        const int size = 16;
+        Bitmap bmp = new Bitmap(size, size, PixelFormat.Format32bppArgb);
+        double[] black = Hex("#0B0A08"), soot = Hex("#2A2620");
+        for (int y = 0; y < size; y++)
+            for (int x = 0; x < size; x++)
+            {
+                double r = Radius(x, y, size);
+                double ragged = 0.75 + 0.35 * Rand((int)((Angle(x, y, size) + Math.PI) * 3), 1, seed);
+                if (r > ragged) { bmp.SetPixel(x, y, Color.FromArgb(0, 0, 0, 0)); continue; }
+                bool hole = r < 0.3;
+                bmp.SetPixel(x, y, ToColorAlpha(hole ? black : soot, hole ? 1.0 : 0.85 - r * 0.4));
+            }
+        return bmp;
+    }
+
+    // A drop of blood: an uneven dark red blob, brighter at a highlight on one side.
+    static Bitmap Blood(int seed)
+    {
+        const int size = 16;
+        Bitmap bmp = new Bitmap(size, size, PixelFormat.Format32bppArgb);
+        double[] dark = Hex("#4A0808"), red = Hex("#9A1410");
+        for (int y = 0; y < size; y++)
+            for (int x = 0; x < size; x++)
+            {
+                double lumps = Fbm(x * 4, y * 4, 4, 4, 2, seed);
+                double inside = 1.0 - Radius(x, y, size) + (lumps - 0.5) * 0.6;
+                if (inside < 0.25) { bmp.SetPixel(x, y, Color.FromArgb(0, 0, 0, 0)); continue; }
+                double highlight = Math.Max(0, 1.0 - Math.Sqrt((x - 5) * (x - 5) + (y - 5) * (y - 5)) / 5.0);
+                bmp.SetPixel(x, y, ToColorAlpha(Mix(dark, red, 0.4 + highlight * 0.6), 1.0));
+            }
+        return bmp;
+    }
+
     // per episode into previewDirectory (each texture enlarged and tiled 3 x 3, to check the seams) and the image of the
     // episode palettes to paletteImagePath (for ART_DIRECTION.md).
     // The seeds are fixed, so the same code always gives exactly the same files.
@@ -459,5 +571,19 @@ public static class TextureGen
 
         Sheet(Path.Combine(previewDirectory, "Episode1.png"), names, textures);
         PaletteSheet(paletteImagePath);
+
+        string effects = Path.Combine(texturesDirectory, "Effects");
+        Directory.CreateDirectory(effects);
+        string[] effectNames = { "MuzzleFlash", "Spark", "Smoke", "Dust", "PelletMark", "Blood" };
+        Bitmap[] effectTextures = {
+            MuzzleFlash(11),
+            Spark(),
+            Puff(Hex("#8C8A84"), Hex("#4C4A46"), 12),
+            Puff(WetStone, Silt, 13),
+            PelletMark(14),
+            Blood(15),
+        };
+        for (int i = 0; i < effectNames.Length; i++)
+            effectTextures[i].Save(Path.Combine(effects, effectNames[i] + ".png"), ImageFormat.Png);
     }
 }

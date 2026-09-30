@@ -17,6 +17,9 @@ const vec3 LightDirection = normalize(vec3(0.4, 1.0, 0.6));
 // The darkest shade, for a surface facing away from the light: no surface turns black (the textures are dark already).
 const float MinimumBrightness = 0.45;
 
+// Texels less opaque than this are cut out (see main).
+const float AlphaCutoff = 0.5;
+
 void main()
 {
     // After interpolation between the vertices the normal is a little shorter than 1, so it is normalized again.
@@ -30,5 +33,14 @@ void main()
     float brightness = mix(MinimumBrightness, 1.0, facing);
 
     vec4 albedo = texture(uniAlbedoTexture, TexCoord);
+
+    // Alpha testing: texels that are (almost) fully transparent are not drawn at all, as if there were no surface there.
+    // Models cut shapes out of flat faces this way (glTF alphaMode "MASK": the plank edges of a crate, the outline of a
+    // dummy); without it the transparent parts would show as black. discard throws the pixel away before it reaches the
+    // screen or the depth buffer. The level textures are fully opaque, so nothing changes for them. One cutoff for every
+    // material until materials come with their own (see Documentation/ARCHITECTURE.md).
+    if (albedo.a < AlphaCutoff)
+        discard;
+
     FragColor = vec4(albedo.rgb * brightness, albedo.a);
 }

@@ -98,7 +98,7 @@ Every asset is listed in `ASSETS.md` before it is committed.
 | 3 | `feat/gltf-models`              | ✅     | glTF (`.glb`) loading: meshes, materials, textures; material store; a CC0 model standing in the test room |
 | 4 | `feat/view-model`               | ✅     | The shotgun in the hands: drawn in its own pass with its own field of view (never inside walls), bob while walking, sway behind the mouse; window with sliders |
 | 5 | `feat/hitscan`                  | ✅     | Fire action (left mouse button), single-barrel shotgun: pellets with a random spread, time between shots, recoil of the view and the model, shot sound; debug lines of the pellets; random numbers in `Core/Math`; unlimited ammo |
-| 6 | `feat/damage`                   | ⏳     | `Health` component; target dummies placed in TrenchBroom (`target_dummy`); traces against entities, not only walls; damage, hit sound, a destroyed target disappears; knockback from shots |
+| 6 | `feat/damage`                   | 🔨     | `Health` component; target dummies placed in TrenchBroom (`target_dummy`); traces against entities, not only walls; damage, hit sound, a destroyed target disappears; knockback from shots; a crosshair in the middle of the screen (its look set by the weapon), hit markers for hits and a different one for kills |
 | 7 | `feat/impact-effects`           | ⏳     | Muzzle flash sprite; particles (sparks and dust at hits, smoke); decals (pellet marks on walls, a limited number) |
 | 8 | `refactor/review-0.3`           | ⏳     | A review of the project and a guided walkthrough of what changed since the last one; screenshots; release v0.3.0 |
 

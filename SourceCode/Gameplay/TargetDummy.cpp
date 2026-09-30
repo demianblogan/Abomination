@@ -13,6 +13,7 @@
 #include "Renderer/ModelRenderer.h"
 #include "World/PlayerStart.h"
 
+#include <glm/common.hpp>
 #include <glm/gtc/quaternion.hpp>
 
 namespace Abomination::Gameplay
@@ -20,6 +21,22 @@ namespace Abomination::Gameplay
     namespace
     {
         const std::string DummyModelPath = "Models/Enemies/Dummy.glb";
+
+        // Whether a box at center overlaps the box of no character. Two boxes overlap when they overlap along every axis:
+        // the distance between their centers is less than the sum of their half sizes along x, along y and along z.
+        bool IsPlaceFree(const entt::registry& registry, const glm::vec3& center, const glm::dvec3& halfExtents)
+        {
+            const auto characters = registry.view<const Physics::CharacterBody, const Core::Transform>();
+            for (const auto [entity, body, transform] : characters.each())
+            {
+                const glm::dvec3 distance = glm::abs(glm::dvec3(transform.position) - glm::dvec3(center));
+                const glm::dvec3 reach = body.halfExtents + halfExtents;
+                if (distance.x < reach.x && distance.y < reach.y && distance.z < reach.z)
+                    return false;
+            }
+
+            return true;
+        }
 
         // Puts the dummy where it starts, whole: at its spawn point, turned by its yaw, with full health, a body that
         // moves and its model scaled to the height of its box.
@@ -97,8 +114,10 @@ namespace Abomination::Gameplay
         {
             if (dummy.isDestroyed)
             {
+                // It comes back only when its place is free: a box appearing over the player or another character would
+                // trap them inside it, so it waits until they step away.
                 dummy.respawnTimer -= tickDuration;
-                if (dummy.respawnTimer <= 0.0f)
+                if (dummy.respawnTimer <= 0.0f && IsPlaceFree(registry, dummy.spawnCenter, World::PlayerHalfExtents))
                 {
                     dummy.isDestroyed = false;
                     ResetDummy(registry, entity, dummy, assets);

@@ -32,7 +32,7 @@ namespace Abomination::Gameplay
 {
     // Component of a target dummy: a character with the box of the player that stands, takes damage (it has a Health),
     // is pushed by shots and slides along the floor like the player. When destroyed it disappears and comes back to where
-    // it started after respawnDelay.
+    // it started after respawnDelay, as soon as nobody stands there.
     struct TargetDummy
     {
         // Where it appears (the center of its box) and which way it faces (yaw, radians).

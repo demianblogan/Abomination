@@ -32,9 +32,9 @@ namespace Abomination::Gameplay
     struct EffectSettings
     {
         // Sparks at a wall: bright, fast, short, falling.
-        int sparkCount = 3;
+        int sparkCount = 10;
         float sparkSpeed = 4.0f;
-        float sparkLifetime = 0.25f;
+        float sparkLifetime = 1.0f;
         float sparkHalfSize = 0.025f;
 
         // Dust at a wall: slow puffs that grow and fade.
@@ -58,7 +58,7 @@ namespace Abomination::Gameplay
         float smokeHalfSize = 0.12f;
 
         // The marks of pellets on walls: their half size, and how many stay before the oldest disappear.
-        float markHalfSize = 0.035f;
+        float markHalfSize = 0.065f;
         int maximumMarkCount = 64;
     };
 

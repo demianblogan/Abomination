@@ -200,6 +200,8 @@ set(LIBRARY_SOURCES
     UI/CrosshairOverlay.cpp
     UI/DebugOverlay.h
     UI/DebugOverlay.cpp
+    UI/EffectsWindow.h
+    UI/EffectsWindow.cpp
     UI/EntitiesWindow.h
     UI/EntitiesWindow.cpp
     UI/ImGuiLibrary.h

@@ -31,6 +31,7 @@ namespace Abomination::Platform
 
 namespace Abomination::Gameplay
 {
+    struct Effects;
     struct LandingDip;
     struct ViewModel;
     struct ViewRecoil;
@@ -87,6 +88,7 @@ namespace Abomination::UI
         Gameplay::LandingDip& landingDip;
         Gameplay::Weapon& weapon;
         Gameplay::ViewRecoil& viewRecoil;
+        Gameplay::Effects& effects;
 
         // The crosshair is drawn while the player is controlled, with the field of view of their camera (radians).
         bool isPlayerControlled;
@@ -149,6 +151,7 @@ namespace Abomination::UI
         bool m_isAudioWindowOpen = false;
         bool m_isViewModelWindowOpen = false;
         bool m_isWeaponWindowOpen = false;
+        bool m_isEffectsWindowOpen = false;
 
         EntitiesWindow m_entitiesWindow;
         AudioWindow m_audioWindow;

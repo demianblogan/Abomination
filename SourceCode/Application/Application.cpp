@@ -389,6 +389,7 @@ namespace Abomination
             .landingDip = m_registry.get<Gameplay::LandingDip>(m_gameplay.player),
             .weapon = m_registry.get<Gameplay::Weapon>(m_gameplay.player),
             .viewRecoil = m_registry.get<Gameplay::ViewRecoil>(m_gameplay.player),
+            .effects = m_gameplay.effects,
             .isPlayerControlled = m_gameplay.controlMode == Gameplay::ControlMode::Player,
             .playerVerticalFOV = m_registry.get<Renderer::CameraLens>(m_gameplay.player).verticalFOV,
         });

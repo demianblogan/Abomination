@@ -97,6 +97,24 @@ namespace Abomination::Renderer
         const glm::mat4 centering = glm::translate(glm::mat4(1.0f), -center);
         for (ModelPart& part : model.parts)
             part.transform = centering * part.transform;
+
+        // The front: the average of the vertices near the frontmost one (the end of a barrel), in centered coordinates.
+        // The middle of the box would not do: the stock and the trigger guard pull it below the barrel.
+        glm::vec3 frontSum(0.0f);
+        int frontCount = 0;
+        for (const ModelPartData& partData : data->parts)
+        {
+            for (const MeshVertex& vertex : partData.mesh.vertices)
+            {
+                const glm::vec3 position(partData.transform * glm::vec4(vertex.position, 1.0f));
+                if (position.z <= minimum.z + ModelFrontDepth)
+                {
+                    frontSum += position - center;
+                    ++frontCount;
+                }
+            }
+        }
+        model.front = frontCount > 0 ? frontSum / static_cast<float>(frontCount) : glm::vec3(0.0f, 0.0f, -size.z * 0.5f);
         model.size = size;
 
         const auto usedImageCount =

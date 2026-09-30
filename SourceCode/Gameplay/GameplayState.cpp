@@ -54,8 +54,8 @@ namespace Abomination::Gameplay
             .model = shotgun,
             .shaderProgram = renderAssets.shaders.Load("Shaders/TexturedShaded"),
 
-            // The model is centered on its origin and points along -Z, so its muzzle is half its length in front.
-            .muzzle = glm::vec3(0.0f, 0.0f, -renderAssets.models.Get(shotgun).size.z * 0.5f),
+            // The model points along -Z, so its front is the end of the barrel.
+            .muzzle = renderAssets.models.Get(shotgun).front,
         });
 
         state.effects.textures = LoadEffectTextures(renderAssets.textures);
@@ -63,11 +63,11 @@ namespace Abomination::Gameplay
         registry.emplace<LandingDip>(state.player);
         registry.emplace<ViewRecoil>(state.player);
 
-        // The shotgun itself: what it shoots and how it sounds. One recording, its pitch changed a little every shot.
+        // The shotgun itself: what it shoots and how it sounds. One recording, its pitch changed by up to 5% every shot.
         Weapon& weapon = registry.emplace<Weapon>(state.player);
         weapon.fireSound = Audio::SoundEvent{
             .variants = {audio.LoadSound("Sounds/Weapons/Shotgun/Fire1.ogg", Core::AssetLifetime::Global)},
-            .pitchVariation = 0.03f,
+            .pitchVariation = 0.05f,
             .maxVoices = 2,
         };
 

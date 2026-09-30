@@ -15,7 +15,7 @@ namespace Abomination::Renderer
 
     // Keeps every mesh exactly once and hands out handles to them. Meshes are added from geometry built in memory and
     // named like asset paths: the parts of a level ("Maps/Test.map#Episode1/Wall_MossyBrick"), shapes of MeshPrimitives
-    // ("Primitives/Cube"). Loading meshes from model files comes in 0.3.
+    // ("Primitives/Cube"), the parts of models ("Models/Weapons/Shotgun.glb#Pump_low_Shotgun_0", see ModelStore).
     //
     // Get() of an invalid handle gives a fallback cube, so drawing code never has to check for nullptr: with the
     // fallback texture on it, a broken mesh reference shows up as a magenta and black cube.

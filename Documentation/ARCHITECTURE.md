@@ -357,11 +357,12 @@ Inside the renderer:
   (`MeshPrimitives` builds a cube, `World` builds the level). Vertex layout:
   position at location 0, texture coordinates at location 1, normal at
   location 2, for every mesh shader.
-- Shaders (`Assets/Shaders/`): `TexturedMesh` (a texture, no shading; for
-  models from 0.3), `TexturedShaded` (the level: its texture, lighter or
-  darker by the direction the surface faces — half-Lambert shading with a
-  fixed made-up light direction, not real lighting, so walls facing different
-  ways stay apart until lightmaps in 0.5) and `Wireframe` (one line color).
+- Shaders (`Assets/Shaders/`): `TexturedShaded` (the level and models: the
+  texture, lighter or darker by the direction the surface faces — half-Lambert
+  shading with a fixed made-up light direction, not real lighting, so walls
+  facing different ways stay apart until lightmaps in 0.5; alpha-tested),
+  `Wireframe` (one line color), `DebugLines` and `Sprite` (particles, marks,
+  the muzzle flash).
 - `TextureStore`, `ShaderStore`, `MeshStore`, `ModelStore`, grouped in `RenderAssets` — load
   every texture, shader program, mesh and model once and hand out handles (see
   section 9).
@@ -620,7 +621,7 @@ either (`Config`). How textures look and where they come from:
   `Platform::GetExecutableDirectory() / "Assets"`; the path is computed once
   in `Main.cpp` and passed down.
 - Asset paths are relative to `Assets/` and use forward slashes:
-  `"Textures/Episode1/Crate_Rotten.png"`, `"Shaders/TexturedMesh"` (a shader program is the
+  `"Textures/Episode1/Crate_Rotten.png"`, `"Shaders/TexturedShaded"` (a shader program is the
   `.vert` + `.frag` pair with that name).
 - The application knows the folders; every module knows the names of its own
   files (`TextureStore` gets the assets folder, `DebugOverlay` gets the assets

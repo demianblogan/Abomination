@@ -1,6 +1,6 @@
 #version 460 core
 
-// Places the vertices like TexturedMesh.vert and passes on the texture coordinates and the direction each surface faces.
+// Places the vertices of a mesh and passes on the texture coordinates and the direction each surface faces.
 // Used for the level: its textures are shaded by the direction of the surface until real lighting arrives (0.5).
 
 layout(location = 0) in vec3 aPosition;

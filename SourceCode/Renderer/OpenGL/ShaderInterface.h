@@ -7,7 +7,7 @@
 // by name at run time. All of them are here, so a change is made in one place, together with the shaders listed.
 namespace Abomination::Renderer
 {
-    // --- Meshes: TexturedMesh, TexturedShaded, Wireframe and the fallback program of ShaderStore ---
+    // --- Meshes: TexturedShaded, Wireframe and the fallback program of ShaderStore ---
 
     // Vertex inputs: layout(location = N) in ... . They follow the layout of MeshVertex (see Mesh::Create); a shader may
     // leave out what it does not need (Wireframe reads only the position).

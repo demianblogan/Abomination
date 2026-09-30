@@ -5,6 +5,7 @@
 #include "Renderer/ImGuiRendererBackend.h"
 #include "UI/AudioWindow.h"
 #include "UI/ConsoleWindow.h"
+#include "UI/CrosshairOverlay.h"
 #include "UI/EntitiesWindow.h"
 #include "UI/ImGuiLibrary.h"
 
@@ -86,6 +87,10 @@ namespace Abomination::UI
         Gameplay::LandingDip& landingDip;
         Gameplay::Weapon& weapon;
         Gameplay::ViewRecoil& viewRecoil;
+
+        // The crosshair is drawn while the player is controlled, with the field of view of their camera (radians).
+        bool isPlayerControlled;
+        float playerVerticalFOV;
     };
 
     // Developer overlay drawn with Dear ImGui on top of the game: a menu bar with debug windows and settings.
@@ -148,6 +153,7 @@ namespace Abomination::UI
         EntitiesWindow m_entitiesWindow;
         AudioWindow m_audioWindow;
         ConsoleWindow m_consoleWindow;
+        CrosshairOverlay m_crosshair;
 
         // The UI scale chosen in Settings > Display > UI scale, and the full scale (with the display scale of Windows) the
         // style was last built for; 0 until the first frame. Not saved between runs yet: settings files come with the

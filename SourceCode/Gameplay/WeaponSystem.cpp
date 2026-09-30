@@ -1,19 +1,24 @@
 #include "Gameplay/WeaponSystem.h"
 
 #include "Audio/AudioEngine.h"
+#include "Core/Math/BoundingBox.h"
 #include "Core/Scene/Transform.h"
+#include "Gameplay/Health.h"
 #include "Gameplay/MouseLook.h"
 #include "Gameplay/Player.h"
+#include "Gameplay/TargetDummy.h"
 #include "Gameplay/ViewModel.h"
 #include "Gameplay/ViewRecoil.h"
 #include "Gameplay/Weapon.h"
 #include "Input/ActionStates.h"
+#include "Physics/CharacterBody.h"
 #include "Renderer/Debug/DebugLines.h"
 #include "World/CollisionTrace.h"
 
 #include <glm/vec3.hpp>
 
 #include <algorithm>
+#include <optional>
 #include <vector>
 
 namespace Abomination::Gameplay
@@ -27,7 +32,40 @@ namespace Abomination::Gameplay
         constexpr float HitMarkerHalfSize = 0.03f;
 
         constexpr glm::vec3 PelletHitColor{1.0f, 0.3f, 0.2f};
+        constexpr glm::vec3 PelletEntityHitColor{1.0f, 0.9f, 0.2f};
         constexpr glm::vec3 PelletMissColor{0.6f, 0.6f, 0.6f};
+
+        struct HitEntity
+        {
+            entt::entity entity = entt::null;
+            double distance = 0.0;
+        };
+
+        // The closest entity with Health and a CharacterBody (its box) that the ray enters before maxDistance, except the
+        // shooter.
+        HitEntity FindHitEntity(const entt::registry& registry, entt::entity shooter, const glm::dvec3& origin,
+                                const glm::dvec3& direction, double maxDistance)
+        {
+            HitEntity closest;
+            double closestDistance = maxDistance;
+            for (const auto [entity, health, body, transform] :
+                 registry.view<const Health, const Physics::CharacterBody, const Core::Transform>().each())
+            {
+                if (entity == shooter)
+                    continue;
+
+                const glm::dvec3 center(transform.position);
+                const Core::BoundingBox box{.minimum = center - body.halfExtents, .maximum = center + body.halfExtents};
+                const std::optional<double> distance = Core::IntersectRay(box, origin, direction, closestDistance);
+                if (distance.has_value())
+                {
+                    closest = {.entity = entity, .distance = *distance};
+                    closestDistance = *distance;
+                }
+            }
+
+            return closest;
+        }
     }
 
     void CollectWeaponInput(GameplayState& state, entt::registry& registry, const Input::ActionStates& actions,
@@ -71,16 +109,59 @@ namespace Abomination::Gameplay
         weapon->lastShotStart = eyes.position;
         weapon->lastShotPellets.clear();
         weapon->secondsSinceLastShot = 0.0f;
+
+        bool hasHurt = false;
+        bool hasKilled = false;
         for (const glm::vec3& direction : directions)
         {
-            // A pellet is a ray: a box of size 0 traced through the brushes.
+            // A pellet is a ray: a box of size 0 traced through the brushes. How far it flies before a wall stops it:
             const glm::dvec3 start(eyes.position);
-            const glm::dvec3 end = start + glm::dvec3(direction) * static_cast<double>(weapon->settings.range);
+            const double range = static_cast<double>(weapon->settings.range);
+            const glm::dvec3 end = start + glm::dvec3(direction) * range;
             const World::TraceResult trace = World::TraceBox(brushes, start, end, glm::dvec3(0.0));
-            weapon->lastShotPellets.push_back(PelletTrace{.end = glm::vec3(trace.endPosition), .hasHit = trace.fraction < 1.0});
+            const double wallDistance = trace.fraction * range;
+
+            // The closest entity with health in front of that wall: its box is where the ray enters it.
+            const HitEntity hit = FindHitEntity(registry, state.player, start, glm::dvec3(direction), wallDistance);
+            if (hit.entity == entt::null)
+            {
+                weapon->lastShotPellets.push_back(
+                    PelletTrace{.end = glm::vec3(trace.endPosition), .hasHit = trace.fraction < 1.0});
+                continue;
+            }
+
+            weapon->lastShotPellets.push_back(PelletTrace{
+                .end = glm::vec3(start + glm::dvec3(direction) * hit.distance),
+                .hasHit = true,
+                .hasHitEntity = true,
+            });
+
+            // The damage, and the push along the pellet, if the entity can move.
+            hasHurt = true;
+            if (ApplyDamage(registry.get<Health>(hit.entity), weapon->settings.damagePerPellet))
+            {
+                hasKilled = true;
+                DestroyTargetDummy(registry, hit.entity);
+            }
+            else if (Physics::CharacterBody* body = registry.try_get<Physics::CharacterBody>(hit.entity); body != nullptr)
+            {
+                body->velocity += direction * weapon->settings.knockbackPerPellet;
+            }
         }
 
         audio.Play(weapon->fireSound);
+
+        // One confirmation per shot, however many pellets hit: a kill sounds different from a hit.
+        if (hasKilled)
+        {
+            ++weapon->killCount;
+            audio.Play(weapon->killSound);
+        }
+        else if (hasHurt)
+        {
+            ++weapon->hitCount;
+            audio.Play(weapon->hitSound);
+        }
 
         // The recoil: the view and the weapon in the hands jerk, and their springs bring them back.
         if (ViewRecoil* viewRecoil = registry.try_get<ViewRecoil>(state.player); viewRecoil != nullptr)
@@ -99,7 +180,9 @@ namespace Abomination::Gameplay
 
         for (const PelletTrace& pellet : weapon->lastShotPellets)
         {
-            const glm::vec3 color = pellet.hasHit ? PelletHitColor : PelletMissColor;
+            // Yellow on an entity, red on a wall, gray into nothing.
+            const glm::vec3 color =
+                pellet.hasHitEntity ? PelletEntityHitColor : (pellet.hasHit ? PelletHitColor : PelletMissColor);
             debugLines.AddLine(weapon->lastShotStart, pellet.end, color);
             if (pellet.hasHit)
                 debugLines.AddBox(pellet.end - glm::vec3(HitMarkerHalfSize), pellet.end + glm::vec3(HitMarkerHalfSize), color);

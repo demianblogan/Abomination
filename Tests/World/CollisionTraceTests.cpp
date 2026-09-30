@@ -219,4 +219,18 @@ namespace Abomination::World
         const TraceResult spike = TraceBox(std::span(&withoutBevels, 1), start, end, HalfExtents);
         EXPECT_LT(spike.fraction, 1.0);
     }
+
+    TEST(CollisionTrace, BoxBrushStopsOtherBoxLikeWall)
+    {
+        // The box of a character standing at x = 3 (half size 0.5): another box of half size 0.5 walking into it along
+        // +X from x = 0 stops where the two touch, at x = 2 (a hair before it, see SurfaceEpsilon).
+        const CollisionBrush character = CreateBoxCollisionBrush({3.0, 1.0, 0.0}, {0.5, 1.0, 0.5});
+        const glm::dvec3 halfExtents{0.5, 1.0, 0.5};
+
+        const TraceResult trace = TraceBox(std::span(&character, 1), {0.0, 1.0, 0.0}, {4.0, 1.0, 0.0}, halfExtents);
+
+        EXPECT_LT(trace.fraction, 1.0);
+        EXPECT_NEAR(trace.endPosition.x, 2.0, 1e-3);
+        EXPECT_NEAR(trace.hitNormal.x, -1.0, Tolerance);
+    }
 }

@@ -97,6 +97,7 @@ namespace Abomination::Renderer
         const glm::mat4 centering = glm::translate(glm::mat4(1.0f), -center);
         for (ModelPart& part : model.parts)
             part.transform = centering * part.transform;
+        model.size = size;
 
         const auto usedImageCount =
             std::ranges::count_if(imageTextures, [](const auto& texture) { return texture.has_value(); });

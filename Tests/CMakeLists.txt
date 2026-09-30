@@ -23,6 +23,7 @@ set(TEST_SOURCES
     Core/Time/FrameStatisticsTests.cpp
     Core/Time/FrameTimerTests.cpp
 
+    Gameplay/CrosshairTests.cpp
     Gameplay/FreeFlyCameraControllerTests.cpp
     Gameplay/LandingDipTests.cpp
     Gameplay/PlayerSystemTests.cpp

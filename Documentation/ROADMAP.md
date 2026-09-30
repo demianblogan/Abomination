@@ -98,7 +98,7 @@ Every asset is listed in `ASSETS.md` before it is committed.
 | 3 | `feat/gltf-models`              | ✅     | glTF (`.glb`) loading: meshes, materials, textures; material store; a CC0 model standing in the test room |
 | 4 | `feat/view-model`               | ✅     | The shotgun in the hands: drawn in its own pass with its own field of view (never inside walls), bob while walking, sway behind the mouse; window with sliders |
 | 5 | `feat/hitscan`                  | ✅     | Fire action (left mouse button), single-barrel shotgun: pellets with a random spread, time between shots, recoil of the view and the model, shot sound; debug lines of the pellets; random numbers in `Core/Math`; unlimited ammo |
-| 6 | `feat/damage`                   | ⏳     | `Health` component; target dummies placed in TrenchBroom (`target_dummy`); traces against entities, not only walls; damage, hit sound, a destroyed target disappears; knockback from shots |
+| 6 | `feat/damage`                   | ✅     | `Health` component; target dummies placed in TrenchBroom (`target_dummy`); traces against entities, not only walls; damage, hit sound, a destroyed target disappears; knockback from shots; a crosshair in the middle of the screen (its look set by the weapon), hit markers for hits and a different one for kills |
 | 7 | `feat/impact-effects`           | ⏳     | Muzzle flash sprite; particles (sparks and dust at hits, smoke); decals (pellet marks on walls, a limited number) |
 | 8 | `refactor/review-0.3`           | ⏳     | A review of the project and a guided walkthrough of what changed since the last one; screenshots; release v0.3.0 |
 
@@ -124,7 +124,11 @@ far:
 - **0.4** — navmesh via Recast/Detour for ground enemies; flying enemies need
   a separate approach. Frustum culling of entities (a bounding sphere tested
   against the six planes of the view) once enemies, pickups and effects bring
-  many draw calls; measure first.
+  many draw calls; measure first. Remove the target dummies of 0.3 when the
+  first enemy arrives: `Gameplay/TargetDummy.h/.cpp`, their use in
+  `WeaponSystem.cpp`, `GameplayState` and `Application`, `target_dummy` in
+  `Level` and the FGD, `Models/Enemies/Dummy.glb` and its line in
+  `ASSETS.md`. Move the crosshair from ImGui lines to the HUD.
 - **0.5** — own lightmap compiler as part of the level compiler; sRGB textures
   and framebuffer (gamma correction) together with lighting; shader hot reload.
   Visibility of level parts (BSP leaves and PVS, or portals) in the level

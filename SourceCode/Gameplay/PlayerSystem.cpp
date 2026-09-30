@@ -2,6 +2,7 @@
 
 #include "Audio/AudioEngine.h"
 #include "Core/Scene/Transform.h"
+#include "Gameplay/CharacterCollision.h"
 #include "Core/Scene/TransformInterpolation.h"
 #include "Gameplay/Player.h"
 #include "Physics/CharacterBody.h"
@@ -12,6 +13,7 @@
 #include <glm/vec3.hpp>
 
 #include <optional>
+#include <vector>
 
 namespace Abomination::Gameplay
 {
@@ -19,6 +21,9 @@ namespace Abomination::Gameplay
     {
         // The box of the player, drawn while the free-fly camera is used.
         constexpr glm::vec3 PlayerBoxColor{0.3f, 1.0f, 0.5f};
+
+        // The boxes of the other characters: cyan, apart from the orange of the brushes.
+        constexpr glm::vec3 CharacterBoxColor{0.2f, 0.85f, 1.0f};
     }
 
     void UpdatePlayerLook(GameplayState& state, entt::registry& registry, const Input::ActionStates& actions,
@@ -39,10 +44,12 @@ namespace Abomination::Gameplay
                 ? state.playerController.CreateMoveCommand(registry.get<LookAngles>(state.player), actions)
                 : Physics::MoveCommand{};
 
+        // The player stops at the walls and at the other characters (the target dummies, later enemies).
         Physics::CharacterBody& body = registry.get<Physics::CharacterBody>(state.player);
-        Physics::UpdateCharacter(body, registry.get<Core::Transform>(state.player), brushes, state.physicsSettings,
+        const std::vector<World::CollisionBrush> obstacles = GatherCollisionBrushes(registry, brushes, state.player);
+        Physics::UpdateCharacter(body, registry.get<Core::Transform>(state.player), obstacles, state.physicsSettings,
                                  state.movementSettings, command, tickDuration);
-        UpdateStepSmoothing(registry.get<PlayerStepSmoothing>(state.player), body.steppedUpHeight, tickDuration);
+        UpdateStepSmoothing(registry.get<StepSmoothing>(state.player), body.steppedUpHeight, tickDuration);
     }
 
     float CalculateLandingVolume(float fallSpeed)
@@ -99,5 +106,23 @@ namespace Abomination::Gameplay
                                                             interpolationFactor).position;
         const glm::vec3 halfExtents(registry.get<Physics::CharacterBody>(state.player).halfExtents);
         debugLines.AddBox(center - halfExtents, center + halfExtents, PlayerBoxColor);
+    }
+
+    void AddCharacterDebugBoxes(const GameplayState& state, const entt::registry& registry, float interpolationFactor,
+                                Renderer::DebugLines& debugLines)
+    {
+        for (const auto [entity, body, transform] : registry.view<const Physics::CharacterBody, const Core::Transform>().each())
+        {
+            if (entity == state.player)
+                continue;
+
+            // Drawn where the character is drawn: between its last two ticks.
+            const Core::PreviousTransform* previous = registry.try_get<Core::PreviousTransform>(entity);
+            const glm::vec3 center =
+                previous == nullptr ? transform.position
+                                    : Core::InterpolateTransform(previous->value, transform, interpolationFactor).position;
+            const glm::vec3 halfExtents(body.halfExtents);
+            debugLines.AddBox(center - halfExtents, center + halfExtents, CharacterBoxColor);
+        }
     }
 }

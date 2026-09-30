@@ -65,6 +65,19 @@ namespace Abomination::Gameplay
             .maxVoices = 2,
         };
 
+        // The confirmation that a shot hurt or killed something (temporary sounds from Kenney's Impact Sounds).
+        const auto loadVariants = [&audio](const std::string& name)
+        {
+            Audio::SoundEvent event;
+            for (int variant = 1; variant <= 3; ++variant)
+                event.variants.push_back(audio.LoadSound("Sounds/Weapons/" + name + std::to_string(variant) + ".ogg",
+                                                         Core::AssetLifetime::Global));
+            event.maxVoices = 2;
+            return event;
+        };
+        weapon.hitSound = loadVariants("Hit");
+        weapon.killSound = loadVariants("Kill");
+
         return state;
     }
 }

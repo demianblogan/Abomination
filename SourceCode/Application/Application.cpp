@@ -10,6 +10,7 @@
 #include "Gameplay/PlayerSystem.h"
 #include "Gameplay/Spin.h"
 #include "Gameplay/LandingDip.h"
+#include "Gameplay/TargetDummy.h"
 #include "Gameplay/ViewModel.h"
 #include "Gameplay/ViewRecoil.h"
 #include "Gameplay/ViewSystem.h"
@@ -17,6 +18,7 @@
 #include "Gameplay/WeaponSystem.h"
 #include "Physics/CharacterBody.h"
 #include "Platform/SystemServices.h"
+#include "Renderer/Camera/CameraLens.h"
 #include "Renderer/Camera/View.h"
 #include "Renderer/OpenGL/DebugOutput.h"
 #include "Renderer/OpenGL/OpenGLLoader.h"
@@ -118,6 +120,7 @@ namespace Abomination
 
         // The player appears where the map puts them. The free-fly camera waits at their eyes; F2 switches to it.
         m_gameplay = Gameplay::CreateGameplayState(m_registry, m_level.GetPlayerStart(), m_audio, m_renderAssets);
+        m_gameplay.targetDummies = Gameplay::SpawnTargetDummies(m_registry, m_renderAssets, m_level.GetTargetDummyStarts());
     }
 
     int Application::Run()
@@ -245,6 +248,8 @@ namespace Abomination
         Gameplay::UpdateWeapon(m_gameplay, m_registry, m_actionStates, m_canPlayerShoot, brushes, m_audio, tickDuration);
         Gameplay::UpdateFreeFlyCamera(m_gameplay, m_registry, m_actionStates, brushes,
                                       m_collisionSettings.doesCameraCollide, tickDuration);
+        Gameplay::UpdateTargetDummies(m_registry, m_renderAssets, brushes, m_gameplay.physicsSettings,
+                                      m_gameplay.movementSettings, tickDuration);
         Gameplay::UpdateSpinningEntities(m_registry, tickDuration);
     }
 
@@ -260,8 +265,11 @@ namespace Abomination
             return;
         }
 
+        // The dummies first: their models belong to the level and are removed with it.
+        Gameplay::DestroyTargetDummies(m_registry, m_gameplay.targetDummies);
         m_level.Unload(m_registry, m_renderAssets);
         m_level = World::Level::Create(m_registry, m_renderAssets, *map, StartMapPath);
+        m_gameplay.targetDummies = Gameplay::SpawnTargetDummies(m_registry, m_renderAssets, m_level.GetTargetDummyStarts());
     }
 
     void Application::Render(const Core::FrameStatistics& frameStatistics)
@@ -297,6 +305,8 @@ namespace Abomination
                                                        cameraTransform, m_debugLines);
 
             Gameplay::AddPlayerDebugBox(m_gameplay, m_registry, interpolationFactor, m_debugLines);
+            if (m_collisionSettings.areColliderBoundsVisible)
+                Gameplay::AddCharacterDebugBoxes(m_gameplay, m_registry, interpolationFactor, m_debugLines);
             Gameplay::AddWeaponDebugLines(m_gameplay, m_registry, m_debugLines);
 
             if (m_renderSettings.areWorldAxesVisible)
@@ -353,6 +363,8 @@ namespace Abomination
             .landingDip = m_registry.get<Gameplay::LandingDip>(m_gameplay.player),
             .weapon = m_registry.get<Gameplay::Weapon>(m_gameplay.player),
             .viewRecoil = m_registry.get<Gameplay::ViewRecoil>(m_gameplay.player),
+            .isPlayerControlled = m_gameplay.controlMode == Gameplay::ControlMode::Player,
+            .playerVerticalFOV = m_registry.get<Renderer::CameraLens>(m_gameplay.player).verticalFOV,
         });
 
         m_window.SwapBuffers();

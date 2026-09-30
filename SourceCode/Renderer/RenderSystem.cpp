@@ -2,6 +2,7 @@
 
 #include "Core/Scene/Transform.h"
 #include "Core/Scene/TransformInterpolation.h"
+#include "Renderer/DrawOffset.h"
 #include "Renderer/MeshRenderer.h"
 #include "Renderer/ModelRenderer.h"
 #include "Renderer/OpenGL/RenderCommands.h"
@@ -91,9 +92,15 @@ namespace Abomination::Renderer
         {
             // try_get returns nullptr if the entity has no such component: only moving entities have a previous transform.
             const Core::PreviousTransform* previousTransform = registry.try_get<Core::PreviousTransform>(entity);
-            return previousTransform == nullptr
-                       ? transform
-                       : Core::InterpolateTransform(previousTransform->value, transform, interpolationFactor);
+            Core::Transform drawn = previousTransform == nullptr
+                                        ? transform
+                                        : Core::InterpolateTransform(previousTransform->value, transform, interpolationFactor);
+
+            // A character gliding up a stair is drawn below its body (see DrawOffset).
+            if (const DrawOffset* drawOffset = registry.try_get<DrawOffset>(entity); drawOffset != nullptr)
+                drawn.position += glm::mix(drawOffset->previousOffset, drawOffset->offset, interpolationFactor);
+
+            return drawn;
         };
 
         const auto drawMesh = [&](ShaderHandle shader, TextureHandle texture, MeshHandle mesh, const glm::mat4& modelMatrix)

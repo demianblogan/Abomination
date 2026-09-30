@@ -32,4 +32,10 @@ namespace Abomination::World
     // Faces without a plane (three points on one line) and faces that do not touch the brush are left out. A brush with
     // no faces left is left out completely.
     [[nodiscard]] std::vector<CollisionBrush> BuildCollisionBrushes(const MapEntity& entity);
+
+    // A brush in the shape of an axis-aligned box (game meters): its six planes and bounds. Characters collide with each
+    // other through such brushes: the box of every other character is added to the brushes of the level while a
+    // character moves, so the same traces stop it at walls and at other characters. A box needs no bevel planes: its
+    // faces are the sides of its bounding box already.
+    [[nodiscard]] CollisionBrush CreateBoxCollisionBrush(const glm::dvec3& center, const glm::dvec3& halfExtents);
 }

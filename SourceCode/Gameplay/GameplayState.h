@@ -7,6 +7,8 @@
 
 #include <entt/entt.hpp>
 
+#include <vector>
+
 namespace Abomination::Audio
 {
     class AudioEngine;
@@ -66,6 +68,9 @@ namespace Abomination::Gameplay
         Physics::MovementSettings movementSettings;
 
         PlayerSounds playerSounds;
+
+        // The target dummies of the level (see TargetDummy.h); replaced when the level is.
+        std::vector<entt::entity> targetDummies;
     };
 
     // Creates the player at the player start of the level and the free-fly camera waiting at their eyes, looking the

@@ -19,14 +19,14 @@ namespace Abomination::Gameplay
         registry.emplace<Core::Transform>(player, Core::Transform{.position = playerStart.boxCenter});
         registry.emplace<Physics::CharacterBody>(player, Physics::CharacterBody{.halfExtents = World::PlayerHalfExtents});
         registry.emplace<LookAngles>(player, LookAngles{.yaw = playerStart.yaw});
-        registry.emplace<PlayerStepSmoothing>(player);
+        registry.emplace<StepSmoothing>(player);
         registry.emplace<Renderer::CameraLens>(player);
         Core::EnableInterpolation(registry, player);
 
         return player;
     }
 
-    void UpdateStepSmoothing(PlayerStepSmoothing& smoothing, float steppedUpHeight, float deltaTime)
+    void UpdateStepSmoothing(StepSmoothing& smoothing, float steppedUpHeight, float deltaTime)
     {
         smoothing.previousOffset = smoothing.offset;
 

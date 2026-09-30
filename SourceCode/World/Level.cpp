@@ -46,29 +46,35 @@ namespace Abomination::World
             return ConvertMapAngleToYaw(degrees);
         }
 
+        // Where a character with the box of the player appears: the center of its box and its yaw, from the origin and
+        // the angle of its map entity.
+        PlayerStart ReadCharacterStart(const MapEntity& entity)
+        {
+            PlayerStart start;
+            if (const std::string* origin = FindProperty(entity, "origin"); origin != nullptr)
+            {
+                // The map stores the origin of the entity; the character is placed by the center of its box, which is a
+                // little higher (see PlayerStart.h). Z is up in the map, so the offset goes along map Z.
+                if (const std::optional<glm::dvec3> position = ParseVectorProperty(*origin); position.has_value())
+                    start.boxCenter = ConvertMapPosition(*position + glm::dvec3(0.0, 0.0, PlayerBoxCenterAboveOrigin));
+            }
+
+            start.yaw = ReadEntityYaw(entity);
+
+            return start;
+        }
+
         PlayerStart ReadPlayerStart(const MapData& map)
         {
-            PlayerStart playerStart;
-
             const MapEntity* entity = FindEntity(map, "info_player_start");
             if (entity == nullptr)
             {
                 Core::Log::Write(LogCategory::World, LogLevel::Warning, "The map has no info_player_start");
 
-                return playerStart;
+                return PlayerStart{};
             }
 
-            if (const std::string* origin = FindProperty(*entity, "origin"); origin != nullptr)
-            {
-                // The map stores the origin of the entity; the player is placed by the center of their box, which is a
-                // little higher (see PlayerStart.h). Z is up in the map, so the offset goes along map Z.
-                if (const std::optional<glm::dvec3> position = ParseVectorProperty(*origin); position.has_value())
-                    playerStart.boxCenter = ConvertMapPosition(*position + glm::dvec3(0.0, 0.0, PlayerBoxCenterAboveOrigin));
-            }
-
-            playerStart.yaw = ReadEntityYaw(*entity);
-
-            return playerStart;
+            return ReadCharacterStart(*entity);
         }
 
         // A model standing in the level (misc_model): its file ("model"), origin and angle.
@@ -151,11 +157,20 @@ namespace Abomination::World
         for (const MapEntity& mapEntity : map.entities)
         {
             const std::string* className = FindProperty(mapEntity, "classname");
-            if (className == nullptr || *className != "misc_model")
+            if (className == nullptr)
                 continue;
 
-            if (const entt::entity entity = CreateModelEntity(registry, assets, mapEntity, shaderProgram); entity != entt::null)
-                level.m_entities.push_back(entity);
+            if (*className == "misc_model")
+            {
+                const entt::entity entity = CreateModelEntity(registry, assets, mapEntity, shaderProgram);
+                if (entity != entt::null)
+                    level.m_entities.push_back(entity);
+            }
+            else if (*className == "target_dummy")
+            {
+                // Only the place is kept: the dummies are gameplay entities, created by the Gameplay module.
+                level.m_targetDummyStarts.push_back(ReadCharacterStart(mapEntity));
+            }
         }
 
         Core::Log::Write(LogCategory::World, LogLevel::Info,
@@ -183,6 +198,11 @@ namespace Abomination::World
     const PlayerStart& Level::GetPlayerStart() const noexcept
     {
         return m_playerStart;
+    }
+
+    const std::vector<PlayerStart>& Level::GetTargetDummyStarts() const noexcept
+    {
+        return m_targetDummyStarts;
     }
 
     const LevelMeshStatistics& Level::GetStatistics() const noexcept

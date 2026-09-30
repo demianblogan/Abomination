@@ -30,6 +30,30 @@ namespace Abomination::UI
                 radians = glm::radians(degrees);
             ImGui::SetItemTooltip("%s", tooltip);
         }
+
+        // The sliders of one kind of hit marker. PushID keeps the equal labels of the hit and the kill marker apart for
+        // ImGui, which makes the ID of an item from its label.
+        void DrawHitMarkerSettings(const char* title, Gameplay::HitMarkerSettings& marker)
+        {
+            ImGui::SeparatorText(title);
+            ImGui::PushID(title);
+
+            ImGui::ColorEdit4("Color", &marker.color.r, ImGuiColorEditFlags_NoInputs);
+            ImGui::SetNextItemWidth(ScaleToUI(SliderWidth));
+            ImGui::SliderFloat("Line length", &marker.lineLength, 1.0f, 30.0f, "%.1f px");
+            ImGui::SetNextItemWidth(ScaleToUI(SliderWidth));
+            ImGui::SliderFloat("Gap from circle", &marker.startGap, -20.0f, 30.0f, "%.1f px");
+            ImGui::SetItemTooltip("Where the lines start, from the circle. Negative: inside it.");
+            ImGui::SetNextItemWidth(ScaleToUI(SliderWidth));
+            ImGui::SliderFloat("Travel", &marker.travelDistance, -30.0f, 30.0f, "%.1f px");
+            ImGui::SetItemTooltip("How far the lines move while they fade. Positive: outwards, negative: inwards.");
+            ImGui::SetNextItemWidth(ScaleToUI(SliderWidth));
+            ImGui::SliderFloat("Duration", &marker.duration, 0.05f, 1.0f, "%.2f s");
+            ImGui::SetNextItemWidth(ScaleToUI(SliderWidth));
+            ImGui::SliderFloat("Thickness", &marker.thickness, 0.5f, 6.0f, "%.1f px");
+
+            ImGui::PopID();
+        }
     }
 
     void DrawWeaponWindow(bool* isOpen, Gameplay::Weapon& weapon, Gameplay::ViewRecoil& viewRecoil,
@@ -68,6 +92,25 @@ namespace Abomination::UI
         ImGui::SetItemTooltip("Lines of the pellets of the last shot for 2 seconds: red with a box where they hit,\n"
                               "gray where they flew into nothing. Best seen from the free-fly camera (F2).");
 
+        ImGui::SetNextItemWidth(ScaleToUI(SliderWidth));
+        ImGui::SliderFloat("Damage per pellet", &settings.damagePerPellet, 0.0f, 50.0f, "%.1f");
+        ImGui::SetItemTooltip("Health one pellet takes. A target dummy has 100.");
+        ImGui::SetNextItemWidth(ScaleToUI(SliderWidth));
+        ImGui::SliderFloat("Knockback per pellet", &settings.knockbackPerPellet, 0.0f, 5.0f, "%.2f m/s");
+        ImGui::SetItemTooltip("How hard one pellet pushes what it hits away from the shooter.");
+
+        Gameplay::CrosshairSettings& crosshair = weapon.crosshair;
+        ImGui::SeparatorText("Crosshair");
+        ImGui::ColorEdit4("Crosshair color", &crosshair.color.r, ImGuiColorEditFlags_NoInputs);
+        ImGui::SetNextItemWidth(ScaleToUI(SliderWidth));
+        ImGui::SliderFloat("Circle thickness", &crosshair.circleThickness, 0.5f, 5.0f, "%.1f px");
+        ImGui::SetItemTooltip("The circle is as wide as the spread: every pellet lands inside it.");
+        ImGui::SetNextItemWidth(ScaleToUI(SliderWidth));
+        ImGui::SliderFloat("Dot radius", &crosshair.dotRadius, 0.0f, 5.0f, "%.1f px");
+
+        DrawHitMarkerSettings("Hit marker", crosshair.hitMarker);
+        DrawHitMarkerSettings("Kill marker", crosshair.killMarker);
+
         ImGui::SeparatorText("Recoil of the view");
         ImGui::SetNextItemWidth(ScaleToUI(SliderWidth));
         ImGui::SliderFloat("View kick", &viewRecoil.kick, 0.0f, 2.0f, "%.2f");
@@ -90,6 +133,7 @@ namespace Abomination::UI
         if (ImGui::Button("Reset"))
         {
             weapon.settings = Gameplay::WeaponSettings{};
+            weapon.crosshair = Gameplay::CrosshairSettings{};
 
             const Gameplay::ViewRecoil recoilDefaults;
             viewRecoil.kick = recoilDefaults.kick;

@@ -51,7 +51,7 @@ namespace Abomination::Gameplay
         if (state.controlMode == ControlMode::Player)
         {
             // The step smoothing moves in ticks too, so it is drawn between its last two values like the transform.
-            const auto& smoothing = registry.get<PlayerStepSmoothing>(state.player);
+            const auto& smoothing = registry.get<StepSmoothing>(state.player);
             const float stepOffset = glm::mix(smoothing.previousOffset, smoothing.offset, interpolationFactor);
 
             // The landing dip moves every frame, not in ticks, so it is used as it is.

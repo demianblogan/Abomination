@@ -68,12 +68,17 @@ set(LIBRARY_SOURCES
     Core/Time/FrameTimer.h
     Core/Time/FrameTimer.cpp
 
+    Gameplay/CharacterCollision.h
+    Gameplay/CharacterCollision.cpp
+    Gameplay/Crosshair.h
+    Gameplay/Crosshair.cpp
     Gameplay/FreeFlyCameraController.h
     Gameplay/FreeFlyCameraController.cpp
     Gameplay/FreeFlyCameraSystem.h
     Gameplay/FreeFlyCameraSystem.cpp
     Gameplay/GameplayState.h
     Gameplay/GameplayState.cpp
+    Gameplay/Health.h
     Gameplay/LandingDip.h
     Gameplay/LandingDip.cpp
     Gameplay/MouseLook.h
@@ -86,6 +91,8 @@ set(LIBRARY_SOURCES
     Gameplay/PlayerSystem.cpp
     Gameplay/Spin.h
     Gameplay/Spin.cpp
+    Gameplay/TargetDummy.h
+    Gameplay/TargetDummy.cpp
     Gameplay/ViewModel.h
     Gameplay/ViewModel.cpp
     Gameplay/ViewModelMotion.h
@@ -127,6 +134,7 @@ set(LIBRARY_SOURCES
 
     Renderer/ImGuiRendererBackend.h
     Renderer/ImGuiRendererBackend.cpp
+    Renderer/DrawOffset.h
     Renderer/MeshRenderer.h
     Renderer/ModelRenderer.h
     Renderer/RenderSettings.h
@@ -180,6 +188,8 @@ set(LIBRARY_SOURCES
     UI/CollisionWindow.cpp
     UI/ConsoleWindow.h
     UI/ConsoleWindow.cpp
+    UI/CrosshairOverlay.h
+    UI/CrosshairOverlay.cpp
     UI/DebugOverlay.h
     UI/DebugOverlay.cpp
     UI/EntitiesWindow.h

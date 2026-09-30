@@ -1,8 +1,10 @@
 #include "Core/Math/BoundingBox.h"
 
+#include <glm/geometric.hpp>
 #include <glm/vec3.hpp>
 #include <gtest/gtest.h>
 
+#include <optional>
 #include <vector>
 
 namespace Abomination::Core
@@ -60,5 +62,52 @@ namespace Abomination::Core
 
         EXPECT_EQ(box.minimum, glm::dvec3(-12.0, -20.0, -31.0));
         EXPECT_EQ(box.maximum, glm::dvec3(-10.0, -18.0, -30.0));
+    }
+
+    namespace
+    {
+        // A cube from (-1, -1, -1) to (1, 1, 1) for the ray tests.
+        constexpr BoundingBox UnitCube{.minimum = {-1.0, -1.0, -1.0}, .maximum = {1.0, 1.0, 1.0}};
+    }
+
+    TEST(BoundingBox, RayEntersBoxAtNearSide)
+    {
+        const std::optional<double> distance = IntersectRay(UnitCube, {-5.0, 0.0, 0.0}, {1.0, 0.0, 0.0}, 100.0);
+
+        ASSERT_TRUE(distance.has_value());
+        EXPECT_DOUBLE_EQ(*distance, 4.0);
+    }
+
+    TEST(BoundingBox, RayGoingTheOtherWayMisses)
+    {
+        EXPECT_FALSE(IntersectRay(UnitCube, {-5.0, 0.0, 0.0}, {-1.0, 0.0, 0.0}, 100.0).has_value());
+    }
+
+    TEST(BoundingBox, RayPassingBesideMisses)
+    {
+        EXPECT_FALSE(IntersectRay(UnitCube, {-5.0, 2.0, 0.0}, {1.0, 0.0, 0.0}, 100.0).has_value());
+    }
+
+    TEST(BoundingBox, BoxBeyondMaxDistanceIsMissed)
+    {
+        EXPECT_FALSE(IntersectRay(UnitCube, {-5.0, 0.0, 0.0}, {1.0, 0.0, 0.0}, 3.0).has_value());
+    }
+
+    TEST(BoundingBox, RayStartingInsideHitsAtOnce)
+    {
+        const std::optional<double> distance = IntersectRay(UnitCube, {0.0, 0.0, 0.0}, {0.0, 0.0, -1.0}, 100.0);
+
+        ASSERT_TRUE(distance.has_value());
+        EXPECT_DOUBLE_EQ(*distance, 0.0);
+    }
+
+    TEST(BoundingBox, SlantedRayHitsCorner)
+    {
+        // Diagonally towards the corner (1, 1, 1) from (3, 3, 3): it enters the box right at that corner.
+        const glm::dvec3 direction = glm::normalize(glm::dvec3(-1.0, -1.0, -1.0));
+        const std::optional<double> distance = IntersectRay(UnitCube, {3.0, 3.0, 3.0}, direction, 100.0);
+
+        ASSERT_TRUE(distance.has_value());
+        EXPECT_NEAR(*distance, glm::length(glm::dvec3(2.0, 2.0, 2.0)), 1e-9);
     }
 }

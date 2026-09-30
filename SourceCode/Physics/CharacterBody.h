@@ -20,7 +20,7 @@ namespace Abomination::Physics
         bool isOnGround = false;
 
         // How high the box walked up a step in the last tick (0 if it did not). The view of the player uses it to glide up
-        // stairs instead of jumping (see Gameplay::PlayerStepSmoothing).
+        // stairs instead of jumping (see Gameplay::StepSmoothing).
         float steppedUpHeight = 0.0f;
 
         // The box began the last tick inside a brush (see Physics::UpdateCharacter). Shown in the debug overlay; also keeps

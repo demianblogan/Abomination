@@ -5,6 +5,7 @@
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/geometric.hpp>
 #include <glm/vec2.hpp>
+#include <glm/vec4.hpp>
 
 namespace Abomination::Gameplay
 {
@@ -31,11 +32,18 @@ namespace Abomination::Gameplay
         return glm::rotate(placed, viewModel.motion.recoilPitch, glm::vec3(1.0f, 0.0f, 0.0f));
     }
 
+    glm::vec3 CalculateViewModelMuzzle(const ViewModel& viewModel)
+    {
+        return glm::vec3(CalculateViewModelMatrix(viewModel) * glm::vec4(viewModel.muzzle, 1.0f));
+    }
+
     void UpdateViewModel(const GameplayState& state, entt::registry& registry, float deltaTime)
     {
         ViewModel* viewModel = registry.try_get<ViewModel>(state.player);
         if (viewModel == nullptr)
             return;
+
+        viewModel->flashTimeLeft -= deltaTime;
 
         const Physics::CharacterBody& body = registry.get<Physics::CharacterBody>(state.player);
         const ViewModelMotionInput input{

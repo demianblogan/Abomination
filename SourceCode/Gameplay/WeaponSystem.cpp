@@ -3,6 +3,7 @@
 #include "Audio/AudioEngine.h"
 #include "Core/Math/BoundingBox.h"
 #include "Core/Scene/Transform.h"
+#include "Gameplay/Effects.h"
 #include "Gameplay/Health.h"
 #include "Gameplay/MouseLook.h"
 #include "Gameplay/Player.h"
@@ -18,6 +19,7 @@
 #include <glm/vec3.hpp>
 
 #include <algorithm>
+#include <numbers>
 #include <optional>
 #include <vector>
 
@@ -125,16 +127,18 @@ namespace Abomination::Gameplay
             const HitEntity hit = FindHitEntity(registry, state.player, start, glm::dvec3(direction), wallDistance);
             if (hit.entity == entt::null)
             {
-                weapon->lastShotPellets.push_back(
-                    PelletTrace{.end = glm::vec3(trace.endPosition), .hasHit = trace.fraction < 1.0});
+                const bool hasHitWall = trace.fraction < 1.0;
+                weapon->lastShotPellets.push_back(PelletTrace{.end = glm::vec3(trace.endPosition), .hasHit = hasHitWall});
+
+                // Sparks, dust and a mark where the pellet hit the wall.
+                if (hasHitWall)
+                    SpawnWallImpact(state.effects, glm::vec3(trace.endPosition), glm::vec3(trace.hitNormal));
                 continue;
             }
 
-            weapon->lastShotPellets.push_back(PelletTrace{
-                .end = glm::vec3(start + glm::dvec3(direction) * hit.distance),
-                .hasHit = true,
-                .hasHitEntity = true,
-            });
+            const glm::vec3 hitPoint(start + glm::dvec3(direction) * hit.distance);
+            weapon->lastShotPellets.push_back(PelletTrace{.end = hitPoint, .hasHit = true, .hasHitEntity = true});
+            SpawnBloodImpact(state.effects, hitPoint, direction);
 
             // The damage, and the push along the pellet, if the entity can move.
             hasHurt = true;
@@ -167,7 +171,19 @@ namespace Abomination::Gameplay
         if (ViewRecoil* viewRecoil = registry.try_get<ViewRecoil>(state.player); viewRecoil != nullptr)
             KickViewRecoil(*viewRecoil);
         if (ViewModel* viewModel = registry.try_get<ViewModel>(state.player); viewModel != nullptr)
+        {
             KickViewModelRecoil(viewModel->motion, viewModel->motionSettings);
+
+            // The flash at the muzzle of the weapon in the hands, turned differently every shot.
+            viewModel->flashTimeLeft = state.effects.settings.flashDuration;
+            viewModel->flashRotation = state.effects.random.GetFloat(0.0f, 2.0f * std::numbers::pi_v<float>);
+
+            // The smoke goes into the world, from where the muzzle is seen: the muzzle relative to the eyes, placed by
+            // the eyes. (The weapon is drawn with its own field of view, so this is close to, not exactly, where the
+            // muzzle appears on the screen; for drifting smoke that does not show.)
+            const glm::vec3 muzzle = eyes.position + eyes.rotation * CalculateViewModelMuzzle(*viewModel);
+            SpawnMuzzleSmoke(state.effects, muzzle, forward);
+        }
 
         return true;
     }

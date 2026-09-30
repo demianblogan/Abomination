@@ -159,6 +159,9 @@ namespace Abomination
             Gameplay::UpdatePlayerLandingDip(m_gameplay, m_registry, frameTimer.GetDeltaTime());
             Gameplay::UpdatePlayerViewRecoil(m_gameplay, m_registry, frameTimer.GetDeltaTime());
 
+            // Particles are only for the eyes, so they move every frame, like the view.
+            m_gameplay.effects.particles.Update(frameTimer.GetDeltaTime(), m_gameplay.physicsSettings.gravity);
+
             frameStatistics.AddFrame(frameTimer.GetDeltaTime(), tickCount);
 
             // 4. Drawing and showing the frame.
@@ -268,6 +271,7 @@ namespace Abomination
         // The dummies first: their models belong to the level and are removed with it.
         Gameplay::DestroyTargetDummies(m_registry, m_gameplay.targetDummies);
         m_level.Unload(m_registry, m_renderAssets);
+        Gameplay::ClearEffects(m_gameplay.effects);
         m_level = World::Level::Create(m_registry, m_renderAssets, *map, StartMapPath);
         m_gameplay.targetDummies = Gameplay::SpawnTargetDummies(m_registry, m_renderAssets, m_level.GetTargetDummyStarts());
     }
@@ -301,6 +305,14 @@ namespace Abomination
             m_renderStatistics = Renderer::DrawMeshes(m_registry, view, interpolationFactor, m_renderAssets,
                                                       m_systemShaders, m_renderSettings);
 
+            // The see-through things after the solid world: the marks on the walls and the particles.
+            m_sprites.Clear();
+            Gameplay::AddDecalSprites(m_gameplay.effects, m_sprites);
+            m_gameplay.effects.particles.AddSprites(m_sprites);
+            m_renderStatistics.drawCallCount += m_spriteRenderer.Draw(m_sprites, view.viewMatrix, view.projectionMatrix,
+                                                                      m_renderAssets.textures,
+                                                                      m_renderAssets.shaders.Get(m_systemShaders.sprites));
+
             m_cameraCast = World::UpdateCollisionDebug(m_level.GetCollisionBrushes(), m_collisionSettings,
                                                        cameraTransform, m_debugLines);
 
@@ -333,6 +345,20 @@ namespace Abomination
                     m_renderAssets, viewModel->shaderProgram, m_systemShaders, m_renderSettings);
                 m_renderStatistics.drawCallCount += viewModelStatistics.drawCallCount;
                 m_renderStatistics.triangleCount += viewModelStatistics.triangleCount;
+
+                // The muzzle flash, drawn with the weapon: in the space of the eyes (no view matrix) with the projection
+                // of the weapon, so it sits exactly at the muzzle.
+                if (viewModel->flashTimeLeft > 0.0f)
+                {
+                    const Gameplay::EffectSettings& effects = m_gameplay.effects.settings;
+                    m_sprites.Clear();
+                    m_sprites.AddBillboard(Gameplay::CalculateViewModelMuzzle(*viewModel), effects.flashHalfSize,
+                                           viewModel->flashRotation, glm::vec4(1.0f),
+                                           m_gameplay.effects.textures.muzzleFlash, Renderer::SpriteBlend::Additive);
+                    m_renderStatistics.drawCallCount += m_spriteRenderer.Draw(
+                        m_sprites, glm::mat4(1.0f), Renderer::CalculateViewModelProjection(viewModel->verticalFOV, aspectRatio),
+                        m_renderAssets.textures, m_renderAssets.shaders.Get(m_systemShaders.sprites));
+                }
             }
         }
 

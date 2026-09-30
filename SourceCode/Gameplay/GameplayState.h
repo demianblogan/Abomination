@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Audio/SoundEvent.h"
+#include "Gameplay/Effects.h"
 #include "Gameplay/FreeFlyCameraController.h"
 #include "Gameplay/PlayerController.h"
 #include "Physics/CharacterMovement.h"
@@ -71,6 +72,9 @@ namespace Abomination::Gameplay
 
         // The target dummies of the level (see TargetDummy.h); replaced when the level is.
         std::vector<entt::entity> targetDummies;
+
+        // The visual effects of shots (see Effects.h).
+        Effects effects;
     };
 
     // Creates the player at the player start of the level and the free-fly camera waiting at their eyes, looking the

@@ -49,10 +49,16 @@ namespace Abomination::Gameplay
 
         // The shotgun in the hands, for the whole game (the pickups and weapon switching of later versions will change
         // which model it is).
+        const Renderer::ModelHandle shotgun = renderAssets.LoadModel("Models/Weapons/Shotgun.glb", Core::AssetLifetime::Global);
         registry.emplace<ViewModel>(state.player, ViewModel{
-            .model = renderAssets.LoadModel("Models/Weapons/Shotgun.glb", Core::AssetLifetime::Global),
+            .model = shotgun,
             .shaderProgram = renderAssets.shaders.Load("Shaders/TexturedShaded"),
+
+            // The model is centered on its origin and points along -Z, so its muzzle is half its length in front.
+            .muzzle = glm::vec3(0.0f, 0.0f, -renderAssets.models.Get(shotgun).size.z * 0.5f),
         });
+
+        state.effects.textures = LoadEffectTextures(renderAssets.textures);
 
         registry.emplace<LandingDip>(state.player);
         registry.emplace<ViewRecoil>(state.player);

@@ -11,6 +11,8 @@
 #include "Platform/Window.h"
 #include "Renderer/Assets/RenderAssets.h"
 #include "Renderer/Debug/DebugLineRenderer.h"
+#include "Renderer/Sprites/SpriteBatch.h"
+#include "Renderer/Sprites/SpriteRenderer.h"
 #include "Renderer/Debug/DebugLines.h"
 #include "Renderer/RenderSettings.h"
 #include "Renderer/RenderSystem.h"
@@ -96,6 +98,10 @@ namespace Abomination
         // Lines any code can add during a frame for debugging; drawn over the scene and cleared at the end of Render().
         Renderer::DebugLines m_debugLines;
         Renderer::DebugLineRenderer m_debugLineRenderer;
+
+        // The sprites of a frame (particles, marks, the muzzle flash) and what draws them.
+        Renderer::SpriteBatch m_sprites;
+        Renderer::SpriteRenderer m_spriteRenderer;
 
         // The folder with the game files, for loading maps after startup.
         std::filesystem::path m_assetsDirectory;

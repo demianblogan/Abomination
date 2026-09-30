@@ -72,6 +72,8 @@ set(LIBRARY_SOURCES
     Gameplay/CharacterCollision.cpp
     Gameplay/Crosshair.h
     Gameplay/Crosshair.cpp
+    Gameplay/Effects.h
+    Gameplay/Effects.cpp
     Gameplay/FreeFlyCameraController.h
     Gameplay/FreeFlyCameraController.cpp
     Gameplay/FreeFlyCameraSystem.h
@@ -83,6 +85,8 @@ set(LIBRARY_SOURCES
     Gameplay/LandingDip.cpp
     Gameplay/MouseLook.h
     Gameplay/MouseLook.cpp
+    Gameplay/Particles.h
+    Gameplay/Particles.cpp
     Gameplay/Player.h
     Gameplay/Player.cpp
     Gameplay/PlayerController.h
@@ -140,6 +144,10 @@ set(LIBRARY_SOURCES
     Renderer/RenderSettings.h
     Renderer/RenderSystem.h
     Renderer/RenderSystem.cpp
+    Renderer/Sprites/SpriteBatch.h
+    Renderer/Sprites/SpriteBatch.cpp
+    Renderer/Sprites/SpriteRenderer.h
+    Renderer/Sprites/SpriteRenderer.cpp
     Renderer/Assets/GLTFLoader.h
     Renderer/Assets/GLTFLoader.cpp
     Renderer/Assets/Mesh.h

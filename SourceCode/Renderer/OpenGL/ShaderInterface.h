@@ -37,4 +37,12 @@ namespace Abomination::Renderer
     // Uniforms after the view and projection matrices: the size of the frame and the width of the lines, in pixels.
     inline constexpr std::uint32_t DebugLineViewportSizeUniform = 3;
     inline constexpr std::uint32_t DebugLineWidthUniform = 4;
+
+    // --- Sprite (see SpriteRenderer) ---
+
+    // Vertex inputs: the corner in world coordinates (no model matrix, like DebugLines), its texture coordinates and the
+    // color that tints the texture. The texture is uniAlbedoTexture (AlbedoTextureUnit).
+    inline constexpr std::uint32_t SpritePositionAttribute = 0;
+    inline constexpr std::uint32_t SpriteTexCoordAttribute = 1;
+    inline constexpr std::uint32_t SpriteColorAttribute = 2;
 }

@@ -3,6 +3,7 @@
 #include "Core/Scene/Name.h"
 #include "Core/Scene/Transform.h"
 #include "Core/Scene/TransformInterpolation.h"
+#include "Gameplay/CharacterCollision.h"
 #include "Gameplay/Health.h"
 #include "Gameplay/Player.h"
 #include "Physics/CharacterBody.h"
@@ -106,8 +107,10 @@ namespace Abomination::Gameplay
             }
 
             // No command: it only slides after a push, slowed by friction, and falls when there is no floor.
+            // It stops at the walls and at the other characters (the player, the other dummies).
             Physics::CharacterBody& body = registry.get<Physics::CharacterBody>(entity);
-            Physics::UpdateCharacter(body, transform, brushes, physicsSettings, movementSettings, Physics::MoveCommand{},
+            const std::vector<World::CollisionBrush> obstacles = GatherCollisionBrushes(registry, brushes, entity);
+            Physics::UpdateCharacter(body, transform, obstacles, physicsSettings, movementSettings, Physics::MoveCommand{},
                                      tickDuration);
 
             // Pushed up a stair, the body jumps up at once; the model glides after it, like the eyes of the player.

@@ -68,11 +68,13 @@ set(LIBRARY_SOURCES
     Core/Time/FrameTimer.h
     Core/Time/FrameTimer.cpp
 
+    Gameplay/CharacterCollision.h
+    Gameplay/CharacterCollision.cpp
+    Gameplay/Crosshair.h
+    Gameplay/Crosshair.cpp
     Gameplay/FreeFlyCameraController.h
     Gameplay/FreeFlyCameraController.cpp
     Gameplay/FreeFlyCameraSystem.h
-    Gameplay/Crosshair.h
-    Gameplay/Crosshair.cpp
     Gameplay/FreeFlyCameraSystem.cpp
     Gameplay/GameplayState.h
     Gameplay/GameplayState.cpp

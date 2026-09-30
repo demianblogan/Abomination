@@ -2,6 +2,7 @@
 
 #include "Audio/AudioEngine.h"
 #include "Core/Scene/Transform.h"
+#include "Gameplay/CharacterCollision.h"
 #include "Core/Scene/TransformInterpolation.h"
 #include "Gameplay/Player.h"
 #include "Physics/CharacterBody.h"
@@ -12,6 +13,7 @@
 #include <glm/vec3.hpp>
 
 #include <optional>
+#include <vector>
 
 namespace Abomination::Gameplay
 {
@@ -42,8 +44,10 @@ namespace Abomination::Gameplay
                 ? state.playerController.CreateMoveCommand(registry.get<LookAngles>(state.player), actions)
                 : Physics::MoveCommand{};
 
+        // The player stops at the walls and at the other characters (the target dummies, later enemies).
         Physics::CharacterBody& body = registry.get<Physics::CharacterBody>(state.player);
-        Physics::UpdateCharacter(body, registry.get<Core::Transform>(state.player), brushes, state.physicsSettings,
+        const std::vector<World::CollisionBrush> obstacles = GatherCollisionBrushes(registry, brushes, state.player);
+        Physics::UpdateCharacter(body, registry.get<Core::Transform>(state.player), obstacles, state.physicsSettings,
                                  state.movementSettings, command, tickDuration);
         UpdateStepSmoothing(registry.get<StepSmoothing>(state.player), body.steppedUpHeight, tickDuration);
     }

@@ -89,4 +89,16 @@ namespace Abomination::World
 
         return brushes;
     }
+
+    CollisionBrush CreateBoxCollisionBrush(const glm::dvec3& center, const glm::dvec3& halfExtents)
+    {
+        CollisionBrush brush;
+        brush.bounds = Core::BoundingBox{.minimum = center - halfExtents, .maximum = center + halfExtents};
+
+        // The six sides of the box are exactly the bevel planes of any brush with these bounds.
+        for (const glm::dvec3& direction : AxisDirections)
+            brush.planes.push_back(CreateBoxSidePlane(brush.bounds, direction));
+
+        return brush;
+    }
 }

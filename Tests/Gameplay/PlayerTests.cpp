@@ -114,7 +114,7 @@ namespace Abomination::Gameplay
 
     TEST(Player, EyesGlideUpAfterStep)
     {
-        PlayerStepSmoothing smoothing;
+        StepSmoothing smoothing;
 
         // The body walks up a step of 0.25 m: the eyes stay behind by that much, minus one tick of catching up.
         UpdateStepSmoothing(smoothing, 0.25f, 1.0f / 60.0f);
@@ -129,7 +129,7 @@ namespace Abomination::Gameplay
 
     TEST(Player, EyesFallBehindAtMostMaximumStepLag)
     {
-        PlayerStepSmoothing smoothing;
+        StepSmoothing smoothing;
 
         UpdateStepSmoothing(smoothing, 2.0f, 0.0f);
 

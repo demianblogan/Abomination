@@ -496,7 +496,7 @@ player entity                                free-fly camera entity
 ├── Physics::CharacterBody  box, velocity,    ├── Renderer::CameraLens
 │                           on ground         └── Gameplay::LookAngles     yaw and pitch
 ├── Gameplay::LookAngles    yaw and pitch
-├── Gameplay::PlayerStepSmoothing  eyes gliding up steps
+├── Gameplay::StepSmoothing  eyes gliding up steps
 └── Renderer::CameraLens
 ```
 
@@ -505,7 +505,7 @@ player entity                                free-fly camera entity
   (`PlayerEyeHeight`); `CalculatePlayerEyeTransform` makes the camera
   transform from the (interpolated) body and the look angles. After the body
   walks up a step (at once), the eyes follow it smoothly: 80 units/s, at most
-  12 units behind (`PlayerStepSmoothing`, like Quake), interpolated between
+  12 units behind (`StepSmoothing`, like Quake), interpolated between
   ticks.
 - `PlayerController` turns input into a `Physics::MoveCommand` (see section
   12): WASD relative to the yaw, always horizontal; a jump pressed in any
@@ -721,7 +721,7 @@ Library: **EnTT 4.0.0** (`ThirdParty/EnTT`, see section 3).
 | `CameraLens` | Renderer | vertical FOV, near and far plane | `CalculateView` |
 | `Spin` | Gameplay | axis, speed | `UpdateSpinningEntities` |
 | `LookAngles` | Gameplay | yaw, pitch of a view turned by the mouse (the player, the free-fly camera) | `PlayerController`, `FreeFlyCameraController`, the view |
-| `PlayerStepSmoothing` | Gameplay | eyes behind the body after a step, now and last tick | the view |
+| `StepSmoothing` | Gameplay | eyes behind the body after a step, now and last tick | the view |
 | `CharacterBody` | Physics | box size, velocity, on ground, stepped up, in solid | `UpdateCharacter`, Movement window |
 
 **Where components live.** A component lives next to the system that

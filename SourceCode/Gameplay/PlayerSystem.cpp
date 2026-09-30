@@ -42,7 +42,7 @@ namespace Abomination::Gameplay
         Physics::CharacterBody& body = registry.get<Physics::CharacterBody>(state.player);
         Physics::UpdateCharacter(body, registry.get<Core::Transform>(state.player), brushes, state.physicsSettings,
                                  state.movementSettings, command, tickDuration);
-        UpdateStepSmoothing(registry.get<PlayerStepSmoothing>(state.player), body.steppedUpHeight, tickDuration);
+        UpdateStepSmoothing(registry.get<StepSmoothing>(state.player), body.steppedUpHeight, tickDuration);
     }
 
     float CalculateLandingVolume(float fallSpeed)

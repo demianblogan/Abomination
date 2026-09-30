@@ -269,7 +269,7 @@ namespace Abomination::UI
             ImGui::Text("In solid: %s", body.isInSolid ? "YES (see the log)" : "no");
         }
 
-        void DrawPlayerStepSmoothing(const Gameplay::PlayerStepSmoothing& smoothing)
+        void DrawStepSmoothing(const Gameplay::StepSmoothing& smoothing)
         {
             // Read-only: changed every tick. Negative while the eyes are still catching up with the body after a step.
             ImGui::Text("Eyes behind the body: %.3f m (last tick %.3f m)", smoothing.offset, smoothing.previousOffset);
@@ -354,10 +354,10 @@ namespace Abomination::UI
                                         "yaw and pitch of the view, turned with the mouse."))
                     DrawLookAngles(*look);
 
-            if (const auto* smoothing = registry.try_get<Gameplay::PlayerStepSmoothing>(entity); smoothing != nullptr)
-                if (DrawComponentHeader("Player Step Smoothing", ComponentModule::Gameplay,
-                                        "lets the eyes glide up stairs after the body."))
-                    DrawPlayerStepSmoothing(*smoothing);
+            if (const auto* smoothing = registry.try_get<Gameplay::StepSmoothing>(entity); smoothing != nullptr)
+                if (DrawComponentHeader("Step Smoothing", ComponentModule::Gameplay,
+                                        "lets the eyes or the model glide up stairs after the body."))
+                    DrawStepSmoothing(*smoothing);
         }
         ImGui::EndChild();
 

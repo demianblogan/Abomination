@@ -132,6 +132,7 @@ set(LIBRARY_SOURCES
 
     Renderer/ImGuiRendererBackend.h
     Renderer/ImGuiRendererBackend.cpp
+    Renderer/DrawOffset.h
     Renderer/MeshRenderer.h
     Renderer/ModelRenderer.h
     Renderer/RenderSettings.h

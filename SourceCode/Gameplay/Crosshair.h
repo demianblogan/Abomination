@@ -12,7 +12,7 @@ namespace Abomination::Gameplay
 
         // How long one line is, how far from the circle it starts, and how far it moves during the marker (negative:
         // towards the middle).
-        float lineLength = 7.0f;
+        float lineLength = 15.0f;
         float startGap = 3.0f;
         float travelDistance = 6.0f;
 
@@ -38,10 +38,10 @@ namespace Abomination::Gameplay
         HitMarkerSettings hitMarker;
         HitMarkerSettings killMarker{
             .color = {1.0f, 0.15f, 0.1f, 1.0f},
-            .lineLength = 9.0f,
+            .lineLength = 20.0f,
             .travelDistance = 9.0f,
             .duration = 0.35f,
-            .thickness = 2.5f,
+            .thickness = 3.0f,
         };
     };
 

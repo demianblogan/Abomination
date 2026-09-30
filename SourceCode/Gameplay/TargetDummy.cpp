@@ -4,9 +4,11 @@
 #include "Core/Scene/Transform.h"
 #include "Core/Scene/TransformInterpolation.h"
 #include "Gameplay/Health.h"
+#include "Gameplay/Player.h"
 #include "Physics/CharacterBody.h"
 #include "Physics/CharacterMovement.h"
 #include "Renderer/Assets/RenderAssets.h"
+#include "Renderer/DrawOffset.h"
 #include "Renderer/ModelRenderer.h"
 #include "World/PlayerStart.h"
 
@@ -40,6 +42,8 @@ namespace Abomination::Gameplay
             registry.emplace_or_replace<Health>(entity, Health{.current = dummy.maximumHealth, .maximum = dummy.maximumHealth});
             registry.emplace_or_replace<Renderer::ModelRenderer>(
                 entity, Renderer::ModelRenderer{.model = dummy.model, .shaderProgram = dummy.shaderProgram});
+            registry.emplace_or_replace<StepSmoothing>(entity);
+            registry.emplace_or_replace<Renderer::DrawOffset>(entity);
         }
     }
 
@@ -102,8 +106,17 @@ namespace Abomination::Gameplay
             }
 
             // No command: it only slides after a push, slowed by friction, and falls when there is no floor.
-            Physics::UpdateCharacter(registry.get<Physics::CharacterBody>(entity), transform, brushes, physicsSettings,
-                                     movementSettings, Physics::MoveCommand{}, tickDuration);
+            Physics::CharacterBody& body = registry.get<Physics::CharacterBody>(entity);
+            Physics::UpdateCharacter(body, transform, brushes, physicsSettings, movementSettings, Physics::MoveCommand{},
+                                     tickDuration);
+
+            // Pushed up a stair, the body jumps up at once; the model glides after it, like the eyes of the player.
+            StepSmoothing& smoothing = registry.get<StepSmoothing>(entity);
+            UpdateStepSmoothing(smoothing, body.steppedUpHeight, tickDuration);
+            registry.replace<Renderer::DrawOffset>(entity, Renderer::DrawOffset{
+                .offset = glm::vec3(0.0f, smoothing.offset, 0.0f),
+                .previousOffset = glm::vec3(0.0f, smoothing.previousOffset, 0.0f),
+            });
         }
     }
 }

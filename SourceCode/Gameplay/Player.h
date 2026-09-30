@@ -15,11 +15,12 @@ namespace Abomination::Gameplay
     // 24 units below its origin to 32 above it, the eyes are 22 above the origin, so 18 above the center of the box).
     inline constexpr float PlayerEyeHeight = Core::MapUnitsToMeters(18.0f);
 
-    // Component: how far the eyes are below where they belong after the body stepped up a stair (0 or negative), now and
-    // one tick earlier (the view is drawn between the two, like interpolated transforms). The body goes up a step at once
-    // (see Physics::StepSlideMove); the eyes follow it smoothly, like in Quake, so climbing stairs does not jerk the view.
-    // Only the view uses it: the body is where the physics put it.
-    struct PlayerStepSmoothing
+    // Component of a character: how far what is seen of it is below where its body is after the body stepped up a stair
+    // (0 or negative), now and one tick earlier (it is drawn between the two, like interpolated transforms). The body
+    // goes up a step at once (see Physics::StepSlideMove); what is seen follows it smoothly, like in Quake, so climbing
+    // stairs does not jerk. For the player it is the eyes; for other characters their model (see Renderer::DrawOffset).
+    // Only the picture uses it: the body is where the physics put it.
+    struct StepSmoothing
     {
         float offset = 0.0f;
         float previousOffset = 0.0f;
@@ -31,15 +32,15 @@ namespace Abomination::Gameplay
 
     // One tick of the smoothing: the eyes stay behind by the height the body just stepped up (at most MaximumStepLag),
     // then catch up by StepSmoothingSpeed.
-    void UpdateStepSmoothing(PlayerStepSmoothing& smoothing, float steppedUpHeight, float deltaTime);
+    void UpdateStepSmoothing(StepSmoothing& smoothing, float steppedUpHeight, float deltaTime);
 
     // Creates the player at the player start of the level: Name, Transform (the center of the box, at
     // playerStart.boxCenter), PreviousTransform (the player moves in ticks), Physics::CharacterBody with the box of
-    // the Quake player (World::PlayerHalfExtents), LookAngles, PlayerStepSmoothing and a Renderer::CameraLens (the
+    // the Quake player (World::PlayerHalfExtents), LookAngles, StepSmoothing and a Renderer::CameraLens (the
     // player is also a camera).
     entt::entity SpawnPlayer(entt::registry& registry, const World::PlayerStart& playerStart);
 
-    // Where the camera of the player is: at the eyes above the body (moved by stepOffset, see PlayerStepSmoothing),
+    // Where the camera of the player is: at the eyes above the body (moved by stepOffset, see StepSmoothing),
     // looking along the look angles. body is the transform of the player (it may be interpolated).
     [[nodiscard]] Core::Transform CalculatePlayerEyeTransform(const Core::Transform& body, const LookAngles& look,
                                                               float stepOffset = 0.0f);

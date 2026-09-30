@@ -45,3 +45,9 @@ the license check before a commercial release.
 | `Models/Enemies/Dummy.glb` | iJUNE | ["[ FREE ] Dummy Model"](https://sketchfab.com/3d-models/free-dummy-model-8f3cb85451214dd6ad38209e46f47182) on Sketchfab | CC-BY 4.0 | — | Temporary target dummy of 0.3, removed with the first enemy (0.4) |
 | `Sounds/Weapons/Hit1.ogg` – `Hit3.ogg` | Kenney | [Impact Sounds 1.0](https://kenney.nl/assets/impact-sounds) | CC0 | Renamed from `impactPunch_medium_000.ogg` – `002.ogg` | A shot hurt something (temporary) |
 | `Sounds/Weapons/Kill1.ogg` – `Kill3.ogg` | Kenney | Same pack | CC0 | Renamed from `impactPlate_heavy_000.ogg` – `002.ogg` | A shot killed something (temporary) |
+| `Textures/Effects/MuzzleFlash.png` | Alone Bull | `Tools/TextureGenerator` (32×32) | Own work | — | Flash at the muzzle of a weapon |
+| `Textures/Effects/Spark.png` | Alone Bull | `Tools/TextureGenerator` (16×16) | Own work | — | Spark of a pellet hitting a wall |
+| `Textures/Effects/Smoke.png` | Alone Bull | `Tools/TextureGenerator` (32×32) | Own work | — | Smoke from the muzzle |
+| `Textures/Effects/Dust.png` | Alone Bull | `Tools/TextureGenerator` (32×32) | Own work | — | Dust of a pellet hitting a wall |
+| `Textures/Effects/PelletMark.png` | Alone Bull | `Tools/TextureGenerator` (16×16) | Own work | — | Mark a pellet leaves on a wall (decal) |
+| `Textures/Effects/Blood.png` | Alone Bull | `Tools/TextureGenerator` (16×16) | Own work | — | Drop of blood of a pellet hitting a character |

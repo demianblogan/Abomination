@@ -12,6 +12,7 @@ the license check before a commercial release.
 | CC0 / Public Domain             | ✅          | None                                          | ✅      |
 | CC-BY 3.0 / 4.0                 | ✅          | Credit the author (Credits screen + this file)| ✅      |
 | Purchased, commercial use       | ✅          | Follow the store's license terms              | ✅      |
+| Pixabay Content License         | ✅          | Only as part of the game, never as a file on its own (no stock redistribution) | ✅      |
 | AI-generated                    | depends     | Service terms must allow commercial use       | ⚠️ check terms |
 | CC-BY-SA                        | ✅          | Modified asset must use the same license      | ⚠️ avoid |
 | CC-BY-ND                        | ✅          | Asset must not be modified                    | ⚠️ only unmodified |
@@ -40,3 +41,4 @@ the license check before a commercial release.
 | `Sounds/Player/Land1.ogg` – `Land3.ogg` | Kenney | [Impact Sounds 1.0](https://kenney.nl/assets/impact-sounds) | CC0 | Renamed from `footstep_concrete_000.ogg` – `002.ogg` | Landing of the player on a stone floor |
 | `Sounds/Debug/TestKnock.ogg` | Kenney | Same pack | CC0 | Renamed from `impactMetal_medium_000.ogg` | Test sound of the Audio window (3D sound in the world) |
 | `Models/Weapons/Shotgun.glb` | Kain Hunter | ["Remington 870 Retro/Quake Style"](https://skfb.ly/oq7yA) on Sketchfab | CC-BY 4.0 | Yes (Blender, by Alone Bull): centered on the origin, the barrel along -Z, FBX helper nodes removed, textures resized from 1024×1024 to 256×256; renamed to `Shotgun.glb` | Shotgun (10 parts: the pump and the slide move on their own). Credit exactly: "Remington 870 Retro/Quake Style" (https://skfb.ly/oq7yA) by Kain Hunter is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/). |
+| `Sounds/Weapons/Shotgun/Fire1.ogg` | Pixabay contributor (not recorded) | [Pixabay sound effects, search "shotgun"](https://pixabay.com/sound-effects/search/shotgun/) | Pixabay Content License | Renamed to `Fire1.ogg` | Shotgun shot. Downloaded from the search results, so the exact page was not recorded; replace or identify it before a commercial release |

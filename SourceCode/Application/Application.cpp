@@ -11,7 +11,10 @@
 #include "Gameplay/Spin.h"
 #include "Gameplay/LandingDip.h"
 #include "Gameplay/ViewModel.h"
+#include "Gameplay/ViewRecoil.h"
 #include "Gameplay/ViewSystem.h"
+#include "Gameplay/Weapon.h"
+#include "Gameplay/WeaponSystem.h"
 #include "Physics/CharacterBody.h"
 #include "Platform/SystemServices.h"
 #include "Renderer/Camera/View.h"
@@ -151,6 +154,7 @@ namespace Abomination
             // and with the view turned in Update(): every frame, so it moves as smoothly as the view.
             Gameplay::UpdateViewModel(m_gameplay, m_registry, frameTimer.GetDeltaTime());
             Gameplay::UpdatePlayerLandingDip(m_gameplay, m_registry, frameTimer.GetDeltaTime());
+            Gameplay::UpdatePlayerViewRecoil(m_gameplay, m_registry, frameTimer.GetDeltaTime());
 
             frameStatistics.AddFrame(frameTimer.GetDeltaTime(), tickCount);
 
@@ -224,6 +228,10 @@ namespace Abomination
         Gameplay::UpdatePlayerLook(m_gameplay, m_registry, m_actionStates,
                                    doesMouseTurnPlayer ? m_inputDevices.mouse.GetMovement() : glm::vec2(0.0f));
         Gameplay::UpdateFreeFlyCameraLook(m_gameplay, m_registry, m_actionStates, m_inputDevices.mouse);
+
+        // The player shoots only while playing: a click on the debug overlay or in the console is not a shot.
+        m_canPlayerShoot = isPlaying;
+        Gameplay::CollectWeaponInput(m_gameplay, m_registry, m_actionStates, m_canPlayerShoot);
     }
 
     void Application::FixedUpdate(float tickDuration)
@@ -234,6 +242,7 @@ namespace Abomination
         const std::span<const World::CollisionBrush> brushes = m_level.GetCollisionBrushes();
         Gameplay::UpdatePlayer(m_gameplay, m_registry, m_actionStates, brushes, tickDuration);
         Gameplay::UpdatePlayerSounds(m_gameplay, m_registry, m_audio);
+        Gameplay::UpdateWeapon(m_gameplay, m_registry, m_actionStates, m_canPlayerShoot, brushes, m_audio, tickDuration);
         Gameplay::UpdateFreeFlyCamera(m_gameplay, m_registry, m_actionStates, brushes,
                                       m_collisionSettings.doesCameraCollide, tickDuration);
         Gameplay::UpdateSpinningEntities(m_registry, tickDuration);
@@ -288,6 +297,7 @@ namespace Abomination
                                                        cameraTransform, m_debugLines);
 
             Gameplay::AddPlayerDebugBox(m_gameplay, m_registry, interpolationFactor, m_debugLines);
+            Gameplay::AddWeaponDebugLines(m_gameplay, m_registry, m_debugLines);
 
             if (m_renderSettings.areWorldAxesVisible)
             {
@@ -341,6 +351,8 @@ namespace Abomination
             .audio = m_audio,
             .viewModel = m_registry.get<Gameplay::ViewModel>(m_gameplay.player),
             .landingDip = m_registry.get<Gameplay::LandingDip>(m_gameplay.player),
+            .weapon = m_registry.get<Gameplay::Weapon>(m_gameplay.player),
+            .viewRecoil = m_registry.get<Gameplay::ViewRecoil>(m_gameplay.player),
         });
 
         m_window.SwapBuffers();

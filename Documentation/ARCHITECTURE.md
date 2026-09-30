@@ -532,8 +532,19 @@ player entity                                free-fly camera entity
   tied to the distance walked, a **sway** that lags behind the view and
   catches up, and **inertia** — one damped spring (`UpdateDampedSpring`)
   kicked down by jumps and landings. The view itself **dips after landings**
-  on the same kind of spring (`LandingDip`). Everything is tuned in View >
-  Gameplay > View Model.
+  on the same kind of spring (`LandingDip`). While the player stands, the
+  weapon **breathes** (slow rise and fall), fading out as the bob fades in.
+  Everything is tuned in View > Gameplay > View Model.
+- **Shooting** (`Gameplay::Weapon`, `WeaponSystem`): Fire (left mouse
+  button) shoots only while playing (no overlay or console open); a press is
+  kept until the next tick, holding keeps shooting at the rhythm of the
+  weapon. A shot is hitscan: every pellet is a ray from the **eyes** (not the
+  muzzle: the weapon in the hands is not in the world, and the pellets must go
+  where the crosshair points), spread evenly over a cone
+  (`GeneratePelletDirections`), traced through the brushes. The recoil jerks
+  the picture up (`ViewRecoil`, the aim stays) and kicks the weapon in the
+  hands back and its muzzle up (springs of `ViewModelMotion`). Tuned in View >
+  Gameplay > Weapon, which also shows the pellet lines of the last shot.
 
 - A camera looks along its **local −Z** axis; its local +X is its right side,
   local +Y the top of the screen. Its direction in the world is its rotation
@@ -551,8 +562,7 @@ player entity                                free-fly camera entity
   is held). It keeps yaw and pitch in `LookAngles` (mouse movement adds to
   them directly, pitch is clamped to ±89°, no roll) and builds the rotation
   from them (`CalculateCameraRotation`: `angleAxis(yaw, WorldUp) *
-  angleAxis(pitch, LocalRight)`). Planned: recoil of the view and the weapon
-  (0.3).
+  angleAxis(pitch, LocalRight)`).
 - Controllers get the components they work with as parameters instead of
   storing references. Turning and moving are separate calls because they run
   at different rates (see section 5): `UpdateRotation(freeFlyCamera,

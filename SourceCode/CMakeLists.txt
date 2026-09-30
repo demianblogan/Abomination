@@ -90,8 +90,14 @@ set(LIBRARY_SOURCES
     Gameplay/ViewModel.cpp
     Gameplay/ViewModelMotion.h
     Gameplay/ViewModelMotion.cpp
+    Gameplay/ViewRecoil.h
+    Gameplay/ViewRecoil.cpp
     Gameplay/ViewSystem.h
     Gameplay/ViewSystem.cpp
+    Gameplay/Weapon.h
+    Gameplay/Weapon.cpp
+    Gameplay/WeaponSystem.h
+    Gameplay/WeaponSystem.cpp
 
     Input/Action.h
     Input/ActionStates.h
@@ -190,6 +196,8 @@ set(LIBRARY_SOURCES
     UI/UIScale.cpp
     UI/ViewModelWindow.h
     UI/ViewModelWindow.cpp
+    UI/WeaponWindow.h
+    UI/WeaponWindow.cpp
 
     World/BrushGeometry.h
     World/BrushGeometry.cpp

@@ -70,6 +70,13 @@ namespace Abomination::UI
                               "flatter; larger: smaller and more stretched in depth. The world is not affected.");
 
         Gameplay::ViewModelMotionSettings& motion = viewModel.motionSettings;
+        ImGui::SeparatorText("Idle (standing)");
+        DrawCentimeterSlider("Idle amount", motion.idleAmount, 0.0f, 2.0f,
+                             "How far the weapon rises and falls with the breath while the player stands. 0 turns it off.");
+        ImGui::SetNextItemWidth(ScaleToUI(SliderWidth));
+        ImGui::SliderFloat("Breath duration", &motion.idleBreathDuration, 1.0f, 10.0f, "%.1f s");
+        ImGui::SetItemTooltip("How long one breath takes. Shorter: faster, as if out of breath.");
+
         ImGui::SeparatorText("Bob (walking)");
         DrawCentimeterSlider("Bob amount", motion.bobAmount, 0.0f, 5.0f,
                              "How far the weapon swings to the sides at full speed. 0 turns the bob off.");

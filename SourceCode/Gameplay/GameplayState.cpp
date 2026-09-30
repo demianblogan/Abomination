@@ -4,6 +4,8 @@
 #include "Gameplay/LandingDip.h"
 #include "Gameplay/Player.h"
 #include "Gameplay/ViewModel.h"
+#include "Gameplay/ViewRecoil.h"
+#include "Gameplay/Weapon.h"
 #include "Renderer/Assets/RenderAssets.h"
 #include "World/PlayerStart.h"
 
@@ -53,6 +55,15 @@ namespace Abomination::Gameplay
         });
 
         registry.emplace<LandingDip>(state.player);
+        registry.emplace<ViewRecoil>(state.player);
+
+        // The shotgun itself: what it shoots and how it sounds. One recording, its pitch changed a little every shot.
+        Weapon& weapon = registry.emplace<Weapon>(state.player);
+        weapon.fireSound = Audio::SoundEvent{
+            .variants = {audio.LoadSound("Sounds/Weapons/Shotgun/Fire1.ogg", Core::AssetLifetime::Global)},
+            .pitchVariation = 0.03f,
+            .maxVoices = 2,
+        };
 
         return state;
     }

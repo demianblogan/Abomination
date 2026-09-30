@@ -97,7 +97,7 @@ Every asset is listed in `ASSETS.md` before it is committed.
 | 2 | `feat/audio`                    | ✅     | New `Audio` module on miniaudio, sound store in the asset cache, voices with a limit per sound, random pitch and variants; jump and landing sounds; Audio window (volume, playing voices, a test sound in 3D where the camera looks) |
 | 3 | `feat/gltf-models`              | ✅     | glTF (`.glb`) loading: meshes, materials, textures; material store; a CC0 model standing in the test room |
 | 4 | `feat/view-model`               | ✅     | The shotgun in the hands: drawn in its own pass with its own field of view (never inside walls), bob while walking, sway behind the mouse; window with sliders |
-| 5 | `feat/hitscan`                  | ⏳     | Fire action (left mouse button), single-barrel shotgun: pellets with a random spread, time between shots, recoil of the view and the model, shot sound; debug lines of the pellets; random numbers in `Core/Math`; unlimited ammo |
+| 5 | `feat/hitscan`                  | ✅     | Fire action (left mouse button), single-barrel shotgun: pellets with a random spread, time between shots, recoil of the view and the model, shot sound; debug lines of the pellets; random numbers in `Core/Math`; unlimited ammo |
 | 6 | `feat/damage`                   | ⏳     | `Health` component; target dummies placed in TrenchBroom (`target_dummy`); traces against entities, not only walls; damage, hit sound, a destroyed target disappears; knockback from shots |
 | 7 | `feat/impact-effects`           | ⏳     | Muzzle flash sprite; particles (sparks and dust at hits, smoke); decals (pellet marks on walls, a limited number) |
 | 8 | `refactor/review-0.3`           | ⏳     | A review of the project and a guided walkthrough of what changed since the last one; screenshots; release v0.3.0 |
@@ -148,6 +148,11 @@ far:
 
 Ideas that are not assigned to a milestone yet.
 
+- **Hands and weapon animations**: a rigged model of the hands holding every
+  weapon, with drawing, reloading and melee animations made in Blender (or a
+  bought set of first-person arms), played with the skeletal animation of 0.4.
+  Mixamo animations may not be kept in a public repository: check its terms
+  first. Until then weapons have no reload animation, like in Quake.
 - **The weapon pulls back near walls**: only a visual touch — close to a wall
   the weapon in the hands slides a few centimeters back and down, while shots
   still come from the middle of the screen (unlike Crysis, which raised the

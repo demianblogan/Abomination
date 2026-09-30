@@ -125,6 +125,9 @@ namespace Abomination
         // The mouse is in relative mode (see Update).
         bool m_isMouseCaptured = false;
 
+        // The player is controlled and nothing needs the cursor: Fire shoots (see Update).
+        bool m_canPlayerShoot = false;
+
         UI::DebugOverlay m_debugOverlay;
 
         // State of the keyboard and the mouse for the current frame: the window fills it, the game reads it.

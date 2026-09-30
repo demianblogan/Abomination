@@ -2,6 +2,7 @@
 
 #include "Audio/SoundEvent.h"
 #include "Core/Math/Random.h"
+#include "Gameplay/Crosshair.h"
 
 #include <glm/trigonometric.hpp>
 #include <glm/vec3.hpp>
@@ -48,6 +49,9 @@ namespace Abomination::Gameplay
     struct Weapon
     {
         WeaponSettings settings;
+
+        // How its crosshair and hit markers look.
+        CrosshairSettings crosshair;
 
         Audio::SoundEvent fireSound;
 

@@ -18,6 +18,7 @@
 #include "Gameplay/WeaponSystem.h"
 #include "Physics/CharacterBody.h"
 #include "Platform/SystemServices.h"
+#include "Renderer/Camera/CameraLens.h"
 #include "Renderer/Camera/View.h"
 #include "Renderer/OpenGL/DebugOutput.h"
 #include "Renderer/OpenGL/OpenGLLoader.h"
@@ -360,6 +361,8 @@ namespace Abomination
             .landingDip = m_registry.get<Gameplay::LandingDip>(m_gameplay.player),
             .weapon = m_registry.get<Gameplay::Weapon>(m_gameplay.player),
             .viewRecoil = m_registry.get<Gameplay::ViewRecoil>(m_gameplay.player),
+            .isPlayerControlled = m_gameplay.controlMode == Gameplay::ControlMode::Player,
+            .playerVerticalFOV = m_registry.get<Renderer::CameraLens>(m_gameplay.player).verticalFOV,
         });
 
         m_window.SwapBuffers();

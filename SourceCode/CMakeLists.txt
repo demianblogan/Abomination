@@ -71,6 +71,8 @@ set(LIBRARY_SOURCES
     Gameplay/FreeFlyCameraController.h
     Gameplay/FreeFlyCameraController.cpp
     Gameplay/FreeFlyCameraSystem.h
+    Gameplay/Crosshair.h
+    Gameplay/Crosshair.cpp
     Gameplay/FreeFlyCameraSystem.cpp
     Gameplay/GameplayState.h
     Gameplay/GameplayState.cpp
@@ -183,6 +185,8 @@ set(LIBRARY_SOURCES
     UI/CollisionWindow.cpp
     UI/ConsoleWindow.h
     UI/ConsoleWindow.cpp
+    UI/CrosshairOverlay.h
+    UI/CrosshairOverlay.cpp
     UI/DebugOverlay.h
     UI/DebugOverlay.cpp
     UI/EntitiesWindow.h

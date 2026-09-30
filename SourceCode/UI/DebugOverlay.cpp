@@ -137,6 +137,10 @@ namespace Abomination::UI
                 DrawWeaponWindow(&m_isWeaponWindowOpen, context.weapon, context.viewRecoil, context.viewModel.motionSettings);
         }
 
+        // The crosshair belongs to the game, not to the debug tools: it is drawn whether the overlay is shown or not.
+        if (context.isPlayerControlled)
+            m_crosshair.Draw(context.weapon, context.playerVerticalFOV);
+
         // The console is drawn even while the rest of the overlay is hidden: it has its own key.
         m_consoleWindow.Draw(context.logHistory);
 

@@ -15,6 +15,7 @@ set(TEST_SOURCES
     Core/Math/ConvexPolygonTests.cpp
     Core/Math/PlaneTests.cpp
     Core/Math/RandomTests.cpp
+    Core/Math/SpringTests.cpp
     Core/Math/UnitsTests.cpp
     Core/Scene/TransformInterpolationTests.cpp
     Core/Scene/TransformTests.cpp

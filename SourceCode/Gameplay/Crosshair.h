@@ -35,7 +35,7 @@ namespace Abomination::Gameplay
         float dotRadius = 1.5f;
 
         // The pulse of a shot: the circle widens and springs back. How hard a shot kicks it (the part of its radius per
-        // second: 3 widens it by about a tenth) and how stiff the spring is (see UpdateDampedSpring).
+        // second: 3 widens it by about a tenth) and how stiff the spring is (see Core::UpdateDampedSpring).
         float pulseKick = 3.0f;
         float pulseStiffness = 200.0f;
 

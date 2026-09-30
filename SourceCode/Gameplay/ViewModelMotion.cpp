@@ -1,5 +1,7 @@
 #include "Gameplay/ViewModelMotion.h"
 
+#include "Core/Math/Spring.h"
+
 #include <glm/common.hpp>
 #include <glm/exponential.hpp>
 #include <glm/geometric.hpp>
@@ -16,20 +18,8 @@ namespace Abomination::Gameplay
         // second, see swayReturnRate).
         constexpr float BobFadeRate = 8.0f;
 
-        // The spring is integrated in steps of at most this long (seconds): a spring moved by a whole slow frame at once
-        // (a long frame of 0.1 s) would overshoot and could swing ever wider. 240 steps per second keep it stable.
-        constexpr float SpringStepDuration = 1.0f / 240.0f;
-
         // Landings slower than this (meters per second) do not move the weapon: walking down a stair is a small fall.
         constexpr float MinimumLandingSpeed = 2.0f;
-
-        // The fraction of a gap that is closed during deltaTime when rate of it is closed per second, the same way at any
-        // frame rate: after two frames of 0.01 s exactly as much is closed as after one frame of 0.02 s. (Closing
-        // rate * deltaTime of it each frame, the simple way, would close less at a low frame rate.)
-        float CalculateApproachFactor(float rate, float deltaTime)
-        {
-            return 1.0f - std::exp(-rate * deltaTime);
-        }
 
         void UpdateBob(ViewModelMotion& motion, const ViewModelMotionSettings& settings, const ViewModelMotionInput& input,
                        float deltaTime)
@@ -40,7 +30,7 @@ namespace Abomination::Gameplay
             motion.bobPhase = std::fmod(motion.bobPhase, 2.0f * std::numbers::pi_v<float>);
 
             const float targetWeight = input.isOnGround ? glm::clamp(input.horizontalSpeed / input.maxSpeed, 0.0f, 1.0f) : 0.0f;
-            motion.bobWeight += (targetWeight - motion.bobWeight) * CalculateApproachFactor(BobFadeRate, deltaTime);
+            motion.bobWeight += (targetWeight - motion.bobWeight) * Core::CalculateApproachFactor(BobFadeRate, deltaTime);
 
             // The breathing goes on all the time and repeats every two breaths (see CalculateViewModelMotionOffset);
             // keeping the time within that span keeps it a small number, which a float holds precisely.
@@ -67,7 +57,7 @@ namespace Abomination::Gameplay
             motion.hasPreviousLook = true;
 
             // And catches up with the view.
-            motion.sway -= motion.sway * CalculateApproachFactor(settings.swayReturnRate, deltaTime);
+            motion.sway -= motion.sway * Core::CalculateApproachFactor(settings.swayReturnRate, deltaTime);
         }
 
         void UpdateInertia(ViewModelMotion& motion, const ViewModelMotionSettings& settings,
@@ -86,27 +76,7 @@ namespace Abomination::Gameplay
             motion.wasOnGround = input.isOnGround;
             motion.previousVerticalSpeed = input.verticalSpeed;
 
-            UpdateDampedSpring(motion.inertiaOffset, motion.inertiaVelocity, settings.springStiffness, deltaTime);
-        }
-    }
-
-    void UpdateDampedSpring(float& offset, float& velocity, float stiffness, float deltaTime)
-    {
-        // The spring accelerates towards 0 in proportion to how far away it is (stiffness), the damping brakes in
-        // proportion to the speed. Damping of 1.4 * sqrt(stiffness) is a little below the value at which it would creep
-        // back without any swing (2 * sqrt(stiffness)), so it swings past 0 once, slightly, like a hand catching a weight.
-        const float damping = 1.4f * std::sqrt(stiffness);
-        float remainingTime = deltaTime;
-        while (remainingTime > 0.0f)
-        {
-            const float step = std::min(remainingTime, SpringStepDuration);
-            const float acceleration = -stiffness * offset - damping * velocity;
-
-            // Semi-implicit Euler: the new velocity moves the position. Unlike the plain order, it does not add energy to
-            // the spring, so the swing does not grow by itself.
-            velocity += acceleration * step;
-            offset += velocity * step;
-            remainingTime -= step;
+            Core::UpdateDampedSpring(motion.inertiaOffset, motion.inertiaVelocity, settings.springStiffness, deltaTime);
         }
     }
 
@@ -116,8 +86,8 @@ namespace Abomination::Gameplay
         UpdateBob(motion, settings, input, deltaTime);
         UpdateSway(motion, settings, input, deltaTime);
         UpdateInertia(motion, settings, input, deltaTime);
-        UpdateDampedSpring(motion.recoilBack, motion.recoilBackVelocity, settings.recoilStiffness, deltaTime);
-        UpdateDampedSpring(motion.recoilPitch, motion.recoilPitchVelocity, settings.recoilStiffness, deltaTime);
+        Core::UpdateDampedSpring(motion.recoilBack, motion.recoilBackVelocity, settings.recoilStiffness, deltaTime);
+        Core::UpdateDampedSpring(motion.recoilPitch, motion.recoilPitchVelocity, settings.recoilStiffness, deltaTime);
     }
 
     void KickViewModelRecoil(ViewModelMotion& motion, const ViewModelMotionSettings& settings)

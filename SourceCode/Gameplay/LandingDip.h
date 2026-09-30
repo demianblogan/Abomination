@@ -11,7 +11,7 @@ namespace Abomination::Gameplay
     struct LandingDip
     {
         // How far the view is pushed down per meter per second of the fall (meters per second of its own motion), and
-        // how stiff the spring is that brings it back (see UpdateDampedSpring).
+        // how stiff the spring is that brings it back (see Core::UpdateDampedSpring).
         float kickPerFallSpeed = 0.8f;
         float springStiffness = 170.0f;
 

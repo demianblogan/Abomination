@@ -101,11 +101,6 @@ namespace Abomination::Gameplay
     void UpdateViewModelMotion(ViewModelMotion& motion, const ViewModelMotionSettings& settings,
                                const ViewModelMotionInput& input, float deltaTime);
 
-    // Moves a damped spring by deltaTime (seconds): offset is pulled back to 0 and settles after one slight swing past
-    // it; a kick is a change of velocity. stiffness is per second squared: stiffer returns faster. Stable at any frame
-    // rate: a long frame is moved in small steps. Shared by the inertia of the weapon and the landing dip of the view.
-    void UpdateDampedSpring(float& offset, float& velocity, float stiffness, float deltaTime);
-
     // A shot: kicks the weapon back and its muzzle up (see recoilKickBack); the springs bring it back.
     void KickViewModelRecoil(ViewModelMotion& motion, const ViewModelMotionSettings& settings);
 

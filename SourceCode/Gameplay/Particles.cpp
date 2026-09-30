@@ -22,7 +22,7 @@ namespace Abomination::Gameplay
     void ParticleSystem::Update(float deltaTime, float gravity)
     {
         // The drag keeps exp(-drag * deltaTime) of the speed each frame: the same slowdown at any frame rate (see
-        // CalculateApproachFactor in ViewModelMotion.cpp for the same idea).
+        // Core::CalculateApproachFactor for the same idea).
         for (Particle& particle : m_particles)
         {
             particle.age += deltaTime;

@@ -1,7 +1,7 @@
 #include "UI/CrosshairOverlay.h"
 
 #include "Gameplay/Crosshair.h"
-#include "Gameplay/ViewModelMotion.h"
+#include "Core/Math/Spring.h"
 #include "Gameplay/Weapon.h"
 #include "UI/UIScale.h"
 
@@ -77,7 +77,7 @@ namespace Abomination::UI
             m_seenShotCount = weapon.shotCount;
             m_pulseVelocity += weapon.crosshair.pulseKick;
         }
-        Gameplay::UpdateDampedSpring(m_pulse, m_pulseVelocity, weapon.crosshair.pulseStiffness, deltaTime);
+        Core::UpdateDampedSpring(m_pulse, m_pulseVelocity, weapon.crosshair.pulseStiffness, deltaTime);
 
         if (weapon.hitCount != m_seenHitCount)
         {

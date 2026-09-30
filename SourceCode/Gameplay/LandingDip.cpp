@@ -1,6 +1,6 @@
 #include "Gameplay/LandingDip.h"
 
-#include "Gameplay/ViewModelMotion.h"
+#include "Core/Math/Spring.h"
 #include "Physics/CharacterBody.h"
 
 namespace Abomination::Gameplay
@@ -15,7 +15,7 @@ namespace Abomination::Gameplay
         dip.wasOnGround = isOnGround;
         dip.previousVerticalSpeed = verticalSpeed;
 
-        UpdateDampedSpring(dip.offset, dip.velocity, dip.springStiffness, deltaTime);
+        Core::UpdateDampedSpring(dip.offset, dip.velocity, dip.springStiffness, deltaTime);
     }
 
     void UpdatePlayerLandingDip(const GameplayState& state, entt::registry& registry, float deltaTime)

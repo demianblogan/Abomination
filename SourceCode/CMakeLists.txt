@@ -52,6 +52,8 @@ set(LIBRARY_SOURCES
     Core/Math/Plane.cpp
     Core/Math/Random.h
     Core/Math/Random.cpp
+    Core/Math/Spring.h
+    Core/Math/Spring.cpp
     Core/Math/Units.h
     Core/Scene/Name.h
     Core/Scene/Transform.h

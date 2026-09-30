@@ -108,6 +108,13 @@ namespace Abomination::UI
         ImGui::SetNextItemWidth(ScaleToUI(SliderWidth));
         ImGui::SliderFloat("Dot radius", &crosshair.dotRadius, 0.0f, 5.0f, "%.1f px");
 
+        ImGui::SetNextItemWidth(ScaleToUI(SliderWidth));
+        ImGui::SliderFloat("Pulse kick", &crosshair.pulseKick, 0.0f, 20.0f, "%.1f");
+        ImGui::SetItemTooltip("How much a shot widens the circle for a moment. 0 turns the pulse off.");
+        ImGui::SetNextItemWidth(ScaleToUI(SliderWidth));
+        ImGui::SliderFloat("Pulse stiffness", &crosshair.pulseStiffness, 20.0f, 800.0f, "%.0f");
+        ImGui::SetItemTooltip("How fast the circle comes back. Bigger: quicker and smaller.");
+
         DrawHitMarkerSettings("Hit marker", crosshair.hitMarker);
         DrawHitMarkerSettings("Kill marker", crosshair.killMarker);
 

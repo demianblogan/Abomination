@@ -1,6 +1,7 @@
 #include "UI/CrosshairOverlay.h"
 
 #include "Gameplay/Crosshair.h"
+#include "Gameplay/ViewModelMotion.h"
 #include "Gameplay/Weapon.h"
 #include "UI/UIScale.h"
 
@@ -41,8 +42,10 @@ namespace Abomination::UI
 
         // The circle is as wide as the spread; its size does not follow the UI scale (it shows where pellets land), but
         // its line thickness does.
-        const float circleRadius = Gameplay::CalculateSpreadRadiusOnScreen(weapon.settings.spreadAngle, verticalFOV,
+        // The pulse of the last shot widens it for a moment (m_pulse is the part of the radius it grows by).
+        const float spreadRadius = Gameplay::CalculateSpreadRadiusOnScreen(weapon.settings.spreadAngle, verticalFOV,
                                                                             ImGui::GetIO().DisplaySize.y);
+        const float circleRadius = spreadRadius * (1.0f + m_pulse);
         drawList->AddCircle(center, circleRadius, ToImGuiColor(settings.color), CircleSegmentCount,
                             ScaleToUI(settings.circleThickness));
         if (settings.dotRadius > 0.0f)
@@ -61,11 +64,20 @@ namespace Abomination::UI
         {
             m_seenHitCount = weapon.hitCount;
             m_seenKillCount = weapon.killCount;
+            m_seenShotCount = weapon.shotCount;
             m_hasSeenWeapon = true;
         }
 
         m_secondsSinceHit += deltaTime;
         m_secondsSinceKill += deltaTime;
+
+        // A new shot kicks the pulse; the spring brings the circle back to the spread.
+        if (weapon.shotCount != m_seenShotCount)
+        {
+            m_seenShotCount = weapon.shotCount;
+            m_pulseVelocity += weapon.crosshair.pulseKick;
+        }
+        Gameplay::UpdateDampedSpring(m_pulse, m_pulseVelocity, weapon.crosshair.pulseStiffness, deltaTime);
 
         if (weapon.hitCount != m_seenHitCount)
         {

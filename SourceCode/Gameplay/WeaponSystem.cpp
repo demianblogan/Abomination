@@ -154,6 +154,7 @@ namespace Abomination::Gameplay
         }
 
         audio.Play(weapon->fireSound);
+        ++weapon->shotCount;
 
         // One confirmation per shot, however many pellets hit: a kill sounds different from a hit.
         if (hasKilled)

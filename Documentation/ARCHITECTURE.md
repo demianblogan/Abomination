@@ -545,6 +545,24 @@ player entity                                free-fly camera entity
   the picture up (`ViewRecoil`, the aim stays) and kicks the weapon in the
   hands back and its muzzle up (springs of `ViewModelMotion`). Tuned in View >
   Gameplay > Weapon, which also shows the pellet lines of the last shot.
+- **Damage**: every pellet hits the closest of the wall behind it and the
+  boxes of the entities with `Health` and a `CharacterBody` in front of it
+  (`Core::IntersectRay`, the slab method); it takes `damagePerPellet` and
+  pushes a character along the pellet. One hit or kill sound per shot; the
+  weapon counts hits and kills (`hitCount`, `killCount`) for the markers.
+- **Crosshair** (`Gameplay::CrosshairSettings`, one per weapon): a circle
+  exactly as wide as the spread on the screen
+  (`CalculateSpreadRadiusOnScreen`), a dot, and hit and kill markers — four
+  diagonal lines that flick outwards and fade. Drawn with ImGui's foreground
+  lines (`UI::CrosshairOverlay`) until the HUD of 0.4.
+- **Characters collide with each other**: a moving character traces through
+  the level brushes plus a box brush for every other character
+  (`GatherCollisionBrushes`, `World::CreateBoxCollisionBrush`). A character
+  stepping up a stair is drawn gliding after its body (`StepSmoothing` for
+  every character, `Renderer::DrawOffset`).
+- **Target dummies** (`Gameplay/TargetDummy`, 0.3 only): characters with
+  health placed with `target_dummy` in TrenchBroom; destroyed, they come back
+  after 3 s once their place is free. Removed with the first enemy (0.4).
 
 - A camera looks along its **local −Z** axis; its local +X is its right side,
   local +Y the top of the screen. Its direction in the world is its rotation

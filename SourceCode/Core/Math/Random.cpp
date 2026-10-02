@@ -6,13 +6,11 @@ namespace Abomination::Core
 {
     Random::Random()
         : m_engine(std::random_device{}())
-    {
-    }
+    {}
 
     Random::Random(std::uint32_t seed) noexcept
         : m_engine(seed)
-    {
-    }
+    {}
 
     float Random::GetFloat(float minimum, float maximum)
     {

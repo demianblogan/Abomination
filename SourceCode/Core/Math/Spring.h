@@ -9,7 +9,7 @@ namespace Abomination::Core
     // a long frame is moved in small steps.
     //
     // With stiffness k the spring swings about sqrt(k) radians per second; a kick of velocity v moves it at most about
-    // 0.46 * v / sqrt(k) away (the 0.46 comes from the damping, see Spring.cpp). Example: k = 150, v = 1: 3.8 cm.
+    // 0.43 * v / sqrt(k) away (the 0.43 comes from the damping, see Spring.cpp). Example: k = 150, v = 1: 3.5 cm.
     void UpdateDampedSpring(float& offset, float& velocity, float stiffness, float deltaTime);
 
     // The part of a gap that is closed during deltaTime when rate of it is closed per second, the same way at any frame

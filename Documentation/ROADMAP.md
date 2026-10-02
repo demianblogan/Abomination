@@ -119,13 +119,24 @@ monsters of Quake; if time runs out, the navmesh moves to 0.5.
 
 | # | Branch                          | Status | Content                                                                 |
 |---|---------------------------------|--------|-------------------------------------------------------------------------|
-| 1 | `feat/text-rendering`           | 🔨     | A font baked into a texture (stb_truetype), a 2D pass over the scene in screen pixels, text and icons without ImGui |
-| 2 | `feat/hud`                      | ⏳     | Health of the player; a minimal HUD (health with an icon in a corner, pixel font); the crosshair and hit markers move from ImGui to the HUD; a red flash when hurt |
-| 3 | `feat/skeletal-animation`       | ⏳     | Skins, joints and animation clips from glTF; skinning in the vertex shader; smooth blending between clips; an animated model standing in the test room |
-| 4 | `feat/enemy`                    | ⏳     | The first enemy, a melee monster: states (idle, alert, chase, attack, pain, death), sight (a trace to the player) and hearing (shots), a strike that hurts the player; the target dummies of 0.3 removed; the log level chosen in the running game |
-| 5 | `feat/death`                    | ⏳     | The enemy dies with an animation and its body stays; the player dies like in Quake (the view drops to the floor, the screen turns red, a click or Space restarts the level) |
-| 6 | `feat/navmesh`                  | ⏳     | Recast/Detour: a navmesh built from the brushes when a level loads, paths around walls and up stairs, the navmesh shown in the debug overlay |
-| 7 | `refactor/review-0.4`           | ⏳     | A review of the project, a list of what changed since the last walkthrough, screenshots; release v0.4.0 |
+| 1 | `feat/text-rendering`           | 🔨     | Fonts baked into a texture (stb_truetype): Oswald for the HUD and texts, Cormorant SC for titles, with every letter of the 5 languages (checked by a test); a 2D pass over the scene in screen pixels, text and icons without ImGui |
+| 2 | `feat/hud`                      | ⏳     | Health and armor of the player, ammo of the shotgun (100 at the start, no shot without it); the HUD (see below) with icons from the texture generator; the crosshair and hit markers move from ImGui to the HUD; a red flash when hurt |
+| 3 | `feat/pump-action`              | ⏳     | After every shot the pump of the shotgun slides back and forth (moved by code, a part of the model) with a click, and a shell flies out, falls, bounces and lies for a while |
+| 4 | `feat/skeletal-animation`       | ⏳     | Skins, joints and animation clips from glTF; skinning in the vertex shader; smooth blending between clips; an animated model standing in the test room |
+| 5 | `feat/enemy`                    | ⏳     | The first enemy, a melee monster: states (idle, alert, chase, attack, pain, death), sight (a trace to the player) and hearing (shots), a strike that hurts the player; the target dummies of 0.3 removed; the log level chosen in the running game |
+| 6 | `feat/death`                    | ⏳     | The enemy dies with an animation and its body stays; the player dies: a death sound, the view drops to the floor and fades to black, "Game Over" and "Press any key to try again"; any key or mouse button restarts the level |
+| 7 | `feat/navmesh`                  | ⏳     | Recast/Detour: a navmesh built from the brushes when a level loads, paths around walls and up stairs, the navmesh shown in the debug overlay |
+| 8 | `refactor/review-0.4`           | ⏳     | A review of the project, a list of what changed since the last walkthrough, screenshots; release v0.4.0 |
+
+**The HUD of the whole game** (the parts that come later are drawn when their
+feature arrives):
+- bottom left: health (0-100%), above it armor (0-100%; hidden while the
+  player has none);
+- bottom right: the ammo of the weapon in the hands, with one of four icons:
+  shells (shotgun, double-barreled shotgun), bullets (machine gun, minigun),
+  rockets (rocket and grenade launcher), cells (lightning gun);
+- bottom center: keys (bronze, silver, gold), if keys are added;
+- top center: an active power-up and its time left, if power-ups are added.
 
 **Done when:** a monster in the test level notices the player, runs to them
 around walls and strikes; the shotgun hurts it and kills it; the HUD shows
@@ -181,7 +192,8 @@ far:
 Ideas that are not assigned to a milestone yet.
 
 - **Hands and weapon animations**: a rigged model of the hands holding every
-  weapon, with drawing, reloading and melee animations made in Blender (or a
+  weapon, with drawing, reloading and melee animations (pumping the shotgun with
+  the hand, pushing shells in one by one) made in Blender (or a
   bought set of first-person arms), played with the skeletal animation of 0.4.
   Mixamo animations may not be kept in a public repository: check its terms
   first. Until then weapons have no reload animation, like in Quake.

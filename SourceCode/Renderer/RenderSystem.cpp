@@ -45,30 +45,41 @@ namespace Abomination::Renderer
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         }
 
-        // Draws one mesh with its texture, placed by modelMatrix and seen through viewMatrix and projectionMatrix.
+        // What every mesh of one drawing pass shares: where the assets are, how to draw, where the scene is seen from and
+        // where the work is counted. Passed to DrawMesh as one value instead of six parameters repeated for every mesh.
+        struct MeshPass
+        {
+            const RenderAssets& assets;
+            const SystemShaders& systemShaders;
+            const RenderSettings& settings;
+            glm::mat4 viewMatrix{1.0f};
+            glm::mat4 projectionMatrix{1.0f};
+            RenderStatistics& statistics;
+        };
+
+        // Draws one mesh with its texture, placed by modelMatrix and seen through the matrices of the pass.
         // In wireframe mode every mesh is drawn with the wireframe shader instead of its own; the texture is still
         // bound, but that shader does not read it.
-        void DrawMesh(const RenderAssets& assets, const SystemShaders& systemShaders, const RenderSettings& settings,
-                      ShaderHandle shader, TextureHandle textureHandle, MeshHandle meshHandle, const glm::mat4& modelMatrix,
-                      const glm::mat4& viewMatrix, const glm::mat4& projectionMatrix, RenderStatistics& statistics)
+        void DrawMesh(const MeshPass& pass, ShaderHandle shader, TextureHandle textureHandle, MeshHandle meshHandle,
+                      const glm::mat4& modelMatrix)
         {
             // The handles are turned into objects at the moment of use (see AssetCache::Get).
             const GLShaderProgram& shaderProgram =
-                assets.shaders.Get(settings.isWireframeEnabled ? systemShaders.wireframe : shader);
-            const GLTexture& texture = assets.textures.Get(textureHandle);
-            const Mesh& mesh = assets.meshes.Get(meshHandle);
+                pass.assets.shaders.Get(pass.settings.isWireframeEnabled ? pass.systemShaders.wireframe : shader);
+            const GLTexture& texture = pass.assets.textures.Get(textureHandle);
+            const Mesh& mesh = pass.assets.meshes.Get(meshHandle);
 
             // Every mesh binds its program and texture again, even if the previous one used the same. That is fine for a
             // few dozen objects; sorting draws by program and texture (batching) comes when there are hundreds.
             shaderProgram.Use();
             shaderProgram.SetUniform(ModelUniform, modelMatrix);
-            shaderProgram.SetUniform(ViewUniform, viewMatrix);
-            shaderProgram.SetUniform(ProjectionUniform, projectionMatrix);
+            shaderProgram.SetUniform(ViewUniform, pass.viewMatrix);
+            shaderProgram.SetUniform(ProjectionUniform, pass.projectionMatrix);
             texture.Bind(AlbedoTextureUnit);
             mesh.Draw();
 
-            ++statistics.drawCallCount;
-            statistics.triangleCount += static_cast<int>(mesh.GetIndexCount() / 3);
+            ++pass.statistics.drawCallCount;
+            pass.statistics.triangleCount += static_cast<int>(mesh.GetIndexCount() / 3);
         }
     }
 
@@ -105,10 +116,13 @@ namespace Abomination::Renderer
             return drawn;
         };
 
-        const auto drawMesh = [&](ShaderHandle shader, TextureHandle texture, MeshHandle mesh, const glm::mat4& modelMatrix)
-        {
-            DrawMesh(assets, systemShaders, settings, shader, texture, mesh, modelMatrix, view.viewMatrix,
-                     view.projectionMatrix, statistics);
+        const MeshPass pass{
+            .assets = assets,
+            .systemShaders = systemShaders,
+            .settings = settings,
+            .viewMatrix = view.viewMatrix,
+            .projectionMatrix = view.projectionMatrix,
+            .statistics = statistics,
         };
 
         // An EnTT view (not to be confused with the camera View): all entities that have both components (const: this
@@ -119,7 +133,7 @@ namespace Abomination::Renderer
         meshEntities.each([&](entt::entity entity, const Core::Transform&, const MeshRenderer& meshRenderer)
         {
             const glm::mat4 modelMatrix = Core::CalculateModelMatrix(calculateDrawnTransform(entity));
-            drawMesh(meshRenderer.shaderProgram, meshRenderer.texture, meshRenderer.mesh, modelMatrix);
+            DrawMesh(pass, meshRenderer.shaderProgram, meshRenderer.texture, meshRenderer.mesh, modelMatrix);
         });
 
         // A model is drawn part by part: each part is first placed in the model (part.transform), then the model is placed
@@ -129,7 +143,7 @@ namespace Abomination::Renderer
         {
             const glm::mat4 entityMatrix = Core::CalculateModelMatrix(calculateDrawnTransform(entity));
             for (const ModelPart& part : assets.models.Get(modelRenderer.model).parts)
-                drawMesh(modelRenderer.shaderProgram, part.texture, part.mesh, entityMatrix * part.transform);
+                DrawMesh(pass, modelRenderer.shaderProgram, part.texture, part.mesh, entityMatrix * part.transform);
         });
 
         EndMeshPass();
@@ -151,10 +165,16 @@ namespace Abomination::Renderer
         // The weapon is placed relative to the eyes, so no view matrix is needed (the identity: the eyes are at the
         // origin, looking along -Z). Its projection has its own field of view: a wider field of view of the world does
         // not stretch the weapon. The aspect ratio is that of the window, so the weapon is not squeezed either.
-        const glm::mat4 projection = CalculateWeaponViewModelProjection(verticalFOV, aspectRatio);
+        const MeshPass pass{
+            .assets = assets,
+            .systemShaders = systemShaders,
+            .settings = settings,
+            .viewMatrix = glm::mat4(1.0f),
+            .projectionMatrix = CalculateWeaponViewModelProjection(verticalFOV, aspectRatio),
+            .statistics = statistics,
+        };
         for (const ModelPart& part : assets.models.Get(model).parts)
-            DrawMesh(assets, systemShaders, settings, shader, part.texture, part.mesh, eyeSpaceMatrix * part.transform,
-                     glm::mat4(1.0f), projection, statistics);
+            DrawMesh(pass, shader, part.texture, part.mesh, eyeSpaceMatrix * part.transform);
 
         EndMeshPass();
 

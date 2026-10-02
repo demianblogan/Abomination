@@ -13,8 +13,8 @@
 // All of it is only for the eyes: the weapon shoots from the middle of the screen wherever it swings.
 namespace Abomination::Gameplay
 {
-    // Values a designer tunes (in the View Model window of the debug overlay).
-    struct ViewModelMotionSettings
+    // Values a designer tunes (in the Weapon View Model window of the debug overlay).
+    struct WeaponViewModelMotionSettings
     {
         // Bob: how far the weapon swings to each side and up and down at full speed (meters), and how far the player
         // walks during one whole figure eight (two steps, meters).
@@ -49,7 +49,7 @@ namespace Abomination::Gameplay
     };
 
     // What the motion needs to know about the player each frame.
-    struct ViewModelMotionInput
+    struct WeaponViewModelMotionInput
     {
         // Horizontal speed now and the fastest the player walks on their own (meters per second).
         float horizontalSpeed = 0.0f;
@@ -65,7 +65,7 @@ namespace Abomination::Gameplay
     };
 
     // The state of the motion between frames.
-    struct ViewModelMotion
+    struct WeaponViewModelMotion
     {
         // How far through the figure eight the bob is (radians), and how strongly it swings (0 standing, 1 at full
         // speed): it fades in and out instead of starting and stopping at once.
@@ -98,14 +98,14 @@ namespace Abomination::Gameplay
 
     // Moves the motion forward by one frame (deltaTime, seconds). Called every frame, not in ticks: the weapon follows
     // the view, which moves every frame. Frame rate independent: the same movement gives the same motion at any FPS.
-    void UpdateViewModelMotion(ViewModelMotion& motion, const ViewModelMotionSettings& settings,
-                               const ViewModelMotionInput& input, float deltaTime);
+    void UpdateWeaponViewModelMotion(WeaponViewModelMotion& motion, const WeaponViewModelMotionSettings& settings,
+                                     const WeaponViewModelMotionInput& input, float deltaTime);
 
     // A shot: kicks the weapon back and its muzzle up (see recoilKickBack); the springs bring it back.
-    void KickViewModelRecoil(ViewModelMotion& motion, const ViewModelMotionSettings& settings);
+    void KickWeaponViewModelRecoil(WeaponViewModelMotion& motion, const WeaponViewModelMotionSettings& settings);
 
     // How far the motion moves the weapon now, relative to where it is held (meters, eye space: +X right, +Y up, +Z
     // towards the eyes).
-    [[nodiscard]] glm::vec3 CalculateViewModelMotionOffset(const ViewModelMotion& motion,
-                                                           const ViewModelMotionSettings& settings);
+    [[nodiscard]] glm::vec3 CalculateWeaponViewModelMotionOffset(const WeaponViewModelMotion& motion,
+                                                                 const WeaponViewModelMotionSettings& settings);
 }

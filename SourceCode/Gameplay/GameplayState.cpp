@@ -3,9 +3,9 @@
 #include "Audio/AudioEngine.h"
 #include "Gameplay/Player/LandingDip.h"
 #include "Gameplay/Player/Player.h"
-#include "Gameplay/Weapons/ViewModel.h"
 #include "Gameplay/Weapons/ViewRecoil.h"
 #include "Gameplay/Weapons/Weapon.h"
+#include "Gameplay/Weapons/WeaponViewModel.h"
 #include "Renderer/Assets/RenderAssets.h"
 #include "World/PlayerStart.h"
 
@@ -31,7 +31,7 @@ namespace Abomination::Gameplay
         // The shotgun in the hands, for the whole game (the pickups and weapon switching of later versions will change
         // which model it is).
         const Renderer::ModelHandle shotgun = renderAssets.LoadModel("Models/Weapons/Shotgun.glb", Core::AssetLifetime::Global);
-        registry.emplace<ViewModel>(state.player, ViewModel{
+        registry.emplace<WeaponViewModel>(state.player, WeaponViewModel{
             .model = shotgun,
             .shaderProgram = renderAssets.shaders.Load("Shaders/TexturedShaded"),
 

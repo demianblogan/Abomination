@@ -1,8 +1,8 @@
 #include "UI/Windows/WeaponWindow.h"
 
-#include "Gameplay/Weapons/ViewModelMotion.h"
 #include "Gameplay/Weapons/ViewRecoil.h"
 #include "Gameplay/Weapons/Weapon.h"
+#include "Gameplay/Weapons/WeaponViewModelMotion.h"
 #include "UI/UIScale.h"
 #include "UI/Widgets.h"
 
@@ -14,7 +14,7 @@ namespace Abomination::UI
 {
     namespace
     {
-        // The window opens for the first time next to the View Model window.
+        // The window opens for the first time next to the Weapon View Model window.
         constexpr ImVec2 InitialPosition(560.0f, 620.0f);
 
         // The sliders of one kind of hit marker. PushID keeps the equal labels of the hit and the kill marker apart for
@@ -38,7 +38,7 @@ namespace Abomination::UI
     }
 
     void DrawWeaponWindow(bool* isOpen, Gameplay::Weapon& weapon, Gameplay::ViewRecoil& viewRecoil,
-                          Gameplay::ViewModelMotionSettings& viewModelMotion)
+                          Gameplay::WeaponViewModelMotionSettings& weaponViewModelMotion)
     {
         ImGui::SetNextWindowPos(ScaleToUI(InitialPosition), ImGuiCond_FirstUseEver);
         if (!ImGui::Begin("Weapon", isOpen, ImGuiWindowFlags_AlwaysAutoResize))
@@ -93,10 +93,11 @@ namespace Abomination::UI
                    "How fast the view comes back down. Bigger: quicker and smaller kicks.");
 
         ImGui::SeparatorText("Recoil of the weapon in the hands");
-        DrawSlider("Kick back", viewModelMotion.recoilKickBack, 0.0f, 5.0f, "%.2f m/s",
+        DrawSlider("Kick back", weaponViewModelMotion.recoilKickBack, 0.0f, 5.0f, "%.2f m/s",
                    "How hard a shot pushes the weapon back towards the eyes.");
-        DrawSlider("Kick up", viewModelMotion.recoilKickUp, 0.0f, 5.0f, "%.2f rad/s", "How hard a shot turns the muzzle up.");
-        DrawSlider("Weapon stiffness", viewModelMotion.recoilStiffness, 20.0f, 500.0f, "%.0f",
+        DrawSlider("Kick up", weaponViewModelMotion.recoilKickUp, 0.0f, 5.0f, "%.2f rad/s",
+                   "How hard a shot turns the muzzle up.");
+        DrawSlider("Weapon stiffness", weaponViewModelMotion.recoilStiffness, 20.0f, 500.0f, "%.0f",
                    "How fast the weapon comes back. Bigger: quicker and smaller kicks.");
 
         if (ImGui::Button("Reset"))
@@ -108,10 +109,10 @@ namespace Abomination::UI
             viewRecoil.kick = recoilDefaults.kick;
             viewRecoil.springStiffness = recoilDefaults.springStiffness;
 
-            const Gameplay::ViewModelMotionSettings motionDefaults;
-            viewModelMotion.recoilKickBack = motionDefaults.recoilKickBack;
-            viewModelMotion.recoilKickUp = motionDefaults.recoilKickUp;
-            viewModelMotion.recoilStiffness = motionDefaults.recoilStiffness;
+            const Gameplay::WeaponViewModelMotionSettings motionDefaults;
+            weaponViewModelMotion.recoilKickBack = motionDefaults.recoilKickBack;
+            weaponViewModelMotion.recoilKickUp = motionDefaults.recoilKickUp;
+            weaponViewModelMotion.recoilStiffness = motionDefaults.recoilStiffness;
         }
 
         ImGui::End();

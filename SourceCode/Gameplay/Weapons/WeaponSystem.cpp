@@ -8,9 +8,9 @@
 #include "Gameplay/Characters/TargetDummy.h"
 #include "Gameplay/Effects/Effects.h"
 #include "Gameplay/Player/Player.h"
-#include "Gameplay/Weapons/ViewModel.h"
 #include "Gameplay/Weapons/ViewRecoil.h"
 #include "Gameplay/Weapons/Weapon.h"
+#include "Gameplay/Weapons/WeaponViewModel.h"
 #include "Input/ActionStates.h"
 #include "Physics/CharacterBody.h"
 #include "Renderer/Debug/DebugLines.h"
@@ -162,20 +162,20 @@ namespace Abomination::Gameplay
             if (ViewRecoil* viewRecoil = registry.try_get<ViewRecoil>(state.player); viewRecoil != nullptr)
                 KickViewRecoil(*viewRecoil);
 
-            ViewModel* viewModel = registry.try_get<ViewModel>(state.player);
-            if (viewModel == nullptr)
+            WeaponViewModel* weaponViewModel = registry.try_get<WeaponViewModel>(state.player);
+            if (weaponViewModel == nullptr)
                 return;
 
-            KickViewModelRecoil(viewModel->motion, viewModel->motionSettings);
+            KickWeaponViewModelRecoil(weaponViewModel->motion, weaponViewModel->motionSettings);
 
             // The flash at the muzzle of the weapon in the hands, turned differently every shot.
-            viewModel->flashTimeLeft = state.effects.settings.flashDuration;
-            viewModel->flashRotation = state.effects.random.GetFloat(0.0f, 2.0f * std::numbers::pi_v<float>);
+            weaponViewModel->flashTimeLeft = state.effects.settings.flashDuration;
+            weaponViewModel->flashRotation = state.effects.random.GetFloat(0.0f, 2.0f * std::numbers::pi_v<float>);
 
             // The smoke goes into the world, from where the muzzle is seen: the muzzle relative to the eyes, placed by the
             // eyes. (The weapon is drawn with its own field of view, so this is close to, not exactly, where the muzzle
             // appears on the screen; for drifting smoke that does not show.)
-            const glm::vec3 muzzle = eyes.position + eyes.rotation * CalculateViewModelMuzzle(*viewModel);
+            const glm::vec3 muzzle = eyes.position + eyes.rotation * CalculateWeaponViewModelMuzzle(*weaponViewModel);
             SpawnMuzzleSmoke(state.effects, muzzle, eyes.rotation * Core::LocalForward);
         }
     }

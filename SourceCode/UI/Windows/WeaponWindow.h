@@ -2,7 +2,7 @@
 
 namespace Abomination::Gameplay
 {
-    struct ViewModelMotionSettings;
+    struct WeaponViewModelMotionSettings;
     struct ViewRecoil;
     struct Weapon;
 }
@@ -15,5 +15,5 @@ namespace Abomination::UI
     //
     // Draws the window while *isOpen is true; its close button sets *isOpen to false.
     void DrawWeaponWindow(bool* isOpen, Gameplay::Weapon& weapon, Gameplay::ViewRecoil& viewRecoil,
-                          Gameplay::ViewModelMotionSettings& viewModelMotion);
+                          Gameplay::WeaponViewModelMotionSettings& weaponViewModelMotion);
 }

@@ -101,16 +101,16 @@ set(LIBRARY_SOURCES
     Gameplay/Player/PlayerSystem.cpp
     Gameplay/Weapons/Crosshair.h
     Gameplay/Weapons/Crosshair.cpp
-    Gameplay/Weapons/ViewModel.h
-    Gameplay/Weapons/ViewModel.cpp
-    Gameplay/Weapons/ViewModelMotion.h
-    Gameplay/Weapons/ViewModelMotion.cpp
     Gameplay/Weapons/ViewRecoil.h
     Gameplay/Weapons/ViewRecoil.cpp
     Gameplay/Weapons/Weapon.h
     Gameplay/Weapons/Weapon.cpp
     Gameplay/Weapons/WeaponSystem.h
     Gameplay/Weapons/WeaponSystem.cpp
+    Gameplay/Weapons/WeaponViewModel.h
+    Gameplay/Weapons/WeaponViewModel.cpp
+    Gameplay/Weapons/WeaponViewModelMotion.h
+    Gameplay/Weapons/WeaponViewModelMotion.cpp
 
     Input/Action.h
     Input/ActionStates.h
@@ -218,8 +218,8 @@ set(LIBRARY_SOURCES
     UI/Windows/PerformanceWindow.cpp
     UI/Windows/RendererWindow.h
     UI/Windows/RendererWindow.cpp
-    UI/Windows/ViewModelWindow.h
-    UI/Windows/ViewModelWindow.cpp
+    UI/Windows/WeaponViewModelWindow.h
+    UI/Windows/WeaponViewModelWindow.cpp
     UI/Windows/WeaponWindow.h
     UI/Windows/WeaponWindow.cpp
 

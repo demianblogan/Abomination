@@ -32,9 +32,9 @@ set(TEST_SOURCES
     Gameplay/Player/PlayerSystemTests.cpp
     Gameplay/Player/PlayerTests.cpp
     Gameplay/Weapons/CrosshairTests.cpp
-    Gameplay/Weapons/ViewModelMotionTests.cpp
-    Gameplay/Weapons/ViewModelTests.cpp
     Gameplay/Weapons/WeaponTests.cpp
+    Gameplay/Weapons/WeaponViewModelMotionTests.cpp
+    Gameplay/Weapons/WeaponViewModelTests.cpp
 
     Input/ActionStatesTests.cpp
     Input/InputBindingsTests.cpp

@@ -44,7 +44,7 @@ namespace Abomination::Gameplay
         bool hasHitEntity = false;
     };
 
-    // Component of the player: the weapon they shoot with. The weapon in their hands as they see it is the ViewModel;
+    // Component of the player: the weapon they shoot with. The weapon in their hands as they see it is the WeaponViewModel;
     // this is what it does.
     struct Weapon
     {

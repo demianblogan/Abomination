@@ -11,8 +11,8 @@
 #include "Gameplay/Characters/TargetDummy.h"
 #include "Gameplay/Player/PlayerSystem.h"
 #include "Gameplay/Spin.h"
-#include "Gameplay/Weapons/ViewModel.h"
 #include "Gameplay/Weapons/WeaponSystem.h"
+#include "Gameplay/Weapons/WeaponViewModel.h"
 #include "Platform/SystemServices.h"
 #include "Renderer/Camera/View.h"
 #include "Renderer/OpenGL/DebugOutput.h"
@@ -305,7 +305,7 @@ namespace Abomination
             m_debugLineRenderer.Draw(m_debugLines, view, m_renderAssets.shaders.Get(m_systemShaders.debugLines), viewportSize,
                                      DebugLineWidth * m_window.GetDisplayScale());
 
-            DrawViewModel(aspectRatio);
+            DrawWeaponViewModel(aspectRatio);
         }
 
         // The lines of this frame are drawn (or, in a minimized window, dropped); the next frame adds its own.
@@ -365,30 +365,31 @@ namespace Abomination
         }
     }
 
-    void Application::DrawViewModel(float aspectRatio)
+    void Application::DrawWeaponViewModel(float aspectRatio)
     {
         // Only while the player is controlled: the free-fly camera has no hands.
-        const auto* viewModel = m_registry.try_get<Gameplay::ViewModel>(m_gameplay.player);
-        if (viewModel == nullptr || m_gameplay.controlMode != Gameplay::ControlMode::Player)
+        const auto* weaponViewModel = m_registry.try_get<Gameplay::WeaponViewModel>(m_gameplay.player);
+        if (weaponViewModel == nullptr || m_gameplay.controlMode != Gameplay::ControlMode::Player)
             return;
 
         const Renderer::RenderStatistics statistics =
-            Renderer::DrawViewModel(viewModel->model, Gameplay::CalculateViewModelMatrix(*viewModel), viewModel->verticalFOV,
-                                    aspectRatio, m_renderAssets, viewModel->shaderProgram, m_systemShaders, m_renderSettings);
+            Renderer::DrawWeaponViewModel(weaponViewModel->model, Gameplay::CalculateWeaponViewModelMatrix(*weaponViewModel),
+                                          weaponViewModel->verticalFOV, aspectRatio, m_renderAssets,
+                                          weaponViewModel->shaderProgram, m_systemShaders, m_renderSettings);
         m_renderStatistics.drawCallCount += statistics.drawCallCount;
         m_renderStatistics.triangleCount += statistics.triangleCount;
 
-        if (viewModel->flashTimeLeft <= 0.0f)
+        if (weaponViewModel->flashTimeLeft <= 0.0f)
             return;
 
         // The muzzle flash, drawn with the weapon: in the space of the eyes (no view matrix) with the projection of the
         // weapon, so it sits exactly at the muzzle.
         const Gameplay::Effects& effects = m_gameplay.effects;
         m_sprites.Clear();
-        m_sprites.AddBillboard(Gameplay::CalculateViewModelMuzzle(*viewModel), effects.settings.flashHalfSize,
-                               viewModel->flashRotation, glm::vec4(1.0f), effects.textures.muzzleFlash,
+        m_sprites.AddBillboard(Gameplay::CalculateWeaponViewModelMuzzle(*weaponViewModel), effects.settings.flashHalfSize,
+                               weaponViewModel->flashRotation, glm::vec4(1.0f), effects.textures.muzzleFlash,
                                Renderer::SpriteBlend::Additive);
-        const glm::mat4 projection = Renderer::CalculateViewModelProjection(viewModel->verticalFOV, aspectRatio);
+        const glm::mat4 projection = Renderer::CalculateWeaponViewModelProjection(weaponViewModel->verticalFOV, aspectRatio);
         m_renderStatistics.drawCallCount +=
             m_spriteRenderer.Draw(m_sprites, glm::mat4(1.0f), projection, m_renderAssets.textures,
                                   m_renderAssets.shaders.Get(m_systemShaders.sprites));

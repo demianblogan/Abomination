@@ -1,0 +1,18 @@
+#pragma once
+
+namespace Abomination::Gameplay
+{
+    struct LandingDip;
+    struct WeaponViewModel;
+}
+
+namespace Abomination::UI
+{
+    // The Weapon View Model window of the debug overlay (View > Gameplay > Weapon View Model): where the weapon in the
+    // hands is held, how wide it is drawn and how it swings, lags and dips, to find values that look right while playing.
+    // The values are not saved between runs yet (that comes with the configuration files, 0.6); "Reset" brings back the
+    // default values.
+    //
+    // Draws the window while *isOpen is true; its close button sets *isOpen to false.
+    void DrawWeaponViewModelWindow(bool* isOpen, Gameplay::WeaponViewModel& weaponViewModel, Gameplay::LandingDip& landingDip);
+}

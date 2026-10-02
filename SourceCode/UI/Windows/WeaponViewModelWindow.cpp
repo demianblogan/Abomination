@@ -1,7 +1,7 @@
-#include "UI/Windows/ViewModelWindow.h"
+#include "UI/Windows/WeaponViewModelWindow.h"
 
 #include "Gameplay/Player/LandingDip.h"
-#include "Gameplay/Weapons/ViewModel.h"
+#include "Gameplay/Weapons/WeaponViewModel.h"
 #include "UI/UIScale.h"
 #include "UI/Widgets.h"
 
@@ -17,33 +17,33 @@ namespace Abomination::UI
         constexpr ImVec2 InitialPosition(900.0f, 620.0f);
     }
 
-    void DrawViewModelWindow(bool* isOpen, Gameplay::ViewModel& viewModel, Gameplay::LandingDip& landingDip)
+    void DrawWeaponViewModelWindow(bool* isOpen, Gameplay::WeaponViewModel& weaponViewModel, Gameplay::LandingDip& landingDip)
     {
         ImGui::SetNextWindowPos(ScaleToUI(InitialPosition), ImGuiCond_FirstUseEver);
-        if (!ImGui::Begin("View Model", isOpen, ImGuiWindowFlags_AlwaysAutoResize))
+        if (!ImGui::Begin("Weapon View Model", isOpen, ImGuiWindowFlags_AlwaysAutoResize))
         {
             ImGui::End();
             return;
         }
 
         ImGui::SeparatorText("Side");
-        for (std::size_t index = 0; index < Gameplay::ViewModelSideNames.size(); ++index)
+        for (std::size_t index = 0; index < Gameplay::WeaponViewModelSideNames.size(); ++index)
         {
             if (index > 0)
                 ImGui::SameLine();
 
-            const auto side = static_cast<Gameplay::ViewModelSide>(index);
-            if (ImGui::RadioButton(Gameplay::ViewModelSideNames[index].data(), viewModel.side == side))
-                viewModel.side = side;
+            const auto side = static_cast<Gameplay::WeaponViewModelSide>(index);
+            if (ImGui::RadioButton(Gameplay::WeaponViewModelSideNames[index].data(), weaponViewModel.side == side))
+                weaponViewModel.side = side;
         }
 
         ImGui::SeparatorText("Position from the eyes");
         // Not called "Right": ImGui makes the ID of an item from its label, and the radio button above is "Right" already.
-        DrawCentimeterSlider("Sideways", viewModel.offset.x, 0.0f, 50.0f,
+        DrawCentimeterSlider("Sideways", weaponViewModel.offset.x, 0.0f, 50.0f,
                              "How far to the side the middle of the weapon is. For the left side it goes to the left,\n"
                              "in the center it is ignored.");
-        DrawCentimeterSlider("Up", viewModel.offset.y, -50.0f, 10.0f, "Negative: below the eyes.");
-        DrawCentimeterSlider("Forward", viewModel.offset.z, -100.0f, 0.0f,
+        DrawCentimeterSlider("Up", weaponViewModel.offset.y, -50.0f, 10.0f, "Negative: below the eyes.");
+        DrawCentimeterSlider("Forward", weaponViewModel.offset.z, -100.0f, 0.0f,
                              "Negative: in front of the eyes. The middle of the shotgun: it is 1.1 m long, so at -35 cm\n"
                              "its muzzle is about 90 cm in front of the eyes and its stock behind them.");
 
@@ -51,17 +51,17 @@ namespace Abomination::UI
         ImGui::SeparatorText("Muzzle (in the model)");
         ImGui::PushID("Muzzle");
         constexpr const char* MuzzleTooltip = "Where the flash and the smoke appear.";
-        DrawCentimeterSlider("Sideways", viewModel.muzzle.x, -20.0f, 20.0f, MuzzleTooltip);
-        DrawCentimeterSlider("Up", viewModel.muzzle.y, -20.0f, 20.0f, MuzzleTooltip);
-        DrawCentimeterSlider("Forward", viewModel.muzzle.z, -80.0f, 0.0f, MuzzleTooltip);
+        DrawCentimeterSlider("Sideways", weaponViewModel.muzzle.x, -20.0f, 20.0f, MuzzleTooltip);
+        DrawCentimeterSlider("Up", weaponViewModel.muzzle.y, -20.0f, 20.0f, MuzzleTooltip);
+        DrawCentimeterSlider("Forward", weaponViewModel.muzzle.z, -80.0f, 0.0f, MuzzleTooltip);
         ImGui::PopID();
 
         ImGui::SeparatorText("Lens");
-        DrawDegreeSlider("Vertical FOV", viewModel.verticalFOV, 30.0f, 90.0f, "%.0f deg",
+        DrawDegreeSlider("Vertical FOV", weaponViewModel.verticalFOV, 30.0f, 90.0f, "%.0f deg",
                          "The field of view the weapon alone is drawn with. Smaller: the weapon looks bigger and\n"
                          "flatter; larger: smaller and more stretched in depth. The world is not affected.");
 
-        Gameplay::ViewModelMotionSettings& motion = viewModel.motionSettings;
+        Gameplay::WeaponViewModelMotionSettings& motion = weaponViewModel.motionSettings;
         ImGui::SeparatorText("Idle (standing)");
         DrawCentimeterSlider("Idle amount", motion.idleAmount, 0.0f, 2.0f,
                              "How far the weapon rises and falls with the breath while the player stands. 0 turns it off.");
@@ -99,11 +99,11 @@ namespace Abomination::UI
         {
             // Only the settings go back to the defaults; the model, the shader, the muzzle found in the model and the
             // current motion stay.
-            const Gameplay::ViewModel defaults;
-            viewModel.offset = defaults.offset;
-            viewModel.side = defaults.side;
-            viewModel.verticalFOV = defaults.verticalFOV;
-            viewModel.motionSettings = defaults.motionSettings;
+            const Gameplay::WeaponViewModel defaults;
+            weaponViewModel.offset = defaults.offset;
+            weaponViewModel.side = defaults.side;
+            weaponViewModel.verticalFOV = defaults.verticalFOV;
+            weaponViewModel.motionSettings = defaults.motionSettings;
 
             const Gameplay::LandingDip dipDefaults;
             landingDip.kickPerFallSpeed = dipDefaults.kickPerFallSpeed;

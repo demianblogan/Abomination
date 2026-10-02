@@ -4,8 +4,8 @@
 #include "Gameplay/Camera/MouseLook.h"
 #include "Gameplay/Player/LandingDip.h"
 #include "Gameplay/Player/Player.h"
-#include "Gameplay/Weapons/ViewModel.h"
 #include "Gameplay/Weapons/ViewRecoil.h"
+#include "Gameplay/Weapons/WeaponViewModel.h"
 #include "Renderer/Camera/CameraLens.h"
 
 #include <glm/common.hpp>
@@ -79,7 +79,7 @@ namespace Abomination::Gameplay
     {
         // The weapon swings with what the ticks of this frame did to the player (a landing, the speed) and with the view
         // turned this frame.
-        UpdateViewModel(state, registry, deltaTime);
+        UpdateWeaponViewModel(state, registry, deltaTime);
         UpdatePlayerLandingDip(state, registry, deltaTime);
         UpdatePlayerViewRecoil(state, registry, deltaTime);
         state.effects.particles.Update(deltaTime, state.physicsSettings.gravity);

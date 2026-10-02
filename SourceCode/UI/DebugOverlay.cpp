@@ -3,9 +3,9 @@
 #include "Core/Time/FrameLimiter.h"
 #include "Gameplay/GameplayState.h"
 #include "Gameplay/Player/LandingDip.h"
-#include "Gameplay/Weapons/ViewModel.h"
 #include "Gameplay/Weapons/ViewRecoil.h"
 #include "Gameplay/Weapons/Weapon.h"
+#include "Gameplay/Weapons/WeaponViewModel.h"
 #include "Physics/CharacterBody.h"
 #include "Platform/Window.h"
 #include "Renderer/Camera/CameraLens.h"
@@ -16,7 +16,7 @@
 #include "UI/Windows/MovementWindow.h"
 #include "UI/Windows/PerformanceWindow.h"
 #include "UI/Windows/RendererWindow.h"
-#include "UI/Windows/ViewModelWindow.h"
+#include "UI/Windows/WeaponViewModelWindow.h"
 #include "UI/Windows/WeaponWindow.h"
 
 #include <imgui.h>
@@ -110,7 +110,7 @@ namespace Abomination::UI
         // The components of the player the gameplay windows and the crosshair change or show.
         entt::registry& registry = context.registry;
         Gameplay::GameplayState& gameplay = context.gameplay;
-        Gameplay::ViewModel& viewModel = registry.get<Gameplay::ViewModel>(gameplay.player);
+        Gameplay::WeaponViewModel& weaponViewModel = registry.get<Gameplay::WeaponViewModel>(gameplay.player);
         Gameplay::Weapon& weapon = registry.get<Gameplay::Weapon>(gameplay.player);
 
         if (m_isVisible)
@@ -143,15 +143,16 @@ namespace Abomination::UI
                 DrawMovementWindow(&m_isMovementWindowOpen, gameplay.physicsSettings, gameplay.movementSettings,
                                    registry.get<Physics::CharacterBody>(gameplay.player));
 
-            if (m_isViewModelWindowOpen)
-                DrawViewModelWindow(&m_isViewModelWindowOpen, viewModel, registry.get<Gameplay::LandingDip>(gameplay.player));
+            if (m_isWeaponViewModelWindowOpen)
+                DrawWeaponViewModelWindow(&m_isWeaponViewModelWindowOpen, weaponViewModel,
+                                          registry.get<Gameplay::LandingDip>(gameplay.player));
 
             if (m_isEffectsWindowOpen)
                 DrawEffectsWindow(&m_isEffectsWindowOpen, gameplay.effects);
 
             if (m_isWeaponWindowOpen)
                 DrawWeaponWindow(&m_isWeaponWindowOpen, weapon, registry.get<Gameplay::ViewRecoil>(gameplay.player),
-                                 viewModel.motionSettings);
+                                 weaponViewModel.motionSettings);
         }
 
         // The crosshair belongs to the game, not to the debug tools: it is drawn whether the overlay is shown or not, while
@@ -229,7 +230,7 @@ namespace Abomination::UI
 
             if (ImGui::BeginMenu("Gameplay"))
             {
-                ImGui::MenuItem("View Model", nullptr, &m_isViewModelWindowOpen);
+                ImGui::MenuItem("Weapon View Model", nullptr, &m_isWeaponViewModelWindowOpen);
                 ImGui::MenuItem("Weapon", nullptr, &m_isWeaponWindowOpen);
                 ImGui::MenuItem("Effects", nullptr, &m_isEffectsWindowOpen);
                 ImGui::EndMenu();

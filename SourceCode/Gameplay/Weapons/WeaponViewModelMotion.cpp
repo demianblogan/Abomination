@@ -1,4 +1,4 @@
-#include "Gameplay/Weapons/ViewModelMotion.h"
+#include "Gameplay/Weapons/WeaponViewModelMotion.h"
 
 #include "Core/Math/Spring.h"
 
@@ -21,8 +21,8 @@ namespace Abomination::Gameplay
         // Landings slower than this (meters per second) do not move the weapon: walking down a stair is a small fall.
         constexpr float MinimumLandingSpeed = 2.0f;
 
-        void UpdateBob(ViewModelMotion& motion, const ViewModelMotionSettings& settings, const ViewModelMotionInput& input,
-                       float deltaTime)
+        void UpdateBob(WeaponViewModelMotion& motion, const WeaponViewModelMotionSettings& settings,
+                       const WeaponViewModelMotionInput& input, float deltaTime)
         {
             // One figure eight (2 pi radians) per stride: the swing follows the distance walked, so it keeps step with
             // the feet at any speed.
@@ -32,13 +32,13 @@ namespace Abomination::Gameplay
             const float targetWeight = input.isOnGround ? glm::clamp(input.horizontalSpeed / input.maxSpeed, 0.0f, 1.0f) : 0.0f;
             motion.bobWeight += (targetWeight - motion.bobWeight) * Core::CalculateApproachFactor(BobFadeRate, deltaTime);
 
-            // The breathing goes on all the time and repeats every two breaths (see CalculateViewModelMotionOffset);
+            // The breathing goes on all the time and repeats every two breaths (see CalculateWeaponViewModelMotionOffset);
             // keeping the time within that span keeps it a small number, which a float holds precisely.
             motion.idleTime = std::fmod(motion.idleTime + deltaTime, 2.0f * settings.idleBreathDuration);
         }
 
-        void UpdateSway(ViewModelMotion& motion, const ViewModelMotionSettings& settings, const ViewModelMotionInput& input,
-                        float deltaTime)
+        void UpdateSway(WeaponViewModelMotion& motion, const WeaponViewModelMotionSettings& settings,
+                        const WeaponViewModelMotionInput& input, float deltaTime)
         {
             // How much the view turned since the last frame. The very first frame has nothing to compare with.
             if (motion.hasPreviousLook)
@@ -60,8 +60,8 @@ namespace Abomination::Gameplay
             motion.sway -= motion.sway * Core::CalculateApproachFactor(settings.swayReturnRate, deltaTime);
         }
 
-        void UpdateInertia(ViewModelMotion& motion, const ViewModelMotionSettings& settings,
-                           const ViewModelMotionInput& input, float deltaTime)
+        void UpdateInertia(WeaponViewModelMotion& motion, const WeaponViewModelMotionSettings& settings,
+                           const WeaponViewModelMotionInput& input, float deltaTime)
         {
             // A jump: the body shoots up, the weapon stays behind for a moment, so it is pushed down.
             if (motion.wasOnGround && !input.isOnGround && input.verticalSpeed > 0.0f)
@@ -80,8 +80,8 @@ namespace Abomination::Gameplay
         }
     }
 
-    void UpdateViewModelMotion(ViewModelMotion& motion, const ViewModelMotionSettings& settings,
-                               const ViewModelMotionInput& input, float deltaTime)
+    void UpdateWeaponViewModelMotion(WeaponViewModelMotion& motion, const WeaponViewModelMotionSettings& settings,
+                                     const WeaponViewModelMotionInput& input, float deltaTime)
     {
         UpdateBob(motion, settings, input, deltaTime);
         UpdateSway(motion, settings, input, deltaTime);
@@ -90,13 +90,14 @@ namespace Abomination::Gameplay
         Core::UpdateDampedSpring(motion.recoilPitch, motion.recoilPitchVelocity, settings.recoilStiffness, deltaTime);
     }
 
-    void KickViewModelRecoil(ViewModelMotion& motion, const ViewModelMotionSettings& settings)
+    void KickWeaponViewModelRecoil(WeaponViewModelMotion& motion, const WeaponViewModelMotionSettings& settings)
     {
         motion.recoilBackVelocity += settings.recoilKickBack;
         motion.recoilPitchVelocity += settings.recoilKickUp;
     }
 
-    glm::vec3 CalculateViewModelMotionOffset(const ViewModelMotion& motion, const ViewModelMotionSettings& settings)
+    glm::vec3 CalculateWeaponViewModelMotionOffset(const WeaponViewModelMotion& motion,
+                                                   const WeaponViewModelMotionSettings& settings)
     {
         // A figure eight lying on its side: one swing left and right (sin of the phase) per stride, and one dip per step,
         // twice as often (sin of twice the phase), smaller.

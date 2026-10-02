@@ -1,7 +1,7 @@
 #pragma once
 
 // Controls the debug windows share, so every window has sliders of the same width and the tuning windows (Movement,
-// View Model, Weapon, Effects) are one line per value.
+// Weapon View Model, Weapon, Effects) are one line per value.
 namespace Abomination::UI
 {
     // The width of a slider in pixels at 100% UI scale.

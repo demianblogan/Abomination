@@ -17,8 +17,8 @@ namespace Abomination::Renderer
     {
         // The weapon in the hands is never farther than a meter from the eyes, so its near and far planes are much
         // closer than those of the world: the barrel may come within centimeters of the eyes without being cut off.
-        constexpr float ViewModelNearPlane = 0.01f;
-        constexpr float ViewModelFarPlane = 10.0f;
+        constexpr float WeaponViewModelNearPlane = 0.01f;
+        constexpr float WeaponViewModelFarPlane = 10.0f;
 
         // Sets the states every drawing pass starts with.
         void BeginMeshPass(const RenderSettings& settings)
@@ -81,9 +81,9 @@ namespace Abomination::Renderer
         };
     }
 
-    glm::mat4 CalculateViewModelProjection(float verticalFOV, float aspectRatio)
+    glm::mat4 CalculateWeaponViewModelProjection(float verticalFOV, float aspectRatio)
     {
-        return glm::perspective(verticalFOV, aspectRatio, ViewModelNearPlane, ViewModelFarPlane);
+        return glm::perspective(verticalFOV, aspectRatio, WeaponViewModelNearPlane, WeaponViewModelFarPlane);
     }
 
     RenderStatistics DrawMeshes(const entt::registry& registry, const View& view, float interpolationFactor,
@@ -137,9 +137,9 @@ namespace Abomination::Renderer
         return statistics;
     }
 
-    RenderStatistics DrawViewModel(ModelHandle model, const glm::mat4& eyeSpaceMatrix, float verticalFOV, float aspectRatio,
-                                   const RenderAssets& assets, ShaderHandle shader, const SystemShaders& systemShaders,
-                                   const RenderSettings& settings)
+    RenderStatistics DrawWeaponViewModel(ModelHandle model, const glm::mat4& eyeSpaceMatrix, float verticalFOV,
+                                         float aspectRatio, const RenderAssets& assets, ShaderHandle shader,
+                                         const SystemShaders& systemShaders, const RenderSettings& settings)
     {
         RenderStatistics statistics;
 
@@ -151,7 +151,7 @@ namespace Abomination::Renderer
         // The weapon is placed relative to the eyes, so no view matrix is needed (the identity: the eyes are at the
         // origin, looking along -Z). Its projection has its own field of view: a wider field of view of the world does
         // not stretch the weapon. The aspect ratio is that of the window, so the weapon is not squeezed either.
-        const glm::mat4 projection = CalculateViewModelProjection(verticalFOV, aspectRatio);
+        const glm::mat4 projection = CalculateWeaponViewModelProjection(verticalFOV, aspectRatio);
         for (const ModelPart& part : assets.models.Get(model).parts)
             DrawMesh(assets, systemShaders, settings, shader, part.texture, part.mesh, eyeSpaceMatrix * part.transform,
                      glm::mat4(1.0f), projection, statistics);

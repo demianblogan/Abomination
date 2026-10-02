@@ -524,20 +524,20 @@ player entity                                free-fly camera entity
   while the right mouse button is held (looking around with the overlay
   open, or with the free-fly camera). The first frame of capturing is not
   used for turning: switching can report one big jump of movement.
-- **The weapon in the hands** (`Gameplay::ViewModel`, a component of the
-  player) is not in the world: `Renderer::DrawViewModel` draws it after the
+- **The weapon in the hands** (`Gameplay::WeaponViewModel`, a component of the
+  player) is not in the world: `Renderer::DrawWeaponViewModel` draws it after the
   world, after clearing the depth buffer, placed relative to the eyes, with
   its own vertical field of view (34°) and near plane (1 cm). So it never
   goes into walls, and a wider field of view of the world does not stretch
   it; the aspect ratio still follows the window. Held on the right, in the
   center or on the left (moved, not mirrored); hidden with the free-fly
-  camera. It moves every frame (`ViewModelMotion`): a figure-eight **bob**
+  camera. It moves every frame (`WeaponViewModelMotion`): a figure-eight **bob**
   tied to the distance walked, a **sway** that lags behind the view and
   catches up, and **inertia** — one damped spring (`Core::UpdateDampedSpring`)
   kicked down by jumps and landings. The view itself **dips after landings**
   on the same kind of spring (`LandingDip`). While the player stands, the
   weapon **breathes** (slow rise and fall), fading out as the bob fades in.
-  Everything is tuned in View > Gameplay > View Model.
+  Everything is tuned in View > Gameplay > Weapon View Model.
 - **Shooting** (`Gameplay::Weapon`, `WeaponSystem`): Fire (left mouse
   button) shoots only while playing (no overlay or console open); a press is
   kept until the next tick, holding keeps shooting at the rhythm of the
@@ -546,7 +546,7 @@ player entity                                free-fly camera entity
   where the crosshair points), spread evenly over a cone
   (`GeneratePelletDirections`), traced through the brushes. The recoil jerks
   the picture up (`ViewRecoil`, the aim stays) and kicks the weapon in the
-  hands back and its muzzle up (springs of `ViewModelMotion`). Tuned in View >
+  hands back and its muzzle up (springs of `WeaponViewModelMotion`). Tuned in View >
   Gameplay > Weapon, which also shows the pellet lines of the last shot.
 - **Damage**: every pellet hits the closest of the wall behind it and the
   boxes of the entities with `Health` and a `CharacterBody` in front of it

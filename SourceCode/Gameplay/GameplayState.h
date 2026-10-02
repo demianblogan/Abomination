@@ -78,7 +78,7 @@ namespace Abomination::Gameplay
     };
 
     // Creates the player at the player start of the level and the free-fly camera waiting at their eyes, looking the
-    // same way, loads the sounds of the player and gives them the shotgun in their hands (see ViewModel). The player is
+    // same way, loads the sounds of the player and gives them the shotgun in their hands (see WeaponViewModel). The player is
     // controlled first.
     [[nodiscard]] GameplayState CreateGameplayState(entt::registry& registry, const World::PlayerStart& playerStart,
                                                     Audio::AudioEngine& audio, Renderer::RenderAssets& renderAssets);

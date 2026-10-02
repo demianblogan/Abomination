@@ -34,6 +34,11 @@ the license check before a commercial release.
 |------|--------|--------|---------|----------|-------|
 | `Fonts/JetBrainsMonoRegular.ttf` | The JetBrains Mono Project Authors | [JetBrains Mono 2.304](https://github.com/JetBrains/JetBrainsMono/releases/tag/v2.304) | SIL Open Font License 1.1 | Renamed from `JetBrainsMono-Regular.ttf` | Debug overlay font. The license must ship with the font |
 | `Fonts/JetBrainsMonoLicense.txt` | The JetBrains Mono Project Authors | Same archive, `OFL.txt` | — | Renamed from `OFL.txt` | License text of the font |
+| `Fonts/OswaldBold.ttf` | The Oswald Project Authors | [OswaldFont](https://github.com/googlefonts/OswaldFont), `fonts/ttf/Oswald-Bold.ttf` | SIL Open Font License 1.1 | Renamed from `Oswald-Bold.ttf` | Text font of the game: the HUD and every ordinary text (Latin and Cyrillic). The license must ship with the font |
+| `Fonts/OswaldLicense.txt` | The Oswald Project Authors | Same repository, `OFL.txt` | — | Renamed from `OFL.txt` | License text of the font |
+| `Fonts/CormorantSCBold.ttf` | The Cormorant Project Authors | [Google Fonts](https://github.com/google/fonts/tree/main/ofl/cormorantsc), `ofl/cormorantsc/CormorantSC-Bold.ttf` | SIL Open Font License 1.1 | Renamed from `CormorantSC-Bold.ttf` | Title font of the game: big headings such as "Game Over" (Latin and Cyrillic). The license must ship with the font |
+| `Fonts/CormorantSCLicense.txt` | The Cormorant Project Authors | Same folder, `OFL.txt` | — | Renamed from `OFL.txt` | License text of the font |
+| `UI/Base.rcss` | The RmlUi authors, Alone Bull | Adapted from the base style sheet of the [RmlUi samples](https://github.com/mikke89/RmlUi) | MIT (the license of RmlUi, shipped in `Licenses/RmlUi.txt`) | Reduced to the rules the game uses | Display types of the elements every document starts from |
 | `Textures/Episode1/Wall_MossyBrick.png` | Alone Bull | `Tools/TextureGenerator` (64×64) | Own work | — | Old brick wall with moss, cracks and damp streaks |
 | `Textures/Episode1/Floor_WetFlagstone.png` | Alone Bull | `Tools/TextureGenerator` (64×64) | Own work | — | Wet stone slabs with mud in the joints |
 | `Textures/Episode1/Floor_RottenPlanks.png` | Alone Bull | `Tools/TextureGenerator` (64×64) | Own work | — | Rotten wooden planks with nails (stairs, bridges) |

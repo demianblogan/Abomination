@@ -59,6 +59,16 @@ namespace Abomination::Renderer
         glVertexArrayAttribBinding(m_vertexArrayID, attributeIndex, bindingIndex);
     }
 
+    void GLVertexArray::SetNormalizedByteAttribute(std::uint32_t attributeIndex, std::uint32_t bindingIndex,
+                                                   int componentCount, std::size_t offset)
+    {
+        // The same three steps as SetFloatAttribute; GL_TRUE ("normalized") makes OpenGL divide every byte by 255.
+        glEnableVertexArrayAttrib(m_vertexArrayID, attributeIndex);
+        glVertexArrayAttribFormat(m_vertexArrayID, attributeIndex, componentCount, GL_UNSIGNED_BYTE, GL_TRUE,
+                                  static_cast<GLuint>(offset));
+        glVertexArrayAttribBinding(m_vertexArrayID, attributeIndex, bindingIndex);
+    }
+
     void GLVertexArray::SetIndexBuffer(const GLBuffer& buffer)
     {
         // The old way: glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, id) while the vertex array is bound.

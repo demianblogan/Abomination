@@ -89,16 +89,20 @@ namespace Abomination
         if (!debugOverlay.has_value())
             return std::unexpected(debugOverlay.error());
 
+        std::expected<UI::GameUI, std::string> gameUI = UI::GameUI::Create(*window, assetsDirectory);
+        if (!gameUI.has_value())
+            return std::unexpected(gameUI.error());
+
         // Without a sound card the engine still works, silently (see Audio::AudioEngine), so it cannot stop the start.
         Audio::AudioEngine audio(assetsDirectory);
 
         return Application(std::move(*SDLLibrary), std::move(*window), std::move(audio), std::move(renderAssets), *map,
-                           std::move(*debugOverlay), assetsDirectory, logHistory);
+                           std::move(*debugOverlay), std::move(*gameUI), assetsDirectory, logHistory);
     }
 
     Application::Application(Platform::SDLLibrary SDLLibrary, Platform::Window window, Audio::AudioEngine audio,
                              Renderer::RenderAssets renderAssets, const World::MapData& map, UI::DebugOverlay debugOverlay,
-                             std::filesystem::path assetsDirectory, Core::LogHistory& logHistory)
+                             UI::GameUI gameUI, std::filesystem::path assetsDirectory, Core::LogHistory& logHistory)
         : m_SDLLibrary(std::move(SDLLibrary))
         , m_window(std::move(window))
         , m_audio(std::move(audio))
@@ -106,8 +110,12 @@ namespace Abomination
         , m_assetsDirectory(std::move(assetsDirectory))
         , m_logHistory(&logHistory)
         , m_debugOverlay(std::move(debugOverlay))
+        , m_gameUI(std::move(gameUI))
     {
         m_systemShaders = Renderer::LoadSystemShaders(m_renderAssets.shaders);
+
+        // The window passes its keyboard and mouse events to the game interface (after ImGui).
+        m_window.SetRmlUiBackend(m_gameUI.GetPlatformBackend());
 
         // Entities are created here, not in Create(): the registry is a member, and the handles the components get from
         // m_renderAssets stay valid because they are numbers, not pointers.
@@ -292,8 +300,8 @@ namespace Abomination
             // The ears are where the eyes are: 3D sounds are heard from the place the scene is seen from.
             m_audio.SetListener(cameraTransform.position, cameraTransform.rotation * Core::LocalForward);
 
-            // In the order things cover each other: the solid world, the see-through effects in it, the debug lines, and
-            // the weapon in the hands over everything.
+            // In the order things cover each other: the solid world, the see-through effects in it, the debug lines, the
+            // weapon in the hands, and the game interface over everything.
             m_renderStatistics = Renderer::DrawMeshes(m_registry, view, interpolationFactor, m_renderAssets,
                                                       m_systemShaders, m_renderSettings);
             DrawEffects(view);
@@ -306,6 +314,11 @@ namespace Abomination
                                      DebugLineWidth * m_window.GetDisplayScale());
 
             DrawWeaponViewModel(aspectRatio);
+
+            // The game interface over everything; it gets the mouse only while the cursor is free (the debug overlay is open).
+            m_gameUI.Update(viewportSize, !m_isMouseCaptured);
+            m_renderStatistics.drawCallCount +=
+                m_gameUI.Render(viewportSize, m_renderAssets.shaders.Get(m_systemShaders.gameUI));
         }
 
         // The lines of this frame are drawn (or, in a minimized window, dropped); the next frame adds its own.

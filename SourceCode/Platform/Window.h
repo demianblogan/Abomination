@@ -16,6 +16,8 @@ namespace Abomination::Input
 
 namespace Abomination::Platform
 {
+    class RmlUiPlatformBackend;
+
     struct WindowSettings
     {
         std::string title = "Abomination";
@@ -50,6 +52,10 @@ namespace Abomination::Platform
         // Handles all events the operating system has sent since the last call: closing and resizing the window,
         // keys, the mouse. Starts a new input frame of every device and fills it with the input of this frame.
         void ProcessEvents(Input::InputDevices& input);
+
+        // The game interface that gets the keyboard and mouse events after ImGui (nullptr: none). Events the interface uses
+        // (a click on a button) do not reach the game. The backend must outlive the window or be reset to nullptr.
+        void SetRmlUiBackend(RmlUiPlatformBackend* backend) noexcept;
 
         // Shows the frame that has just been drawn: swaps the back buffer and the front buffer.
         void SwapBuffers();
@@ -105,6 +111,7 @@ namespace Abomination::Platform
         int m_widthInPixels = 0;
         int m_heightInPixels = 0;
         float m_displayScale = 1.0f;
+        RmlUiPlatformBackend* m_rmlUiBackend = nullptr;
     };
 
     // A pointer to a function without parameters and return value. OpenGL functions have different signatures,

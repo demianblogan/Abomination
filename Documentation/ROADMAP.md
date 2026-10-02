@@ -24,7 +24,7 @@ we now* and *what comes next*.
 | 0.1     | Foundation             | ✅     | Free-fly (noclip) camera                              | Window, OpenGL 4.6 context, debug output, textured cube, ImGui overlay |
 | 0.2     | First Steps            | ✅     | Quake-style movement, collision with the level        | EnTT, resource manager, TrenchBroom map loading, brush texturing |
 | 0.3     | Boomstick              | ✅     | First hitscan weapon, damage, sound                   | View model with sway/bob/recoil, muzzle flash, particles, decals, glTF loading |
-| 0.4     | It Moves               | 🔨     | First enemy: AI, navmesh, health, death, HUD          | Skeletal animation, text rendering                       |
+| 0.4     | It Moves               | 🔨     | First enemy: AI, navmesh, health, death, HUD          | Skeletal animation, game interface (RmlUi)               |
 | 0.5     | Lights                 | ⏳     | Glowing projectiles, dynamic light in combat          | Lightmap baking, shadows, HDR, bloom, gamma              |
 | 0.6     | Game Loop              | ⏳     | Pickups, armor, doors, buttons, plates, level exit, stats screen, level transitions — first complete level | Moving brushes, data-driven configs |
 | 0.7     | Arsenal & Bestiary     | ⏳     | All weapons, projectiles, explosions, weapon switching (keys, wheel, mouse wheel), gamepad, new enemy types (incl. flying), first boss | Weapon effects, new models |
@@ -119,7 +119,7 @@ monsters of Quake; if time runs out, the navmesh moves to 0.5.
 
 | # | Branch                          | Status | Content                                                                 |
 |---|---------------------------------|--------|-------------------------------------------------------------------------|
-| 1 | `feat/text-rendering`           | 🔨     | Fonts baked into a texture (stb_truetype): Oswald for the HUD and texts, Cormorant SC for titles, with every letter of the 5 languages (checked by a test); a 2D pass over the scene in screen pixels, text and icons without ImGui |
+| 1 | `feat/game-ui`                 | 🔨     | The game interface on RmlUi (documents in RML/RCSS, controls, font effects such as outlines): SDL3 and OpenGL backends; fonts Oswald for the HUD and texts and Cormorant SC for titles, with every letter of the 5 languages (checked by a test) |
 | 2 | `feat/hud`                      | ⏳     | Health and armor of the player, ammo of the shotgun (100 at the start, no shot without it); the HUD (see below) with icons from the texture generator; the crosshair and hit markers move from ImGui to the HUD; a red flash when hurt |
 | 3 | `feat/pump-action`              | ⏳     | After every shot the pump of the shotgun slides back and forth (moved by code, a part of the model) with a click, and a shell flies out, falls, bounces and lies for a while |
 | 4 | `feat/skeletal-animation`       | ⏳     | Skins, joints and animation clips from glTF; skinning in the vertex shader; smooth blending between clips; an animated model standing in the test room |

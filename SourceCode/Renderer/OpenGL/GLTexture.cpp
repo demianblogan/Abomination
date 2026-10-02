@@ -25,7 +25,7 @@ namespace Abomination::Renderer
         }
     }
 
-    GLTexture GLTexture::CreateFromImage(const Core::Image& image)
+    GLTexture GLTexture::CreateFromImage(const Core::Image& image, TextureFiltering filtering)
     {
         // A texture of 0 texels is an OpenGL error, and fewer pixels than the size promises would be read past their end.
         assert(image.width > 0 && image.height > 0);
@@ -53,8 +53,11 @@ namespace Abomination::Renderer
         //   Minification - the texture is far and many texels fall into one screen pixel.
         //     GL_NEAREST_MIPMAP_LINEAR takes the nearest texel on the two mipmap levels closest to the needed size
         //     and blends between those levels. Distant surfaces stay calm instead of flickering, and still crisp.
-        glTextureParameteri(textureID, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glTextureParameteri(textureID, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_LINEAR);
+        // Smooth filtering blends the 4 nearest texels (GL_LINEAR) on the two closest mipmap levels and between them
+        // (GL_LINEAR_MIPMAP_LINEAR, "trilinear"): text stays soft-edged at any size.
+        const bool isSmooth = filtering == TextureFiltering::Smooth;
+        glTextureParameteri(textureID, GL_TEXTURE_MAG_FILTER, isSmooth ? GL_LINEAR : GL_NEAREST);
+        glTextureParameteri(textureID, GL_TEXTURE_MIN_FILTER, isSmooth ? GL_LINEAR_MIPMAP_LINEAR : GL_NEAREST_MIPMAP_LINEAR);
 
         // Texture coordinates outside 0-1 repeat the texture (like tiles), which walls and floors of levels need.
         glTextureParameteri(textureID, GL_TEXTURE_WRAP_S, GL_REPEAT);

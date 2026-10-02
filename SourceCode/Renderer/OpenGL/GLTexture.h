@@ -13,14 +13,26 @@ namespace Abomination::Core
 
 namespace Abomination::Renderer
 {
+    // How a texture looks when it is drawn larger or smaller than its own size.
+    enum class TextureFiltering
+    {
+        // Crisp square texels close up, the retro look of the level and the models (see CreateFromImage).
+        Pixelated,
+
+        // Texels blended smoothly at every size: text and interface icons, whose edges must stay soft, not stepped.
+        Smooth,
+    };
+
     // A 2D texture in video memory: a picture the fragment shader can read colors from.
     // It stores the picture itself and all its mipmap levels (smaller copies for distant surfaces), and uses
-    // pixel-crisp filtering for the retro look. The texture is deleted in the destructor. Move-only.
+    // pixel-crisp filtering for the retro look (or smooth filtering, see TextureFiltering). The texture is deleted in the
+    // destructor. Move-only.
     class GLTexture
     {
     public:
         // Uploads the pixels of the image to the GPU and generates the mipmap levels.
-        [[nodiscard]] static GLTexture CreateFromImage(const Core::Image& image);
+        [[nodiscard]] static GLTexture CreateFromImage(const Core::Image& image,
+                                                       TextureFiltering filtering = TextureFiltering::Pixelated);
 
         // Loads an image file and calls CreateFromImage(). Returns an error if the file cannot be loaded.
         [[nodiscard]] static std::expected<GLTexture, std::string> CreateFromFile(const std::filesystem::path& path);

@@ -3,6 +3,7 @@
 #include "Core/BuildConfiguration.h"
 #include "Core/Logging/Log.h"
 #include "Input/InputDevices.h"
+#include "Platform/RmlUiPlatformBackend.h"
 #include "Platform/WindowSizing.h"
 
 #include <SDL3/SDL.h>
@@ -161,6 +162,7 @@ namespace Abomination::Platform
         , m_widthInPixels(other.m_widthInPixels)
         , m_heightInPixels(other.m_heightInPixels)
         , m_displayScale(other.m_displayScale)
+        , m_rmlUiBackend(std::exchange(other.m_rmlUiBackend, nullptr))
     {}
 
     Window& Window::operator=(Window&& other) noexcept
@@ -176,6 +178,7 @@ namespace Abomination::Platform
             m_widthInPixels = other.m_widthInPixels;
             m_heightInPixels = other.m_heightInPixels;
             m_displayScale = other.m_displayScale;
+            m_rmlUiBackend = std::exchange(other.m_rmlUiBackend, nullptr);
         }
 
         return *this;
@@ -199,6 +202,18 @@ namespace Abomination::Platform
             // Without an ImGui context (the debug overlay is not created) there is nobody to pass them to.
             if (ImGui::GetCurrentContext() != nullptr)
                 ImGui_ImplSDL3_ProcessEvent(&event);
+
+            // Then the game interface, unless ImGui uses the mouse or the keyboard. What the interface uses (a click on
+            // one of its buttons, typing into its text field) does not reach the game; releases always do, so no key or
+            // button stays held.
+            if (m_rmlUiBackend != nullptr && !IsMouseCapturedByImGui() && !IsKeyboardCapturedByImGui() &&
+                m_rmlUiBackend->ProcessEvent(event))
+            {
+                const bool isPress = event.type == SDL_EVENT_KEY_DOWN || event.type == SDL_EVENT_MOUSE_BUTTON_DOWN ||
+                                     event.type == SDL_EVENT_MOUSE_WHEEL;
+                if (isPress)
+                    continue;
+            }
 
             switch (event.type)
             {
@@ -365,6 +380,11 @@ namespace Abomination::Platform
     int Window::GetHeightInPixels() const noexcept
     {
         return m_heightInPixels;
+    }
+
+    void Window::SetRmlUiBackend(RmlUiPlatformBackend* backend) noexcept
+    {
+        m_rmlUiBackend = backend;
     }
 
     float Window::GetDisplayScale() const noexcept

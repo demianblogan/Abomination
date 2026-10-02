@@ -220,6 +220,8 @@ set(LIBRARY_SOURCES
     UI/ViewModelWindow.cpp
     UI/WeaponWindow.h
     UI/WeaponWindow.cpp
+    UI/Widgets.h
+    UI/Widgets.cpp
 
     World/BrushGeometry.h
     World/BrushGeometry.cpp

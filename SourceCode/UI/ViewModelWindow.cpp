@@ -3,8 +3,8 @@
 #include "Gameplay/LandingDip.h"
 #include "Gameplay/ViewModel.h"
 #include "UI/UIScale.h"
+#include "UI/Widgets.h"
 
-#include <glm/trigonometric.hpp>
 #include <imgui.h>
 
 #include <cstddef>
@@ -15,20 +15,6 @@ namespace Abomination::UI
     {
         // The window opens for the first time at the right edge, below the Collisions window.
         constexpr ImVec2 InitialPosition(900.0f, 620.0f);
-
-        // The width of the sliders in pixels at 100% scale.
-        constexpr float SliderWidth = 180.0f;
-
-        // A slider for a distance in centimeters, stored in meters: centimeters are easier to read and to set exactly.
-        void DrawCentimeterSlider(const char* label, float& meters, float minimumCentimeters, float maximumCentimeters,
-                                  const char* tooltip)
-        {
-            float centimeters = meters * 100.0f;
-            ImGui::SetNextItemWidth(ScaleToUI(SliderWidth));
-            if (ImGui::SliderFloat(label, &centimeters, minimumCentimeters, maximumCentimeters, "%.1f cm"))
-                meters = centimeters / 100.0f;
-            ImGui::SetItemTooltip("%s", tooltip);
-        }
     }
 
     void DrawViewModelWindow(bool* isOpen, Gameplay::ViewModel& viewModel, Gameplay::LandingDip& landingDip)
@@ -64,64 +50,55 @@ namespace Abomination::UI
         // Found from the model (the middle of the end of its barrel); fine-tuned here if the flash is off.
         ImGui::SeparatorText("Muzzle (in the model)");
         ImGui::PushID("Muzzle");
-        DrawCentimeterSlider("Sideways", viewModel.muzzle.x, -20.0f, 20.0f, "Where the flash and the smoke appear.");
-        DrawCentimeterSlider("Up", viewModel.muzzle.y, -20.0f, 20.0f, "Where the flash and the smoke appear.");
-        DrawCentimeterSlider("Forward", viewModel.muzzle.z, -80.0f, 0.0f, "Where the flash and the smoke appear.");
+        constexpr const char* MuzzleTooltip = "Where the flash and the smoke appear.";
+        DrawCentimeterSlider("Sideways", viewModel.muzzle.x, -20.0f, 20.0f, MuzzleTooltip);
+        DrawCentimeterSlider("Up", viewModel.muzzle.y, -20.0f, 20.0f, MuzzleTooltip);
+        DrawCentimeterSlider("Forward", viewModel.muzzle.z, -80.0f, 0.0f, MuzzleTooltip);
         ImGui::PopID();
 
         ImGui::SeparatorText("Lens");
-        float fovDegrees = glm::degrees(viewModel.verticalFOV);
-        ImGui::SetNextItemWidth(ScaleToUI(SliderWidth));
-        if (ImGui::SliderFloat("Vertical FOV", &fovDegrees, 30.0f, 90.0f, "%.0f deg"))
-            viewModel.verticalFOV = glm::radians(fovDegrees);
-        ImGui::SetItemTooltip("The field of view the weapon alone is drawn with. Smaller: the weapon looks bigger and\n"
-                              "flatter; larger: smaller and more stretched in depth. The world is not affected.");
+        DrawDegreeSlider("Vertical FOV", viewModel.verticalFOV, 30.0f, 90.0f, "%.0f deg",
+                         "The field of view the weapon alone is drawn with. Smaller: the weapon looks bigger and\n"
+                         "flatter; larger: smaller and more stretched in depth. The world is not affected.");
 
         Gameplay::ViewModelMotionSettings& motion = viewModel.motionSettings;
         ImGui::SeparatorText("Idle (standing)");
         DrawCentimeterSlider("Idle amount", motion.idleAmount, 0.0f, 2.0f,
                              "How far the weapon rises and falls with the breath while the player stands. 0 turns it off.");
-        ImGui::SetNextItemWidth(ScaleToUI(SliderWidth));
-        ImGui::SliderFloat("Breath duration", &motion.idleBreathDuration, 1.0f, 10.0f, "%.1f s");
-        ImGui::SetItemTooltip("How long one breath takes. Shorter: faster, as if out of breath.");
+        DrawSlider("Breath duration", motion.idleBreathDuration, 1.0f, 10.0f, "%.1f s",
+                   "How long one breath takes. Shorter: faster, as if out of breath.");
 
         ImGui::SeparatorText("Bob (walking)");
         DrawCentimeterSlider("Bob amount", motion.bobAmount, 0.0f, 5.0f,
                              "How far the weapon swings to the sides at full speed. 0 turns the bob off.");
-        ImGui::SetNextItemWidth(ScaleToUI(SliderWidth));
-        ImGui::SliderFloat("Stride length", &motion.bobStrideLength, 0.5f, 5.0f, "%.2f m");
-        ImGui::SetItemTooltip("How far the player walks during one whole swing (two steps). Shorter: faster swings.");
+        DrawSlider("Stride length", motion.bobStrideLength, 0.5f, 5.0f, "%.2f m",
+                   "How far the player walks during one whole swing (two steps). Shorter: faster swings.");
 
         ImGui::SeparatorText("Sway (turning)");
         DrawCentimeterSlider("Sway amount", motion.swayAmount, 0.0f, 10.0f,
                              "How far the weapon lags per radian (57 degrees) the view turns. 0 turns the sway off.");
         DrawCentimeterSlider("Sway maximum", motion.swayMaximum, 0.0f, 10.0f, "The farthest the weapon ever lags.");
-        ImGui::SetNextItemWidth(ScaleToUI(SliderWidth));
-        ImGui::SliderFloat("Sway return", &motion.swayReturnRate, 1.0f, 30.0f, "%.1f /s");
-        ImGui::SetItemTooltip("How fast the weapon catches up with the view. Bigger: quicker, stiffer.");
+        DrawSlider("Sway return", motion.swayReturnRate, 1.0f, 30.0f, "%.1f /s",
+                   "How fast the weapon catches up with the view. Bigger: quicker, stiffer.");
 
         ImGui::SeparatorText("Inertia (jumping, landing)");
-        ImGui::SetNextItemWidth(ScaleToUI(SliderWidth));
-        ImGui::SliderFloat("Jump kick", &motion.jumpKick, 0.0f, 1.0f, "%.2f m/s");
-        ImGui::SetItemTooltip("How hard a jump pushes the weapon down. 0 turns it off.");
-        ImGui::SetNextItemWidth(ScaleToUI(SliderWidth));
-        ImGui::SliderFloat("Landing kick", &motion.landingKickPerFallSpeed, 0.0f, 0.1f, "%.3f");
-        ImGui::SetItemTooltip("How hard a landing pushes the weapon down, per m/s of the fall (a jump lands at 8.4 m/s).");
-        ImGui::SetNextItemWidth(ScaleToUI(SliderWidth));
-        ImGui::SliderFloat("Spring stiffness", &motion.springStiffness, 20.0f, 500.0f, "%.0f");
-        ImGui::SetItemTooltip("How fast the weapon comes back after a kick. Bigger: quicker and smaller dips.");
+        DrawSlider("Jump kick", motion.jumpKick, 0.0f, 1.0f, "%.2f m/s",
+                   "How hard a jump pushes the weapon down. 0 turns it off.");
+        DrawSlider("Landing kick", motion.landingKickPerFallSpeed, 0.0f, 0.1f, "%.3f",
+                   "How hard a landing pushes the weapon down, per m/s of the fall (a jump lands at 8.4 m/s).");
+        DrawSlider("Spring stiffness", motion.springStiffness, 20.0f, 500.0f, "%.0f",
+                   "How fast the weapon comes back after a kick. Bigger: quicker and smaller dips.");
 
         ImGui::SeparatorText("Camera landing dip");
-        ImGui::SetNextItemWidth(ScaleToUI(SliderWidth));
-        ImGui::SliderFloat("Dip kick", &landingDip.kickPerFallSpeed, 0.0f, 1.0f, "%.3f");
-        ImGui::SetItemTooltip("How far the view dips after a landing, per m/s of the fall. 0 turns it off.");
-        ImGui::SetNextItemWidth(ScaleToUI(SliderWidth));
-        ImGui::SliderFloat("Dip stiffness", &landingDip.springStiffness, 20.0f, 500.0f, "%.0f");
-        ImGui::SetItemTooltip("How fast the view comes back up. Bigger: quicker and smaller dips.");
+        DrawSlider("Dip kick", landingDip.kickPerFallSpeed, 0.0f, 1.0f, "%.3f",
+                   "How far the view dips after a landing, per m/s of the fall. 0 turns it off.");
+        DrawSlider("Dip stiffness", landingDip.springStiffness, 20.0f, 500.0f, "%.0f",
+                   "How fast the view comes back up. Bigger: quicker and smaller dips.");
 
         if (ImGui::Button("Reset"))
         {
-            // Only the settings go back to the defaults; the model, the shader and the current motion stay.
+            // Only the settings go back to the defaults; the model, the shader, the muzzle found in the model and the
+            // current motion stay.
             const Gameplay::ViewModel defaults;
             viewModel.offset = defaults.offset;
             viewModel.side = defaults.side;

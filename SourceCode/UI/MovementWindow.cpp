@@ -4,6 +4,7 @@
 #include "Physics/CharacterBody.h"
 #include "Physics/CharacterMovement.h"
 #include "UI/UIScale.h"
+#include "UI/Widgets.h"
 
 #include <glm/geometric.hpp>
 #include <glm/vec2.hpp>
@@ -15,18 +16,6 @@ namespace Abomination::UI
     {
         // The window opens for the first time at the left edge, below the Performance window.
         constexpr ImVec2 InitialPosition(10.0f, 260.0f);
-
-        // The width of the sliders in pixels at 100% scale.
-        constexpr float SliderWidth = 180.0f;
-
-        // A slider for a setting; the tooltip explains it. Returns nothing: the value is changed in place.
-        void DrawSlider(const char* label, float& value, float minimum, float maximum, const char* format,
-                        const char* tooltip)
-        {
-            ImGui::SetNextItemWidth(ScaleToUI(SliderWidth));
-            ImGui::SliderFloat(label, &value, minimum, maximum, format);
-            ImGui::SetItemTooltip("%s", tooltip);
-        }
     }
 
     void DrawMovementWindow(bool* isOpen, Physics::PhysicsSettings& physicsSettings,

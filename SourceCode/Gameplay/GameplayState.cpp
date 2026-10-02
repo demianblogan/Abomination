@@ -11,29 +11,8 @@
 
 #include <glm/vec3.hpp>
 
-#include <string>
-
 namespace Abomination::Gameplay
 {
-    namespace
-    {
-        // Loads the variants Sounds/Player/<name>1.ogg ... <name><count>.ogg of one sound event, for the whole game.
-        Audio::SoundEvent LoadPlayerSoundEvent(Audio::AudioEngine& audio, const std::string& name, int variantCount)
-        {
-            Audio::SoundEvent event;
-            for (int variant = 1; variant <= variantCount; ++variant)
-            {
-                const std::string path = "Sounds/Player/" + name + std::to_string(variant) + ".ogg";
-                event.variants.push_back(audio.LoadSound(path, Core::AssetLifetime::Global));
-            }
-
-            // One jump or landing at a time: a new one cuts the old one off.
-            event.maxVoices = 1;
-
-            return event;
-        }
-    }
-
     GameplayState CreateGameplayState(entt::registry& registry, const World::PlayerStart& playerStart,
                                       Audio::AudioEngine& audio, Renderer::RenderAssets& renderAssets)
     {
@@ -45,7 +24,9 @@ namespace Abomination::Gameplay
 
         // A jump itself makes no sound: the feet only push off. The jump will be the voice of the player (a short effort
         // sound), recorded separately; until then the jump event has no variants and plays nothing.
-        state.playerSounds.land = LoadPlayerSoundEvent(audio, "Land", 3);
+        // One landing at a time: a new one cuts the old one off.
+        state.playerSounds.land = audio.LoadSoundEvent("Sounds/Player/Land", 3, Core::AssetLifetime::Global);
+        state.playerSounds.land.maxVoices = 1;
 
         // The shotgun in the hands, for the whole game (the pickups and weapon switching of later versions will change
         // which model it is).
@@ -65,24 +46,15 @@ namespace Abomination::Gameplay
 
         // The shotgun itself: what it shoots and how it sounds. One recording, its pitch changed by up to 5% every shot.
         Weapon& weapon = registry.emplace<Weapon>(state.player);
-        weapon.fireSound = Audio::SoundEvent{
-            .variants = {audio.LoadSound("Sounds/Weapons/Shotgun/Fire1.ogg", Core::AssetLifetime::Global)},
-            .pitchVariation = 0.05f,
-            .maxVoices = 2,
-        };
+        weapon.fireSound = audio.LoadSoundEvent("Sounds/Weapons/Shotgun/Fire", 1, Core::AssetLifetime::Global);
+        weapon.fireSound.pitchVariation = 0.05f;
+        weapon.fireSound.maxVoices = 2;
 
         // The confirmation that a shot hurt or killed something (temporary sounds from Kenney's Impact Sounds).
-        const auto loadVariants = [&audio](const std::string& name)
-        {
-            Audio::SoundEvent event;
-            for (int variant = 1; variant <= 3; ++variant)
-                event.variants.push_back(audio.LoadSound("Sounds/Weapons/" + name + std::to_string(variant) + ".ogg",
-                                                         Core::AssetLifetime::Global));
-            event.maxVoices = 2;
-            return event;
-        };
-        weapon.hitSound = loadVariants("Hit");
-        weapon.killSound = loadVariants("Kill");
+        weapon.hitSound = audio.LoadSoundEvent("Sounds/Weapons/Hit", 3, Core::AssetLifetime::Global);
+        weapon.hitSound.maxVoices = 2;
+        weapon.killSound = audio.LoadSoundEvent("Sounds/Weapons/Kill", 3, Core::AssetLifetime::Global);
+        weapon.killSound.maxVoices = 2;
 
         return state;
     }

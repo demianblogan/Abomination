@@ -106,6 +106,31 @@ Every asset is listed in `ASSETS.md` before it is committed.
 level, the pellets spread, the targets take damage and are destroyed, every
 shot is heard and leaves a flash, particles and marks on the walls.
 
+## 0.4 — It Moves 🔨
+
+**Goal:** the first enemy: a melee monster that notices the player, runs to
+them and strikes; it takes damage, feels pain and dies. The player has health
+shown in a HUD and can die too, then the level restarts.
+
+The enemy model and its animations come from a CC0 pack (Quaternius) for now.
+The navmesh comes last: until then the enemy runs straight at the player and
+slides along walls with the same movement code as the player, like the
+monsters of Quake; if time runs out, the navmesh moves to 0.5.
+
+| # | Branch                          | Status | Content                                                                 |
+|---|---------------------------------|--------|-------------------------------------------------------------------------|
+| 1 | `feat/text-rendering`           | 🔨     | A font baked into a texture (stb_truetype), a 2D pass over the scene in screen pixels, text and icons without ImGui |
+| 2 | `feat/hud`                      | ⏳     | Health of the player; a minimal HUD (health with an icon in a corner, pixel font); the crosshair and hit markers move from ImGui to the HUD; a red flash when hurt |
+| 3 | `feat/skeletal-animation`       | ⏳     | Skins, joints and animation clips from glTF; skinning in the vertex shader; smooth blending between clips; an animated model standing in the test room |
+| 4 | `feat/enemy`                    | ⏳     | The first enemy, a melee monster: states (idle, alert, chase, attack, pain, death), sight (a trace to the player) and hearing (shots), a strike that hurts the player; the target dummies of 0.3 removed; the log level chosen in the running game |
+| 5 | `feat/death`                    | ⏳     | The enemy dies with an animation and its body stays; the player dies like in Quake (the view drops to the floor, the screen turns red, a click or Space restarts the level) |
+| 6 | `feat/navmesh`                  | ⏳     | Recast/Detour: a navmesh built from the brushes when a level loads, paths around walls and up stairs, the navmesh shown in the debug overlay |
+| 7 | `refactor/review-0.4`           | ⏳     | A review of the project, a list of what changed since the last walkthrough, screenshots; release v0.4.0 |
+
+**Done when:** a monster in the test level notices the player, runs to them
+around walls and strikes; the shotgun hurts it and kills it; the HUD shows
+the health of the player, who dies and restarts the level when it runs out.
+
 ## Later milestones
 
 Detailed branch plans are written when a milestone starts. Notes collected so

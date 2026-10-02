@@ -159,14 +159,16 @@ A module may depend only on modules **below** it in this diagram.
   ImGui is used only for developer tools, never for the game interface.
 - **The debug overlay** has a main menu bar (F1): *View* opens and closes
   debug windows (now *Performance* and *Console* at the top, then submenus by
-  part of the engine: *Engine* — *Entities*, *Assets*; *Rendering* —
-  *Renderer*; *Physics* — *Collisions*, *Movement*; one file per window; all
-  closed at the first start), *Settings*
+  part of the engine: *Engine* — *Entities*, *Assets*, *Audio*; *Rendering* —
+  *Renderer*; *Physics* — *Collisions*, *Movement*; *Gameplay* — *View
+  Model*, *Weapon*, *Effects*; one file per window; all closed at the first
+  start; the tuning windows share the sliders of `UI/Widgets`), *Settings*
   changes settings grouped like the future options menu (now *Display*:
   screen mode, V-Sync, FPS limit, UI scale). The font size is one constant next to the font
   file name in `DebugOverlay.cpp`. `Draw()` takes one `UI::DebugOverlayContext`
-  with references to the systems the overlay shows and changes; a new debug
-  tool adds a field to it instead of a new parameter. The references are valid
+  with references to the systems the overlay shows and changes (the gameplay
+  windows get the whole `GameplayState` and find the components of the player
+  themselves); a new debug tool adds a field to it instead of a new parameter. The references are valid
   only during the call. Positions and sizes of the windows are saved in
   `DebugOverlay.ini` next to the executable. `UI::ImGuiLibrary` loads and saves
   that file itself instead of giving ImGui a `const char*` path, which would
@@ -531,7 +533,7 @@ player entity                                free-fly camera entity
   center or on the left (moved, not mirrored); hidden with the free-fly
   camera. It moves every frame (`ViewModelMotion`): a figure-eight **bob**
   tied to the distance walked, a **sway** that lags behind the view and
-  catches up, and **inertia** — one damped spring (`UpdateDampedSpring`)
+  catches up, and **inertia** — one damped spring (`Core::UpdateDampedSpring`)
   kicked down by jumps and landings. The view itself **dips after landings**
   on the same kind of spring (`LandingDip`). While the player stands, the
   weapon **breathes** (slow rise and fall), fading out as the bob fades in.
@@ -766,7 +768,7 @@ is `Abomination::Core::Clock`. Core and Renderer are split already:
 
 | Module | Root | Topic folders |
 |--------|------|---------------|
-| `Core` | `BuildConfiguration`, `Version` | `Time/` (clock, frame timer, fixed timestep, FPS limit, statistics), `Logging/`, `Files/` (files, images), `Math/` (units, planes, polygons, bounding boxes), `Assets/` (handles, cache, lifetimes), `Scene/` (`Name`, `Transform`, interpolation) |
+| `Core` | `BuildConfiguration`, `Version` | `Time/` (clock, frame timer, fixed timestep, FPS limit, statistics), `Logging/`, `Files/` (files, images), `Math/` (units, planes, polygons, bounding boxes and rays, random numbers, springs), `Assets/` (handles, cache, lifetimes), `Scene/` (`Name`, `Transform`, interpolation) |
 | `Renderer` | `RenderSystem`, `RenderSettings`, `MeshRenderer`, `ImGuiRendererBackend` | `OpenGL/` (wrappers of OpenGL objects, loader, debug output, shader interface), `Assets/` (meshes and the stores), `Camera/` (`CameraLens`, `View`), `Debug/` (debug lines) |
 
 A module is split when its folder no longer shows its parts at a glance

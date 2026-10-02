@@ -54,6 +54,8 @@ set(TEST_SOURCES
 
     ThirdParty/EnTTTests.cpp
 
+    UI/GameFontsTests.cpp
+
     World/BrushGeometryTests.cpp
     World/CollisionBrushTests.cpp
     World/CollisionDebugTests.cpp
@@ -74,6 +76,8 @@ target_link_libraries(AbominationTests PRIVATE
     GTest::gtest_main   # Provides main() that runs all tests
 )
 target_include_directories(AbominationTests SYSTEM PRIVATE ${Stb_INCLUDE_DIR})
+# The font tests read the fonts of the game from the source tree.
+target_compile_definitions(AbominationTests PRIVATE ABOMINATION_TEST_ASSETS_DIRECTORY="${PROJECT_SOURCE_DIR}/Assets")
 abomination_set_compiler_options(AbominationTests)
 
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${TEST_SOURCES})

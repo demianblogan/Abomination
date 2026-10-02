@@ -19,6 +19,7 @@
 #include "Renderer/Sprites/SpriteBatch.h"
 #include "Renderer/Sprites/SpriteRenderer.h"
 #include "UI/DebugOverlay.h"
+#include "UI/GameUI.h"
 #include "World/CollisionDebug.h"
 #include "World/Level.h"
 
@@ -60,7 +61,7 @@ namespace Abomination
         // map: the parsed start map, whose entities the constructor creates. assetsDirectory is kept for loading maps later.
         Application(Platform::SDLLibrary SDLLibrary, Platform::Window window, Audio::AudioEngine audio,
                     Renderer::RenderAssets renderAssets, const World::MapData& map, UI::DebugOverlay debugOverlay,
-                    std::filesystem::path assetsDirectory, Core::LogHistory& logHistory);
+                    UI::GameUI gameUI, std::filesystem::path assetsDirectory, Core::LogHistory& logHistory);
 
         // The two kinds of updates of the main loop, named like in Unity:
         //   Update()      - once per frame: what must react immediately and does not depend on time
@@ -145,6 +146,10 @@ namespace Abomination
         bool m_canPlayerShoot = false;
 
         UI::DebugOverlay m_debugOverlay;
+
+        // The game interface (the HUD, later the menus), drawn over the game and under the debug overlay. Declared after the
+        // window, so it is destroyed first, while the OpenGL context still exists.
+        UI::GameUI m_gameUI;
 
         // State of the keyboard and the mouse for the current frame: the window fills it, the game reads it.
         Input::InputDevices m_inputDevices;

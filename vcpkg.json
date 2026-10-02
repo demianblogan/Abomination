@@ -15,7 +15,12 @@
       ]
     },
     "cgltf",
+    {
+      "name": "freetype",
+      "default-features": false
+    },
     "miniaudio",
+    "rmlui",
     "sdl3",
     {
       "name": "spdlog",

@@ -34,6 +34,11 @@ namespace Abomination::Renderer
         void SetFloatAttribute(std::uint32_t attributeIndex, std::uint32_t bindingIndex, int componentCount,
                                std::size_t offset);
 
+        // Describes one shader input stored as componentCount bytes (0-255) that the shader reads as floats from 0 to 1, a
+        // color in 4 bytes instead of 16. The other parameters are those of SetFloatAttribute.
+        void SetNormalizedByteAttribute(std::uint32_t attributeIndex, std::uint32_t bindingIndex, int componentCount,
+                                        std::size_t offset);
+
         // Connects an index buffer (element buffer): a list of vertex numbers that tells glDrawElements in which
         // order to take the vertices, so a vertex shared by several triangles is stored only once.
         void SetIndexBuffer(const GLBuffer& buffer);

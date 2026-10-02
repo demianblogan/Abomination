@@ -29,6 +29,9 @@ namespace Abomination::Renderer
 
         // Draws sprites: particles, the muzzle flash, marks on walls (see SpriteRenderer).
         ShaderHandle sprites;
+
+        // Draws the game interface: the HUD, menus (see RmlUiRendererBackend).
+        ShaderHandle gameUI;
     };
 
     // Loads the system shaders. Called once at startup, after the stores are created.

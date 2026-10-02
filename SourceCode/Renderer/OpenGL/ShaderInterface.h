@@ -45,4 +45,15 @@ namespace Abomination::Renderer
     inline constexpr std::uint32_t SpritePositionAttribute = 0;
     inline constexpr std::uint32_t SpriteTexCoordAttribute = 1;
     inline constexpr std::uint32_t SpriteColorAttribute = 2;
+
+    // --- GameUI (see RmlUiRendererBackend) ---
+
+    // Vertex inputs: the corner in window pixels, its color (4 bytes, alpha premultiplied) and texture coordinates.
+    inline constexpr std::uint32_t GameUIPositionAttribute = 0;
+    inline constexpr std::uint32_t GameUIColorAttribute = 1;
+    inline constexpr std::uint32_t GameUITexCoordAttribute = 2;
+
+    // Uniforms besides the projection (ProjectionUniform): how far the geometry is moved, in pixels. The texture is
+    // uniAlbedoTexture (AlbedoTextureUnit).
+    inline constexpr std::uint32_t GameUITranslationUniform = 3;
 }

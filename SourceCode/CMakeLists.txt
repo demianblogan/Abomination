@@ -1,6 +1,7 @@
 # --- Dependencies ------------------------------------------------------------
 find_package(glm CONFIG REQUIRED)
 find_package(imgui CONFIG REQUIRED)
+find_package(RmlUi CONFIG REQUIRED)
 find_package(SDL3 CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
 find_package(Stb REQUIRED)  # Header-only: provides only Stb_INCLUDE_DIR, no target
@@ -128,6 +129,8 @@ set(LIBRARY_SOURCES
     Physics/CharacterMovement.cpp
     Platform/ImGuiPlatformBackend.h
     Platform/ImGuiPlatformBackend.cpp
+    Platform/RmlUiPlatformBackend.h
+    Platform/RmlUiPlatformBackend.cpp
     Platform/ScreenMode.h
     Platform/SDLLibrary.h
     Platform/SDLLibrary.cpp
@@ -146,6 +149,8 @@ set(LIBRARY_SOURCES
     Renderer/RenderSettings.h
     Renderer/RenderSystem.h
     Renderer/RenderSystem.cpp
+    Renderer/RmlUiRendererBackend.h
+    Renderer/RmlUiRendererBackend.cpp
     Renderer/Sprites/SpriteBatch.h
     Renderer/Sprites/SpriteBatch.cpp
     Renderer/Sprites/SpriteRenderer.h
@@ -194,6 +199,8 @@ set(LIBRARY_SOURCES
     UI/CrosshairOverlay.cpp
     UI/DebugOverlay.h
     UI/DebugOverlay.cpp
+    UI/GameUI.h
+    UI/GameUI.cpp
     UI/ImGuiLibrary.h
     UI/ImGuiLibrary.cpp
     UI/UIScale.h
@@ -259,6 +266,7 @@ target_link_libraries(AbominationCore
     PRIVATE
         GLAD                  # Only Renderer/*.cpp include GLAD, no header does
         imgui::imgui          # Only .cpp files include ImGui, no header does
+        RmlUi::RmlUi          # Only the RmlUi backends (Platform, Renderer) and UI/GameUI.cpp include RmlUi
         SDL3::SDL3            # Only Platform/*.cpp include SDL, no header does
         spdlog::spdlog        # Only Log.cpp includes spdlog, Log.h does not
 )

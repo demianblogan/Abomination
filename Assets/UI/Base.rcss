@@ -1,0 +1,52 @@
+/* What every document of the game starts from. RmlUi has no built-in styles: without these rules every element would be
+   laid out inline, like text. Adapted from the base style sheet of the RmlUi samples. */
+
+body, div, h1, h2, h3, h4, p, form, label.block
+{
+    display: block;
+}
+
+em
+{
+    font-style: italic;
+}
+
+strong
+{
+    font-weight: bold;
+}
+
+select
+{
+    text-align: left;
+}
+
+table
+{
+    display: table;
+}
+
+tr
+{
+    display: table-row;
+}
+
+td
+{
+    display: table-cell;
+}
+
+col
+{
+    display: table-column;
+}
+
+colgroup
+{
+    display: table-column-group;
+}
+
+thead, tbody, tfoot
+{
+    display: table-row-group;
+}

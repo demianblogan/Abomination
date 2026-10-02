@@ -89,6 +89,7 @@ namespace Abomination::Renderer
             .wireframe = shaders.Load("Shaders/Wireframe"),
             .debugLines = shaders.Load("Shaders/DebugLines"),
             .sprites = shaders.Load("Shaders/Sprite"),
+            .gameUI = shaders.Load("Shaders/GameUI"),
         };
     }
 

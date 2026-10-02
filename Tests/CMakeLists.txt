@@ -24,16 +24,16 @@ set(TEST_SOURCES
     Core/Time/FrameStatisticsTests.cpp
     Core/Time/FrameTimerTests.cpp
 
-    Gameplay/CrosshairTests.cpp
-    Gameplay/FreeFlyCameraControllerTests.cpp
-    Gameplay/LandingDipTests.cpp
-    Gameplay/ParticlesTests.cpp
-    Gameplay/PlayerSystemTests.cpp
-    Gameplay/PlayerTests.cpp
     Gameplay/SpinTests.cpp
-    Gameplay/ViewModelMotionTests.cpp
-    Gameplay/ViewModelTests.cpp
-    Gameplay/WeaponTests.cpp
+    Gameplay/Camera/FreeFlyCameraControllerTests.cpp
+    Gameplay/Effects/ParticlesTests.cpp
+    Gameplay/Player/LandingDipTests.cpp
+    Gameplay/Player/PlayerSystemTests.cpp
+    Gameplay/Player/PlayerTests.cpp
+    Gameplay/Weapons/CrosshairTests.cpp
+    Gameplay/Weapons/ViewModelMotionTests.cpp
+    Gameplay/Weapons/ViewModelTests.cpp
+    Gameplay/Weapons/WeaponTests.cpp
 
     Input/ActionStatesTests.cpp
     Input/InputBindingsTests.cpp

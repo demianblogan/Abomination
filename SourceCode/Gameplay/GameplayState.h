@@ -1,9 +1,9 @@
 #pragma once
 
 #include "Audio/SoundEvent.h"
-#include "Gameplay/Effects.h"
-#include "Gameplay/FreeFlyCameraController.h"
-#include "Gameplay/PlayerController.h"
+#include "Gameplay/Camera/FreeFlyCameraController.h"
+#include "Gameplay/Effects/Effects.h"
+#include "Gameplay/Player/PlayerController.h"
 #include "Physics/CharacterMovement.h"
 
 #include <entt/entt.hpp>

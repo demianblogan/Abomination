@@ -3,11 +3,11 @@
 #include "Core/BuildConfiguration.h"
 #include "Platform/ImGuiPlatformBackend.h"
 #include "Renderer/ImGuiRendererBackend.h"
-#include "UI/AudioWindow.h"
-#include "UI/ConsoleWindow.h"
 #include "UI/CrosshairOverlay.h"
-#include "UI/EntitiesWindow.h"
 #include "UI/ImGuiLibrary.h"
+#include "UI/Windows/AudioWindow.h"
+#include "UI/Windows/ConsoleWindow.h"
+#include "UI/Windows/EntitiesWindow.h"
 
 #include <entt/entt.hpp>
 

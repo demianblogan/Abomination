@@ -128,7 +128,7 @@ far:
   a separate approach. Frustum culling of entities (a bounding sphere tested
   against the six planes of the view) once enemies, pickups and effects bring
   many draw calls; measure first. Remove the target dummies of 0.3 when the
-  first enemy arrives: `Gameplay/TargetDummy.h/.cpp`, their use in
+  first enemy arrives: `Gameplay/Characters/TargetDummy.h/.cpp`, their use in
   `WeaponSystem.cpp`, `GameplayState` and `Application`, `target_dummy` in
   `Level` and the FGD, `Models/Enemies/Dummy.glb` and its line in
   `ASSETS.md`. Move the crosshair from ImGui lines to the HUD.

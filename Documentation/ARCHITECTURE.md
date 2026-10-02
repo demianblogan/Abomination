@@ -128,8 +128,8 @@ A module may depend only on modules **below** it in this diagram.
 | `Physics`     | Characters moving through the level like in Quake: gravity, sliding along walls, steps, walking, jumping, air control, on top of the box traces of `World` (see section 12) | 0.2 |
 | `AI`          | Enemy behaviour, pathfinding                                    | Planned |
 | `Audio`       | Sounds (miniaudio): sound store, voices, 2D and 3D sound; music later | 0.3 |
-| `Gameplay`    | Game rules: the player (entity, controller, view), free-fly camera, mouse look, spin (0.1–0.2); weapons, enemies | 0.1 |
-| `UI`          | Dear ImGui debug overlay: menu bar, performance, assets, entity inspector, renderer, collision, movement, in-game console (0.1–0.2); HUD and menus (later) | 0.1 |
+| `Gameplay`    | Game rules: the player (entity, controller, view), free-fly camera, mouse look, spin (0.1–0.2); the shotgun in the hands, shooting, damage, recoil, effects, crosshair, target dummies (0.3); enemies (0.4) | 0.1 |
+| `UI`          | Dear ImGui debug overlay: menu bar, performance, assets, entity inspector, renderer, collision, movement, in-game console (0.1–0.2); audio, view model, weapon, effects windows, the crosshair (0.3); HUD and menus (later) | 0.1 |
 | `Save`        | Serialization of the game state                                 | Planned |
 | `Application` | Startup, shutdown, main loop, switching between game states     | 0.1     |
 
@@ -503,7 +503,7 @@ player entity                                free-fly camera entity
 └── Renderer::CameraLens
 ```
 
-- **The player** (`Gameplay/Player`): the box never turns (like in Quake), the
+- **The player** (`Gameplay/Player/Player`): the box never turns (like in Quake), the
   view turns. The eyes are 18 units (0.56 m) above the center of the box
   (`PlayerEyeHeight`); `CalculatePlayerEyeTransform` makes the camera
   transform from the (interpolated) body and the look angles. After the body
@@ -515,7 +515,7 @@ player entity                                free-fly camera entity
   frame is kept until the next tick takes it (`CollectFrameInput`), so a short
   press in a frame without a tick is not lost. It knows nothing about walls
   or speeds: the Physics module decides how the player moves.
-- **Mouse look** is shared (`Gameplay/MouseLook`): both entities keep yaw and
+- **Mouse look** is shared (`Gameplay/Camera/MouseLook`): both entities keep yaw and
   pitch in the same component, `LookAngles`. `TurnByMouse` changes them by the
   mouse movement of a frame (pitch clamped to ±89°), `CalculateCameraRotation`
   builds the rotation from them.
@@ -563,7 +563,7 @@ player entity                                free-fly camera entity
   (`GatherCollisionBrushes`, `World::CreateBoxCollisionBrush`). A character
   stepping up a stair is drawn gliding after its body (`StepSmoothing` for
   every character, `Renderer::DrawOffset`).
-- **Effects** (`Gameplay/Effects`, `Gameplay/Particles`): sprites drawn by
+- **Effects** (`Gameplay/Effects/`): sprites drawn by
   `Renderer::SpriteRenderer` from a `SpriteBatch` of the frame — billboards
   (turned to the camera) and flat quads (marks on walls); depth-tested but not
   written, alpha sprites sorted back to front, additive ones (fire, sparks)
@@ -574,7 +574,7 @@ player entity                                free-fly camera entity
   stay); a character hit throws blood. Textures come from
   `Tools/TextureGenerator`. Tuned in View > Gameplay > Effects. The crosshair
   pulses with every shot.
-- **Target dummies** (`Gameplay/TargetDummy`, 0.3 only): characters with
+- **Target dummies** (`Gameplay/Characters/TargetDummy`, 0.3 only): characters with
   health placed with `target_dummy` in TrenchBroom; destroyed, they come back
   after 3 s once their place is free. Removed with the first enemy (0.4).
 
@@ -764,12 +764,14 @@ used by one system only shares its file (`Gameplay/Spin.h`); a component used
 by several gets its own header. When a module grows, it is split into topic
 folders that hold components and systems together (`Gameplay/Weapons/`,
 `Gameplay/Enemies/`), keeping the namespace of the module: `Core/Time/Clock.h`
-is `Abomination::Core::Clock`. Core and Renderer are split already:
+is `Abomination::Core::Clock`. These modules are split already:
 
 | Module | Root | Topic folders |
 |--------|------|---------------|
 | `Core` | `BuildConfiguration`, `Version` | `Time/` (clock, frame timer, fixed timestep, FPS limit, statistics), `Logging/`, `Files/` (files, images), `Math/` (units, planes, polygons, bounding boxes and rays, random numbers, springs), `Assets/` (handles, cache, lifetimes), `Scene/` (`Name`, `Transform`, interpolation) |
-| `Renderer` | `RenderSystem`, `RenderSettings`, `MeshRenderer`, `ImGuiRendererBackend` | `OpenGL/` (wrappers of OpenGL objects, loader, debug output, shader interface), `Assets/` (meshes and the stores), `Camera/` (`CameraLens`, `View`), `Debug/` (debug lines) |
+| `Renderer` | `RenderSystem`, `RenderSettings`, `MeshRenderer`, `ModelRenderer`, `DrawOffset`, `ImGuiRendererBackend` | `OpenGL/` (wrappers of OpenGL objects, loader, debug output, shader interface), `Assets/` (meshes, models, glTF loading and the stores), `Camera/` (`CameraLens`, `View`), `Debug/` (debug lines), `Sprites/` (sprite batch and renderer) |
+| `Gameplay` | `GameplayState`, `Spin` | `Player/` (player, controller, its system, landing dip), `Camera/` (free-fly camera, mouse look, the view), `Weapons/` (weapon, its system, the weapon in the hands and its motion, recoil, crosshair), `Effects/` (effects, particles), `Characters/` (health, collisions between characters, target dummies) |
+| `UI` | `DebugOverlay`, `ImGuiLibrary`, `UIScale`, `Widgets`, `CrosshairOverlay` | `Windows/` (one file per debug window) |
 
 A module is split when its folder no longer shows its parts at a glance
 (around 20 files); the tests in `Tests/` follow the same folders.

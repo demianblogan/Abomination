@@ -1,11 +1,11 @@
 #include "Gameplay/GameplayState.h"
 
 #include "Audio/AudioEngine.h"
-#include "Gameplay/LandingDip.h"
-#include "Gameplay/Player.h"
-#include "Gameplay/ViewModel.h"
-#include "Gameplay/ViewRecoil.h"
-#include "Gameplay/Weapon.h"
+#include "Gameplay/Player/LandingDip.h"
+#include "Gameplay/Player/Player.h"
+#include "Gameplay/Weapons/ViewModel.h"
+#include "Gameplay/Weapons/ViewRecoil.h"
+#include "Gameplay/Weapons/Weapon.h"
 #include "Renderer/Assets/RenderAssets.h"
 #include "World/PlayerStart.h"
 

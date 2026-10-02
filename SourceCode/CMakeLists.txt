@@ -70,47 +70,47 @@ set(LIBRARY_SOURCES
     Core/Time/FrameTimer.h
     Core/Time/FrameTimer.cpp
 
-    Gameplay/CharacterCollision.h
-    Gameplay/CharacterCollision.cpp
-    Gameplay/Crosshair.h
-    Gameplay/Crosshair.cpp
-    Gameplay/Effects.h
-    Gameplay/Effects.cpp
-    Gameplay/FreeFlyCameraController.h
-    Gameplay/FreeFlyCameraController.cpp
-    Gameplay/FreeFlyCameraSystem.h
-    Gameplay/FreeFlyCameraSystem.cpp
     Gameplay/GameplayState.h
     Gameplay/GameplayState.cpp
-    Gameplay/Health.h
-    Gameplay/LandingDip.h
-    Gameplay/LandingDip.cpp
-    Gameplay/MouseLook.h
-    Gameplay/MouseLook.cpp
-    Gameplay/Particles.h
-    Gameplay/Particles.cpp
-    Gameplay/Player.h
-    Gameplay/Player.cpp
-    Gameplay/PlayerController.h
-    Gameplay/PlayerController.cpp
-    Gameplay/PlayerSystem.h
-    Gameplay/PlayerSystem.cpp
     Gameplay/Spin.h
     Gameplay/Spin.cpp
-    Gameplay/TargetDummy.h
-    Gameplay/TargetDummy.cpp
-    Gameplay/ViewModel.h
-    Gameplay/ViewModel.cpp
-    Gameplay/ViewModelMotion.h
-    Gameplay/ViewModelMotion.cpp
-    Gameplay/ViewRecoil.h
-    Gameplay/ViewRecoil.cpp
-    Gameplay/ViewSystem.h
-    Gameplay/ViewSystem.cpp
-    Gameplay/Weapon.h
-    Gameplay/Weapon.cpp
-    Gameplay/WeaponSystem.h
-    Gameplay/WeaponSystem.cpp
+    Gameplay/Camera/FreeFlyCameraController.h
+    Gameplay/Camera/FreeFlyCameraController.cpp
+    Gameplay/Camera/FreeFlyCameraSystem.h
+    Gameplay/Camera/FreeFlyCameraSystem.cpp
+    Gameplay/Camera/MouseLook.h
+    Gameplay/Camera/MouseLook.cpp
+    Gameplay/Camera/ViewSystem.h
+    Gameplay/Camera/ViewSystem.cpp
+    Gameplay/Characters/CharacterCollision.h
+    Gameplay/Characters/CharacterCollision.cpp
+    Gameplay/Characters/Health.h
+    Gameplay/Characters/TargetDummy.h
+    Gameplay/Characters/TargetDummy.cpp
+    Gameplay/Effects/Effects.h
+    Gameplay/Effects/Effects.cpp
+    Gameplay/Effects/Particles.h
+    Gameplay/Effects/Particles.cpp
+    Gameplay/Player/LandingDip.h
+    Gameplay/Player/LandingDip.cpp
+    Gameplay/Player/Player.h
+    Gameplay/Player/Player.cpp
+    Gameplay/Player/PlayerController.h
+    Gameplay/Player/PlayerController.cpp
+    Gameplay/Player/PlayerSystem.h
+    Gameplay/Player/PlayerSystem.cpp
+    Gameplay/Weapons/Crosshair.h
+    Gameplay/Weapons/Crosshair.cpp
+    Gameplay/Weapons/ViewModel.h
+    Gameplay/Weapons/ViewModel.cpp
+    Gameplay/Weapons/ViewModelMotion.h
+    Gameplay/Weapons/ViewModelMotion.cpp
+    Gameplay/Weapons/ViewRecoil.h
+    Gameplay/Weapons/ViewRecoil.cpp
+    Gameplay/Weapons/Weapon.h
+    Gameplay/Weapons/Weapon.cpp
+    Gameplay/Weapons/WeaponSystem.h
+    Gameplay/Weapons/WeaponSystem.cpp
 
     Input/Action.h
     Input/ActionStates.h
@@ -190,38 +190,38 @@ set(LIBRARY_SOURCES
     Renderer/OpenGL/RenderCommands.cpp
     Renderer/OpenGL/ShaderInterface.h
 
-    UI/AssetsWindow.h
-    UI/AssetsWindow.cpp
-    UI/AudioWindow.h
-    UI/AudioWindow.cpp
-    UI/CollisionWindow.h
-    UI/CollisionWindow.cpp
-    UI/ConsoleWindow.h
-    UI/ConsoleWindow.cpp
     UI/CrosshairOverlay.h
     UI/CrosshairOverlay.cpp
     UI/DebugOverlay.h
     UI/DebugOverlay.cpp
-    UI/EffectsWindow.h
-    UI/EffectsWindow.cpp
-    UI/EntitiesWindow.h
-    UI/EntitiesWindow.cpp
     UI/ImGuiLibrary.h
     UI/ImGuiLibrary.cpp
-    UI/MovementWindow.h
-    UI/MovementWindow.cpp
-    UI/PerformanceWindow.h
-    UI/PerformanceWindow.cpp
-    UI/RendererWindow.h
-    UI/RendererWindow.cpp
     UI/UIScale.h
     UI/UIScale.cpp
-    UI/ViewModelWindow.h
-    UI/ViewModelWindow.cpp
-    UI/WeaponWindow.h
-    UI/WeaponWindow.cpp
     UI/Widgets.h
     UI/Widgets.cpp
+    UI/Windows/AssetsWindow.h
+    UI/Windows/AssetsWindow.cpp
+    UI/Windows/AudioWindow.h
+    UI/Windows/AudioWindow.cpp
+    UI/Windows/CollisionWindow.h
+    UI/Windows/CollisionWindow.cpp
+    UI/Windows/ConsoleWindow.h
+    UI/Windows/ConsoleWindow.cpp
+    UI/Windows/EffectsWindow.h
+    UI/Windows/EffectsWindow.cpp
+    UI/Windows/EntitiesWindow.h
+    UI/Windows/EntitiesWindow.cpp
+    UI/Windows/MovementWindow.h
+    UI/Windows/MovementWindow.cpp
+    UI/Windows/PerformanceWindow.h
+    UI/Windows/PerformanceWindow.cpp
+    UI/Windows/RendererWindow.h
+    UI/Windows/RendererWindow.cpp
+    UI/Windows/ViewModelWindow.h
+    UI/Windows/ViewModelWindow.cpp
+    UI/Windows/WeaponWindow.h
+    UI/Windows/WeaponWindow.cpp
 
     World/BrushGeometry.h
     World/BrushGeometry.cpp

@@ -30,7 +30,7 @@ namespace Abomination::World
         // The center of the player box: the position of the player entity (see Physics::CharacterBody).
         glm::vec3 boxCenter{0.0f};
 
-        // Radians, like every yaw of the game (see Gameplay/MouseLook.h).
+        // Radians, like every yaw of the game (see Gameplay/Camera/MouseLook.h).
         float yaw = 0.0f;
     };
 }

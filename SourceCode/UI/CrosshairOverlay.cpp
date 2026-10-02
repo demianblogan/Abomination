@@ -1,8 +1,8 @@
 #include "UI/CrosshairOverlay.h"
 
-#include "Gameplay/Crosshair.h"
 #include "Core/Math/Spring.h"
-#include "Gameplay/Weapon.h"
+#include "Gameplay/Weapons/Crosshair.h"
+#include "Gameplay/Weapons/Weapon.h"
 #include "UI/UIScale.h"
 
 #include <glm/common.hpp>

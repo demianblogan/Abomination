@@ -127,7 +127,7 @@ namespace Abomination
         // middle of drawing the overlay.
         bool m_isLevelReloadRequested = false;
 
-        // The collision tools of the debug overlay (View > Physics > Collisions) and the camera cast of the last frame.
+        // The collision tools of the debug overlay (Collisions in the menu bar) and the camera cast of the last frame.
         World::CollisionDebugSettings m_collisionSettings;
         World::CameraCast m_cameraCast;
 

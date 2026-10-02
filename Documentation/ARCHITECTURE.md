@@ -157,15 +157,15 @@ A module may depend only on modules **below** it in this diagram.
   size, time), `Renderer::ImGuiRendererBackend` wraps the OpenGL backend
   (drawing), and `UI::DebugOverlay` combines them and describes the windows.
   ImGui is used only for developer tools, never for the game interface.
-- **The debug overlay** has a main menu bar (F1): *View* opens and closes
-  debug windows (now *Performance* and *Console* at the top, then submenus by
-  part of the engine: *Engine* — *Entities*, *Assets*, *Audio*; *Rendering* —
-  *Renderer*; *Physics* — *Collisions*, *Movement*; *Gameplay* — *View
-  Model*, *Weapon*, *Effects*; one file per window; all closed at the first
-  start; the tuning windows share the sliders of `UI/Widgets`), *Settings*
-  changes settings grouped like the future options menu (now *Display*:
-  screen mode, V-Sync, FPS limit, UI scale). The font size is one constant next to the font
-  file name in `DebugOverlay.cpp`. `Draw()` takes one `UI::DebugOverlayContext`
+- **The debug overlay** has a main menu bar (F1): the *Display* menu (screen
+  mode, V-Sync, FPS limit, UI scale), then one item per debug window that
+  opens and closes it with one click and stays highlighted while it is open,
+  grouped by part of the engine: *Performance*, *Console* | *Entities*,
+  *Assets*, *Renderer*, *Audio* | *Collisions*, *Movement* | *Weapon* (tabs:
+  Shot, Crosshair, Recoil, In hands), *Effects*. One file per window; all
+  closed at the first start; every window except the console can be resized;
+  the tuning windows share the sliders of `UI/Widgets`. The font size is one
+  constant next to the font file name in `DebugOverlay.cpp`. `Draw()` takes one `UI::DebugOverlayContext`
   with references to the systems the overlay shows and changes (the gameplay
   windows get the whole `GameplayState` and find the components of the player
   themselves); a new debug tool adds a field to it instead of a new parameter. The references are valid
@@ -176,7 +176,7 @@ A module may depend only on modules **below** it in this diagram.
 - **Scaling for high-DPI monitors.** The overlay draws at
   `Window::GetDisplayScale()` (the display scale of Windows: 2.0 on a 4K
   monitor at 200%, updated when the window moves to another monitor) times
-  the UI scale chosen in *Settings > Display* (not saved between runs until
+  the UI scale chosen in *Display* (not saved between runs until
   the Config module, 0.8). When the scale changes, `ImGuiLibrary::SetScale`
   rebuilds the style from the defaults (`ScaleAllSizes` multiplies, so it must
   start from the same base) and sets `FontScaleDpi`, which makes ImGui draw
@@ -196,9 +196,9 @@ A module may depend only on modules **below** it in this diagram.
   (exclusive, at the desktop resolution until the options menu, 0.8).
   `Window::SetScreenMode` switches between them; SDL remembers the windowed
   size and position, so leaving fullscreen restores them. The mode is chosen
-  in *Settings > Display > Screen mode*, or with Alt+Enter (windowed ↔
+  in *Display > Screen mode*, or with Alt+Enter (windowed ↔
   borderless), and is not saved between runs until the Config module (0.8).
-- **In-game console** (`UI::ConsoleWindow`, the <kbd>~</kbd> key or View > Console): the
+- **In-game console** (`UI::ConsoleWindow`, the <kbd>~</kbd> key or *Console* in the menu bar): the
   log as a strip along the bottom of the screen, like the console of Quake;
   it stays open while the rest of the overlay is hidden. A third spdlog sink
   keeps every message in `Core::LogHistory` (the last 2000, in parts: time,
@@ -397,7 +397,7 @@ Inside the renderer:
   along the line to just in front of it. The vertices go into a dynamic buffer
   (`GLBuffer::CreateDynamic` + `Update`: fixed size, contents replaced every
   frame), replaced by one twice as big when a frame has more lines.
-- **Renderer window** of the debug overlay (View > Rendering > Renderer): Solid /
+- **Renderer window** of the debug overlay (Renderer in the menu bar): Solid /
   Wireframe, world axes (arrows along X, Y, Z from the origin, over
   everything), draw calls and triangles of the last frame, brushes, faces and
   triangles of the level, and *Reload*, which loads the map next to the
@@ -536,7 +536,7 @@ player entity                                free-fly camera entity
   kicked down by jumps and landings. The view itself **dips after landings**
   on the same kind of spring (`LandingDip`). While the player stands, the
   weapon **breathes** (slow rise and fall), fading out as the bob fades in.
-  Everything is tuned in View > Gameplay > Weapon View Model.
+  Everything is tuned in the Weapon window (In hands tab).
 - **Shooting** (`Gameplay::Weapon`, `WeaponSystem`): Fire (left mouse
   button) shoots only while playing (no overlay or console open); a press is
   kept until the next tick, holding keeps shooting at the rhythm of the
@@ -545,8 +545,8 @@ player entity                                free-fly camera entity
   where the crosshair points), spread evenly over a cone
   (`GeneratePelletDirections`), traced through the brushes. The recoil jerks
   the picture up (`ViewRecoil`, the aim stays) and kicks the weapon in the
-  hands back and its muzzle up (springs of `WeaponViewModelMotion`). Tuned in View >
-  Gameplay > Weapon, which also shows the pellet lines of the last shot.
+  hands back and its muzzle up (springs of `WeaponViewModelMotion`). Tuned in the
+  Weapon window (Recoil tab), whose Shot tab also shows the pellet lines of the last shot.
 - **Damage**: every pellet hits the closest of the wall behind it and the
   boxes of the entities with `Health` and a `CharacterBody` in front of it
   (`Core::IntersectRay`, the slab method); it takes `damagePerPellet` and
@@ -571,7 +571,7 @@ player entity                                free-fly camera entity
   with its projection; the muzzle is the front of the model) and smokes into
   the world; a wall hit throws sparks and dust and leaves a mark (the last 64
   stay); a character hit throws blood. Textures come from
-  `Tools/TextureGenerator`. Tuned in View > Gameplay > Effects. The crosshair
+  `Tools/TextureGenerator`. Tuned in the Effects window. The crosshair
   pulses with every shot.
 - **Target dummies** (`Gameplay/Characters/TargetDummy`, 0.3 only): characters with
   health placed with `target_dummy` in TrenchBroom; destroyed, they come back
@@ -687,8 +687,8 @@ Renderer::RenderAssets                     all graphics stores, owned by Applica
   makes room). A sound plays in 2D, "in the head" (the player's own body), or
   in 3D at a position; the listener is put at the eyes of the camera every
   frame. Without a sound card the game runs silently. A missing sound file
-  becomes a short beep, the audible magenta texture. Audio window: View >
-  Engine > Audio (volume, voices, sounds, a repeating 3D test sound).
+  becomes a short beep, the audible magenta texture. Audio window (Audio in
+  the menu bar: volume, voices, sounds, a repeating 3D test sound).
 - `Renderer::RenderAssets` groups the stores of all graphics assets. Code that
   draws gets it as one parameter; a new graphics asset type adds a member.
 - **Fallbacks:** a missing or broken texture becomes a magenta and black
@@ -705,7 +705,7 @@ Renderer::RenderAssets                     all graphics stores, owned by Applica
   the handles of the removed level invalid. An asset asked for with both
   lifetimes keeps the longer one. Texture and mesh stores take the lifetime
   in every `Load`/`Add`; shader programs are always global.
-- **Assets window** of the debug overlay (View > Engine > Assets): every loaded
+- **Assets window** of the debug overlay (Assets in the menu bar): every loaded
   texture with its size, video memory (all mipmap levels) and lifetime, every
   mesh and shader program, fallbacks marked in magenta.
 
@@ -775,7 +775,7 @@ is `Abomination::Core::Clock`. These modules are split already:
 A module is split when its folder no longer shows its parts at a glance
 (around 20 files); the tests in `Tests/` follow the same folders.
 
-**Tools.** The entity inspector of the debug overlay (View > Engine > Entities) lists
+**Tools.** The entity inspector of the debug overlay (Entities in the menu bar) lists
 all entities (`registry.view<entt::entity>()`) and shows and edits the
 components of the selected one; section headers are colored by module.
 A new component type gets a small drawing function there.
@@ -872,7 +872,7 @@ Test.map ─► ParseMap ─► MapData ─┬─► BuildBrushPolygons ─► B
   are skipped. The player box is `PlayerHalfExtents` (1 × 1.75 × 1 m, like
   32 × 56 × 32 units in Quake and `info_player_start` in `Abomination.fgd`),
   defined once in `World/PlayerStart.h`.
-- **Collision tools** (`CollisionDebug`, View > Physics > Collisions): collider
+- **Collision tools** (`CollisionDebug`, Collisions in the menu bar): collider
   bounds, a cast from the camera straight ahead (ray, small box or player box;
   the stopping box and the normal are drawn as debug lines, the numbers are
   shown in the window) and a colliding free-fly camera (it slides along walls
@@ -933,8 +933,8 @@ AI (later)              ─┘               jump, friction, accelerate,
 - **Settings**: `PhysicsSettings` (gravity 25 m/s², like Quake) and
   `MovementSettings` (running 7 m/s like modern shooters — Quake runs at
   10 m/s — acceleration 10, friction 4, stop speed 3.1 m/s, step 0.56 m, jump
-  8.4 m/s ≈ 1.4 m high, air acceleration 10 up to 0.94 m/s). **View >
-  Physics > Movement** shows a speedometer and the state of the player and has sliders
+  8.4 m/s ≈ 1.4 m high, air acceleration 10 up to 0.94 m/s). The **Movement**
+  window shows a speedometer and the state of the player and has sliders
   for all of them; not saved yet (JSON configuration, 0.6).
 
 **Planned:** player clip brushes (invisible slopes over stairs) in maps;

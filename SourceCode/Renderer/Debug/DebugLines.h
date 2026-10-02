@@ -22,7 +22,7 @@ namespace Abomination::Renderer
         HiddenBehindWalls,
 
         // Always visible, drawn over everything: for markers that must never be lost (the world axes).
-        AlwaysVisible,
+        AlwaysVisible
     };
 
     // Lines drawn over the scene for debugging: collision boxes, traces, normals, axes. Any code adds lines during the

@@ -16,7 +16,6 @@
 #include "UI/Windows/MovementWindow.h"
 #include "UI/Windows/PerformanceWindow.h"
 #include "UI/Windows/RendererWindow.h"
-#include "UI/Windows/WeaponViewModelWindow.h"
 #include "UI/Windows/WeaponWindow.h"
 
 #include <imgui.h>
@@ -40,7 +39,7 @@ namespace Abomination::UI
         // The game interface (menus, HUD) will have its own fonts.
         constexpr float FontSize = 18.0f;
 
-        // The limits offered in Settings > Display > FPS limit; 0 means no limit. They are chosen for testing, not for
+        // The limits offered in Display > FPS limit; 0 means no limit. They are chosen for testing, not for
         // players: with the simulation running at 60 ticks per second,
         //   15, 30 - a slow computer: 4 and 2 ticks in every frame;
         //   60     - exactly 1 tick in every frame;
@@ -49,7 +48,7 @@ namespace Abomination::UI
         //   240    - common fast monitors, many frames without a tick.
         constexpr std::array FPSLimits{0, 15, 30, 60, 120, 144, 240};
 
-        // The UI scales offered in Settings > Display > UI scale. They multiply the display scale of Windows: for a screen
+        // The UI scales offered in Display > UI scale. They multiply the display scale of Windows: for a screen
         // whose Windows setting does not match how far away it is (a 4K TV at 100%, seen from the sofa).
         constexpr std::array UserUIScales{0.75f, 1.0f, 1.25f, 1.5f, 2.0f};
     }
@@ -141,18 +140,15 @@ namespace Abomination::UI
 
             if (m_isMovementWindowOpen)
                 DrawMovementWindow(&m_isMovementWindowOpen, gameplay.physicsSettings, gameplay.movementSettings,
+                                   registry.get<Gameplay::LandingDip>(gameplay.player),
                                    registry.get<Physics::CharacterBody>(gameplay.player));
-
-            if (m_isWeaponViewModelWindowOpen)
-                DrawWeaponViewModelWindow(&m_isWeaponViewModelWindowOpen, weaponViewModel,
-                                          registry.get<Gameplay::LandingDip>(gameplay.player));
 
             if (m_isEffectsWindowOpen)
                 DrawEffectsWindow(&m_isEffectsWindowOpen, gameplay.effects);
 
             if (m_isWeaponWindowOpen)
                 DrawWeaponWindow(&m_isWeaponWindowOpen, weapon, registry.get<Gameplay::ViewRecoil>(gameplay.player),
-                                 weaponViewModel.motionSettings);
+                                 weaponViewModel);
         }
 
         // The crosshair belongs to the game, not to the debug tools: it is drawn whether the overlay is shown or not, while
@@ -193,119 +189,100 @@ namespace Abomination::UI
 
     void DebugOverlay::DrawMainMenuBar(const DebugOverlayContext& context)
     {
-        // BeginMainMenuBar() creates a bar along the top edge of the screen; BeginMenu() adds a menu to it that opens
-        // on click. Both return true only while they are visible/open, and only then must their End...() be called.
+        // BeginMainMenuBar() creates a bar along the top edge of the screen. Every window has its own item in the bar, so
+        // it opens with one click; only the display settings, which are not a window, are a menu that drops down.
         if (!ImGui::BeginMainMenuBar())
             return;
 
-        if (ImGui::BeginMenu("View"))
-        {
-            // MenuItem(label, shortcut, bool*) shows a check mark and flips the bool when clicked. The windows used all the
-            // time are at the top; the others are grouped by the part of the engine they show, so the menu grows in width
-            // (new submenus) instead of in height as tools are added.
-            ImGui::MenuItem("Performance", nullptr, &m_isPerformanceWindowOpen);
-            ImGui::MenuItem("Console", "`", m_consoleWindow.GetOpenFlag());
-            ImGui::Separator();
+        DrawDisplayMenu(context);
+        ImGui::Separator();
 
-            if (ImGui::BeginMenu("Engine"))
-            {
-                ImGui::MenuItem("Entities", nullptr, &m_isEntitiesWindowOpen);
-                ImGui::MenuItem("Assets", nullptr, &m_isAssetsWindowOpen);
-                ImGui::MenuItem("Audio", nullptr, &m_isAudioWindowOpen);
-                ImGui::EndMenu();
-            }
+        // MenuItem(label, shortcut, bool*) directly in the bar is a button that flips the bool when clicked and stays
+        // highlighted while it is true, so the bar shows which windows are open. The separators group the windows by the
+        // part of the engine they show.
+        ImGui::MenuItem("Performance", nullptr, &m_isPerformanceWindowOpen);
+        ImGui::MenuItem("Console", nullptr, m_consoleWindow.GetOpenFlag());
+        ImGui::SetItemTooltip("Also the ` key (left of 1), even while the overlay is hidden.");
+        ImGui::Separator();
 
-            if (ImGui::BeginMenu("Rendering"))
-            {
-                ImGui::MenuItem("Renderer", nullptr, &m_isRendererWindowOpen);
-                ImGui::EndMenu();
-            }
+        ImGui::MenuItem("Entities", nullptr, &m_isEntitiesWindowOpen);
+        ImGui::MenuItem("Assets", nullptr, &m_isAssetsWindowOpen);
+        ImGui::MenuItem("Renderer", nullptr, &m_isRendererWindowOpen);
+        ImGui::MenuItem("Audio", nullptr, &m_isAudioWindowOpen);
+        ImGui::Separator();
 
-            if (ImGui::BeginMenu("Physics"))
-            {
-                ImGui::MenuItem("Collisions", nullptr, &m_isCollisionWindowOpen);
-                ImGui::MenuItem("Movement", nullptr, &m_isMovementWindowOpen);
-                ImGui::EndMenu();
-            }
+        ImGui::MenuItem("Collisions", nullptr, &m_isCollisionWindowOpen);
+        ImGui::MenuItem("Movement", nullptr, &m_isMovementWindowOpen);
+        ImGui::Separator();
 
-            if (ImGui::BeginMenu("Gameplay"))
-            {
-                ImGui::MenuItem("Weapon View Model", nullptr, &m_isWeaponViewModelWindowOpen);
-                ImGui::MenuItem("Weapon", nullptr, &m_isWeaponWindowOpen);
-                ImGui::MenuItem("Effects", nullptr, &m_isEffectsWindowOpen);
-                ImGui::EndMenu();
-            }
-
-            ImGui::EndMenu();
-        }
-
-        // Settings are grouped into submenus the same way as the options menu of the game will be (Settings > Display, ...).
-        // A BeginMenu() inside an open menu becomes a submenu.
-        if (ImGui::BeginMenu("Settings"))
-        {
-            if (ImGui::BeginMenu("Display"))
-            {
-                // One item per mode, the current one checked, like the FPS limits below. The tooltip is set right after
-                // BeginMenu(), so it belongs to the "Screen mode" item whether the submenu is open or not.
-                const bool isScreenModeMenuOpen = ImGui::BeginMenu("Screen mode");
-                ImGui::SetItemTooltip("Alt+Enter switches between Windowed and Borderless.");
-                if (isScreenModeMenuOpen)
-                {
-                    for (std::size_t index = 0; index < Platform::ScreenModeNames.size(); ++index)
-                    {
-                        const auto mode = static_cast<Platform::ScreenMode>(index);
-                        const bool isCurrentMode = context.window.GetScreenMode() == mode;
-                        // data() is safe here: the names are string literals, which end with a zero like ImGui expects.
-                        if (ImGui::MenuItem(Platform::ScreenModeNames[index].data(), nullptr, isCurrentMode) && !isCurrentMode)
-                            context.window.SetScreenMode(mode);
-                    }
-
-                    ImGui::EndMenu();
-                }
-
-                // Here MenuItem(label, shortcut, bool) only shows the check mark and returns true when clicked,
-                // because the state belongs to the window, not to the overlay.
-                const bool isVSyncEnabled = context.window.IsVSyncEnabled();
-                if (ImGui::MenuItem("V-Sync", nullptr, isVSyncEnabled))
-                    context.window.SetVSyncEnabled(!isVSyncEnabled);
-                ImGui::SetItemTooltip("Waits for the monitor refresh: no tearing, but FPS never exceeds the refresh rate.");
-
-                // One item per limit, the current one checked (like radio buttons).
-                if (ImGui::BeginMenu("FPS limit"))
-                {
-                    for (const int limit : FPSLimits)
-                    {
-                        const bool isCurrentLimit = context.frameLimiter.GetMaxFPS() == limit;
-                        if (ImGui::MenuItem(FormatFPSLimit(limit).c_str(), nullptr, isCurrentLimit))
-                            context.frameLimiter.SetMaxFPS(limit);
-                    }
-
-                    ImGui::EndMenu();
-                }
-
-                // The tooltip belongs to the "UI scale" item itself, so it is set right after BeginMenu(), whether the
-                // submenu is open or not.
-                const bool isUIScaleMenuOpen = ImGui::BeginMenu("UI scale");
-                ImGui::SetItemTooltip("Multiplies the display scale of Windows (now %.0f%%).",
-                                      context.window.GetDisplayScale() * 100.0f);
-                if (isUIScaleMenuOpen)
-                {
-                    for (const float userScale : UserUIScales)
-                    {
-                        const std::string label = std::format("{:.0f}%", userScale * 100.0f);
-                        if (ImGui::MenuItem(label.c_str(), nullptr, m_userUIScale == userScale))
-                            m_userUIScale = userScale;
-                    }
-
-                    ImGui::EndMenu();
-                }
-
-                ImGui::EndMenu();
-            }
-
-            ImGui::EndMenu();
-        }
+        ImGui::MenuItem("Weapon", nullptr, &m_isWeaponWindowOpen);
+        ImGui::MenuItem("Effects", nullptr, &m_isEffectsWindowOpen);
 
         ImGui::EndMainMenuBar();
+    }
+
+    void DebugOverlay::DrawDisplayMenu(const DebugOverlayContext& context)
+    {
+        // BeginMenu() adds a menu that opens on click; it returns true only while it is open, and only then must
+        // EndMenu() be called. A BeginMenu() inside an open menu becomes a submenu.
+        if (!ImGui::BeginMenu("Display"))
+            return;
+
+        // One item per mode, the current one checked, like the FPS limits below. The tooltip is set right after
+        // BeginMenu(), so it belongs to the "Screen mode" item whether the submenu is open or not.
+        const bool isScreenModeMenuOpen = ImGui::BeginMenu("Screen mode");
+        ImGui::SetItemTooltip("Alt+Enter switches between Windowed and Borderless.");
+        if (isScreenModeMenuOpen)
+        {
+            for (std::size_t index = 0; index < Platform::ScreenModeNames.size(); ++index)
+            {
+                const auto mode = static_cast<Platform::ScreenMode>(index);
+                const bool isCurrentMode = context.window.GetScreenMode() == mode;
+                // data() is safe here: the names are string literals, which end with a zero like ImGui expects.
+                if (ImGui::MenuItem(Platform::ScreenModeNames[index].data(), nullptr, isCurrentMode) && !isCurrentMode)
+                    context.window.SetScreenMode(mode);
+            }
+
+            ImGui::EndMenu();
+        }
+
+        // Here MenuItem(label, shortcut, bool) only shows the check mark and returns true when clicked, because the state
+        // belongs to the window, not to the overlay.
+        const bool isVSyncEnabled = context.window.IsVSyncEnabled();
+        if (ImGui::MenuItem("V-Sync", nullptr, isVSyncEnabled))
+            context.window.SetVSyncEnabled(!isVSyncEnabled);
+        ImGui::SetItemTooltip("Waits for the monitor refresh: no tearing, but FPS never exceeds the refresh rate.");
+
+        // One item per limit, the current one checked (like radio buttons).
+        if (ImGui::BeginMenu("FPS limit"))
+        {
+            for (const int limit : FPSLimits)
+            {
+                const bool isCurrentLimit = context.frameLimiter.GetMaxFPS() == limit;
+                if (ImGui::MenuItem(FormatFPSLimit(limit).c_str(), nullptr, isCurrentLimit))
+                    context.frameLimiter.SetMaxFPS(limit);
+            }
+
+            ImGui::EndMenu();
+        }
+
+        // The tooltip belongs to the "UI scale" item itself, so it is set right after BeginMenu(), whether the submenu is
+        // open or not.
+        const bool isUIScaleMenuOpen = ImGui::BeginMenu("UI scale");
+        ImGui::SetItemTooltip("Multiplies the display scale of Windows (now %.0f%%).",
+                              context.window.GetDisplayScale() * 100.0f);
+        if (isUIScaleMenuOpen)
+        {
+            for (const float userScale : UserUIScales)
+            {
+                const std::string label = std::format("{:.0f}%", userScale * 100.0f);
+                if (ImGui::MenuItem(label.c_str(), nullptr, m_userUIScale == userScale))
+                    m_userUIScale = userScale;
+            }
+
+            ImGui::EndMenu();
+        }
+
+        ImGui::EndMenu();
     }
 }

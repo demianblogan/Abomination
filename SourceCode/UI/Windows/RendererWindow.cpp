@@ -18,9 +18,8 @@ namespace Abomination::UI
     void DrawRendererWindow(bool* isOpen, Renderer::RenderSettings& settings, const Renderer::RenderStatistics& statistics,
                             const World::LevelMeshStatistics& levelStatistics, bool& isLevelReloadRequested)
     {
-        // AlwaysAutoResize: the window is exactly as big as its contents, which do not change much.
         ImGui::SetNextWindowPos(ScaleToUI(InitialPosition), ImGuiCond_FirstUseEver);
-        if (ImGui::Begin("Renderer", isOpen, ImGuiWindowFlags_AlwaysAutoResize))
+        if (ImGui::Begin("Renderer", isOpen))
         {
             // Two radio buttons for one setting: RadioButton(label, isActive) shows which one is chosen and returns true
             // when it is clicked.

@@ -107,9 +107,12 @@ namespace Abomination::UI
         DebugOverlay(ImGuiLibrary library, Platform::ImGuiPlatformBackend platformBackend,
                      Renderer::ImGuiRendererBackend rendererBackend, std::string GPUName) noexcept;
 
-        // The bar along the top edge of the game window: the View menu opens and closes debug windows (each of them is
-        // in a file of its own: PerformanceWindow, AssetsWindow, ...), the Settings menu changes settings of the game.
+        // The bar along the top edge of the game window: the Display menu, then one item per debug window that opens and
+        // closes it (each window is in a file of its own: PerformanceWindow, AssetsWindow, ...).
         void DrawMainMenuBar(const DebugOverlayContext& context);
+
+        // The Display menu of the menu bar: screen mode, V-Sync, FPS limit and UI scale.
+        void DrawDisplayMenu(const DebugOverlayContext& context);
 
         // Members are destroyed in reverse order of declaration: both backends first, then the ImGui context they use.
         ImGuiLibrary m_library;
@@ -130,7 +133,6 @@ namespace Abomination::UI
         bool m_isCollisionWindowOpen = false;
         bool m_isMovementWindowOpen = false;
         bool m_isAudioWindowOpen = false;
-        bool m_isWeaponViewModelWindowOpen = false;
         bool m_isWeaponWindowOpen = false;
         bool m_isEffectsWindowOpen = false;
 
@@ -139,7 +141,7 @@ namespace Abomination::UI
         ConsoleWindow m_consoleWindow;
         CrosshairOverlay m_crosshair;
 
-        // The UI scale chosen in Settings > Display > UI scale, and the full scale (with the display scale of Windows) the
+        // The UI scale chosen in Display > UI scale, and the full scale (with the display scale of Windows) the
         // style was last built for; 0 until the first frame. Not saved between runs yet: settings files come with the
         // Config module (0.8).
         float m_userUIScale = 1.0f;

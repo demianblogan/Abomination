@@ -10,7 +10,7 @@ namespace Abomination::World
 
 namespace Abomination::UI
 {
-    // The Collision window of the debug overlay (View > Physics > Collisions): the collision tools (see
+    // The Collision window of the debug overlay (Collisions in the menu bar): the collision tools (see
     // World::CollisionDebugSettings) and the result of the trace from the camera in the last frame.
     //
     // Draws the window while *isOpen is true; its close button sets *isOpen to false.

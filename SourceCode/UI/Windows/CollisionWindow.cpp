@@ -17,7 +17,7 @@ namespace Abomination::UI
                              std::size_t collisionBrushCount)
     {
         ImGui::SetNextWindowPos(ScaleToUI(InitialPosition), ImGuiCond_FirstUseEver);
-        if (ImGui::Begin("Collisions", isOpen, ImGuiWindowFlags_AlwaysAutoResize))
+        if (ImGui::Begin("Collisions", isOpen))
         {
             ImGui::Text("Colliders: %zu", collisionBrushCount);
             ImGui::Checkbox("Draw collider bounds", &settings.areColliderBoundsVisible);

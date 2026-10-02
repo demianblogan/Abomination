@@ -57,7 +57,7 @@ namespace Abomination::UI
     void AudioWindow::Draw(bool* isOpen, Audio::AudioEngine& audio)
     {
         ImGui::SetNextWindowPos(ScaleToUI(InitialPosition), ImGuiCond_FirstUseEver);
-        if (!ImGui::Begin("Audio", isOpen, ImGuiWindowFlags_AlwaysAutoResize))
+        if (!ImGui::Begin("Audio", isOpen))
         {
             ImGui::End();
             return;

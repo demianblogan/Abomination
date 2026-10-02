@@ -24,8 +24,9 @@ namespace Abomination::UI
         // Opacity of the window background: 0 is fully transparent, 1 is opaque.
         constexpr float BackgroundAlpha = 0.6f;
 
-        // Size of the frame time graph in pixels.
-        constexpr float GraphWidth = 400.0f;
+        // The width of the window when it first opens, and the height of the frame time graph, in pixels. The graph is as
+        // wide as the window, which can be resized.
+        constexpr float InitialWindowWidth = 420.0f;
         constexpr float GraphHeight = 60.0f;
 
         // The top of the graph is at least 1/30 s (33.3 ms): the budget of a frame at 30 FPS. A fixed minimum keeps
@@ -34,15 +35,13 @@ namespace Abomination::UI
 
         constexpr float MillisecondsPerSecond = 1000.0f;
 
-        // The window has a title bar with a close button and can be collapsed by the arrow in it, but it cannot be moved:
-        //   AlwaysAutoResize   - the size always fits the contents (so it cannot be resized by hand either);
+        // The window has a title bar with a close button, can be collapsed by the arrow in it and resized, but it cannot be
+        // moved:
         //   NoMove             - stays pinned to the corner;
-        //   NoSavedSettings    - its position and state are not written anywhere;
         //   NoFocusOnAppearing - does not take the keyboard focus from the game when it appears;
         //   NoNav              - is skipped by keyboard and gamepad navigation between ImGui windows.
-        constexpr ImGuiWindowFlags WindowFlags = ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove |
-                                                 ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing |
-                                                 ImGuiWindowFlags_NoNav;
+        constexpr ImGuiWindowFlags WindowFlags =
+            ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav;
     }
 
     void DrawPerformanceWindow(bool* isOpen, const Core::FrameStatistics& frameStatistics,
@@ -55,6 +54,8 @@ namespace Abomination::UI
         const float margin = ScaleToUI(WindowMargin);
         const ImVec2 position(margin, ImGui::GetFrameHeight() + margin);
         ImGui::SetNextWindowPos(position, ImGuiCond_Always);
+        // Height 0: fitted to the contents the first time; after that the size the developer gave it is kept.
+        ImGui::SetNextWindowSize(ImVec2(ScaleToUI(InitialWindowWidth), 0.0f), ImGuiCond_FirstUseEver);
         ImGui::SetNextWindowBgAlpha(BackgroundAlpha);
 
         // The title is shown in the title bar; ImGui also identifies windows by it, so it must be unique.
@@ -108,7 +109,7 @@ namespace Abomination::UI
 
             ImGui::PlotLines("##FrameTimes", frameTimeSamples.data(), static_cast<int>(frameTimeSamples.size()),
                              oldestSampleIndex, graphCaption.c_str(), 0.0f, graphTop,
-                             ScaleToUI(ImVec2(GraphWidth, GraphHeight)));
+                             ImVec2(ImGui::GetContentRegionAvail().x, ScaleToUI(GraphHeight)));
         }
         ImGui::End();
     }

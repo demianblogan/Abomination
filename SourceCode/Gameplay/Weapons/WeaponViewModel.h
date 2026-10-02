@@ -18,13 +18,13 @@ namespace Abomination::Gameplay
     // Which side of the screen the weapon is held on. Modern shooters hold it on the right; Quake held it in the middle.
     enum class WeaponViewModelSide
     {
-        Right,
-        Center,
         Left,
+        Center,
+        Right,
     };
 
-    // Names for the debug overlay, in the order of the enum values.
-    inline constexpr std::array<std::string_view, 3> WeaponViewModelSideNames = {"Right", "Center", "Left"};
+    // Names for the debug overlay, in the order of the enum values: from left to right, like the radio buttons.
+    inline constexpr std::array<std::string_view, 3> WeaponViewModelSideNames = {"Left", "Center", "Right"};
 
     // Component of the player: the weapon in their hands as they see it (a "view model"). It is not in the world: it is
     // drawn over the world, placed relative to the eyes (see Renderer::DrawWeaponViewModel), so it follows the view exactly

@@ -6,7 +6,7 @@
 
 namespace Abomination::UI
 {
-    // The Audio window of the debug overlay (View > Engine > Audio): the sound card, the master volume, how many voices
+    // The Audio window of the debug overlay (Audio in the menu bar): the sound card, the master volume, how many voices
     // play, the loaded sounds (each can be played), and a test sound in 3D.
     //
     // The test sound shows what 3D sound does: it is placed in front of the camera and repeats; walk around it, turn away

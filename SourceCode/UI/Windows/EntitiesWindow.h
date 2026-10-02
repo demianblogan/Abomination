@@ -9,7 +9,7 @@ namespace Abomination::Renderer
 
 namespace Abomination::UI
 {
-    // The Entities window of the debug overlay (View > Engine > Entities), an entity inspector: the list of all entities
+    // The Entities window of the debug overlay (Entities in the menu bar), an entity inspector: the list of all entities
     // on the left, the components of the selected one on the right. Values can be changed in place (move the player, widen
     // the camera's field of view), so the effect is visible at once.
     //

@@ -30,7 +30,7 @@ namespace Abomination::UI
     void DrawEffectsWindow(bool* isOpen, Gameplay::Effects& effects)
     {
         ImGui::SetNextWindowPos(ScaleToUI(InitialPosition), ImGuiCond_FirstUseEver);
-        if (!ImGui::Begin("Effects", isOpen, ImGuiWindowFlags_AlwaysAutoResize))
+        if (!ImGui::Begin("Effects", isOpen))
         {
             ImGui::End();
             return;

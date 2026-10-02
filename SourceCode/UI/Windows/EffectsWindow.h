@@ -7,7 +7,7 @@ namespace Abomination::Gameplay
 
 namespace Abomination::UI
 {
-    // The Effects window of the debug overlay (View > Gameplay > Effects): how many particles the effects of shots make,
+    // The Effects window of the debug overlay (Effects in the menu bar): how many particles the effects of shots make,
     // how fast, how big and how long they live, the muzzle flash and the marks on walls. The values are not saved between
     // runs yet; "Reset" brings back the defaults, "Clear" removes every particle and mark.
     //

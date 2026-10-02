@@ -15,8 +15,8 @@ namespace Abomination::Core
 namespace Abomination::UI
 {
     // The in-game console: the log as a strip along the bottom of the screen, over the game, like the console of Quake.
-    // Opened with the ` key (the key left of 1) or View > Console; it stays open even while the rest of the debug overlay
-    // is hidden. The messages come from Core::LogHistory, colored by level and filtered by level and category.
+    // Opened with the ` key (the key left of 1) or Console in the menu bar; it stays open even while the rest of the debug
+    // overlay is hidden. The messages come from Core::LogHistory, colored by level and filtered by level and category.
     class ConsoleWindow
     {
     public:
@@ -25,7 +25,7 @@ namespace Abomination::UI
         void Toggle() noexcept;
         [[nodiscard]] bool IsOpen() const noexcept;
 
-        // For the check mark of View > Console, which switches the console like Toggle().
+        // For the Console item of the menu bar: it switches the console like Toggle() and is highlighted while it is open.
         [[nodiscard]] bool* GetOpenFlag() noexcept;
 
     private:

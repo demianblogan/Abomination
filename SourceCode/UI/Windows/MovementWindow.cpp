@@ -1,6 +1,7 @@
 #include "UI/Windows/MovementWindow.h"
 
 #include "Core/Math/Units.h"
+#include "Gameplay/Player/LandingDip.h"
 #include "Physics/CharacterBody.h"
 #include "Physics/CharacterMovement.h"
 #include "UI/UIScale.h"
@@ -19,10 +20,11 @@ namespace Abomination::UI
     }
 
     void DrawMovementWindow(bool* isOpen, Physics::PhysicsSettings& physicsSettings,
-                            Physics::MovementSettings& movementSettings, const Physics::CharacterBody& playerBody)
+                            Physics::MovementSettings& movementSettings, Gameplay::LandingDip& landingDip,
+                            const Physics::CharacterBody& playerBody)
     {
         ImGui::SetNextWindowPos(ScaleToUI(InitialPosition), ImGuiCond_FirstUseEver);
-        if (!ImGui::Begin("Movement", isOpen, ImGuiWindowFlags_AlwaysAutoResize))
+        if (!ImGui::Begin("Movement", isOpen))
         {
             ImGui::End();
             return;
@@ -72,11 +74,21 @@ namespace Abomination::UI
                    "The most speed steering adds in any one direction in the air. Quake: 0.94 m/s (30 units/s).\n"
                    "Small values keep jumps committed; turning with a strafe key still bends them (air strafing).");
 
+        ImGui::SeparatorText("Landing dip of the view");
+        DrawSlider("Dip kick", landingDip.kickPerFallSpeed, 0.0f, 1.0f, "%.3f",
+                   "How far the view dips after a landing, per m/s of the fall. 0 turns it off.");
+        DrawSlider("Dip stiffness", landingDip.springStiffness, 20.0f, 500.0f, "%.0f",
+                   "How fast the view comes back up. Bigger: quicker and smaller dips.");
+
         ImGui::Separator();
         if (ImGui::Button("Reset"))
         {
             physicsSettings = Physics::PhysicsSettings{};
             movementSettings = Physics::MovementSettings{};
+
+            const Gameplay::LandingDip dipDefaults;
+            landingDip.kickPerFallSpeed = dipDefaults.kickPerFallSpeed;
+            landingDip.springStiffness = dipDefaults.springStiffness;
         }
         ImGui::SetItemTooltip("Brings back the default values. The values are not saved between runs yet.");
 

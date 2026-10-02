@@ -218,8 +218,6 @@ set(LIBRARY_SOURCES
     UI/Windows/PerformanceWindow.cpp
     UI/Windows/RendererWindow.h
     UI/Windows/RendererWindow.cpp
-    UI/Windows/WeaponViewModelWindow.h
-    UI/Windows/WeaponViewModelWindow.cpp
     UI/Windows/WeaponWindow.h
     UI/Windows/WeaponWindow.cpp
 

@@ -586,4 +586,291 @@ public static class TextureGen
         for (int i = 0; i < effectNames.Length; i++)
             effectTextures[i].Save(Path.Combine(effects, effectNames[i] + ".png"), ImageFormat.Png);
     }
+
+    // ---------- HUD icons ----------
+    // Icons of the HUD in the look of the world: drawn at 32 x 32 pixels like the textures (no smoothing, colors
+    // posterized), from battered materials - scratched iron, rust, chipped paint, tarnished brass, grime in the corners -
+    // with a light top-left edge and a dark bottom-right one, and a black outline. Saved 4 times larger with every pixel
+    // turned into a 4 x 4 block, so the smooth filtering of the interface keeps them crisp.
+    const int IconPixels = 32;
+    const int IconScale = 4;
+
+    // Which pixels of a 32 x 32 icon a shape covers, drawn without smoothing.
+    static bool[,] Mask(Action<Graphics> draw)
+    {
+        bool[,] mask = new bool[IconPixels, IconPixels];
+        using (Bitmap bmp = new Bitmap(IconPixels, IconPixels, PixelFormat.Format32bppArgb))
+        using (Graphics g = Graphics.FromImage(bmp))
+        {
+            g.SmoothingMode = SmoothingMode.None;
+            g.PixelOffsetMode = PixelOffsetMode.Half;
+            g.Clear(Color.Transparent);
+            draw(g);
+            for (int y = 0; y < IconPixels; y++)
+                for (int x = 0; x < IconPixels; x++)
+                    mask[x, y] = bmp.GetPixel(x, y).A > 128;
+        }
+        return mask;
+    }
+
+    static bool In(bool[,] mask, int x, int y)
+    {
+        return x >= 0 && y >= 0 && x < IconPixels && y < IconPixels && mask[x, y];
+    }
+
+    // A worn material: base colors from light to dark, how much rust and how many scratches, a seed.
+    sealed class Material
+    {
+        public double[] Light, Dark, Rust;
+        public double RustAmount, Scratches, Grime;
+        public Material(string light, string dark, string rust, double rustAmount, double scratches, double grime)
+        {
+            Light = Hex(light); Dark = Hex(dark); Rust = Hex(rust);
+            RustAmount = rustAmount; Scratches = scratches; Grime = grime;
+        }
+    }
+
+    static readonly Material IconIron = new Material("#8A877C", "#2E2C28", "#6E3B22", 0.35, 0.10, 0.35);
+    static readonly Material IconRedPaint = new Material("#A8281C", "#3E0C08", "#3A2418", 0.25, 0.12, 0.30);
+    static readonly Material IconBrass = new Material("#C8A04A", "#4A3414", "#3E4A2A", 0.20, 0.08, 0.30);
+    static readonly Material IconBronze = new Material("#A8703A", "#3A220E", "#3E5A40", 0.35, 0.08, 0.30);
+    static readonly Material IconSilver = new Material("#C4C4BC", "#4A4A46", "#2E2C28", 0.15, 0.10, 0.30);
+    static readonly Material IconGold = new Material("#E0B848", "#5A3C0C", "#4A3010", 0.10, 0.06, 0.25);
+    static readonly Material IconCellBlue = new Material("#4A78A0", "#101E30", "#2A3A2A", 0.20, 0.10, 0.35);
+    static readonly Material IconArmorGreen = new Material("#7A9446", "#1A2410", "#5A3A1E", 0.25, 0.10, 0.30);
+    static readonly Material IconBone = new Material("#D8CCA8", "#5A5038", "#4A3A22", 0.10, 0.06, 0.30);
+
+    // Paints the shape of mask into the icon with the material: noise for a rough surface, a bevel (lighter where the
+    // shape has an edge above or to the left, darker below or to the right), rust patches, scratches and grime near the
+    // edges.
+    static void Paint(Color[,] icon, bool[,] mask, Material m, int seed)
+    {
+        // The bounds of the shape, for the light falling across it.
+        int minX = IconPixels, minY = IconPixels, maxX = 0, maxY = 0;
+        for (int y = 0; y < IconPixels; y++)
+            for (int x = 0; x < IconPixels; x++)
+                if (mask[x, y])
+                {
+                    minX = Math.Min(minX, x); minY = Math.Min(minY, y);
+                    maxX = Math.Max(maxX, x); maxY = Math.Max(maxY, y);
+                }
+        double width = Math.Max(1, maxX - minX), height = Math.Max(1, maxY - minY);
+
+        for (int y = 0; y < IconPixels; y++)
+            for (int x = 0; x < IconPixels; x++)
+            {
+                if (!mask[x, y])
+                    continue;
+
+                // A rough surface lit from the top left: a gradient across the whole shape from bright (top left) to dark
+                // (bottom right) makes it look rounded, raised out of the screen.
+                double rough = Fbm(x * 2, y * 2, 8, 8, 3, seed);
+                double light = 1.0 - ((x - minX) / width + (y - minY) / height) * 0.5;
+                double shade = 0.0 + rough * 0.3 + light * 0.85;
+
+                // The bevel, two pixels wide: edges facing up-left catch the light, edges facing down-right are in shadow.
+                if (!In(mask, x - 1, y) || !In(mask, x, y - 1)) shade += 0.35;
+                else if (!In(mask, x - 2, y) || !In(mask, x, y - 2)) shade += 0.15;
+                if (!In(mask, x + 1, y) || !In(mask, x, y + 1)) shade -= 0.40;
+                else if (!In(mask, x + 2, y) || !In(mask, x, y + 2)) shade -= 0.18;
+
+                double[] c = Mix(m.Dark, m.Light, Math.Max(0, Math.Min(1, shade)));
+
+                // Rust and wear in patches.
+                double rust = Fbm(x * 2 + 17, y * 2 + 5, 4, 4, 2, seed + 7);
+                if (rust > 1.0 - m.RustAmount)
+                    c = Mix(c, m.Rust, Math.Min(1, (rust - (1.0 - m.RustAmount)) * 4));
+
+                // Scratches: single bright pixels.
+                if (Rand(x, y, seed + 13) < m.Scratches)
+                    c = Mix(c, m.Light, 0.6);
+
+                // Grime collects along the shaded edges and in random specks (not on the lit edges, which stay bright).
+                bool shadedEdge = !In(mask, x + 1, y) || !In(mask, x, y + 1);
+                if (shadedEdge || Rand(x, y, seed + 29) < m.Grime * 0.25)
+                    c = Mix(c, Hex("#1A1712"), m.Grime * (shadedEdge ? 0.4 : 0.8));
+
+                icon[x, y] = ToColor(c);
+            }
+    }
+
+    // Knocks pixels out of the edge of a shape (chips), and draws the black outline around everything painted.
+    static Bitmap Finish(Color[,] icon, int seed, double chips)
+    {
+        bool[,] filled = new bool[IconPixels, IconPixels];
+        for (int y = 0; y < IconPixels; y++)
+            for (int x = 0; x < IconPixels; x++)
+                filled[x, y] = icon[x, y].A > 0;
+
+        for (int y = 0; y < IconPixels; y++)
+            for (int x = 0; x < IconPixels; x++)
+            {
+                bool edge = filled[x, y] &&
+                    (!In(filled, x - 1, y) || !In(filled, x + 1, y) || !In(filled, x, y - 1) || !In(filled, x, y + 1));
+                if (edge && Rand(x, y, seed + 41) < chips)
+                    icon[x, y] = Color.Transparent;
+            }
+
+        Color outline = Color.FromArgb(255, 10, 9, 7);
+        Bitmap bmp = new Bitmap(IconPixels * IconScale, IconPixels * IconScale, PixelFormat.Format32bppArgb);
+        for (int y = 0; y < IconPixels; y++)
+            for (int x = 0; x < IconPixels; x++)
+            {
+                Color c = icon[x, y];
+                if (c.A == 0)
+                {
+                    bool nearShape = false;
+                    for (int dy = -1; dy <= 1 && !nearShape; dy++)
+                        for (int dx = -1; dx <= 1 && !nearShape; dx++)
+                        {
+                            int nx = x + dx, ny = y + dy;
+                            if (nx >= 0 && ny >= 0 && nx < IconPixels && ny < IconPixels && icon[nx, ny].A > 0)
+                                nearShape = true;
+                        }
+                    c = nearShape ? outline : Color.Transparent;
+                }
+                for (int by = 0; by < IconScale; by++)
+                    for (int bx = 0; bx < IconScale; bx++)
+                        bmp.SetPixel(x * IconScale + bx, y * IconScale + by, c);
+            }
+        return bmp;
+    }
+
+    static Color[,] NewIconPixels()
+    {
+        Color[,] icon = new Color[IconPixels, IconPixels];
+        for (int y = 0; y < IconPixels; y++)
+            for (int x = 0; x < IconPixels; x++)
+                icon[x, y] = Color.Transparent;
+        return icon;
+    }
+
+    static readonly Brush White = Brushes.White;
+
+    // Health: a dented square iron box with a chipped red cross painted on it.
+    static Bitmap HealthIcon()
+    {
+        Color[,] icon = NewIconPixels();
+        Paint(icon, Mask(g => g.FillRectangle(White, 3, 3, 26, 26)), IconIron, 101);
+        Paint(icon, Mask(g => { g.FillRectangle(White, 13, 7, 6, 18); g.FillRectangle(White, 7, 13, 18, 6); }),
+              IconRedPaint, 103);
+        return Finish(icon, 104, 0.10);
+    }
+
+    // Armor: a battered green breastplate with rivets and rust, like the green armor of Quake.
+    static Bitmap ArmorIcon()
+    {
+        Color[,] icon = NewIconPixels();
+        Paint(icon, Mask(g => g.FillPolygon(White, new Point[] {
+            new Point(4, 4), new Point(11, 4), new Point(16, 8), new Point(21, 4), new Point(28, 4), new Point(28, 14),
+            new Point(25, 24), new Point(16, 29), new Point(7, 24), new Point(4, 14) })), IconArmorGreen, 111);
+        Paint(icon, Mask(g => { g.FillRectangle(White, 15, 10, 2, 16); }), New("#4A4740", "#1E1C18"), 112);
+        Point[] rivets = { new Point(7, 7), new Point(24, 7), new Point(8, 17), new Point(23, 17) };
+        Paint(icon, Mask(g => { foreach (Point p in rivets) g.FillRectangle(White, p.X, p.Y, 2, 2); }), IconBrass, 113);
+        return Finish(icon, 114, 0.08);
+    }
+
+    // Shells: two scuffed red shotgun shells on tarnished brass bases.
+    static Bitmap ShellsIcon()
+    {
+        Color[,] icon = NewIconPixels();
+        foreach (int x in new int[] { 6, 17 })
+        {
+            Paint(icon, Mask(g => g.FillRectangle(White, x, 4, 9, 18)), IconRedPaint, 121 + x);
+            Paint(icon, Mask(g => g.FillRectangle(White, x - 1, 21, 11, 7)), IconBrass, 131 + x);
+        }
+        return Finish(icon, 124, 0.10);
+    }
+
+    // Bullets: three dirty brass cartridges with dark copper tips.
+    static Bitmap BulletsIcon()
+    {
+        Color[,] icon = NewIconPixels();
+        foreach (int x in new int[] { 5, 13, 21 })
+        {
+            Point[] tip = {
+                new Point(x, 12), new Point(x + 1, 7), new Point(x + 3, 3), new Point(x + 5, 7), new Point(x + 6, 12) };
+            Paint(icon, Mask(g => g.FillPolygon(White, tip)), New("#A0583A", "#3A180C"), 141 + x);
+            Paint(icon, Mask(g => g.FillRectangle(White, x, 12, 6, 16)), IconBrass, 151 + x);
+        }
+        return Finish(icon, 144, 0.10);
+    }
+
+    // Rockets: a rusty iron rocket with a chipped red nose and bent fins, standing upright.
+    static Bitmap RocketsIcon()
+    {
+        Color[,] icon = NewIconPixels();
+        Point[] leftFin = { new Point(11, 20), new Point(6, 29), new Point(11, 27) };
+        Point[] rightFin = { new Point(21, 20), new Point(26, 29), new Point(21, 27) };
+        Paint(icon, Mask(g => { g.FillPolygon(White, leftFin); g.FillPolygon(White, rightFin); }), IconRedPaint, 161);
+        Paint(icon, Mask(g => g.FillRectangle(White, 11, 10, 10, 19)), IconIron, 162);
+        Point[] nose = { new Point(11, 11), new Point(13, 5), new Point(16, 2), new Point(19, 5), new Point(21, 11) };
+        Paint(icon, Mask(g => g.FillPolygon(White, nose)), IconRedPaint, 163);
+        return Finish(icon, 164, 0.08);
+    }
+
+    // Cells: a grimy battery of dull blue metal with iron caps and a bone-white lightning bolt.
+    static Bitmap CellsIcon()
+    {
+        Color[,] icon = NewIconPixels();
+        Paint(icon, Mask(g => g.FillRectangle(White, 6, 7, 20, 21)), IconCellBlue, 171);
+        Paint(icon, Mask(g => { g.FillRectangle(White, 9, 3, 5, 4); g.FillRectangle(White, 18, 3, 5, 4); }), IconIron, 172);
+        Point[] bolt = {
+            new Point(18, 9), new Point(10, 19), new Point(15, 19), new Point(13, 27), new Point(22, 15), new Point(17, 15) };
+        Paint(icon, Mask(g => g.FillPolygon(White, bolt)), IconBone, 173);
+        return Finish(icon, 174, 0.08);
+    }
+
+    // A key: an old skeleton key - a ring, a long shaft and a toothed bit - in the given metal.
+    static Bitmap KeyIcon(Material metal, int seed)
+    {
+        Color[,] icon = NewIconPixels();
+        Paint(icon, Mask(g => {
+            g.FillEllipse(White, 3, 3, 13, 13);
+            g.FillRectangle(White, 13, 8, 16, 4);
+            g.FillRectangle(White, 22, 12, 3, 6);
+            g.FillRectangle(White, 26, 12, 3, 8);
+        }), metal, seed);
+        // The hole of the ring.
+        bool[,] hole = Mask(g => g.FillEllipse(White, 7, 7, 5, 5));
+        for (int y = 0; y < IconPixels; y++)
+            for (int x = 0; x < IconPixels; x++)
+                if (hole[x, y]) icon[x, y] = Color.Transparent;
+        return Finish(icon, seed + 1, 0.06);
+    }
+
+    static Material New(string light, string dark)
+    {
+        return new Material(light, dark, "#3A2418", 0.20, 0.08, 0.30);
+    }
+
+    // Writes the HUD icons into iconsDirectory, and a preview sheet of all of them into previewPath.
+    public static void RunIcons(string iconsDirectory, string previewPath)
+    {
+        Directory.CreateDirectory(iconsDirectory);
+        string[] names = { "Health", "Armor", "Shells", "Bullets", "Rockets", "Cells", "KeyBronze", "KeySilver", "KeyGold" };
+        Bitmap[] icons = {
+            HealthIcon(), ArmorIcon(), ShellsIcon(), BulletsIcon(), RocketsIcon(), CellsIcon(),
+            KeyIcon(IconBronze, 181), KeyIcon(IconSilver, 191), KeyIcon(IconGold, 201),
+        };
+        for (int i = 0; i < names.Length; i++)
+            icons[i].Save(Path.Combine(iconsDirectory, names[i] + ".png"), ImageFormat.Png);
+
+        // The preview: every icon twice, on a dark and on a light wall color, to see that it reads on both.
+        int cell = IconPixels * IconScale + 16;
+        using (Bitmap sheet = new Bitmap(cell * icons.Length, cell * 2, PixelFormat.Format32bppArgb))
+        using (Graphics g = Graphics.FromImage(sheet))
+        {
+            g.InterpolationMode = InterpolationMode.NearestNeighbor;
+            g.FillRectangle(new SolidBrush(ToColor(Silt)), 0, 0, sheet.Width, cell);
+            g.FillRectangle(new SolidBrush(ToColor(WetStone)), 0, cell, sheet.Width, cell);
+            for (int i = 0; i < icons.Length; i++)
+            {
+                g.DrawImage(icons[i], i * cell + 8, 8);
+                g.DrawImage(icons[i], i * cell + 8, cell + 8);
+            }
+            Directory.CreateDirectory(Path.GetDirectoryName(previewPath));
+            sheet.Save(previewPath, ImageFormat.Png);
+        }
+    }
 }

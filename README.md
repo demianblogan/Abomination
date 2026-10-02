@@ -17,7 +17,7 @@ built from scratch with modern C++ and OpenGL 4.6.**
 [![CI](https://img.shields.io/github/actions/workflow/status/demianblogan/Abomination/CI.yml?branch=main&style=flat-square&label=CI&logo=githubactions&logoColor=white)](https://github.com/demianblogan/Abomination/actions/workflows/CI.yml)
 [![Release](https://img.shields.io/github/v/release/demianblogan/Abomination?style=flat-square&label=release&color=brightgreen)](https://github.com/demianblogan/Abomination/releases/latest)
 [![Status](https://img.shields.io/badge/status-early_development-orange?style=flat-square)](Documentation/ROADMAP.md)
-[![Milestone](https://img.shields.io/badge/milestone-0.3_Boomstick-blue?style=flat-square)](Documentation/ROADMAP.md)
+[![Milestone](https://img.shields.io/badge/milestone-0.4_It_Moves-blue?style=flat-square)](Documentation/ROADMAP.md)
 [![License](https://img.shields.io/badge/license-PolyForm_Noncommercial_1.0-lightgrey?style=flat-square)](LICENSE.md)
 
 [About](#-about) •
@@ -46,8 +46,8 @@ written from the ground up, and every system — from the OpenGL renderer to
 the enemy AI — is built to be read and learned from.
 
 > [!NOTE]
-> The game is in early development. **Version 0.2** is out: run and jump around a test level with
-> Quake-style movement — follow the [roadmap](Documentation/ROADMAP.md) to see what is being built next.
+> The game is in early development. **Version 0.3** is out: run around a test level with a shotgun and
+> shoot target dummies — follow the [roadmap](Documentation/ROADMAP.md) to see what is being built next.
 
 ## 🎯 Features
 
@@ -80,6 +80,16 @@ the enemy AI — is built to be read and learned from.
 ## 📸 Screenshots
 
 Every picture has the same size; click one to open it in full resolution.
+
+### 0.3 — Boomstick
+
+<table>
+<tr>
+<td align="center" valign="top" width="25%"><a href="Documentation/Screenshots/v0.3.0/Shot.png"><img src="Documentation/Screenshots/v0.3.0/Shot.png" alt="A shotgun shot at a target dummy: muzzle flash, recoil, crosshair, hit marker and blood" width="176" height="99"></a><br><sub>A shot: flash, recoil, hit marker, blood</sub></td>
+<td align="center" valign="top" width="25%"><a href="Documentation/Screenshots/v0.3.0/ParticleSystem.png"><img src="Documentation/Screenshots/v0.3.0/ParticleSystem.png" alt="Sparks, smoke and pellet marks where a shot hits a wall" width="176" height="99"></a><br><sub>Sparks, smoke and pellet marks</sub></td>
+<td align="center" valign="top" width="25%"><a href="Documentation/Screenshots/v0.3.0/NewDebugWindows.png"><img src="Documentation/Screenshots/v0.3.0/NewDebugWindows.png" alt="The Effects and Weapon windows of the debug overlay and its new menu bar" width="176" height="99"></a><br><sub>Effects and Weapon windows</sub></td>
+</tr>
+</table>
 
 ### 0.2 — First Steps
 
@@ -139,13 +149,14 @@ Full instructions, including the command line: **[BUILDING.md](Documentation/BUI
 
 ## 🎮 Controls
 
-The current build (version 0.2) lets you run and jump around a test level made in TrenchBroom,
-with Quake-style movement.
+The current build (version 0.3) lets you run and jump around a test level made in TrenchBroom, with
+Quake-style movement, and shoot target dummies with a shotgun.
 
 | Input | Action |
 |:-----:|--------|
 | <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> | Run forward, left, back, right (relative to the view) |
 | <kbd>Space</kbd> | Jump |
+| Left mouse button | Fire (hold to keep firing) |
 | Mouse | Look around (while the debug overlay is open: hold the **right mouse button**) |
 | <kbd>F2</kbd> | Switch to the free-fly camera and back (fly through walls: <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd>, <kbd>E</kbd> / <kbd>Q</kbd> up / down, <kbd>Shift</kbd> faster, right mouse button to look) |
 | <kbd>F1</kbd> | Show / hide the debug overlay |
@@ -159,8 +170,8 @@ with Quake-style movement.
 |:-------:|------------------------|:------:|
 | 0.1     | Foundation             | ✅     |
 | 0.2     | First Steps            | ✅     |
-| 0.3     | Boomstick              | 🔨     |
-| 0.4     | It Moves               | ⏳     |
+| 0.3     | Boomstick              | ✅     |
+| 0.4     | It Moves               | 🔨     |
 | 0.5     | Lights                 | ⏳     |
 | 0.6     | Game Loop              | ⏳     |
 | 0.7     | Arsenal & Bestiary     | ⏳     |

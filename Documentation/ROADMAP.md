@@ -23,8 +23,8 @@ we now* and *what comes next*.
 |---------|------------------------|--------|-------------------------------------------------------|----------------------------------------------------------|
 | 0.1     | Foundation             | ✅     | Free-fly (noclip) camera                              | Window, OpenGL 4.6 context, debug output, textured cube, ImGui overlay |
 | 0.2     | First Steps            | ✅     | Quake-style movement, collision with the level        | EnTT, resource manager, TrenchBroom map loading, brush texturing |
-| 0.3     | Boomstick              | 🔨     | First hitscan weapon, damage, sound                   | View model with sway/bob/recoil, muzzle flash, particles, decals, glTF loading |
-| 0.4     | It Moves               | ⏳     | First enemy: AI, navmesh, health, death, HUD          | Skeletal animation, text rendering                       |
+| 0.3     | Boomstick              | ✅     | First hitscan weapon, damage, sound                   | View model with sway/bob/recoil, muzzle flash, particles, decals, glTF loading |
+| 0.4     | It Moves               | 🔨     | First enemy: AI, navmesh, health, death, HUD          | Skeletal animation, text rendering                       |
 | 0.5     | Lights                 | ⏳     | Glowing projectiles, dynamic light in combat          | Lightmap baking, shadows, HDR, bloom, gamma              |
 | 0.6     | Game Loop              | ⏳     | Pickups, armor, doors, buttons, plates, level exit, stats screen, level transitions — first complete level | Moving brushes, data-driven configs |
 | 0.7     | Arsenal & Bestiary     | ⏳     | All weapons, projectiles, explosions, weapon switching (keys, wheel, mouse wheel), gamepad, new enemy types (incl. flying), first boss | Weapon effects, new models |
@@ -81,7 +81,7 @@ same at any frame rate.
 
 ![0.2 First Steps: the textured test level](Screenshots/v0.2.0/TestLevel.png)
 
-## 0.3 — Boomstick 🔨
+## 0.3 — Boomstick ✅
 
 **Goal:** a shotgun in the hands of the player: hitscan shots with a spread of
 pellets, sound, recoil, damage to targets, a muzzle flash, particles and
@@ -100,7 +100,7 @@ Every asset is listed in `ASSETS.md` before it is committed.
 | 5 | `feat/hitscan`                  | ✅     | Fire action (left mouse button), single-barrel shotgun: pellets with a random spread, time between shots, recoil of the view and the model, shot sound; debug lines of the pellets; random numbers in `Core/Math`; unlimited ammo |
 | 6 | `feat/damage`                   | ✅     | `Health` component; target dummies placed in TrenchBroom (`target_dummy`); traces against entities, not only walls; damage, hit sound, a destroyed target disappears; knockback from shots; a crosshair in the middle of the screen (its look set by the weapon), hit markers for hits and a different one for kills |
 | 7 | `feat/impact-effects`           | ✅     | Muzzle flash sprite; particles (sparks and dust at hits, smoke, blood on characters); decals (pellet marks on walls, a limited number); effect textures from the texture generator; the crosshair pulses with every shot; Effects window |
-| 8 | `refactor/review-0.3`           | ⏳     | A review of the project and a guided walkthrough of what changed since the last one; screenshots; release v0.3.0 |
+| 8 | `refactor/review-0.3`           | ✅     | A review of the whole project before the release: the unused TexturedMesh shader removed; the damped spring and the approach factor (`Core/Math/Spring`), the drawn transform, the sliders of the tuning windows (`UI/Widgets`) and the loading of sound variants each written once; `UpdateWeapon` and `Render` split into named steps; the overlay gets the whole `GameplayState`; Gameplay and UI split into topic folders; effects tests; `WeaponViewModel` and `DebugLineDepth` names; `MeshPass`; a flat menu bar of the debug overlay with one Weapon window (tabs) and resizable windows; a guided walkthrough of Core, Input, Platform and Renderer; release v0.3.0 |
 
 **Done when:** the player shoots the shotgun at target dummies in the test
 level, the pellets spread, the targets take damage and are destroyed, every

@@ -42,11 +42,12 @@ namespace Abomination::Renderer
     void DebugLineRenderer::Draw(const DebugLines& lines, const View& view, const GLShaderProgram& program,
                                  glm::vec2 viewportSize, float lineWidth)
     {
-        // The depth-tested strips first, then the ones on top, all in one buffer; each pass draws its own range.
+        // The strips hidden behind walls first, then the always visible ones, all in one buffer; each pass draws its own
+        // range.
         m_stripVertices.clear();
-        AddStrips(lines.GetVertices(DebugLineDepth::Tested));
-        const std::size_t testedVertexCount = m_stripVertices.size();
-        AddStrips(lines.GetVertices(DebugLineDepth::OnTop));
+        AddStrips(lines.GetVertices(DebugLineDepth::HiddenBehindWalls));
+        const std::size_t hiddenBehindWallsVertexCount = m_stripVertices.size();
+        AddStrips(lines.GetVertices(DebugLineDepth::AlwaysVisible));
         if (m_stripVertices.empty())
             return;
 
@@ -65,12 +66,12 @@ namespace Abomination::Renderer
         glDisable(GL_CULL_FACE);
 
         glEnable(GL_DEPTH_TEST);
-        glDrawArrays(GL_TRIANGLES, 0, static_cast<GLsizei>(testedVertexCount));
+        glDrawArrays(GL_TRIANGLES, 0, static_cast<GLsizei>(hiddenBehindWallsVertexCount));
 
         // Without the depth test nothing can hide these strips.
         glDisable(GL_DEPTH_TEST);
-        glDrawArrays(GL_TRIANGLES, static_cast<GLint>(testedVertexCount),
-                     static_cast<GLsizei>(m_stripVertices.size() - testedVertexCount));
+        glDrawArrays(GL_TRIANGLES, static_cast<GLint>(hiddenBehindWallsVertexCount),
+                     static_cast<GLsizei>(m_stripVertices.size() - hiddenBehindWallsVertexCount));
         glEnable(GL_DEPTH_TEST);
     }
 

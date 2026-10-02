@@ -388,14 +388,13 @@ Inside the renderer:
   `SystemShaders` are the shaders the render system uses on its own, loaded
   once by `LoadSystemShaders`.
 - **Debug lines** (`DebugLines`, `DebugLineRenderer`): any code adds lines,
-  boxes and arrows during a frame to a plain list (no OpenGL, testable);
-  after the scene all of them are drawn in two draw calls and the list is
-  cleared. Lines are `Tested` (hidden behind walls) or `OnTop` (always
-  visible). OpenGL Core only has to draw lines 1 pixel wide, so every line is
-  a strip of two triangles that the vertex shader (`DebugLines.vert`) widens
-  across the line on the screen: 2.5 pixels at 100% display scale, whatever
-  the distance. An end behind the camera is moved along the line to just in
-  front of it. The vertices go into a dynamic buffer
+  boxes and arrows during a frame to a plain list (no OpenGL, testable); after
+  the scene all of them are drawn in two draw calls and the list is cleared.
+  Lines are `HiddenBehindWalls` or `AlwaysVisible`. OpenGL Core only has to draw
+  lines 1 pixel wide, so every line is a strip of two triangles that the vertex
+  shader (`DebugLines.vert`) widens across the line on the screen: 2.5 pixels at
+  100% display scale, whatever the distance. An end behind the camera is moved
+  along the line to just in front of it. The vertices go into a dynamic buffer
   (`GLBuffer::CreateDynamic` + `Update`: fixed size, contents replaced every
   frame), replaced by one twice as big when a frame has more lines.
 - **Renderer window** of the debug overlay (View > Rendering > Renderer): Solid /

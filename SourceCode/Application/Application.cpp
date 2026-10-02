@@ -358,10 +358,10 @@ namespace Abomination
         if (m_renderSettings.areWorldAxesVisible)
         {
             constexpr glm::vec3 Origin{0.0f};
-            constexpr auto OnTop = Renderer::DebugLineDepth::OnTop;
-            m_debugLines.AddArrow(Origin, {1.0f, 0.0f, 0.0f}, {1.0f, 0.2f, 0.2f}, OnTop);
-            m_debugLines.AddArrow(Origin, {0.0f, 1.0f, 0.0f}, {0.2f, 1.0f, 0.2f}, OnTop);
-            m_debugLines.AddArrow(Origin, {0.0f, 0.0f, 1.0f}, {0.3f, 0.5f, 1.0f}, OnTop);
+            constexpr auto AlwaysVisible = Renderer::DebugLineDepth::AlwaysVisible;
+            m_debugLines.AddArrow(Origin, {1.0f, 0.0f, 0.0f}, {1.0f, 0.2f, 0.2f}, AlwaysVisible);
+            m_debugLines.AddArrow(Origin, {0.0f, 1.0f, 0.0f}, {0.2f, 1.0f, 0.2f}, AlwaysVisible);
+            m_debugLines.AddArrow(Origin, {0.0f, 0.0f, 1.0f}, {0.3f, 0.5f, 1.0f}, AlwaysVisible);
         }
     }
 

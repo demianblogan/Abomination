@@ -16,7 +16,8 @@ namespace Abomination::Renderer
 
     void DebugLines::AddLine(const glm::vec3& from, const glm::vec3& to, const glm::vec3& color, DebugLineDepth depth)
     {
-        std::vector<DebugLineVertex>& vertices = depth == DebugLineDepth::OnTop ? m_onTopVertices : m_testedVertices;
+        std::vector<DebugLineVertex>& vertices =
+            depth == DebugLineDepth::AlwaysVisible ? m_alwaysVisibleVertices : m_hiddenBehindWallsVertices;
         vertices.push_back({.position = from, .color = color});
         vertices.push_back({.position = to, .color = color});
     }
@@ -66,17 +67,17 @@ namespace Abomination::Renderer
     void DebugLines::Clear() noexcept
     {
         // clear() keeps the allocated memory, so the next frame adds its lines without allocating again.
-        m_testedVertices.clear();
-        m_onTopVertices.clear();
+        m_hiddenBehindWallsVertices.clear();
+        m_alwaysVisibleVertices.clear();
     }
 
     std::span<const DebugLineVertex> DebugLines::GetVertices(DebugLineDepth depth) const noexcept
     {
-        return depth == DebugLineDepth::OnTop ? m_onTopVertices : m_testedVertices;
+        return depth == DebugLineDepth::AlwaysVisible ? m_alwaysVisibleVertices : m_hiddenBehindWallsVertices;
     }
 
     std::size_t DebugLines::GetLineCount() const noexcept
     {
-        return (m_testedVertices.size() + m_onTopVertices.size()) / 2;
+        return (m_hiddenBehindWallsVertices.size() + m_alwaysVisibleVertices.size()) / 2;
     }
 }

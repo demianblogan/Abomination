@@ -31,18 +31,7 @@ namespace Abomination::Platform
 
 namespace Abomination::Gameplay
 {
-    struct Effects;
-    struct LandingDip;
-    struct ViewModel;
-    struct ViewRecoil;
-    struct Weapon;
-}
-
-namespace Abomination::Physics
-{
-    struct CharacterBody;
-    struct MovementSettings;
-    struct PhysicsSettings;
+    struct GameplayState;
 }
 
 namespace Abomination::Renderer
@@ -80,19 +69,11 @@ namespace Abomination::UI
         const World::CameraCast& cameraCast;
         std::size_t collisionBrushCount;
         Core::LogHistory& logHistory;
-        Physics::PhysicsSettings& physicsSettings;
-        Physics::MovementSettings& movementSettings;
-        const Physics::CharacterBody& playerBody;
         Audio::AudioEngine& audio;
-        Gameplay::ViewModel& viewModel;
-        Gameplay::LandingDip& landingDip;
-        Gameplay::Weapon& weapon;
-        Gameplay::ViewRecoil& viewRecoil;
-        Gameplay::Effects& effects;
 
-        // The crosshair is drawn while the player is controlled, with the field of view of their camera (radians).
-        bool isPlayerControlled;
-        float playerVerticalFOV;
+        // The player and their tunable settings: the gameplay windows find the components of the player in the registry
+        // (its movement, weapon, view model, recoil), the crosshair is drawn while the player is controlled.
+        Gameplay::GameplayState& gameplay;
     };
 
     // Developer overlay drawn with Dear ImGui on top of the game: a menu bar with debug windows and settings.

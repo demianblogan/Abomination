@@ -1,8 +1,14 @@
 #include "UI/DebugOverlay.h"
 
 #include "Core/Time/FrameLimiter.h"
+#include "Gameplay/GameplayState.h"
+#include "Gameplay/LandingDip.h"
 #include "Gameplay/ViewModel.h"
+#include "Gameplay/ViewRecoil.h"
+#include "Gameplay/Weapon.h"
+#include "Physics/CharacterBody.h"
 #include "Platform/Window.h"
+#include "Renderer/Camera/CameraLens.h"
 #include "Renderer/OpenGL/OpenGLLoader.h"
 #include "UI/AssetsWindow.h"
 #include "UI/CollisionWindow.h"
@@ -101,6 +107,12 @@ namespace Abomination::UI
         //    While the overlay is hidden the ImGui frame still runs, just without windows: ImGui keeps receiving the
         //    input and the time, so it is in a consistent state when the overlay is shown again. An empty frame costs
         //    practically nothing.
+        // The components of the player the gameplay windows and the crosshair change or show.
+        entt::registry& registry = context.registry;
+        Gameplay::GameplayState& gameplay = context.gameplay;
+        Gameplay::ViewModel& viewModel = registry.get<Gameplay::ViewModel>(gameplay.player);
+        Gameplay::Weapon& weapon = registry.get<Gameplay::Weapon>(gameplay.player);
+
         if (m_isVisible)
         {
             DrawMainMenuBar(context);
@@ -128,22 +140,24 @@ namespace Abomination::UI
                                     context.collisionBrushCount);
 
             if (m_isMovementWindowOpen)
-                DrawMovementWindow(&m_isMovementWindowOpen, context.physicsSettings, context.movementSettings,
-                                   context.playerBody);
+                DrawMovementWindow(&m_isMovementWindowOpen, gameplay.physicsSettings, gameplay.movementSettings,
+                                   registry.get<Physics::CharacterBody>(gameplay.player));
 
             if (m_isViewModelWindowOpen)
-                DrawViewModelWindow(&m_isViewModelWindowOpen, context.viewModel, context.landingDip);
+                DrawViewModelWindow(&m_isViewModelWindowOpen, viewModel, registry.get<Gameplay::LandingDip>(gameplay.player));
 
             if (m_isEffectsWindowOpen)
-                DrawEffectsWindow(&m_isEffectsWindowOpen, context.effects);
+                DrawEffectsWindow(&m_isEffectsWindowOpen, gameplay.effects);
 
             if (m_isWeaponWindowOpen)
-                DrawWeaponWindow(&m_isWeaponWindowOpen, context.weapon, context.viewRecoil, context.viewModel.motionSettings);
+                DrawWeaponWindow(&m_isWeaponWindowOpen, weapon, registry.get<Gameplay::ViewRecoil>(gameplay.player),
+                                 viewModel.motionSettings);
         }
 
-        // The crosshair belongs to the game, not to the debug tools: it is drawn whether the overlay is shown or not.
-        if (context.isPlayerControlled)
-            m_crosshair.Draw(context.weapon, context.playerVerticalFOV);
+        // The crosshair belongs to the game, not to the debug tools: it is drawn whether the overlay is shown or not, while
+        // the player is controlled, with the field of view of their camera.
+        if (gameplay.controlMode == Gameplay::ControlMode::Player)
+            m_crosshair.Draw(weapon, registry.get<Renderer::CameraLens>(gameplay.player).verticalFOV);
 
         // The console is drawn even while the rest of the overlay is hidden: it has its own key.
         m_consoleWindow.Draw(context.logHistory);

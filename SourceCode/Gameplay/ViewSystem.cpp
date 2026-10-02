@@ -4,6 +4,7 @@
 #include "Gameplay/LandingDip.h"
 #include "Gameplay/MouseLook.h"
 #include "Gameplay/Player.h"
+#include "Gameplay/ViewModel.h"
 #include "Gameplay/ViewRecoil.h"
 #include "Renderer/Camera/CameraLens.h"
 
@@ -72,5 +73,15 @@ namespace Abomination::Gameplay
     const Renderer::CameraLens& GetViewLens(const GameplayState& state, const entt::registry& registry)
     {
         return registry.get<Renderer::CameraLens>(GetViewEntity(state));
+    }
+
+    void UpdateViewEffects(GameplayState& state, entt::registry& registry, float deltaTime)
+    {
+        // The weapon swings with what the ticks of this frame did to the player (a landing, the speed) and with the view
+        // turned this frame.
+        UpdateViewModel(state, registry, deltaTime);
+        UpdatePlayerLandingDip(state, registry, deltaTime);
+        UpdatePlayerViewRecoil(state, registry, deltaTime);
+        state.effects.particles.Update(deltaTime, state.physicsSettings.gravity);
     }
 }

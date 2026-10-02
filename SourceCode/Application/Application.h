@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Audio/AudioEngine.h"
+#include "Core/Scene/Transform.h"
 #include "Core/Time/FixedTimestep.h"
 #include "Core/Time/FrameLimiter.h"
 #include "Gameplay/GameplayState.h"
@@ -10,12 +11,13 @@
 #include "Platform/SDLLibrary.h"
 #include "Platform/Window.h"
 #include "Renderer/Assets/RenderAssets.h"
+#include "Renderer/Camera/View.h"
 #include "Renderer/Debug/DebugLineRenderer.h"
-#include "Renderer/Sprites/SpriteBatch.h"
-#include "Renderer/Sprites/SpriteRenderer.h"
 #include "Renderer/Debug/DebugLines.h"
 #include "Renderer/RenderSettings.h"
 #include "Renderer/RenderSystem.h"
+#include "Renderer/Sprites/SpriteBatch.h"
+#include "Renderer/Sprites/SpriteRenderer.h"
 #include "UI/DebugOverlay.h"
 #include "World/CollisionDebug.h"
 #include "World/Level.h"
@@ -76,6 +78,14 @@ namespace Abomination
         // Draws the frame (the game, then the debug overlay on top) and shows it on the screen.
         // frameStatistics: the numbers for the overlay.
         void Render(const Core::FrameStatistics& frameStatistics);
+
+        // The steps of Render():
+        //   DrawEffects   - the marks on the walls and the particles, seen through the view;
+        //   AddDebugLines - the lines of the debug tools of this frame (collision, characters, pellets, world axes);
+        //   DrawViewModel - the weapon in the hands and its muzzle flash, over everything.
+        void DrawEffects(const Renderer::View& view);
+        void AddDebugLines(const Core::Transform& cameraTransform, float interpolationFactor);
+        void DrawViewModel(float aspectRatio);
 
         // Members are destroyed in reverse order of declaration: the overlay and the assets first (they use OpenGL),
         // then the window, then SDL, which the window needs.

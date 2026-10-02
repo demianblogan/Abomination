@@ -36,4 +36,13 @@ namespace Abomination::Core
             .scale = glm::mix(previous.scale, current.scale, alpha),
         };
     }
+
+    Transform CalculateDrawnTransform(const entt::registry& registry, entt::entity entity, float alpha)
+    {
+        // try_get returns nullptr if the entity has no such component: only moving entities have a previous transform.
+        const Transform& current = registry.get<Transform>(entity);
+        const PreviousTransform* previous = registry.try_get<PreviousTransform>(entity);
+
+        return previous == nullptr ? current : InterpolateTransform(previous->value, current, alpha);
+    }
 }

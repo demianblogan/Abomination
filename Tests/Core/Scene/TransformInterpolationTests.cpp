@@ -83,4 +83,19 @@ namespace Abomination::Core
         ExpectNear(registry.get<PreviousTransform>(interpolated).value.position, {1.0f, 2.0f, 3.0f});
         EXPECT_FALSE(registry.all_of<PreviousTransform>(notInterpolated));
     }
+
+    TEST(TransformInterpolation, DrawnTransformIsBetweenTicksOnlyForMovingEntities)
+    {
+        entt::registry registry;
+        const entt::entity moving = registry.create();
+        registry.emplace<Transform>(moving);
+        EnableInterpolation(registry, moving);
+        registry.get<Transform>(moving).position = {2.0f, 0.0f, 0.0f};
+
+        const entt::entity standing = registry.create();
+        registry.emplace<Transform>(standing, Transform{.position = {5.0f, 0.0f, 0.0f}});
+
+        ExpectNear(CalculateDrawnTransform(registry, moving, 0.25f).position, {0.5f, 0.0f, 0.0f});
+        ExpectNear(CalculateDrawnTransform(registry, standing, 0.25f).position, {5.0f, 0.0f, 0.0f});
+    }
 }

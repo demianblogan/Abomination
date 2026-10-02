@@ -16,10 +16,10 @@ namespace Abomination::Renderer
 
         lines.AddLine({0.0f, 0.0f, 0.0f}, {1.0f, 2.0f, 3.0f}, {1.0f, 0.0f, 0.0f});
 
-        ASSERT_EQ(lines.GetVertices(DebugLineDepth::Tested).size(), 2u);
+        ASSERT_EQ(lines.GetVertices(DebugLineDepth::HiddenBehindWalls).size(), 2u);
         EXPECT_EQ(lines.GetLineCount(), 1u);
-        EXPECT_EQ(lines.GetVertices(DebugLineDepth::Tested)[1].position, glm::vec3(1.0f, 2.0f, 3.0f));
-        EXPECT_EQ(lines.GetVertices(DebugLineDepth::Tested)[0].color, glm::vec3(1.0f, 0.0f, 0.0f));
+        EXPECT_EQ(lines.GetVertices(DebugLineDepth::HiddenBehindWalls)[1].position, glm::vec3(1.0f, 2.0f, 3.0f));
+        EXPECT_EQ(lines.GetVertices(DebugLineDepth::HiddenBehindWalls)[0].color, glm::vec3(1.0f, 0.0f, 0.0f));
     }
 
     TEST(DebugLines, BoxIsTwelveEdgesBetweenItsCorners)
@@ -29,10 +29,10 @@ namespace Abomination::Renderer
         lines.AddBox({0.0f, 0.0f, 0.0f}, {1.0f, 2.0f, 3.0f}, {0.0f, 1.0f, 0.0f});
 
         ASSERT_EQ(lines.GetLineCount(), 12u);
-        for (std::size_t index = 0; index < lines.GetVertices(DebugLineDepth::Tested).size(); index += 2)
+        for (std::size_t index = 0; index < lines.GetVertices(DebugLineDepth::HiddenBehindWalls).size(); index += 2)
         {
-            const glm::vec3 from = lines.GetVertices(DebugLineDepth::Tested)[index].position;
-            const glm::vec3 to = lines.GetVertices(DebugLineDepth::Tested)[index + 1].position;
+            const glm::vec3 from = lines.GetVertices(DebugLineDepth::HiddenBehindWalls)[index].position;
+            const glm::vec3 to = lines.GetVertices(DebugLineDepth::HiddenBehindWalls)[index + 1].position;
 
             // Every edge runs along one axis: its ends differ in exactly one coordinate.
             const int differentCoordinates = (from.x != to.x) + (from.y != to.y) + (from.z != to.z);
@@ -52,24 +52,24 @@ namespace Abomination::Renderer
     {
         DebugLines lines;
         lines.AddBox({0.0f, 0.0f, 0.0f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f, 1.0f});
-        lines.AddLine({0.0f, 0.0f, 0.0f}, {1.0f, 0.0f, 0.0f}, {1.0f, 1.0f, 1.0f}, DebugLineDepth::OnTop);
+        lines.AddLine({0.0f, 0.0f, 0.0f}, {1.0f, 0.0f, 0.0f}, {1.0f, 1.0f, 1.0f}, DebugLineDepth::AlwaysVisible);
 
         lines.Clear();
 
         EXPECT_EQ(lines.GetLineCount(), 0u);
-        EXPECT_TRUE(lines.GetVertices(DebugLineDepth::Tested).empty());
-        EXPECT_TRUE(lines.GetVertices(DebugLineDepth::OnTop).empty());
+        EXPECT_TRUE(lines.GetVertices(DebugLineDepth::HiddenBehindWalls).empty());
+        EXPECT_TRUE(lines.GetVertices(DebugLineDepth::AlwaysVisible).empty());
     }
 
-    TEST(DebugLines, LinesOnTopAreKeptApart)
+    TEST(DebugLines, AlwaysVisibleLinesAreKeptApart)
     {
         DebugLines lines;
 
         lines.AddLine({0.0f, 0.0f, 0.0f}, {1.0f, 0.0f, 0.0f}, {1.0f, 1.0f, 1.0f});
-        lines.AddLine({0.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 1.0f, 1.0f}, DebugLineDepth::OnTop);
+        lines.AddLine({0.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 1.0f, 1.0f}, DebugLineDepth::AlwaysVisible);
 
-        EXPECT_EQ(lines.GetVertices(DebugLineDepth::Tested).size(), 2u);
-        EXPECT_EQ(lines.GetVertices(DebugLineDepth::OnTop).size(), 2u);
+        EXPECT_EQ(lines.GetVertices(DebugLineDepth::HiddenBehindWalls).size(), 2u);
+        EXPECT_EQ(lines.GetVertices(DebugLineDepth::AlwaysVisible).size(), 2u);
         EXPECT_EQ(lines.GetLineCount(), 2u);
     }
 
@@ -80,7 +80,7 @@ namespace Abomination::Renderer
 
         lines.AddArrow({0.0f, 0.0f, 0.0f}, tip, {1.0f, 0.0f, 0.0f});
 
-        const std::span<const DebugLineVertex> vertices = lines.GetVertices(DebugLineDepth::Tested);
+        const std::span<const DebugLineVertex> vertices = lines.GetVertices(DebugLineDepth::HiddenBehindWalls);
         ASSERT_EQ(lines.GetLineCount(), 5u);
         for (std::size_t index = 2; index < vertices.size(); index += 2)
         {

@@ -13,6 +13,6 @@ namespace Abomination::Renderer
     void ClearFrame(const glm::vec4& color);
 
     // Resets only the depth buffer: what is drawn next is not hidden by anything drawn before, but the colors stay.
-    // The weapon in the hands is drawn after it (see DrawViewModel), so it never disappears into a wall.
+    // The weapon in the hands is drawn after it (see DrawWeaponViewModel), so it never disappears into a wall.
     void ClearDepth();
 }

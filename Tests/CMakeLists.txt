@@ -15,6 +15,7 @@ set(TEST_SOURCES
     Core/Math/ConvexPolygonTests.cpp
     Core/Math/PlaneTests.cpp
     Core/Math/RandomTests.cpp
+    Core/Math/SpringTests.cpp
     Core/Math/UnitsTests.cpp
     Core/Scene/TransformInterpolationTests.cpp
     Core/Scene/TransformTests.cpp
@@ -23,16 +24,17 @@ set(TEST_SOURCES
     Core/Time/FrameStatisticsTests.cpp
     Core/Time/FrameTimerTests.cpp
 
-    Gameplay/CrosshairTests.cpp
-    Gameplay/FreeFlyCameraControllerTests.cpp
-    Gameplay/LandingDipTests.cpp
-    Gameplay/ParticlesTests.cpp
-    Gameplay/PlayerSystemTests.cpp
-    Gameplay/PlayerTests.cpp
     Gameplay/SpinTests.cpp
-    Gameplay/ViewModelMotionTests.cpp
-    Gameplay/ViewModelTests.cpp
-    Gameplay/WeaponTests.cpp
+    Gameplay/Camera/FreeFlyCameraControllerTests.cpp
+    Gameplay/Effects/EffectsTests.cpp
+    Gameplay/Effects/ParticlesTests.cpp
+    Gameplay/Player/LandingDipTests.cpp
+    Gameplay/Player/PlayerSystemTests.cpp
+    Gameplay/Player/PlayerTests.cpp
+    Gameplay/Weapons/CrosshairTests.cpp
+    Gameplay/Weapons/WeaponTests.cpp
+    Gameplay/Weapons/WeaponViewModelMotionTests.cpp
+    Gameplay/Weapons/WeaponViewModelTests.cpp
 
     Input/ActionStatesTests.cpp
     Input/InputBindingsTests.cpp

@@ -19,10 +19,10 @@ namespace Abomination::Renderer
     enum class DebugLineDepth
     {
         // Hidden behind walls like everything else, so it is clear where in space the line is.
-        Tested,
+        HiddenBehindWalls,
 
         // Always visible, drawn over everything: for markers that must never be lost (the world axes).
-        OnTop,
+        AlwaysVisible
     };
 
     // Lines drawn over the scene for debugging: collision boxes, traces, normals, axes. Any code adds lines during the
@@ -32,15 +32,15 @@ namespace Abomination::Renderer
     {
     public:
         void AddLine(const glm::vec3& from, const glm::vec3& to, const glm::vec3& color,
-                     DebugLineDepth depth = DebugLineDepth::Tested);
+                     DebugLineDepth depth = DebugLineDepth::HiddenBehindWalls);
 
         // The 12 edges of an axis-aligned box.
         void AddBox(const glm::vec3& minimum, const glm::vec3& maximum, const glm::vec3& color,
-                    DebugLineDepth depth = DebugLineDepth::Tested);
+                    DebugLineDepth depth = DebugLineDepth::HiddenBehindWalls);
 
         // A line with an arrow head at its end: four short lines from the tip back, like the edges of a pyramid.
         void AddArrow(const glm::vec3& from, const glm::vec3& to, const glm::vec3& color,
-                      DebugLineDepth depth = DebugLineDepth::Tested);
+                      DebugLineDepth depth = DebugLineDepth::HiddenBehindWalls);
 
         void Clear() noexcept;
 
@@ -51,7 +51,7 @@ namespace Abomination::Renderer
         [[nodiscard]] std::size_t GetLineCount() const noexcept;
 
     private:
-        std::vector<DebugLineVertex> m_testedVertices;
-        std::vector<DebugLineVertex> m_onTopVertices;
+        std::vector<DebugLineVertex> m_hiddenBehindWallsVertices;
+        std::vector<DebugLineVertex> m_alwaysVisibleVertices;
     };
 }

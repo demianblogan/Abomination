@@ -15,7 +15,7 @@ namespace Abomination::Renderer
     using ShaderHandle = Core::AssetHandle<GLShaderProgram>;
 
     // Loads shader programs and keeps every program exactly once. A program is named by the path of its two files
-    // without the extension: "Shaders/TexturedMesh" is Shaders/TexturedMesh.vert + Shaders/TexturedMesh.frag.
+    // without the extension: "Shaders/TexturedShaded" is Shaders/TexturedShaded.vert + Shaders/TexturedShaded.frag.
     //
     // A missing file or a compilation error does not stop the game: the program is replaced by a fallback program that
     // draws everything in plain magenta, and the error (with the compiler log) is logged. The fallback is stored under

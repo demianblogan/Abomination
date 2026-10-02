@@ -6,19 +6,14 @@
 #include "Core/Scene/TransformInterpolation.h"
 #include "Core/Time/FrameStatistics.h"
 #include "Core/Time/FrameTimer.h"
-#include "Gameplay/FreeFlyCameraSystem.h"
-#include "Gameplay/PlayerSystem.h"
+#include "Gameplay/Camera/FreeFlyCameraSystem.h"
+#include "Gameplay/Camera/ViewSystem.h"
+#include "Gameplay/Characters/TargetDummy.h"
+#include "Gameplay/Player/PlayerSystem.h"
 #include "Gameplay/Spin.h"
-#include "Gameplay/LandingDip.h"
-#include "Gameplay/TargetDummy.h"
-#include "Gameplay/ViewModel.h"
-#include "Gameplay/ViewRecoil.h"
-#include "Gameplay/ViewSystem.h"
-#include "Gameplay/Weapon.h"
-#include "Gameplay/WeaponSystem.h"
-#include "Physics/CharacterBody.h"
+#include "Gameplay/Weapons/WeaponSystem.h"
+#include "Gameplay/Weapons/WeaponViewModel.h"
 #include "Platform/SystemServices.h"
-#include "Renderer/Camera/CameraLens.h"
 #include "Renderer/Camera/View.h"
 #include "Renderer/OpenGL/DebugOutput.h"
 #include "Renderer/OpenGL/OpenGLLoader.h"
@@ -153,14 +148,9 @@ namespace Abomination
             for (int tick = 0; tick < tickCount; ++tick)
                 FixedUpdate(m_fixedTimestep.GetTickDuration());
 
-            // The weapon in the hands swings with what the ticks of this frame did to the player (a landing, the speed)
-            // and with the view turned in Update(): every frame, so it moves as smoothly as the view.
-            Gameplay::UpdateViewModel(m_gameplay, m_registry, frameTimer.GetDeltaTime());
-            Gameplay::UpdatePlayerLandingDip(m_gameplay, m_registry, frameTimer.GetDeltaTime());
-            Gameplay::UpdatePlayerViewRecoil(m_gameplay, m_registry, frameTimer.GetDeltaTime());
-
-            // Particles are only for the eyes, so they move every frame, like the view.
-            m_gameplay.effects.particles.Update(frameTimer.GetDeltaTime(), m_gameplay.physicsSettings.gravity);
+            // What only moves the picture (the weapon in the hands, the view, the particles) moves every frame, after the
+            // ticks of this frame, so it is as smooth as the view.
+            Gameplay::UpdateViewEffects(m_gameplay, m_registry, frameTimer.GetDeltaTime());
 
             frameStatistics.AddFrame(frameTimer.GetDeltaTime(), tickCount);
 
@@ -302,64 +292,20 @@ namespace Abomination
             // The ears are where the eyes are: 3D sounds are heard from the place the scene is seen from.
             m_audio.SetListener(cameraTransform.position, cameraTransform.rotation * Core::LocalForward);
 
+            // In the order things cover each other: the solid world, the see-through effects in it, the debug lines, and
+            // the weapon in the hands over everything.
             m_renderStatistics = Renderer::DrawMeshes(m_registry, view, interpolationFactor, m_renderAssets,
                                                       m_systemShaders, m_renderSettings);
+            DrawEffects(view);
 
-            // The see-through things after the solid world: the marks on the walls and the particles.
-            m_sprites.Clear();
-            Gameplay::AddDecalSprites(m_gameplay.effects, m_sprites);
-            m_gameplay.effects.particles.AddSprites(m_sprites);
-            m_renderStatistics.drawCallCount += m_spriteRenderer.Draw(m_sprites, view.viewMatrix, view.projectionMatrix,
-                                                                      m_renderAssets.textures,
-                                                                      m_renderAssets.shaders.Get(m_systemShaders.sprites));
-
-            m_cameraCast = World::UpdateCollisionDebug(m_level.GetCollisionBrushes(), m_collisionSettings,
-                                                       cameraTransform, m_debugLines);
-
-            Gameplay::AddPlayerDebugBox(m_gameplay, m_registry, interpolationFactor, m_debugLines);
-            if (m_collisionSettings.areColliderBoundsVisible)
-                Gameplay::AddCharacterDebugBoxes(m_gameplay, m_registry, interpolationFactor, m_debugLines);
-            Gameplay::AddWeaponDebugLines(m_gameplay, m_registry, m_debugLines);
-
-            if (m_renderSettings.areWorldAxesVisible)
-            {
-                constexpr glm::vec3 Origin{0.0f};
-                constexpr auto OnTop = Renderer::DebugLineDepth::OnTop;
-                m_debugLines.AddArrow(Origin, {1.0f, 0.0f, 0.0f}, {1.0f, 0.2f, 0.2f}, OnTop);
-                m_debugLines.AddArrow(Origin, {0.0f, 1.0f, 0.0f}, {0.2f, 1.0f, 0.2f}, OnTop);
-                m_debugLines.AddArrow(Origin, {0.0f, 0.0f, 1.0f}, {0.3f, 0.5f, 1.0f}, OnTop);
-            }
+            AddDebugLines(cameraTransform, interpolationFactor);
+            const glm::vec2 viewportSize(static_cast<float>(widthInPixels), static_cast<float>(heightInPixels));
 
             // The line width is given at 100% display scale, like the debug overlay: on a 4K monitor at 200% it doubles.
-            const glm::vec2 viewportSize(static_cast<float>(widthInPixels), static_cast<float>(heightInPixels));
             m_debugLineRenderer.Draw(m_debugLines, view, m_renderAssets.shaders.Get(m_systemShaders.debugLines), viewportSize,
                                      DebugLineWidth * m_window.GetDisplayScale());
 
-            // The weapon in the hands comes last, over the world and the debug lines. Only while the player is controlled:
-            // the free-fly camera has no hands.
-            if (const auto* viewModel = m_registry.try_get<Gameplay::ViewModel>(m_gameplay.player);
-                viewModel != nullptr && m_gameplay.controlMode == Gameplay::ControlMode::Player)
-            {
-                const Renderer::RenderStatistics viewModelStatistics = Renderer::DrawViewModel(
-                    viewModel->model, Gameplay::CalculateViewModelMatrix(*viewModel), viewModel->verticalFOV, aspectRatio,
-                    m_renderAssets, viewModel->shaderProgram, m_systemShaders, m_renderSettings);
-                m_renderStatistics.drawCallCount += viewModelStatistics.drawCallCount;
-                m_renderStatistics.triangleCount += viewModelStatistics.triangleCount;
-
-                // The muzzle flash, drawn with the weapon: in the space of the eyes (no view matrix) with the projection
-                // of the weapon, so it sits exactly at the muzzle.
-                if (viewModel->flashTimeLeft > 0.0f)
-                {
-                    const Gameplay::EffectSettings& effects = m_gameplay.effects.settings;
-                    m_sprites.Clear();
-                    m_sprites.AddBillboard(Gameplay::CalculateViewModelMuzzle(*viewModel), effects.flashHalfSize,
-                                           viewModel->flashRotation, glm::vec4(1.0f),
-                                           m_gameplay.effects.textures.muzzleFlash, Renderer::SpriteBlend::Additive);
-                    m_renderStatistics.drawCallCount += m_spriteRenderer.Draw(
-                        m_sprites, glm::mat4(1.0f), Renderer::CalculateViewModelProjection(viewModel->verticalFOV, aspectRatio),
-                        m_renderAssets.textures, m_renderAssets.shaders.Get(m_systemShaders.sprites));
-                }
-            }
+            DrawWeaponViewModel(aspectRatio);
         }
 
         // The lines of this frame are drawn (or, in a minimized window, dropped); the next frame adds its own.
@@ -381,19 +327,71 @@ namespace Abomination
             .cameraCast = m_cameraCast,
             .collisionBrushCount = m_level.GetCollisionBrushes().size(),
             .logHistory = *m_logHistory,
-            .physicsSettings = m_gameplay.physicsSettings,
-            .movementSettings = m_gameplay.movementSettings,
-            .playerBody = m_registry.get<Physics::CharacterBody>(m_gameplay.player),
             .audio = m_audio,
-            .viewModel = m_registry.get<Gameplay::ViewModel>(m_gameplay.player),
-            .landingDip = m_registry.get<Gameplay::LandingDip>(m_gameplay.player),
-            .weapon = m_registry.get<Gameplay::Weapon>(m_gameplay.player),
-            .viewRecoil = m_registry.get<Gameplay::ViewRecoil>(m_gameplay.player),
-            .effects = m_gameplay.effects,
-            .isPlayerControlled = m_gameplay.controlMode == Gameplay::ControlMode::Player,
-            .playerVerticalFOV = m_registry.get<Renderer::CameraLens>(m_gameplay.player).verticalFOV,
+            .gameplay = m_gameplay,
         });
 
         m_window.SwapBuffers();
+    }
+
+    void Application::DrawEffects(const Renderer::View& view)
+    {
+        // The see-through things after the solid world: the marks on the walls and the particles.
+        m_sprites.Clear();
+        Gameplay::AddDecalSprites(m_gameplay.effects, m_sprites);
+        m_gameplay.effects.particles.AddSprites(m_sprites);
+        m_renderStatistics.drawCallCount += m_spriteRenderer.Draw(m_sprites, view.viewMatrix, view.projectionMatrix,
+                                                                  m_renderAssets.textures,
+                                                                  m_renderAssets.shaders.Get(m_systemShaders.sprites));
+    }
+
+    void Application::AddDebugLines(const Core::Transform& cameraTransform, float interpolationFactor)
+    {
+        m_cameraCast =
+            World::UpdateCollisionDebug(m_level.GetCollisionBrushes(), m_collisionSettings, cameraTransform, m_debugLines);
+
+        Gameplay::AddPlayerDebugBox(m_gameplay, m_registry, interpolationFactor, m_debugLines);
+        if (m_collisionSettings.areColliderBoundsVisible)
+            Gameplay::AddCharacterDebugBoxes(m_gameplay, m_registry, interpolationFactor, m_debugLines);
+        Gameplay::AddWeaponDebugLines(m_gameplay, m_registry, m_debugLines);
+
+        if (m_renderSettings.areWorldAxesVisible)
+        {
+            constexpr glm::vec3 Origin{0.0f};
+            constexpr auto AlwaysVisible = Renderer::DebugLineDepth::AlwaysVisible;
+            m_debugLines.AddArrow(Origin, {1.0f, 0.0f, 0.0f}, {1.0f, 0.2f, 0.2f}, AlwaysVisible);
+            m_debugLines.AddArrow(Origin, {0.0f, 1.0f, 0.0f}, {0.2f, 1.0f, 0.2f}, AlwaysVisible);
+            m_debugLines.AddArrow(Origin, {0.0f, 0.0f, 1.0f}, {0.3f, 0.5f, 1.0f}, AlwaysVisible);
+        }
+    }
+
+    void Application::DrawWeaponViewModel(float aspectRatio)
+    {
+        // Only while the player is controlled: the free-fly camera has no hands.
+        const auto* weaponViewModel = m_registry.try_get<Gameplay::WeaponViewModel>(m_gameplay.player);
+        if (weaponViewModel == nullptr || m_gameplay.controlMode != Gameplay::ControlMode::Player)
+            return;
+
+        const Renderer::RenderStatistics statistics =
+            Renderer::DrawWeaponViewModel(weaponViewModel->model, Gameplay::CalculateWeaponViewModelMatrix(*weaponViewModel),
+                                          weaponViewModel->verticalFOV, aspectRatio, m_renderAssets,
+                                          weaponViewModel->shaderProgram, m_systemShaders, m_renderSettings);
+        m_renderStatistics.drawCallCount += statistics.drawCallCount;
+        m_renderStatistics.triangleCount += statistics.triangleCount;
+
+        if (weaponViewModel->flashTimeLeft <= 0.0f)
+            return;
+
+        // The muzzle flash, drawn with the weapon: in the space of the eyes (no view matrix) with the projection of the
+        // weapon, so it sits exactly at the muzzle.
+        const Gameplay::Effects& effects = m_gameplay.effects;
+        m_sprites.Clear();
+        m_sprites.AddBillboard(Gameplay::CalculateWeaponViewModelMuzzle(*weaponViewModel), effects.settings.flashHalfSize,
+                               weaponViewModel->flashRotation, glm::vec4(1.0f), effects.textures.muzzleFlash,
+                               Renderer::SpriteBlend::Additive);
+        const glm::mat4 projection = Renderer::CalculateWeaponViewModelProjection(weaponViewModel->verticalFOV, aspectRatio);
+        m_renderStatistics.drawCallCount +=
+            m_spriteRenderer.Draw(m_sprites, glm::mat4(1.0f), projection, m_renderAssets.textures,
+                                  m_renderAssets.shaders.Get(m_systemShaders.sprites));
     }
 }

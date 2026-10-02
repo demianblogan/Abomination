@@ -40,7 +40,9 @@ namespace Abomination::Renderer
         [[nodiscard]] int GetWidth() const noexcept;
         [[nodiscard]] int GetHeight() const noexcept;
 
-        // Bytes of video memory the texture takes: all its mipmap levels, 4 bytes per texel.
+        // Bytes of video memory the texture takes: all its mipmap levels, 4 bytes per texel. Only calls
+        // CalculateVideoMemorySize with the size of this texture: the formula itself lives there because a GLTexture
+        // cannot be created without an OpenGL context, so a method of the object could not be tested.
         [[nodiscard]] std::size_t GetVideoMemorySize() const noexcept;
 
         // Bytes of video memory a texture of this size takes with all its mipmap levels. Needs no OpenGL, so it can be

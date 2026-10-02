@@ -23,7 +23,7 @@ namespace Abomination::Renderer
 
     // The geometry of a mesh in ordinary memory, before it is uploaded to the GPU: vertices and the indices that make
     // triangles of them (every 3 indices are one triangle, counter-clockwise when looked at from its front side).
-    // Built by code (MeshPrimitives) now, loaded from model files later (0.3). Needs no OpenGL, so it can be tested.
+    // Built by code (MeshPrimitives, the level) or read from model files (ModelData). Needs no OpenGL, so it can be tested.
     struct MeshData
     {
         std::vector<MeshVertex> vertices;

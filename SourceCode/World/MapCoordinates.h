@@ -28,7 +28,7 @@ namespace Abomination::World
     [[nodiscard]] Core::Plane ConvertMapPlane(const Core::Plane& mapPlane);
 
     // The "angle" of a map entity (degrees counter-clockwise from map +X, seen from above) as the yaw of the game
-    // (radians counter-clockwise from game -Z, see Gameplay/MouseLook.h): an angle of 90 (map +Y) is yaw 0.
+    // (radians counter-clockwise from game -Z, see Gameplay/Camera/MouseLook.h): an angle of 90 (map +Y) is yaw 0.
     [[nodiscard]] float ConvertMapAngleToYaw(double mapAngleDegrees);
 
     // Reads a vector property like "origin" "-48 -176 88". Returns nothing if the text is not three numbers.

@@ -21,7 +21,7 @@ namespace Abomination::Renderer
     // hard to see. So every line becomes a thin strip of two triangles instead. The strip is widened in the vertex
     // shader, on the screen: it stays the same number of pixels wide however far away the line is.
     //
-    // Lines are drawn in two passes: first the depth-tested ones, then the ones on top of everything (see
+    // Lines are drawn in two passes: first those hidden behind walls, then those always visible (see
     // DebugLineDepth). Everything goes into one dynamic vertex buffer that is reused every frame; when a frame has more
     // lines than fit, the buffer is replaced by one twice as big. Requires a current OpenGL context. Move-only.
     class DebugLineRenderer

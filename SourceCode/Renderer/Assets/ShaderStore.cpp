@@ -65,7 +65,7 @@ namespace Abomination::Renderer
         if (const std::optional<ShaderHandle> loadedHandle = m_cache.Find(name); loadedHandle.has_value())
             return *loadedHandle;
 
-        // "Shaders/TexturedMesh" -> ".../Assets/Shaders/TexturedMesh.vert" and ".../Assets/Shaders/TexturedMesh.frag".
+        // "Shaders/TexturedShaded" -> ".../Assets/Shaders/TexturedShaded.vert" and ".../Assets/Shaders/TexturedShaded.frag".
         // += appends text to the last part of a path (unlike /, which adds a new part). make_preferred() turns the forward
         // slashes of the name into the backslashes of Windows, so paths in log messages do not mix both.
         std::filesystem::path vertexShaderPath = m_assetsDirectory / name;

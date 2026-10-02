@@ -118,6 +118,16 @@ namespace Abomination::Audio
         return m_implementation->sounds.Load(path, lifetime);
     }
 
+    SoundEvent AudioEngine::LoadSoundEvent(const std::string& pathWithoutNumber, int variantCount,
+                                           Core::AssetLifetime lifetime)
+    {
+        SoundEvent event;
+        for (int variant = 1; variant <= variantCount; ++variant)
+            event.variants.push_back(LoadSound(pathWithoutNumber + std::to_string(variant) + ".ogg", lifetime));
+
+        return event;
+    }
+
     void AudioEngine::RemoveSounds(Core::AssetLifetime lifetime)
     {
         StopAll();

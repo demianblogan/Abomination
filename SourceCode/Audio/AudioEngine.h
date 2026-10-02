@@ -53,6 +53,11 @@ namespace Abomination::Audio
         // Loads a sound (see SoundStore::Load).
         [[nodiscard]] SoundHandle LoadSound(const std::string& path, Core::AssetLifetime lifetime);
 
+        // Loads the variants of a sound event, numbered from 1: "Sounds/Weapons/Hit" with 3 variants loads
+        // Sounds/Weapons/Hit1.ogg, Hit2.ogg and Hit3.ogg. The other values of the event are the defaults of SoundEvent.
+        [[nodiscard]] SoundEvent LoadSoundEvent(const std::string& pathWithoutNumber, int variantCount,
+                                                Core::AssetLifetime lifetime);
+
         // Stops every voice and removes every sound of the lifetime group. The voices are stopped first: a voice reads the
         // samples of its sound while it plays, from the thread of miniaudio.
         void RemoveSounds(Core::AssetLifetime lifetime);

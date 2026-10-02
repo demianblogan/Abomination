@@ -3,11 +3,11 @@
 #include "Core/BuildConfiguration.h"
 #include "Platform/ImGuiPlatformBackend.h"
 #include "Renderer/ImGuiRendererBackend.h"
-#include "UI/AudioWindow.h"
-#include "UI/ConsoleWindow.h"
 #include "UI/CrosshairOverlay.h"
-#include "UI/EntitiesWindow.h"
 #include "UI/ImGuiLibrary.h"
+#include "UI/Windows/AudioWindow.h"
+#include "UI/Windows/ConsoleWindow.h"
+#include "UI/Windows/EntitiesWindow.h"
 
 #include <entt/entt.hpp>
 
@@ -31,18 +31,7 @@ namespace Abomination::Platform
 
 namespace Abomination::Gameplay
 {
-    struct Effects;
-    struct LandingDip;
-    struct ViewModel;
-    struct ViewRecoil;
-    struct Weapon;
-}
-
-namespace Abomination::Physics
-{
-    struct CharacterBody;
-    struct MovementSettings;
-    struct PhysicsSettings;
+    struct GameplayState;
 }
 
 namespace Abomination::Renderer
@@ -80,19 +69,11 @@ namespace Abomination::UI
         const World::CameraCast& cameraCast;
         std::size_t collisionBrushCount;
         Core::LogHistory& logHistory;
-        Physics::PhysicsSettings& physicsSettings;
-        Physics::MovementSettings& movementSettings;
-        const Physics::CharacterBody& playerBody;
         Audio::AudioEngine& audio;
-        Gameplay::ViewModel& viewModel;
-        Gameplay::LandingDip& landingDip;
-        Gameplay::Weapon& weapon;
-        Gameplay::ViewRecoil& viewRecoil;
-        Gameplay::Effects& effects;
 
-        // The crosshair is drawn while the player is controlled, with the field of view of their camera (radians).
-        bool isPlayerControlled;
-        float playerVerticalFOV;
+        // The player and their tunable settings: the gameplay windows find the components of the player in the registry
+        // (its movement, weapon, view model, recoil), the crosshair is drawn while the player is controlled.
+        Gameplay::GameplayState& gameplay;
     };
 
     // Developer overlay drawn with Dear ImGui on top of the game: a menu bar with debug windows and settings.
@@ -126,9 +107,12 @@ namespace Abomination::UI
         DebugOverlay(ImGuiLibrary library, Platform::ImGuiPlatformBackend platformBackend,
                      Renderer::ImGuiRendererBackend rendererBackend, std::string GPUName) noexcept;
 
-        // The bar along the top edge of the game window: the View menu opens and closes debug windows (each of them is
-        // in a file of its own: PerformanceWindow, AssetsWindow, ...), the Settings menu changes settings of the game.
+        // The bar along the top edge of the game window: the Display menu, then one item per debug window that opens and
+        // closes it (each window is in a file of its own: PerformanceWindow, AssetsWindow, ...).
         void DrawMainMenuBar(const DebugOverlayContext& context);
+
+        // The Display menu of the menu bar: screen mode, V-Sync, FPS limit and UI scale.
+        void DrawDisplayMenu(const DebugOverlayContext& context);
 
         // Members are destroyed in reverse order of declaration: both backends first, then the ImGui context they use.
         ImGuiLibrary m_library;
@@ -149,7 +133,6 @@ namespace Abomination::UI
         bool m_isCollisionWindowOpen = false;
         bool m_isMovementWindowOpen = false;
         bool m_isAudioWindowOpen = false;
-        bool m_isViewModelWindowOpen = false;
         bool m_isWeaponWindowOpen = false;
         bool m_isEffectsWindowOpen = false;
 
@@ -158,7 +141,7 @@ namespace Abomination::UI
         ConsoleWindow m_consoleWindow;
         CrosshairOverlay m_crosshair;
 
-        // The UI scale chosen in Settings > Display > UI scale, and the full scale (with the display scale of Windows) the
+        // The UI scale chosen in Display > UI scale, and the full scale (with the display scale of Windows) the
         // style was last built for; 0 until the first frame. Not saved between runs yet: settings files come with the
         // Config module (0.8).
         float m_userUIScale = 1.0f;

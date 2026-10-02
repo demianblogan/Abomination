@@ -68,6 +68,116 @@ namespace Abomination::Gameplay
 
             return closest;
         }
+
+        // What the pellets of one shot did.
+        struct ShotResult
+        {
+            bool hasHurt = false;
+            bool hasKilled = false;
+        };
+
+        // Sends one pellet from start along direction: to the closest of the wall behind it and the characters in front
+        // of that wall. It damages and pushes what it hits, throws the effects of the hit, and is recorded for the debug
+        // lines.
+        void FirePellet(GameplayState& state, entt::registry& registry, Weapon& weapon, const glm::dvec3& start,
+                        const glm::vec3& direction, std::span<const World::CollisionBrush> brushes, ShotResult& result)
+        {
+            // A pellet is a ray: a box of size 0 traced through the brushes. How far it flies before a wall stops it:
+            const double range = static_cast<double>(weapon.settings.range);
+            const glm::dvec3 end = start + glm::dvec3(direction) * range;
+            const World::TraceResult trace = World::TraceBox(brushes, start, end, glm::dvec3(0.0));
+            const double wallDistance = trace.fraction * range;
+
+            // The closest entity with health in front of that wall: its box is where the ray enters it.
+            const HitEntity hit = FindHitEntity(registry, state.player, start, glm::dvec3(direction), wallDistance);
+            if (hit.entity == entt::null)
+            {
+                const bool hasHitWall = trace.fraction < 1.0;
+                weapon.lastShotPellets.push_back(PelletTrace{.end = glm::vec3(trace.endPosition), .hasHit = hasHitWall});
+
+                // Sparks, dust and a mark where the pellet hit the wall.
+                if (hasHitWall)
+                    SpawnWallImpact(state.effects, glm::vec3(trace.endPosition), glm::vec3(trace.hitNormal));
+                return;
+            }
+
+            const glm::vec3 hitPoint(start + glm::dvec3(direction) * hit.distance);
+            weapon.lastShotPellets.push_back(PelletTrace{.end = hitPoint, .hasHit = true, .hasHitEntity = true});
+            SpawnBloodImpact(state.effects, hitPoint, direction);
+
+            // The damage, and the push along the pellet, if the entity can move.
+            result.hasHurt = true;
+            if (ApplyDamage(registry.get<Health>(hit.entity), weapon.settings.damagePerPellet))
+            {
+                result.hasKilled = true;
+                DestroyTargetDummy(registry, hit.entity);
+            }
+            else if (Physics::CharacterBody* body = registry.try_get<Physics::CharacterBody>(hit.entity); body != nullptr)
+            {
+                body->velocity += direction * weapon.settings.knockbackPerPellet;
+            }
+        }
+
+        // Sends every pellet of a shot from the eyes, spread in the cone of the weapon.
+        ShotResult FirePellets(GameplayState& state, entt::registry& registry, Weapon& weapon, const Core::Transform& eyes,
+                               std::span<const World::CollisionBrush> brushes)
+        {
+            const glm::vec3 forward = eyes.rotation * Core::LocalForward;
+            const glm::vec3 up = eyes.rotation * Core::WorldUp;
+            const std::vector<glm::vec3> directions =
+                GeneratePelletDirections(forward, up, weapon.settings.spreadAngle, weapon.settings.pelletCount, weapon.random);
+
+            weapon.lastShotStart = eyes.position;
+            weapon.lastShotPellets.clear();
+            weapon.secondsSinceLastShot = 0.0f;
+
+            ShotResult result;
+            for (const glm::vec3& direction : directions)
+                FirePellet(state, registry, weapon, glm::dvec3(eyes.position), direction, brushes, result);
+
+            return result;
+        }
+
+        // What the player hears, sees and feels of a shot: its sound and the confirmation of a hit or a kill, the recoil
+        // of the view and of the weapon in the hands, the muzzle flash and the smoke.
+        void PlayShotFeedback(GameplayState& state, entt::registry& registry, Weapon& weapon, Audio::AudioEngine& audio,
+                              const Core::Transform& eyes, const ShotResult& result)
+        {
+            audio.Play(weapon.fireSound);
+            ++weapon.shotCount;
+
+            // One confirmation per shot, however many pellets hit: a kill sounds different from a hit.
+            if (result.hasKilled)
+            {
+                ++weapon.killCount;
+                audio.Play(weapon.killSound);
+            }
+            else if (result.hasHurt)
+            {
+                ++weapon.hitCount;
+                audio.Play(weapon.hitSound);
+            }
+
+            // The recoil: the view and the weapon in the hands jerk, and their springs bring them back.
+            if (ViewRecoil* viewRecoil = registry.try_get<ViewRecoil>(state.player); viewRecoil != nullptr)
+                KickViewRecoil(*viewRecoil);
+
+            ViewModel* viewModel = registry.try_get<ViewModel>(state.player);
+            if (viewModel == nullptr)
+                return;
+
+            KickViewModelRecoil(viewModel->motion, viewModel->motionSettings);
+
+            // The flash at the muzzle of the weapon in the hands, turned differently every shot.
+            viewModel->flashTimeLeft = state.effects.settings.flashDuration;
+            viewModel->flashRotation = state.effects.random.GetFloat(0.0f, 2.0f * std::numbers::pi_v<float>);
+
+            // The smoke goes into the world, from where the muzzle is seen: the muzzle relative to the eyes, placed by the
+            // eyes. (The weapon is drawn with its own field of view, so this is close to, not exactly, where the muzzle
+            // appears on the screen; for drifting smoke that does not show.)
+            const glm::vec3 muzzle = eyes.position + eyes.rotation * CalculateViewModelMuzzle(*viewModel);
+            SpawnMuzzleSmoke(state.effects, muzzle, eyes.rotation * Core::LocalForward);
+        }
     }
 
     void CollectWeaponInput(GameplayState& state, entt::registry& registry, const Input::ActionStates& actions,
@@ -102,89 +212,9 @@ namespace Abomination::Gameplay
         // The eyes as they are in this tick (not interpolated: the simulation shoots from where the player really is).
         const Core::Transform eyes = CalculatePlayerEyeTransform(registry.get<Core::Transform>(state.player),
                                                                  registry.get<LookAngles>(state.player));
-        const glm::vec3 forward = eyes.rotation * Core::LocalForward;
-        const glm::vec3 up = eyes.rotation * Core::WorldUp;
 
-        const std::vector<glm::vec3> directions = GeneratePelletDirections(
-            forward, up, weapon->settings.spreadAngle, weapon->settings.pelletCount, weapon->random);
-
-        weapon->lastShotStart = eyes.position;
-        weapon->lastShotPellets.clear();
-        weapon->secondsSinceLastShot = 0.0f;
-
-        bool hasHurt = false;
-        bool hasKilled = false;
-        for (const glm::vec3& direction : directions)
-        {
-            // A pellet is a ray: a box of size 0 traced through the brushes. How far it flies before a wall stops it:
-            const glm::dvec3 start(eyes.position);
-            const double range = static_cast<double>(weapon->settings.range);
-            const glm::dvec3 end = start + glm::dvec3(direction) * range;
-            const World::TraceResult trace = World::TraceBox(brushes, start, end, glm::dvec3(0.0));
-            const double wallDistance = trace.fraction * range;
-
-            // The closest entity with health in front of that wall: its box is where the ray enters it.
-            const HitEntity hit = FindHitEntity(registry, state.player, start, glm::dvec3(direction), wallDistance);
-            if (hit.entity == entt::null)
-            {
-                const bool hasHitWall = trace.fraction < 1.0;
-                weapon->lastShotPellets.push_back(PelletTrace{.end = glm::vec3(trace.endPosition), .hasHit = hasHitWall});
-
-                // Sparks, dust and a mark where the pellet hit the wall.
-                if (hasHitWall)
-                    SpawnWallImpact(state.effects, glm::vec3(trace.endPosition), glm::vec3(trace.hitNormal));
-                continue;
-            }
-
-            const glm::vec3 hitPoint(start + glm::dvec3(direction) * hit.distance);
-            weapon->lastShotPellets.push_back(PelletTrace{.end = hitPoint, .hasHit = true, .hasHitEntity = true});
-            SpawnBloodImpact(state.effects, hitPoint, direction);
-
-            // The damage, and the push along the pellet, if the entity can move.
-            hasHurt = true;
-            if (ApplyDamage(registry.get<Health>(hit.entity), weapon->settings.damagePerPellet))
-            {
-                hasKilled = true;
-                DestroyTargetDummy(registry, hit.entity);
-            }
-            else if (Physics::CharacterBody* body = registry.try_get<Physics::CharacterBody>(hit.entity); body != nullptr)
-            {
-                body->velocity += direction * weapon->settings.knockbackPerPellet;
-            }
-        }
-
-        audio.Play(weapon->fireSound);
-        ++weapon->shotCount;
-
-        // One confirmation per shot, however many pellets hit: a kill sounds different from a hit.
-        if (hasKilled)
-        {
-            ++weapon->killCount;
-            audio.Play(weapon->killSound);
-        }
-        else if (hasHurt)
-        {
-            ++weapon->hitCount;
-            audio.Play(weapon->hitSound);
-        }
-
-        // The recoil: the view and the weapon in the hands jerk, and their springs bring them back.
-        if (ViewRecoil* viewRecoil = registry.try_get<ViewRecoil>(state.player); viewRecoil != nullptr)
-            KickViewRecoil(*viewRecoil);
-        if (ViewModel* viewModel = registry.try_get<ViewModel>(state.player); viewModel != nullptr)
-        {
-            KickViewModelRecoil(viewModel->motion, viewModel->motionSettings);
-
-            // The flash at the muzzle of the weapon in the hands, turned differently every shot.
-            viewModel->flashTimeLeft = state.effects.settings.flashDuration;
-            viewModel->flashRotation = state.effects.random.GetFloat(0.0f, 2.0f * std::numbers::pi_v<float>);
-
-            // The smoke goes into the world, from where the muzzle is seen: the muzzle relative to the eyes, placed by
-            // the eyes. (The weapon is drawn with its own field of view, so this is close to, not exactly, where the
-            // muzzle appears on the screen; for drifting smoke that does not show.)
-            const glm::vec3 muzzle = eyes.position + eyes.rotation * CalculateViewModelMuzzle(*viewModel);
-            SpawnMuzzleSmoke(state.effects, muzzle, forward);
-        }
+        const ShotResult result = FirePellets(state, registry, *weapon, eyes, brushes);
+        PlayShotFeedback(state, registry, *weapon, audio, eyes, result);
 
         return true;
     }

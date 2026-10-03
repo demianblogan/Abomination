@@ -1070,4 +1070,44 @@ public static class TextureGen
             sheet.Save(previewPath, ImageFormat.Png);
         }
     }
+
+    // ---------- the opening behind the shotgun bolt ----------
+    // The bolt of the shotgun model slides back with the pump (see Renderer::ModelPartSplit) and uncovers this: a 16 x 16
+    // texture of the dark inside of the receiver, almost black, with the dim brass glint of the chamber at its bottom.
+    static Bitmap OpeningTexture(int seed)
+    {
+        double[] black = Hex("#0A0908"), soot = Hex("#1E1C18"), brass = Hex("#5A4016");
+        Bitmap bmp = new Bitmap(16, 16, PixelFormat.Format32bppArgb);
+        for (int y = 0; y < 16; y++)
+            for (int x = 0; x < 16; x++)
+            {
+                double rough = Fbm(x * 4, y * 4, 8, 8, 2, seed);
+                double[] c = Mix(black, soot, rough);
+
+                // The chamber: a dim glint along the bottom rows (the image is stored top row first).
+                if (y >= 12)
+                    c = Mix(c, brass, 0.25 + (y - 12) * 0.08 + (rough - 0.5) * 0.2);
+                bmp.SetPixel(x, y, ToColor(c));
+            }
+        return bmp;
+    }
+
+    // Writes the texture of the opening into weaponsDirectory, and a preview of it, enlarged, into previewPath.
+    public static void RunBoltOpening(string weaponsDirectory, string previewPath)
+    {
+        Directory.CreateDirectory(weaponsDirectory);
+        Bitmap opening = OpeningTexture(509);
+        opening.Save(Path.Combine(weaponsDirectory, "ShotgunOpening.png"), ImageFormat.Png);
+
+        using (Bitmap sheet = new Bitmap(16 * 10 + 16, 16 * 10 + 16, PixelFormat.Format32bppArgb))
+        using (Graphics g = Graphics.FromImage(sheet))
+        {
+            g.Clear(ToColor(Silt));
+            g.InterpolationMode = InterpolationMode.NearestNeighbor;
+            g.PixelOffsetMode = PixelOffsetMode.Half;
+            g.DrawImage(opening, 8, 8, 16 * 10, 16 * 10);
+            Directory.CreateDirectory(Path.GetDirectoryName(previewPath));
+            sheet.Save(previewPath, ImageFormat.Png);
+        }
+    }
 }

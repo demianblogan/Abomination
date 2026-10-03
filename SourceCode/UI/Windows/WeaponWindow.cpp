@@ -1,5 +1,6 @@
 #include "UI/Windows/WeaponWindow.h"
 
+#include "Gameplay/Weapons/Shells.h"
 #include "Gameplay/Weapons/ViewRecoil.h"
 #include "Gameplay/Weapons/Weapon.h"
 #include "Gameplay/Weapons/WeaponViewModel.h"
@@ -234,8 +235,64 @@ namespace Abomination::UI
         }
     }
 
+    namespace
+    {
+        void DrawShellsTab(Gameplay::Shells& shells, entt::registry& registry)
+        {
+            Gameplay::ShellSettings& settings = shells.settings;
+            ImGui::Text("Shells in the level: %zu", shells.shells.size());
+
+            ImGui::SeparatorText("Throw");
+            DrawSlider("To the side", settings.sideSpeed, 0.0f, 6.0f, "%.2f m/s",
+                       "How fast the shell flies out to the right side of the weapon.");
+            DrawSlider("Up", settings.upSpeed, -2.0f, 4.0f, "%.2f m/s", "How fast it flies up (of the weapon).");
+            DrawSlider("Back", settings.backSpeed, -2.0f, 3.0f, "%.2f m/s", "How fast it flies back, towards the stock.");
+            DrawSlider("Speed variation", settings.speedVariation, 0.0f, 0.6f, "%.2f",
+                       "How much every throw changes the speed (0.2: by up to 20%).");
+            DrawDegreeSlider("Spin", settings.spinSpeed, 0.0f, 3000.0f, "%.0f deg/s", "How fast it turns end over end.");
+            DrawCentimeterSlider("Window right", settings.windowOffset.x, -5.0f, 5.0f,
+                                 "Moves the place it comes out of along the weapon's right.");
+            DrawCentimeterSlider("Window up", settings.windowOffset.y, -5.0f, 5.0f,
+                                 "Moves the place it comes out of along the weapon's up.");
+            DrawCentimeterSlider("Window back", settings.windowOffset.z, -20.0f, 20.0f,
+                                 "Moves the place it comes out of along the barrel, towards the stock.");
+
+            ImGui::SeparatorText("Bounces");
+            DrawSlider("Bounce", settings.bounce, 0.0f, 1.0f, "%.2f",
+                       "The part of the speed into a surface it jumps back with.");
+            DrawSlider("Slide", settings.slide, 0.0f, 1.0f, "%.2f",
+                       "The part of the speed along a surface it keeps after a bounce.");
+            DrawSlider("Rest speed", settings.restSpeed, 0.05f, 2.0f, "%.2f m/s", "Slower than this on a floor it lies down.");
+            DrawIntSlider("Maximum count", settings.maximumCount, 1, 100,
+                          "How many shells lie in the level; a new one replaces the oldest.");
+            DrawSlider("Sound from", settings.soundSpeed, 0.0f, 3.0f, "%.2f m/s",
+                       "A bounce is heard when the shell hits a surface faster than this.");
+            DrawSlider("Full volume at", settings.fullVolumeSpeed, 0.5f, 8.0f, "%.2f m/s");
+            DrawSlider("Sound fade-out", settings.soundFadeOut, 0.0f, 1.0f, "%.2f s",
+                       "How long the ringing of the last bounce fades out once the shell lies still.");
+
+            ImGui::SeparatorText("Smoke");
+            DrawIntSlider("Window puffs", settings.windowSmokeCount, 0, 10, "Puffs of smoke out of the window.");
+            DrawSlider("Window lifetime", settings.windowSmokeLifetime, 0.1f, 2.0f, "%.2f s");
+            DrawCentimeterSlider("Window size", settings.windowSmokeHalfSize, 0.5f, 20.0f, "Half the size of a puff.");
+            DrawSlider("Trail duration", settings.trailDuration, 0.0f, 2.0f, "%.2f s",
+                       "How long the shell trails smoke after the throw.");
+            DrawSlider("Trail interval", settings.trailInterval, 0.005f, 0.2f, "%.3f s",
+                       "Time between two puffs of the trail.");
+            DrawSlider("Trail lifetime", settings.trailLifetime, 0.1f, 2.0f, "%.2f s");
+            DrawCentimeterSlider("Trail size", settings.trailHalfSize, 0.2f, 10.0f, "Half the size of a puff of the trail.");
+
+            ImGui::Separator();
+            if (ImGui::Button("Reset"))
+                settings = Gameplay::ShellSettings{};
+            ImGui::SameLine();
+            if (ImGui::Button("Remove shells"))
+                Gameplay::ClearShells(shells, registry);
+        }
+    }
+
     void DrawWeaponWindow(bool* isOpen, Gameplay::Weapon& weapon, Gameplay::ViewRecoil& viewRecoil,
-                          Gameplay::WeaponViewModel& weaponViewModel)
+                          Gameplay::WeaponViewModel& weaponViewModel, Gameplay::Shells& shells, entt::registry& registry)
     {
         ImGui::SetNextWindowPos(ScaleToUI(InitialPosition), ImGuiCond_FirstUseEver);
         if (!ImGui::Begin("Weapon", isOpen))
@@ -268,6 +325,12 @@ namespace Abomination::UI
             if (ImGui::BeginTabItem("In hands"))
             {
                 DrawInHandsTab(weaponViewModel);
+                ImGui::EndTabItem();
+            }
+
+            if (ImGui::BeginTabItem("Shells"))
+            {
+                DrawShellsTab(shells, registry);
                 ImGui::EndTabItem();
             }
 

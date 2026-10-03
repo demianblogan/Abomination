@@ -53,6 +53,7 @@ set(TEST_SOURCES
 
     Renderer/Assets/GLTFLoaderTests.cpp
     Renderer/Assets/MeshPrimitivesTests.cpp
+    Renderer/Assets/ModelPartSplitTests.cpp
     Renderer/Camera/ViewTests.cpp
     Renderer/Debug/DebugLinesTests.cpp
     Renderer/OpenGL/GLTextureTests.cpp

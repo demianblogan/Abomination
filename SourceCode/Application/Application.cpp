@@ -12,6 +12,7 @@
 #include "Gameplay/Player/DamageReaction.h"
 #include "Gameplay/Player/PlayerSystem.h"
 #include "Gameplay/Spin.h"
+#include "Gameplay/Weapons/Shells.h"
 #include "Gameplay/Weapons/WeaponSystem.h"
 #include "Gameplay/Weapons/WeaponViewModel.h"
 #include "Platform/SystemServices.h"
@@ -120,7 +121,9 @@ namespace Abomination
         m_window.SetRmlUiBackend(m_gameUI.GetPlatformBackend());
 
         // Entities are created here, not in Create(): the registry is a member, and the handles the components get from
-        // m_renderAssets stay valid because they are numbers, not pointers.
+        // m_renderAssets stay valid because they are numbers, not pointers. The level may show gameplay models (the shotgun
+        // lying on the floor), so the store learns how they are split first.
+        Gameplay::PrepareGameplayModels(m_renderAssets);
         m_level = World::Level::Create(m_registry, m_renderAssets, map, StartMapPath);
 
         // The player appears where the map puts them. The free-fly camera waits at their eyes; F2 switches to it.
@@ -161,6 +164,12 @@ namespace Abomination
             // What only moves the picture (the weapon in the hands, the view, the particles) moves every frame, after the
             // ticks of this frame, so it is as smooth as the view.
             Gameplay::UpdateViewEffects(m_gameplay, m_registry, m_audio, frameTimer.GetDeltaTime());
+
+            // The shells fly out of the weapon as it is seen: from the eyes between the last two ticks.
+            const Core::Transform eyes =
+                Gameplay::CalculateViewTransform(m_gameplay, m_registry, m_fixedTimestep.GetInterpolationFactor());
+            Gameplay::UpdateShells(m_gameplay, m_registry, eyes, m_level.GetCollisionBrushes(), m_audio,
+                                   frameTimer.GetDeltaTime());
             Gameplay::UpdateDamageReaction(m_gameplay, m_registry, m_audio, frameTimer.GetDeltaTime());
 
             frameStatistics.AddFrame(frameTimer.GetDeltaTime(), tickCount);
@@ -273,6 +282,7 @@ namespace Abomination
         Gameplay::DestroyTargetDummies(m_registry, m_gameplay.targetDummies);
         m_level.Unload(m_registry, m_renderAssets);
         Gameplay::ClearEffects(m_gameplay.effects);
+        Gameplay::ClearShells(m_gameplay.shells, m_registry);
         m_level = World::Level::Create(m_registry, m_renderAssets, *map, StartMapPath);
         m_gameplay.targetDummies = Gameplay::SpawnTargetDummies(m_registry, m_renderAssets, m_level.GetTargetDummyStarts());
     }

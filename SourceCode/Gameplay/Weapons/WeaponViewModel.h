@@ -52,6 +52,9 @@ namespace Abomination::Gameplay
         // Where the muzzle is in the model (meters): the flash appears there.
         glm::vec3 muzzle{0.0f};
 
+        // Where the window that spent shells fly out of is in the model (meters), roughly: see FindShellWindow.
+        glm::vec3 shellWindow{0.0f};
+
         // The pump that moves back and forth after every shot (see PumpAction.h).
         PumpAction pump;
 

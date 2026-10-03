@@ -110,6 +110,8 @@ set(LIBRARY_SOURCES
     Gameplay/Weapons/Crosshair.cpp
     Gameplay/Weapons/PumpAction.h
     Gameplay/Weapons/PumpAction.cpp
+    Gameplay/Weapons/Shells.h
+    Gameplay/Weapons/Shells.cpp
     Gameplay/Weapons/ViewRecoil.h
     Gameplay/Weapons/ViewRecoil.cpp
     Gameplay/Weapons/Weapon.h
@@ -173,6 +175,8 @@ set(LIBRARY_SOURCES
     Renderer/Assets/MeshStore.h
     Renderer/Assets/MeshStore.cpp
     Renderer/Assets/ModelData.h
+    Renderer/Assets/ModelPartSplit.h
+    Renderer/Assets/ModelPartSplit.cpp
     Renderer/Assets/ModelStore.h
     Renderer/Assets/ModelStore.cpp
     Renderer/Assets/RenderAssets.h

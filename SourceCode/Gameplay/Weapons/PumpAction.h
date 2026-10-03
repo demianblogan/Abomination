@@ -70,6 +70,9 @@ namespace Abomination::Gameplay
         float turn = 0.0f;
         float lift = 0.0f;
         float tilt = 0.0f;
+
+        // The pump has just reached the back: the spent shell is to be thrown out (see UpdateShells, which clears it).
+        bool isShellEjectRequested = false;
     };
 
     // How far through its movement the pump is secondsSinceShot after a shot: 0 at rest, 1 at the back. It goes back with

@@ -5,6 +5,7 @@
 #include "Gameplay/Characters/DamageKind.h"
 #include "Gameplay/Effects/Effects.h"
 #include "Gameplay/Player/PlayerController.h"
+#include "Gameplay/Weapons/Shells.h"
 #include "Physics/CharacterMovement.h"
 
 #include <entt/entt.hpp>
@@ -85,7 +86,14 @@ namespace Abomination::Gameplay
 
         // The visual effects of shots (see Effects.h).
         Effects effects;
+
+        // The spent shells thrown out by the pump (see Shells.h).
+        Shells shells;
     };
+
+    // Tells the model store how the gameplay needs its models split (the bolt of the shotgun is taken out of its body, see
+    // ModelPartSplit). Called before anything loads them: the level may show the shotgun before the player gets it.
+    void PrepareGameplayModels(Renderer::RenderAssets& renderAssets);
 
     // Creates the player at the player start of the level and the free-fly camera waiting at their eyes, looking the
     // same way, loads the sounds of the player and gives them the shotgun in their hands (see WeaponViewModel). The player is

@@ -90,6 +90,10 @@ namespace Abomination::Audio
         // Stops the sound if the voice still plays it.
         void Stop(VoiceId voice);
 
+        // Fades the sound out over seconds and stops it, if the voice still plays it: softer than Stop(), which cuts it off
+        // with a click.
+        void FadeOut(VoiceId voice, float seconds);
+
         void StopAll();
 
         // Where the ears are: position and the direction the listener looks (not necessarily normalized), game axes

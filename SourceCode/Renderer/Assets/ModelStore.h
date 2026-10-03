@@ -4,6 +4,7 @@
 #include "Core/Assets/AssetHandle.h"
 #include "Core/Assets/AssetLifetime.h"
 #include "Renderer/Assets/MeshStore.h"
+#include "Renderer/Assets/ModelPartSplit.h"
 #include "Renderer/Assets/TextureStore.h"
 
 #include <glm/mat4x4.hpp>
@@ -11,6 +12,7 @@
 #include <cstddef>
 #include <filesystem>
 #include <string>
+#include <unordered_map>
 #include <unordered_set>
 #include <vector>
 
@@ -23,6 +25,11 @@ namespace Abomination::Renderer
         MeshHandle mesh;
         TextureHandle texture;
         glm::mat4 transform{1.0f};
+
+        // The box around the part in the model (meters, in the coordinates of the centered model, see Model::size): its
+        // middle and its size. To find a place on the model by a part, like the window of a shotgun that shells fly out of.
+        glm::vec3 center{0.0f};
+        glm::vec3 size{0.0f};
     };
 
     // A model ready to be drawn: its parts. The meshes and textures themselves live in the mesh and texture stores, named
@@ -60,9 +67,13 @@ namespace Abomination::Renderer
 
         // Returns the model loaded from path, loading it on the first call: its meshes go to meshes and its textures to
         // textures, with the same lifetime. path is relative to the assets directory and uses forward slashes:
-        // "Models/Weapons/Shotgun.glb".
+        // "Models/Weapons/Shotgun.glb". The splits set for the path (see SetPartSplits) are made before the meshes are.
         [[nodiscard]] ModelHandle Load(const std::string& path, Core::AssetLifetime lifetime, MeshStore& meshes,
                                        TextureStore& textures);
+
+        // Sets the pieces to take out of parts of the model at path into parts of their own (see ModelPartSplit), whoever
+        // loads it. Must be called before the model is loaded: a loaded model keeps its parts.
+        void SetPartSplits(const std::string& path, std::vector<ModelPartSplit> splits);
 
         // Removes every model of the lifetime group; their handles become invalid. Their meshes and textures are removed
         // by their own stores (see RenderAssets::RemoveAll).
@@ -86,6 +97,9 @@ namespace Abomination::Renderer
 
         // Paths whose file could not be loaded and which hold the fallback model instead.
         std::unordered_set<std::string> m_fallbackPaths;
+
+        // The pieces to take out of the parts of a model when it is loaded, by path (see SetPartSplits).
+        std::unordered_map<std::string, std::vector<ModelPartSplit>> m_partSplits;
 
         // Returned by Get() for invalid handles: one part with invalid handles.
         Model m_fallbackModel{.parts = {ModelPart{.name = "Fallback"}}};

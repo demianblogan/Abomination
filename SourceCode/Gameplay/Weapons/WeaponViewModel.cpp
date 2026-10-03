@@ -72,6 +72,11 @@ namespace Abomination::Gameplay
             if (previous < soundStart && pump.secondsSinceShot >= soundStart)
                 audio.Play(weapon->pumpSound);
 
+            // At the back the spent shell flies out of the window.
+            const float backTime = CalculatePumpStartTime(settings) + settings.backDuration;
+            if (previous < backTime && pump.secondsSinceShot >= backTime)
+                pump.isShellEjectRequested = true;
+
             // To the chest means towards the middle of the body: to the left (positive angles) for a weapon held on the right
             // or in the middle, to the right for one held on the left.
             const float towardsBody = weaponViewModel->side == WeaponViewModelSide::Left ? -1.0f : 1.0f;

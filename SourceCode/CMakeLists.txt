@@ -76,6 +76,8 @@ set(LIBRARY_SOURCES
     Gameplay/GameplayState.cpp
     Gameplay/Spin.h
     Gameplay/Spin.cpp
+    Gameplay/Animation/Animator.h
+    Gameplay/Animation/Animator.cpp
     Gameplay/Camera/FreeFlyCameraController.h
     Gameplay/Camera/FreeFlyCameraController.cpp
     Gameplay/Camera/FreeFlyCameraSystem.h
@@ -168,6 +170,8 @@ set(LIBRARY_SOURCES
     Renderer/Sprites/SpriteBatch.cpp
     Renderer/Sprites/SpriteRenderer.h
     Renderer/Sprites/SpriteRenderer.cpp
+    Renderer/Animation/AnimationSampling.h
+    Renderer/Animation/AnimationSampling.cpp
     Renderer/Animation/SkeletonPose.h
     Renderer/Animation/SkeletonPose.cpp
     Renderer/Assets/GLTFLoader.h

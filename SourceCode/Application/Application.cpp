@@ -6,6 +6,7 @@
 #include "Core/Scene/TransformInterpolation.h"
 #include "Core/Time/FrameStatistics.h"
 #include "Core/Time/FrameTimer.h"
+#include "Gameplay/Animation/Animator.h"
 #include "Gameplay/Camera/FreeFlyCameraSystem.h"
 #include "Gameplay/Camera/ViewSystem.h"
 #include "Gameplay/Characters/TargetDummy.h"
@@ -164,6 +165,9 @@ namespace Abomination
             // What only moves the picture (the weapon in the hands, the view, the particles) moves every frame, after the
             // ticks of this frame, so it is as smooth as the view.
             Gameplay::UpdateViewEffects(m_gameplay, m_registry, m_audio, frameTimer.GetDeltaTime());
+
+            // Animated models move every frame too: their poses are only for the eyes.
+            Gameplay::UpdateAnimators(m_registry, m_renderAssets.models, frameTimer.GetDeltaTime());
 
             // The shells fly out of the weapon as it is seen: from the eyes between the last two ticks.
             const Core::Transform eyes =

@@ -112,8 +112,8 @@ shot is heard and leaves a flash, particles and marks on the walls.
 them and strikes; it takes damage, feels pain and dies. The player has health
 shown in a HUD and can die too, then the level restarts.
 
-The enemy is the Straw Reaper by imaginais, a low-poly scarecrow with a scythe in the
-style of PS1 horror, with its own animations (idle, walk, run, strike, pain, death).
+The enemy is a fat rotting dog: its body and texture made with Tripo, its skeleton and
+animations (idle, walk, gallop, attack, pain, death) taken from a CC0 husky of Quaternius.
 The navmesh comes last: until then the enemy runs straight at the player and
 slides along walls with the same movement code as the player, like the
 monsters of Quake; if time runs out, the navmesh moves to 0.5.
@@ -123,7 +123,7 @@ monsters of Quake; if time runs out, the navmesh moves to 0.5.
 | 1 | `feat/game-ui`                 | ✅     | The game interface on RmlUi (documents in RML/RCSS, controls, font effects such as outlines): SDL3 and OpenGL backends; fonts Oswald for the HUD and texts and Cormorant SC for titles, with every letter of the 5 languages (checked by a test) |
 | 2 | `feat/hud`                      | ✅     | Health, armor (takes two thirds of a blow) and ammunition of the player (four kinds, 100 shells at the start, an empty click without them); HUD icons, vignettes and the damage arc in the style of Quake from the texture generator; sound events kept by the engine with a volume per event and per group (Effects, Voice, Music), tuned in the Audio window; the player feels damage and healing: the voice of the author (jump, hurt, death, relief), the sound of the blow, a punch of the view, a muffle of the world, a heartbeat at low health; the HUD on RmlUi with the crosshair, a red vignette, a shake and an arc towards the blow, a green vignette when healed, a pulse with the heart, a blinking empty ammunition; Player window |
 | 3 | `feat/pump-action`              | ✅     | After every shot the shotgun is brought to the chest and its pump slides back and forth with a click (moved by code); the bolt, taken out of the body of the model, uncovers the window, and a smoking shell flies out, bounces off the level and stays on the floor (the 20 newest) with the sound of its fall |
-| 4 | `feat/skeletal-animation`       | ⏳     | Skins, joints and animation clips from glTF; skinning in the vertex shader; smooth blending between clips; the Straw Reaper standing in the test room, its clips chosen in an Animation window |
+| 4 | `feat/skeletal-animation`       | ⏳     | Skins, joints and animation clips from glTF; skinning in the vertex shader; smooth blending between clips; an animated model standing in the test room, its clips chosen in an Animation window |
 | 5 | `feat/first-person-hands`       | ⏳     | Hands holding the shotgun (WRAD ARMS, the texture made dirtier in the style of Quake): the right hand on the grip, the left one on the pump, following it with a two-bone IK |
 | 6 | `feat/enemy`                    | ⏳     | The first enemy, a melee monster: states (idle, alert, chase, attack, pain, death), sight (a trace to the player) and hearing (shots), a strike that hurts the player; the target dummies of 0.3 removed; the log level chosen in the running game |
 | 7 | `feat/death`                    | ⏳     | The enemy dies with an animation and its body stays; the player dies: a death sound, the view drops to the floor and fades to black, "Game Over" and "Press any key to try again"; any key or mouse button restarts the level |

@@ -13,6 +13,7 @@
 #include <glad/gl.h>
 #include <glm/ext/matrix_clip_space.hpp>
 #include <glm/ext/matrix_transform.hpp>
+#include <glm/geometric.hpp>
 
 #include <span>
 #include <vector>
@@ -121,7 +122,19 @@ namespace Abomination::Renderer
             {
                 glm::mat4 partMatrix = part.transform;
                 if (part.parentJoint.has_value() && *part.parentJoint < jointMatrices.size())
-                    partMatrix = model.skeletonTransform * jointMatrices[*part.parentJoint] * part.transform;
+                {
+                    // The adjustment is in meters, but the joint's space may be scaled (a model made in other units, by 1/10000):
+                    // it is scaled into that space first, so a centimeter stays a centimeter.
+                    const glm::mat4& joint = jointMatrices[*part.parentJoint];
+                    glm::mat4 adjustment(1.0f);
+                    if (pose != nullptr && pose->heldPartAdjustment != glm::mat4(1.0f))
+                    {
+                        const float scale = glm::length(glm::vec3(joint[0]));
+                        adjustment = glm::scale(glm::mat4(1.0f), glm::vec3(1.0f / scale)) * pose->heldPartAdjustment *
+                                     glm::scale(glm::mat4(1.0f), glm::vec3(scale));
+                    }
+                    partMatrix = model.skeletonTransform * joint * adjustment * part.transform;
+                }
 
                 for (const ModelPartOffset& partOffset : partOffsets)
                     if (partOffset.partName == part.name)

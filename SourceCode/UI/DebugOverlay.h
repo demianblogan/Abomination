@@ -135,6 +135,7 @@ namespace Abomination::UI
         bool m_isAudioWindowOpen = false;
         bool m_isWeaponWindowOpen = false;
         bool m_isEffectsWindowOpen = false;
+        bool m_isAnimationWindowOpen = false;
 
         EntitiesWindow m_entitiesWindow;
         AudioWindow m_audioWindow;

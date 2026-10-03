@@ -228,6 +228,8 @@ set(LIBRARY_SOURCES
     UI/UIScale.cpp
     UI/Widgets.h
     UI/Widgets.cpp
+    UI/Windows/AnimationWindow.h
+    UI/Windows/AnimationWindow.cpp
     UI/Windows/AssetsWindow.h
     UI/Windows/AssetsWindow.cpp
     UI/Windows/AudioWindow.h

@@ -12,5 +12,9 @@ namespace Abomination::Renderer
     struct ModelPose
     {
         std::vector<glm::mat4> jointMatrices;
+
+        // Turns and moves every part held by a joint (the scythe in the hand) relative to that joint, in meters and the
+        // joint's own directions, whatever the scale of the model file: a fix for a part the artist placed a little off.
+        glm::mat4 heldPartAdjustment{1.0f};
     };
 }

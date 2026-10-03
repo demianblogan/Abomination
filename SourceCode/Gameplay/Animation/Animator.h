@@ -2,8 +2,10 @@
 
 #include "Renderer/Animation/SkeletonPose.h"
 #include "Renderer/Assets/ModelStore.h"
+#include "Renderer/Debug/DebugLines.h"
 
 #include <entt/entt.hpp>
+#include <glm/vec3.hpp>
 
 #include <cstddef>
 #include <optional>
@@ -13,8 +15,8 @@
 namespace Abomination::Gameplay
 {
     // A piece of animation the game plays by name ("Idle", "Walk"): a part of one clip of the model, from start to end
-    // (seconds). A model may come with one long clip holding all its animations one after another (the Straw Reaper
-    // does), so a segment names a part of it. end below 0 means the end of the clip.
+    // (seconds). A model may come with one long clip holding all its animations one after another,
+    // so a segment names a part of it. end below 0 means the end of the clip.
     struct AnimationSegment
     {
         std::string name;
@@ -54,6 +56,18 @@ namespace Abomination::Gameplay
 
         // How fast the animation plays: 1 as made, 0.5 at half the speed. 0 stops it.
         float speed = 1.0f;
+
+        // Debug: the bones are drawn as lines over everything (see AddAnimatorDebugLines).
+        bool isSkeletonVisible = false;
+
+        // Debug: the axes of the model are drawn at its middle: its right (+X, red), up (+Y, green) and the direction the
+        // game takes as its front (-Z, blue; see Core::LocalForward).
+        bool areAxesVisible = false;
+
+        // Debug: turns and moves the parts held by joints (see Renderer::ModelPose::heldPartAdjustment): meters along the
+        // joint's X, Y and Z, and angles around them (radians, applied X first, then Y, then Z).
+        glm::vec3 heldPartOffset{0.0f};
+        glm::vec3 heldPartAngles{0.0f};
     };
 
     // One looping segment for every clip of the model, named like the clip, from its start to its end.
@@ -76,4 +90,17 @@ namespace Abomination::Gameplay
 
     // Once per frame: advances every animator and sets the Renderer::ModelPose of its entity (the matrix of every joint).
     void UpdateAnimators(entt::registry& registry, const Renderer::ModelStore& models, float deltaTime);
+
+    // The segments the game knows for a model file. For now every clip of the model is one looping segment (see
+    // CreateClipSegments); models whose clips need cutting or tuning get their own list here.
+    [[nodiscard]] std::vector<AnimationSegment> FindModelSegments(const std::string& path, const Renderer::Model& model);
+
+    // Gives every model of the level that has animation clips (a misc_model of the map) an animator playing its "Idle"
+    // segment (or its first one). Called after the level is created.
+    void AnimateLevelModels(entt::registry& registry, const Renderer::ModelStore& models);
+
+    // The bones of every animator with isSkeletonVisible, as lines from each joint to its parent (white) and a short
+    // axis at every joint, over everything. interpolationFactor places moving entities like the render system does.
+    void AddAnimatorDebugLines(const entt::registry& registry, const Renderer::ModelStore& models, float interpolationFactor,
+                               Renderer::DebugLines& lines);
 }

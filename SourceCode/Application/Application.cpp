@@ -130,6 +130,7 @@ namespace Abomination
         // The player appears where the map puts them. The free-fly camera waits at their eyes; F2 switches to it.
         m_gameplay = Gameplay::CreateGameplayState(m_registry, m_level.GetPlayerStart(), m_audio, m_renderAssets);
         m_gameplay.targetDummies = Gameplay::SpawnTargetDummies(m_registry, m_renderAssets, m_level.GetTargetDummyStarts());
+        Gameplay::AnimateLevelModels(m_registry, m_renderAssets.models);
     }
 
     int Application::Run()
@@ -289,6 +290,7 @@ namespace Abomination
         Gameplay::ClearShells(m_gameplay.shells, m_registry);
         m_level = World::Level::Create(m_registry, m_renderAssets, *map, StartMapPath);
         m_gameplay.targetDummies = Gameplay::SpawnTargetDummies(m_registry, m_renderAssets, m_level.GetTargetDummyStarts());
+        Gameplay::AnimateLevelModels(m_registry, m_renderAssets.models);
     }
 
     void Application::Render(const Core::FrameStatistics& frameStatistics, float deltaTime)
@@ -386,6 +388,7 @@ namespace Abomination
         if (m_collisionSettings.areColliderBoundsVisible)
             Gameplay::AddCharacterDebugBoxes(m_gameplay, m_registry, interpolationFactor, m_debugLines);
         Gameplay::AddWeaponDebugLines(m_gameplay, m_registry, m_debugLines);
+        Gameplay::AddAnimatorDebugLines(m_registry, m_renderAssets.models, interpolationFactor, m_debugLines);
 
         if (m_renderSettings.areWorldAxesVisible)
         {

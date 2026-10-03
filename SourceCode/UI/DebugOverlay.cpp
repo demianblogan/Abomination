@@ -8,7 +8,9 @@
 #include "Gameplay/Weapons/WeaponViewModel.h"
 #include "Physics/CharacterBody.h"
 #include "Platform/Window.h"
+#include "Renderer/Assets/RenderAssets.h"
 #include "Renderer/OpenGL/OpenGLLoader.h"
+#include "UI/Windows/AnimationWindow.h"
 #include "UI/Windows/AssetsWindow.h"
 #include "UI/Windows/CollisionWindow.h"
 #include "UI/Windows/EffectsWindow.h"
@@ -130,6 +132,9 @@ namespace Abomination::UI
             if (m_isEntitiesWindowOpen)
                 m_entitiesWindow.Draw(&m_isEntitiesWindowOpen, context.registry, context.renderAssets);
 
+            if (m_isAnimationWindowOpen)
+                DrawAnimationWindow(&m_isAnimationWindowOpen, context.registry, context.renderAssets.models);
+
             if (m_isRendererWindowOpen)
                 DrawRendererWindow(&m_isRendererWindowOpen, context.renderSettings, context.renderStatistics,
                                    context.levelStatistics, context.isLevelReloadRequested);
@@ -206,6 +211,7 @@ namespace Abomination::UI
         ImGui::MenuItem("Entities", nullptr, &m_isEntitiesWindowOpen);
         ImGui::MenuItem("Assets", nullptr, &m_isAssetsWindowOpen);
         ImGui::MenuItem("Renderer", nullptr, &m_isRendererWindowOpen);
+        ImGui::MenuItem("Animation", nullptr, &m_isAnimationWindowOpen);
         ImGui::MenuItem("Audio", nullptr, &m_isAudioWindowOpen);
         ImGui::Separator();
 

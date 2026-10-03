@@ -16,6 +16,7 @@
 #include "Renderer/Debug/DebugLines.h"
 #include "Renderer/RenderSettings.h"
 #include "Renderer/RenderSystem.h"
+#include "Renderer/SkinningBuffer.h"
 #include "Renderer/Sprites/SpriteBatch.h"
 #include "Renderer/Sprites/SpriteRenderer.h"
 #include "UI/DebugOverlay.h"
@@ -113,6 +114,9 @@ namespace Abomination
         // The sprites of a frame (particles, marks, the muzzle flash) and what draws them.
         Renderer::SpriteBatch m_sprites;
         Renderer::SpriteRenderer m_spriteRenderer;
+
+        // The joint matrices of the skinned mesh being drawn (characters bent by their skeletons).
+        Renderer::SkinningBuffer m_skinningBuffer;
 
         // The folder with the game files, for loading maps after startup.
         std::filesystem::path m_assetsDirectory;

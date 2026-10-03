@@ -1,6 +1,7 @@
 #include "Renderer/Assets/ModelStore.h"
 
 #include "Core/Logging/Log.h"
+#include "Renderer/Animation/SkeletonPose.h"
 #include "Renderer/Assets/GLTFLoader.h"
 
 #include <glm/common.hpp>
@@ -94,18 +95,54 @@ namespace Abomination::Renderer
                            : backingTextures.contains(partData.name) ? backingTextures.at(partData.name)
                                                                      : TextureHandle{},
                 .transform = partData.transform,
+                .parentJoint = partData.parentJoint,
+                .isSkinned = !partData.mesh.skin.empty(),
             });
+        }
+
+        // The skeleton at rest places the skinned vertices and the parts held by joints.
+        std::vector<glm::mat4> restSkinningMatrices;
+        if (data->skeleton.has_value())
+        {
+            CalculateJointMatrices(*data->skeleton, CreateRestPose(*data->skeleton), model.restJointMatrices);
+            CalculateSkinningMatrices(*data->skeleton, model.restJointMatrices, restSkinningMatrices);
+        }
+
+        // Where every vertex of every part is in the model at rest: moved by the skeleton (a skinned vertex: by its joints,
+        // each as much as its weight), by the joint that holds its part, or by the transform of its part.
+        std::vector<std::vector<glm::vec3>> restPositions(data->parts.size());
+        for (std::size_t partIndex = 0; partIndex < data->parts.size(); ++partIndex)
+        {
+            const ModelPartData& partData = data->parts[partIndex];
+            const MeshData& mesh = partData.mesh;
+            restPositions[partIndex].reserve(mesh.vertices.size());
+            for (std::size_t vertexIndex = 0; vertexIndex < mesh.vertices.size(); ++vertexIndex)
+            {
+                const glm::vec4 position(mesh.vertices[vertexIndex].position, 1.0f);
+                glm::mat4 placement = partData.transform;
+                if (!mesh.skin.empty() && !restSkinningMatrices.empty())
+                {
+                    const VertexSkin& skin = mesh.skin[vertexIndex];
+                    placement = glm::mat4(0.0f);
+                    for (int slot = 0; slot < 4; ++slot)
+                        placement += restSkinningMatrices[skin.joints[slot]] * skin.weights[slot];
+                }
+                else if (partData.parentJoint.has_value())
+                {
+                    placement = model.restJointMatrices[*partData.parentJoint] * partData.transform;
+                }
+                restPositions[partIndex].push_back(glm::vec3(placement * position));
+            }
         }
 
         // The box around the whole model, in its own coordinates: a model exported in centimeters, or far from its origin,
         // is easy to notice in the log (it would be invisible in the game: too big, too small, or somewhere else).
         glm::vec3 minimum(std::numeric_limits<float>::max());
         glm::vec3 maximum(std::numeric_limits<float>::lowest());
-        for (const ModelPartData& partData : data->parts)
+        for (const std::vector<glm::vec3>& positions : restPositions)
         {
-            for (const MeshVertex& vertex : partData.mesh.vertices)
+            for (const glm::vec3& position : positions)
             {
-                const glm::vec3 position(partData.transform * glm::vec4(vertex.position, 1.0f));
                 minimum = glm::min(minimum, position);
                 maximum = glm::max(maximum, position);
             }
@@ -115,21 +152,24 @@ namespace Abomination::Renderer
 
         // Models from the internet often lie far from their origin (the shotgun was 50 m away from it), and an entity
         // places the origin of its model: such a model would stand far from the entity. So every model is moved to have
-        // the center of its box at its origin; a map entity or a hand then places the middle of the model.
+        // the center of its box at its origin; a map entity or a hand then places the middle of the model. A part held
+        // by a joint is moved with the skeleton (skeletonTransform), not by its own transform, which is relative to the
+        // joint.
         const glm::mat4 centering = glm::translate(glm::mat4(1.0f), -center);
         for (ModelPart& part : model.parts)
-            part.transform = centering * part.transform;
+            if (!part.parentJoint.has_value())
+                part.transform = centering * part.transform;
+        model.skeletonTransform = centering;
 
         // The box of every part, in the centered coordinates. The parts follow data->parts one to one.
         for (std::size_t partIndex = 0; partIndex < model.parts.size(); ++partIndex)
         {
             glm::vec3 partMinimum(std::numeric_limits<float>::max());
             glm::vec3 partMaximum(std::numeric_limits<float>::lowest());
-            for (const MeshVertex& vertex : data->parts[partIndex].mesh.vertices)
+            for (const glm::vec3& position : restPositions[partIndex])
             {
-                const glm::vec3 position(model.parts[partIndex].transform * glm::vec4(vertex.position, 1.0f));
-                partMinimum = glm::min(partMinimum, position);
-                partMaximum = glm::max(partMaximum, position);
+                partMinimum = glm::min(partMinimum, position - center);
+                partMaximum = glm::max(partMaximum, position - center);
             }
 
             // A part without vertices keeps an empty box at the middle of the model.
@@ -144,11 +184,10 @@ namespace Abomination::Renderer
         // The middle of the box would not do: the stock and the trigger guard pull it below the barrel.
         glm::vec3 frontSum(0.0f);
         int frontCount = 0;
-        for (const ModelPartData& partData : data->parts)
+        for (const std::vector<glm::vec3>& positions : restPositions)
         {
-            for (const MeshVertex& vertex : partData.mesh.vertices)
+            for (const glm::vec3& position : positions)
             {
-                const glm::vec3 position(partData.transform * glm::vec4(vertex.position, 1.0f));
                 if (position.z <= minimum.z + ModelFrontDepth)
                 {
                     frontSum += position - center;
@@ -158,6 +197,8 @@ namespace Abomination::Renderer
         }
         model.front = frontCount > 0 ? frontSum / static_cast<float>(frontCount) : glm::vec3(0.0f, 0.0f, -size.z * 0.5f);
         model.size = size;
+        model.skeleton = std::move(data->skeleton);
+        model.animations = std::move(data->animations);
 
         const auto usedImageCount =
             std::ranges::count_if(imageTextures, [](const auto& texture) { return texture.has_value(); });

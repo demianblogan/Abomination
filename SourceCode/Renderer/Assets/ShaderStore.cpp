@@ -14,19 +14,34 @@ namespace Abomination::Renderer
     namespace
     {
         // The fallback program is written in the code, not in files, so it is available even when the files are not.
-        // It only places the vertices like every other program and paints every pixel magenta. GLSL text cannot use the
-        // C++ constants, so its locations are written as numbers: they must match Renderer/OpenGL/ShaderInterface.h.
+        // It only places the vertices like every other program (a skinned mesh bent by its joints) and paints every
+        // pixel magenta. It has every uniform the render system sets, so setting them never fails. GLSL text cannot use
+        // the C++ constants, so its locations are written as numbers: they must match Renderer/OpenGL/ShaderInterface.h.
         constexpr std::string_view FallbackVertexShaderSource = R"(
             #version 460 core
             layout(location = 0) in vec3 aPosition;
+            layout(location = 3) in uvec4 aJoints;
+            layout(location = 4) in vec4 aWeights;
 
             layout(location = 0) uniform mat4 uniModel;
             layout(location = 1) uniform mat4 uniView;
             layout(location = 2) uniform mat4 uniProjection;
+            layout(location = 3) uniform bool uniIsSkinned;
+
+            layout(std430, binding = 0) readonly buffer JointMatrices
+            {
+                mat4 uniJointMatrices[];
+            };
 
             void main()
             {
-                gl_Position = uniProjection * uniView * uniModel * vec4(aPosition, 1.0);
+                mat4 skin = mat4(1.0);
+                if (uniIsSkinned)
+                {
+                    skin = aWeights.x * uniJointMatrices[aJoints.x] + aWeights.y * uniJointMatrices[aJoints.y] +
+                           aWeights.z * uniJointMatrices[aJoints.z] + aWeights.w * uniJointMatrices[aJoints.w];
+                }
+                gl_Position = uniProjection * uniView * uniModel * skin * vec4(aPosition, 1.0);
             }
         )";
 

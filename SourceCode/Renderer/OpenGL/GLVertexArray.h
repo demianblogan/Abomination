@@ -39,6 +39,12 @@ namespace Abomination::Renderer
         void SetNormalizedByteAttribute(std::uint32_t attributeIndex, std::uint32_t bindingIndex, int componentCount,
                                         std::size_t offset);
 
+        // Describes one shader input of 32-bit unsigned integers that the shader reads as integers (uint, uvec2-4), not
+        // converted to floats: the numbers of joints, which index an array. The other parameters are those of
+        // SetFloatAttribute.
+        void SetUnsignedIntAttribute(std::uint32_t attributeIndex, std::uint32_t bindingIndex, int componentCount,
+                                     std::size_t offset);
+
         // Connects an index buffer (element buffer): a list of vertex numbers that tells glDrawElements in which
         // order to take the vertices, so a vertex shared by several triangles is stored only once.
         void SetIndexBuffer(const GLBuffer& buffer);

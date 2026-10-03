@@ -192,3 +192,10 @@
 "origin" "-100 -232 32"
 "angle" "0"
 }
+// entity 5
+{
+"classname" "misc_model"
+"origin" "-100 -176 20"
+"model" "Models/Enemies/Dog.glb"
+"angle" "0"
+}

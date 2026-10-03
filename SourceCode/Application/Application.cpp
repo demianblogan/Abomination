@@ -6,6 +6,7 @@
 #include "Core/Scene/TransformInterpolation.h"
 #include "Core/Time/FrameStatistics.h"
 #include "Core/Time/FrameTimer.h"
+#include "Gameplay/Animation/Animator.h"
 #include "Gameplay/Camera/FreeFlyCameraSystem.h"
 #include "Gameplay/Camera/ViewSystem.h"
 #include "Gameplay/Characters/TargetDummy.h"
@@ -129,6 +130,7 @@ namespace Abomination
         // The player appears where the map puts them. The free-fly camera waits at their eyes; F2 switches to it.
         m_gameplay = Gameplay::CreateGameplayState(m_registry, m_level.GetPlayerStart(), m_audio, m_renderAssets);
         m_gameplay.targetDummies = Gameplay::SpawnTargetDummies(m_registry, m_renderAssets, m_level.GetTargetDummyStarts());
+        Gameplay::AnimateLevelModels(m_registry, m_renderAssets.models);
     }
 
     int Application::Run()
@@ -164,6 +166,9 @@ namespace Abomination
             // What only moves the picture (the weapon in the hands, the view, the particles) moves every frame, after the
             // ticks of this frame, so it is as smooth as the view.
             Gameplay::UpdateViewEffects(m_gameplay, m_registry, m_audio, frameTimer.GetDeltaTime());
+
+            // Animated models move every frame too: their poses are only for the eyes.
+            Gameplay::UpdateAnimators(m_registry, m_renderAssets.models, frameTimer.GetDeltaTime());
 
             // The shells fly out of the weapon as it is seen: from the eyes between the last two ticks.
             const Core::Transform eyes =
@@ -285,6 +290,7 @@ namespace Abomination
         Gameplay::ClearShells(m_gameplay.shells, m_registry);
         m_level = World::Level::Create(m_registry, m_renderAssets, *map, StartMapPath);
         m_gameplay.targetDummies = Gameplay::SpawnTargetDummies(m_registry, m_renderAssets, m_level.GetTargetDummyStarts());
+        Gameplay::AnimateLevelModels(m_registry, m_renderAssets.models);
     }
 
     void Application::Render(const Core::FrameStatistics& frameStatistics, float deltaTime)
@@ -316,7 +322,7 @@ namespace Abomination
             // In the order things cover each other: the solid world, the see-through effects in it, the debug lines, the
             // weapon in the hands, and the game interface over everything.
             m_renderStatistics = Renderer::DrawMeshes(m_registry, view, interpolationFactor, m_renderAssets,
-                                                      m_systemShaders, m_renderSettings);
+                                                      m_systemShaders, m_renderSettings, m_skinningBuffer);
             DrawEffects(view);
 
             AddDebugLines(cameraTransform, interpolationFactor);
@@ -382,6 +388,7 @@ namespace Abomination
         if (m_collisionSettings.areColliderBoundsVisible)
             Gameplay::AddCharacterDebugBoxes(m_gameplay, m_registry, interpolationFactor, m_debugLines);
         Gameplay::AddWeaponDebugLines(m_gameplay, m_registry, m_debugLines);
+        Gameplay::AddAnimatorDebugLines(m_registry, m_renderAssets.models, interpolationFactor, m_debugLines);
 
         if (m_renderSettings.areWorldAxesVisible)
         {
@@ -409,7 +416,7 @@ namespace Abomination
             Renderer::DrawWeaponViewModel(weaponViewModel->model, Gameplay::CalculateWeaponViewModelMatrix(*weaponViewModel),
                                           weaponViewModel->verticalFOV, aspectRatio, m_renderAssets,
                                           weaponViewModel->shaderProgram, m_systemShaders, m_renderSettings,
-                                          partOffsets);
+                                          m_skinningBuffer, partOffsets);
         m_renderStatistics.drawCallCount += statistics.drawCallCount;
         m_renderStatistics.triangleCount += statistics.triangleCount;
 

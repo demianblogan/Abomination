@@ -2,6 +2,7 @@
 
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
+#include <glm/vec4.hpp>
 
 #include <cstdint>
 #include <vector>
@@ -21,6 +22,15 @@ namespace Abomination::Renderer
         glm::vec3 normal{0.0f, 1.0f, 0.0f};
     };
 
+    // How one vertex of a skinned mesh follows the bones of its skeleton: up to four joints (indices into
+    // SkeletonData::joints) and how much each of them pulls it (the weights add up to 1). A vertex of an elbow is pulled
+    // by the upper arm and the forearm, half each, so the skin bends smoothly instead of breaking at the joint.
+    struct VertexSkin
+    {
+        glm::uvec4 joints{0};
+        glm::vec4 weights{1.0f, 0.0f, 0.0f, 0.0f};
+    };
+
     // The geometry of a mesh in ordinary memory, before it is uploaded to the GPU: vertices and the indices that make
     // triangles of them (every 3 indices are one triangle, counter-clockwise when looked at from its front side).
     // Built by code (MeshPrimitives, the level) or read from model files (ModelData). Needs no OpenGL, so it can be tested.
@@ -28,5 +38,8 @@ namespace Abomination::Renderer
     {
         std::vector<MeshVertex> vertices;
         std::vector<std::uint32_t> indices;
+
+        // The skin of every vertex, in the same order, for a mesh bent by a skeleton; empty for a rigid mesh.
+        std::vector<VertexSkin> skin;
     };
 }

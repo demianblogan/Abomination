@@ -26,6 +26,7 @@ set(TEST_SOURCES
     Core/Time/FrameTimerTests.cpp
 
     Gameplay/SpinTests.cpp
+    Gameplay/Animation/AnimatorTests.cpp
     Gameplay/Camera/FreeFlyCameraControllerTests.cpp
     Gameplay/Characters/ArmorTests.cpp
     Gameplay/Effects/EffectsTests.cpp
@@ -51,6 +52,8 @@ set(TEST_SOURCES
 
     Platform/WindowSizingTests.cpp
 
+    Renderer/Animation/AnimationSamplingTests.cpp
+    Renderer/Animation/SkeletonPoseTests.cpp
     Renderer/Assets/GLTFLoaderTests.cpp
     Renderer/Assets/MeshPrimitivesTests.cpp
     Renderer/Assets/ModelPartSplitTests.cpp

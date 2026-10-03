@@ -112,7 +112,8 @@ shot is heard and leaves a flash, particles and marks on the walls.
 them and strikes; it takes damage, feels pain and dies. The player has health
 shown in a HUD and can die too, then the level restarts.
 
-The enemy model and its animations come from a CC0 pack (Quaternius) for now.
+The enemy is a fat rotting dog: its body and texture made with Tripo, its skeleton and
+animations (idle, walk, gallop, attack, pain, death) taken from a CC0 husky of Quaternius.
 The navmesh comes last: until then the enemy runs straight at the player and
 slides along walls with the same movement code as the player, like the
 monsters of Quake; if time runs out, the navmesh moves to 0.5.
@@ -121,12 +122,13 @@ monsters of Quake; if time runs out, the navmesh moves to 0.5.
 |---|---------------------------------|--------|-------------------------------------------------------------------------|
 | 1 | `feat/game-ui`                 | ✅     | The game interface on RmlUi (documents in RML/RCSS, controls, font effects such as outlines): SDL3 and OpenGL backends; fonts Oswald for the HUD and texts and Cormorant SC for titles, with every letter of the 5 languages (checked by a test) |
 | 2 | `feat/hud`                      | ✅     | Health, armor (takes two thirds of a blow) and ammunition of the player (four kinds, 100 shells at the start, an empty click without them); HUD icons, vignettes and the damage arc in the style of Quake from the texture generator; sound events kept by the engine with a volume per event and per group (Effects, Voice, Music), tuned in the Audio window; the player feels damage and healing: the voice of the author (jump, hurt, death, relief), the sound of the blow, a punch of the view, a muffle of the world, a heartbeat at low health; the HUD on RmlUi with the crosshair, a red vignette, a shake and an arc towards the blow, a green vignette when healed, a pulse with the heart, a blinking empty ammunition; Player window |
-| 3 | `feat/pump-action`              | ⏳     | After every shot the pump of the shotgun slides back and forth (moved by code, a part of the model) with a click, and a shell flies out, falls, bounces and lies for a while |
-| 4 | `feat/skeletal-animation`       | ⏳     | Skins, joints and animation clips from glTF; skinning in the vertex shader; smooth blending between clips; an animated model standing in the test room |
-| 5 | `feat/enemy`                    | ⏳     | The first enemy, a melee monster: states (idle, alert, chase, attack, pain, death), sight (a trace to the player) and hearing (shots), a strike that hurts the player; the target dummies of 0.3 removed; the log level chosen in the running game |
-| 6 | `feat/death`                    | ⏳     | The enemy dies with an animation and its body stays; the player dies: a death sound, the view drops to the floor and fades to black, "Game Over" and "Press any key to try again"; any key or mouse button restarts the level |
-| 7 | `feat/navmesh`                  | ⏳     | Recast/Detour: a navmesh built from the brushes when a level loads, paths around walls and up stairs, the navmesh shown in the debug overlay |
-| 8 | `refactor/review-0.4`           | ⏳     | A review of the project, a list of what changed since the last walkthrough, screenshots; release v0.4.0 |
+| 3 | `feat/pump-action`              | ✅     | After every shot the shotgun is brought to the chest and its pump slides back and forth with a click (moved by code); the bolt, taken out of the body of the model, uncovers the window, and a smoking shell flies out, bounces off the level and stays on the floor (the 20 newest) with the sound of its fall |
+| 4 | `feat/skeletal-animation`       | ⏳     | Skins, joints and animation clips from glTF; skinning in the vertex shader; smooth blending between clips; an animated model standing in the test room, its clips chosen in an Animation window |
+| 5 | `feat/first-person-hands`       | ⏳     | Hands holding the shotgun (WRAD ARMS, the texture made dirtier in the style of Quake): the right hand on the grip, the left one on the pump, following it with a two-bone IK |
+| 6 | `feat/enemy`                    | ⏳     | The first enemy, a melee monster: states (idle, alert, chase, attack, pain, death), sight (a trace to the player) and hearing (shots), a strike that hurts the player; the target dummies of 0.3 removed; the log level chosen in the running game |
+| 7 | `feat/death`                    | ⏳     | The enemy dies with an animation and its body stays; the player dies: a death sound, the view drops to the floor and fades to black, "Game Over" and "Press any key to try again"; any key or mouse button restarts the level |
+| 8 | `feat/navmesh`                  | ⏳     | Recast/Detour: a navmesh built from the brushes when a level loads, paths around walls and up stairs, the navmesh shown in the debug overlay |
+| 9 | `refactor/review-0.4`           | ⏳     | A review of the project, a list of what changed since the last walkthrough, screenshots; release v0.4.0 |
 
 **The HUD of the whole game** (the parts that come later are drawn when their
 feature arrives):
@@ -191,12 +193,10 @@ far:
 
 Ideas that are not assigned to a milestone yet.
 
-- **Hands and weapon animations**: a rigged model of the hands holding every
-  weapon, with drawing, reloading and melee animations (pumping the shotgun with
-  the hand, pushing shells in one by one) made in Blender (or a
-  bought set of first-person arms), played with the skeletal animation of 0.4.
-  Mixamo animations may not be kept in a public repository: check its terms
-  first. Until then weapons have no reload animation, like in Quake.
+- **Weapon animations of the hands** (the hands themselves come in 0.4):
+  drawing, reloading and melee animations (pushing shells in one by one), made in
+  Blender and played with the skeletal animation of 0.4. Until then weapons have
+  no reload animation, like in Quake.
 - **The weapon pulls back near walls**: only a visual touch — close to a wall
   the weapon in the hands slides a few centimeters back and down, while shots
   still come from the middle of the screen (unlike Crysis, which raised the

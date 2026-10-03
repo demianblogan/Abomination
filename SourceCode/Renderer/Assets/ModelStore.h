@@ -11,6 +11,7 @@
 
 #include <cstddef>
 #include <filesystem>
+#include <optional>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
@@ -30,6 +31,12 @@ namespace Abomination::Renderer
         // middle and its size. To find a place on the model by a part, like the window of a shotgun that shells fly out of.
         glm::vec3 center{0.0f};
         glm::vec3 size{0.0f};
+
+        // A part held by a joint (see ModelPartData::parentJoint): transform then places it relative to that joint, and
+        // the part is drawn at Model::skeletonTransform times the joint's matrix times transform. A skinned part has a
+        // skin in its mesh, and transform places the skinned vertices in the model.
+        std::optional<std::size_t> parentJoint;
+        bool isSkinned = false;
     };
 
     // A model ready to be drawn: its parts. The meshes and textures themselves live in the mesh and texture stores, named
@@ -46,6 +53,14 @@ namespace Abomination::Renderer
         // The middle of the front of the model (its -Z end): the average of the vertices within FrontDepth of its
         // frontmost point. For a weapon pointing forward it is the muzzle, where the flash appears.
         glm::vec3 front{0.0f};
+
+        // The skeleton and its clips, for a model that has them (see ModelData). skeletonTransform moves the joints'
+        // matrices into the centered model (the centering above); restJointMatrices is the skeleton at rest, drawn when
+        // nothing animates the model (see Renderer::ModelPose).
+        std::optional<SkeletonData> skeleton;
+        std::vector<AnimationClipData> animations;
+        glm::mat4 skeletonTransform{1.0f};
+        std::vector<glm::mat4> restJointMatrices;
     };
 
     // How deep the front of a model is taken (meters, see Model::front).

@@ -12,8 +12,9 @@ namespace Abomination::Renderer
 {
     namespace
     {
-        // The vertex array has only one vertex buffer, connected to binding slot 0.
+        // The vertices are read from binding slot 0; the skin of a skinned mesh from slot 1.
         constexpr std::uint32_t VertexBufferBinding = 0;
+        constexpr std::uint32_t SkinBufferBinding = 1;
     }
 
     Mesh Mesh::Create(const MeshData& data)
@@ -34,14 +35,26 @@ namespace Abomination::Renderer
         vertexArray.SetFloatAttribute(MeshNormalAttribute, VertexBufferBinding, 3, offsetof(MeshVertex, normal));
         vertexArray.SetIndexBuffer(indexBuffer);
 
-        return Mesh(std::move(vertexBuffer), std::move(indexBuffer), std::move(vertexArray), data.vertices.size(),
-                    data.indices.size());
+        // A skinned mesh: the joints and weights of every vertex in a second buffer, so a rigid mesh does not carry them.
+        std::optional<GLBuffer> skinBuffer;
+        if (!data.skin.empty())
+        {
+            assert(data.skin.size() == data.vertices.size());
+            skinBuffer.emplace(std::as_bytes(std::span(data.skin)));
+            vertexArray.SetVertexBuffer(SkinBufferBinding, *skinBuffer, sizeof(VertexSkin));
+            vertexArray.SetUnsignedIntAttribute(MeshJointsAttribute, SkinBufferBinding, 4, offsetof(VertexSkin, joints));
+            vertexArray.SetFloatAttribute(MeshWeightsAttribute, SkinBufferBinding, 4, offsetof(VertexSkin, weights));
+        }
+
+        return Mesh(std::move(vertexBuffer), std::move(indexBuffer), std::move(skinBuffer), std::move(vertexArray),
+                    data.vertices.size(), data.indices.size());
     }
 
-    Mesh::Mesh(GLBuffer vertexBuffer, GLBuffer indexBuffer, GLVertexArray vertexArray, std::size_t vertexCount,
-               std::size_t indexCount) noexcept
+    Mesh::Mesh(GLBuffer vertexBuffer, GLBuffer indexBuffer, std::optional<GLBuffer> skinBuffer, GLVertexArray vertexArray,
+               std::size_t vertexCount, std::size_t indexCount) noexcept
         : m_vertexBuffer(std::move(vertexBuffer))
         , m_indexBuffer(std::move(indexBuffer))
+        , m_skinBuffer(std::move(skinBuffer))
         , m_vertexArray(std::move(vertexArray))
         , m_vertexCount(vertexCount)
         , m_indexCount(indexCount)
@@ -65,8 +78,14 @@ namespace Abomination::Renderer
         return m_indexCount;
     }
 
+    bool Mesh::IsSkinned() const noexcept
+    {
+        return m_skinBuffer.has_value();
+    }
+
     std::size_t Mesh::GetVideoMemorySize() const noexcept
     {
-        return m_vertexCount * sizeof(MeshVertex) + m_indexCount * sizeof(std::uint32_t);
+        const std::size_t skinSize = IsSkinned() ? m_vertexCount * sizeof(VertexSkin) : 0;
+        return m_vertexCount * sizeof(MeshVertex) + m_indexCount * sizeof(std::uint32_t) + skinSize;
     }
 }

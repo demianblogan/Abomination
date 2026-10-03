@@ -873,4 +873,132 @@ public static class TextureGen
             sheet.Save(previewPath, ImageFormat.Png);
         }
     }
+
+    // ---------- HUD effects ----------
+    // Full-screen and overlay pictures of the HUD: the vignettes of a blow (red) and of healing (green), and the arc that
+    // shows where a blow came from. Pixelated like the icons: drawn small, posterized, with ragged edges from noise, and
+    // saved with every pixel a 4 x 4 block.
+    const int VignetteWidth = 128, VignetteHeight = 72;
+
+    // How far a pixel is from the middle of the screen towards its edges: 0 in the middle, 1 at the middle of an edge,
+    // more in the corners. A power of 2.6 rounds the shape between an ellipse and a rectangle, like the screen itself.
+    static double EdgeDistance(int x, int y, int width, int height)
+    {
+        double nx = Math.Abs((x + 0.5) / width * 2 - 1), ny = Math.Abs((y + 0.5) / height * 2 - 1);
+        return Math.Pow(Math.Pow(nx, 2.6) + Math.Pow(ny, 2.6), 1 / 2.6);
+    }
+
+    // Saves a picture of width x height pixels, every pixel a scale x scale block.
+    static Bitmap Upscale(Color[,] pixels, int width, int height, int scale)
+    {
+        Bitmap bmp = new Bitmap(width * scale, height * scale, PixelFormat.Format32bppArgb);
+        for (int y = 0; y < height; y++)
+            for (int x = 0; x < width; x++)
+                for (int by = 0; by < scale; by++)
+                    for (int bx = 0; bx < scale; bx++)
+                        bmp.SetPixel(x * scale + bx, y * scale + by, pixels[x, y]);
+        return bmp;
+    }
+
+    // A vignette: the edges of the screen tinted, ragged like a smear, fading to nothing in the middle. edge is the color
+    // at the very edge (dark blood for a blow, a bright green glow for healing), inner the color further in, opacity
+    // how strong it is at the edge (a glow is lighter than blood).
+    static Bitmap Vignette(string inner, string edge, double opacity, int seed)
+    {
+        double[] innerColor = Hex(inner), edgeColor = Hex(edge);
+        Color[,] pixels = new Color[VignetteWidth, VignetteHeight];
+        for (int y = 0; y < VignetteHeight; y++)
+            for (int x = 0; x < VignetteWidth; x++)
+            {
+                // The noise is laid over the 64 x 64 tile twice across and once down; it makes the inner edge ragged.
+                double noise = Fbm(x * 64.0 / VignetteWidth * 2, y * 64.0 / VignetteHeight, 6, 6, 3, seed);
+                double distance = EdgeDistance(x, y, VignetteWidth, VignetteHeight) + (noise - 0.5) * 0.45;
+                double t = Math.Max(0, Math.Min(1, (distance - 0.62) / 0.5));
+                double alpha = Math.Pow(t, 1.4);
+                double[] c = Mix(innerColor, edgeColor, Math.Min(1, t * 1.2 + (Rand(x, y, seed + 3) - 0.5) * 0.2));
+                pixels[x, y] = alpha <= 0 ? Color.Transparent : ToColorAlpha(c, alpha * opacity);
+            }
+        return Upscale(pixels, VignetteWidth, VignetteHeight, 4);
+    }
+
+    const int ArcWidth = 48, ArcHeight = 16;
+
+    // The arc of the damage direction: a ragged crescent of blood, the top of a ring, thick in the middle and thin at its
+    // ends. It points up; the HUD turns it towards where the blow came from.
+    static Bitmap DamageArc(int seed)
+    {
+        double[] red = Hex("#B0180E"), dark = Hex("#3A0604");
+        Color[,] pixels = new Color[ArcWidth, ArcHeight];
+        // The ring has its middle below the picture; the arc spans 35 degrees to either side of straight up.
+        double centerX = ArcWidth / 2.0, centerY = 52, radius = 46, span = 35 * Math.PI / 180;
+        for (int y = 0; y < ArcHeight; y++)
+            for (int x = 0; x < ArcWidth; x++)
+            {
+                pixels[x, y] = Color.Transparent;
+                double dx = x + 0.5 - centerX, dy = y + 0.5 - centerY;
+                double angle = Math.Atan2(dx, -dy);
+                double along = Math.Abs(angle) / span;
+                if (along > 1)
+                    continue;
+
+                // Thicker in the middle of the arc, ragged at both edges.
+                double thickness = 5.5 * (1 - along * along) + 1;
+                double ragged = (Fbm(x * 4, y * 4, 8, 8, 2, seed) - 0.5) * 3;
+                double offset = Math.Sqrt(dx * dx + dy * dy) - radius;
+                if (Math.Abs(offset) > thickness / 2 + ragged)
+                    continue;
+
+                double depth = Math.Abs(offset) / (thickness / 2 + 0.01);
+                double[] c = Mix(red, dark, Math.Min(1, depth * 0.8 + along * 0.4 + (Rand(x, y, seed + 5) - 0.5) * 0.3));
+                pixels[x, y] = ToColorAlpha(c, 1.0 - along * along * 0.6);
+            }
+        return Upscale(pixels, ArcWidth, ArcHeight, 4);
+    }
+
+    // Writes the HUD effects into imagesDirectory, and a preview of them over a wall of the first episode into
+    // previewPath.
+    public static void RunHUDEffects(string imagesDirectory, string wallTexturePath, string previewPath)
+    {
+        Directory.CreateDirectory(imagesDirectory);
+        Bitmap red = Vignette("#B01A0C", "#4A0603", 0.95, 301);
+        Bitmap green = Vignette("#F0FFD8", "#B4F09A", 0.5, 311);
+        Bitmap arc = DamageArc(321);
+        red.Save(Path.Combine(imagesDirectory, "VignetteDamage.png"), ImageFormat.Png);
+        green.Save(Path.Combine(imagesDirectory, "VignetteHeal.png"), ImageFormat.Png);
+        arc.Save(Path.Combine(imagesDirectory, "DamageArc.png"), ImageFormat.Png);
+
+        // The preview: three frames of a wall (tiled, pixelated like in the game): with the red vignette, with the green
+        // one, and with the arc turned towards a blow from the left.
+        int frameWidth = VignetteWidth * 4, frameHeight = VignetteHeight * 4;
+        using (Bitmap wall = new Bitmap(wallTexturePath))
+        using (Bitmap sheet = new Bitmap(frameWidth * 3 + 32, frameHeight + 16, PixelFormat.Format32bppArgb))
+        using (Graphics g = Graphics.FromImage(sheet))
+        {
+            g.Clear(Color.FromArgb(255, 20, 20, 20));
+            g.InterpolationMode = InterpolationMode.NearestNeighbor;
+            g.PixelOffsetMode = PixelOffsetMode.Half;
+            for (int frame = 0; frame < 3; frame++)
+            {
+                int left = 8 + frame * (frameWidth + 8);
+                g.SetClip(new Rectangle(left, 8, frameWidth, frameHeight));
+                for (int ty = 0; ty < frameHeight; ty += wall.Height * 3)
+                    for (int tx = 0; tx < frameWidth; tx += wall.Width * 3)
+                        g.DrawImage(wall, left + tx, 8 + ty, wall.Width * 3, wall.Height * 3);
+                if (frame < 2)
+                    g.DrawImage(frame == 0 ? red : green, left, 8, frameWidth, frameHeight);
+                else
+                {
+                    // The arc around the middle of the screen, turned 90 degrees to the left.
+                    var state = g.Save();
+                    g.TranslateTransform(left + frameWidth / 2, 8 + frameHeight / 2);
+                    g.RotateTransform(-90);
+                    g.DrawImage(arc, -arc.Width / 2, -frameHeight / 3 - arc.Height / 2, arc.Width, arc.Height);
+                    g.Restore(state);
+                }
+                g.ResetClip();
+            }
+            Directory.CreateDirectory(Path.GetDirectoryName(previewPath));
+            sheet.Save(previewPath, ImageFormat.Png);
+        }
+    }
 }

@@ -8,7 +8,6 @@
 #include "Gameplay/Weapons/WeaponViewModel.h"
 #include "Physics/CharacterBody.h"
 #include "Platform/Window.h"
-#include "Renderer/Camera/CameraLens.h"
 #include "Renderer/OpenGL/OpenGLLoader.h"
 #include "UI/Windows/AssetsWindow.h"
 #include "UI/Windows/CollisionWindow.h"
@@ -107,7 +106,7 @@ namespace Abomination::UI
         //    While the overlay is hidden the ImGui frame still runs, just without windows: ImGui keeps receiving the
         //    input and the time, so it is in a consistent state when the overlay is shown again. An empty frame costs
         //    practically nothing.
-        // The components of the player the gameplay windows and the crosshair change or show.
+        // The components of the player the gameplay windows change or show.
         entt::registry& registry = context.registry;
         Gameplay::GameplayState& gameplay = context.gameplay;
         Gameplay::WeaponViewModel& weaponViewModel = registry.get<Gameplay::WeaponViewModel>(gameplay.player);
@@ -154,11 +153,6 @@ namespace Abomination::UI
                 DrawWeaponWindow(&m_isWeaponWindowOpen, weapon, registry.get<Gameplay::ViewRecoil>(gameplay.player),
                                  weaponViewModel);
         }
-
-        // The crosshair belongs to the game, not to the debug tools: it is drawn whether the overlay is shown or not, while
-        // the player is controlled, with the field of view of their camera.
-        if (gameplay.controlMode == Gameplay::ControlMode::Player)
-            m_crosshair.Draw(weapon, registry.get<Renderer::CameraLens>(gameplay.player).verticalFOV);
 
         // The console is drawn even while the rest of the overlay is hidden: it has its own key.
         m_consoleWindow.Draw(context.logHistory);

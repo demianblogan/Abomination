@@ -55,6 +55,7 @@ namespace Abomination::Renderer
         // lays out documents.
         program.Use();
         program.SetUniform(ProjectionUniform, glm::ortho(0.0f, viewportSize.x, viewportSize.y, 0.0f, -1.0f, 1.0f));
+        program.SetUniform(GameUITransformUniform, glm::mat4(1.0f));
 
         // Over everything, in the order RmlUi draws, both sides visible (+Y down turns the corners the other way round).
         // The colors come with premultiplied alpha: the color written = new color + old color * (1 - new alpha).
@@ -182,6 +183,16 @@ namespace Abomination::Renderer
             glEnable(GL_SCISSOR_TEST);
         else
             glDisable(GL_SCISSOR_TEST);
+    }
+
+    void RmlUiRendererBackend::SetTransform(const Rml::Matrix4f* transform)
+    {
+        // RmlUi keeps its matrices by columns, like OpenGL and glm, so the 16 numbers are copied as they are. nullptr means
+        // no transform. A transformed element is still clipped by the scissor of its parent, which is enough for the HUD.
+        glm::mat4 matrix(1.0f);
+        if (transform != nullptr)
+            std::copy_n(transform->data(), 16, &matrix[0][0]);
+        m_program->SetUniform(GameUITransformUniform, matrix);
     }
 
     void RmlUiRendererBackend::SetScissorRegion(Rml::Rectanglei region)

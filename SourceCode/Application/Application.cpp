@@ -165,7 +165,7 @@ namespace Abomination
             frameStatistics.AddFrame(frameTimer.GetDeltaTime(), tickCount);
 
             // 4. Drawing and showing the frame.
-            Render(frameStatistics);
+            Render(frameStatistics, frameTimer.GetDeltaTime());
 
             // 5. With an FPS limit, the frame waits here until it has lasted 1 / limit seconds. The next frame then
             //    starts right on time, and its measured delta time includes this wait.
@@ -276,7 +276,7 @@ namespace Abomination
         m_gameplay.targetDummies = Gameplay::SpawnTargetDummies(m_registry, m_renderAssets, m_level.GetTargetDummyStarts());
     }
 
-    void Application::Render(const Core::FrameStatistics& frameStatistics)
+    void Application::Render(const Core::FrameStatistics& frameStatistics, float deltaTime)
     {
         const int widthInPixels = m_window.GetWidthInPixels();
         const int heightInPixels = m_window.GetHeightInPixels();
@@ -317,7 +317,9 @@ namespace Abomination
 
             DrawWeaponViewModel(aspectRatio);
 
-            // The game interface over everything; it gets the mouse only while the cursor is free (the debug overlay is open).
+            // The game interface over everything (the HUD); it gets the mouse only while the cursor is free (the debug overlay
+            // is open).
+            m_gameUI.UpdateHUD(m_gameplay, m_registry, viewportSize, deltaTime);
             m_gameUI.Update(viewportSize, !m_isMouseCaptured);
             m_renderStatistics.drawCallCount +=
                 m_gameUI.Render(viewportSize, m_renderAssets.shaders.Get(m_systemShaders.gameUI));

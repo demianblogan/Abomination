@@ -77,8 +77,8 @@ namespace Abomination
         void ReloadLevel();
 
         // Draws the frame (the game, then the debug overlay on top) and shows it on the screen.
-        // frameStatistics: the numbers for the overlay.
-        void Render(const Core::FrameStatistics& frameStatistics);
+        // frameStatistics: the numbers for the overlay; deltaTime: the length of the frame (seconds), for the HUD.
+        void Render(const Core::FrameStatistics& frameStatistics, float deltaTime);
 
         // The steps of Render():
         //   DrawEffects   - the marks on the walls and the particles, seen through the view;

@@ -129,7 +129,7 @@ A module may depend only on modules **below** it in this diagram.
 | `AI`          | Enemy behaviour, pathfinding                                    | Planned |
 | `Audio`       | Sounds (miniaudio): sound store, voices, 2D and 3D sound; music later | 0.3 |
 | `Gameplay`    | Game rules: the player (entity, controller, view), free-fly camera, mouse look, spin (0.1–0.2); the shotgun in the hands, shooting, damage, recoil, effects, crosshair, target dummies (0.3); enemies (0.4) | 0.1 |
-| `UI`          | Dear ImGui debug overlay: menu bar, performance, assets, entity inspector, renderer, collision, movement, in-game console (0.1–0.2); audio, view model, weapon, effects windows, the crosshair (0.3); the game interface on RmlUi (`GameUI`, 0.4): HUD, death screen, later the menus | 0.1 |
+| `UI`          | Dear ImGui debug overlay: menu bar, performance, assets, entity inspector, renderer, collision, movement, in-game console (0.1–0.2); audio, view model, weapon, effects windows (0.3); the game interface on RmlUi (`GameUI`, 0.4): the HUD with the crosshair (`HUD`), the death screen, later the menus | 0.1 |
 | `Save`        | Serialization of the game state                                 | Planned |
 | `Application` | Startup, shutdown, main loop, switching between game states     | 0.1     |
 
@@ -172,6 +172,19 @@ A module may depend only on modules **below** it in this diagram.
   fonts are Oswald Bold (text, HUD) and Cormorant SC Bold (titles), drawn by
   FreeType; a test checks that both have every letter of the five languages.
   It gets the mouse only while the cursor is free.
+- **The HUD** (`UI::HUD`, `Assets/UI/HUD.rml`): health in the bottom left
+  corner with armor above it (hidden while there is none), the ammunition of
+  the weapon in the bottom right with the icon of its kind, the crosshair in
+  the middle; icons as high as the digits, numbers red when low. It reacts to
+  the counts the game keeps (`DamageReaction`, `Weapon`): a blow shows the red
+  vignette (stronger for a bigger blow), shakes the health and armor and puts
+  an arc around the crosshair towards where it came from (the arc keeps
+  pointing there while the player turns); healing shows the green vignette;
+  at low health the number pulses with every beat of the heart; an empty click
+  blinks the ammunition twice. The numbers reach the document through a data
+  model (`{{health}}`); everything that moves is moved by code every frame
+  (the renderer backend applies CSS transforms). Shown while the player is
+  controlled and alive.
 - **The debug overlay** has a main menu bar (F1): the *Display* menu (screen
   mode, V-Sync, FPS limit, UI scale), then one item per debug window that
   opens and closes it with one click and stays highlighted while it is open,
@@ -591,8 +604,9 @@ player entity                                free-fly camera entity
 - **Crosshair** (`Gameplay::CrosshairSettings`, one per weapon): a circle
   exactly as wide as the spread on the screen
   (`CalculateSpreadRadiusOnScreen`), a dot, and hit and kill markers — four
-  diagonal lines that flick outwards and fade. Drawn with ImGui's foreground
-  lines (`UI::CrosshairOverlay`) until the HUD of 0.4.
+  diagonal lines that flick outwards and fade. Part of the HUD (`UI::HUD`):
+  RmlUi elements moved every frame (the circle is a box with a rounded
+  border, a marker line is turned by its CSS transform); sizes in dp.
 - **Characters collide with each other**: a moving character traces through
   the level brushes plus a box brush for every other character
   (`GatherCollisionBrushes`, `World::CreateBoxCollisionBrush`). A character
@@ -814,7 +828,7 @@ is `Abomination::Core::Clock`. These modules are split already:
 | `Core` | `BuildConfiguration`, `Version` | `Time/` (clock, frame timer, fixed timestep, FPS limit, statistics), `Logging/`, `Files/` (files, images), `Math/` (units, planes, polygons, bounding boxes and rays, random numbers, springs), `Assets/` (handles, cache, lifetimes), `Scene/` (`Name`, `Transform`, interpolation) |
 | `Renderer` | `RenderSystem`, `RenderSettings`, `MeshRenderer`, `ModelRenderer`, `DrawOffset`, `ImGuiRendererBackend`, `RmlUiRendererBackend` | `OpenGL/` (wrappers of OpenGL objects, loader, debug output, shader interface), `Assets/` (meshes, models, glTF loading and the stores), `Camera/` (`CameraLens`, `View`), `Debug/` (debug lines), `Sprites/` (sprite batch and renderer) |
 | `Gameplay` | `GameplayState`, `Spin` | `Player/` (player, controller, its system, landing dip), `Camera/` (free-fly camera, mouse look, the view), `Weapons/` (weapon, its system, the weapon in the hands and its motion, recoil, crosshair), `Effects/` (effects, particles), `Characters/` (health, collisions between characters, target dummies) |
-| `UI` | `DebugOverlay`, `ImGuiLibrary`, `UIScale`, `Widgets`, `CrosshairOverlay`, `GameUI` | `Windows/` (one file per debug window) |
+| `UI` | `DebugOverlay`, `ImGuiLibrary`, `UIScale`, `Widgets`, `GameUI`, `HUD` | `Windows/` (one file per debug window) |
 
 A module is split when its folder no longer shows its parts at a glance
 (around 20 files); the tests in `Tests/` follow the same folders.

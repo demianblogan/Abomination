@@ -40,6 +40,19 @@ namespace Abomination::UI
         void DrawShotTab(Gameplay::Weapon& weapon)
         {
             Gameplay::WeaponSettings& settings = weapon.settings;
+
+            // The kind of ammunition the weapon uses; the HUD shows its icon and count. Until there are more weapons
+            // (0.7), switching it is the way to see every ammunition icon in the HUD.
+            int ammoType = static_cast<int>(settings.ammoType);
+            for (std::size_t index = 0; index < Gameplay::AmmoTypeNames.size(); ++index)
+            {
+                if (index > 0)
+                    ImGui::SameLine();
+                ImGui::RadioButton(Gameplay::AmmoTypeNames[index].data(), &ammoType, static_cast<int>(index));
+            }
+            settings.ammoType = static_cast<Gameplay::AmmoType>(ammoType);
+            ImGui::SetItemTooltip("The ammunition the weapon uses (to try the icons of the HUD).");
+
             DrawIntSlider("Pellets", settings.pelletCount, 1, 20, "How many pellets one shot sends.");
             DrawDegreeSlider("Spread", settings.spreadAngle, 0.0f, 15.0f, "%.1f deg",
                              "How far a pellet may fly off the middle of the screen (half the angle of the cone).\n"

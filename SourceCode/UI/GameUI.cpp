@@ -5,6 +5,7 @@
 #include "Platform/RmlUiPlatformBackend.h"
 #include "Platform/Window.h"
 #include "Renderer/RmlUiRendererBackend.h"
+#include "UI/HUD.h"
 
 #include <RmlUi/Core.h>
 
@@ -24,6 +25,9 @@ namespace Abomination::UI
         // for titles. Documents choose them by their family names, "Oswald" and "Cormorant SC". Both have every letter of
         // the five languages of the game (a test checks it).
         constexpr std::array<std::string_view, 2> FontPaths = {"Fonts/OswaldBold.ttf", "Fonts/CormorantSCBold.ttf"};
+
+        // The documents, relative to the assets folder.
+        constexpr std::string_view HUDDocumentPath = "UI/HUD.rml";
 
         // The window height the sizes in the documents are written for: 1 dp is 1 pixel in a window 1080 pixels high.
         constexpr float ReferenceHeight = 1080.0f;
@@ -60,6 +64,7 @@ namespace Abomination::UI
             return std::unexpected("Failed to create the RmlUi context");
         }
 
+        gameUI.m_hud = HUD::Load(*gameUI.m_context, Core::ToUTF8String(assetsDirectory / HUDDocumentPath));
         gameUI.m_platformBackend->SetContext(gameUI.m_context);
 
         Core::Log::Write(LogCategory::UI, LogLevel::Info, "Game interface started (RmlUi {})", Rml::GetVersion());
@@ -72,6 +77,7 @@ namespace Abomination::UI
         : m_platformBackend(std::move(other.m_platformBackend))
         , m_rendererBackend(std::move(other.m_rendererBackend))
         , m_context(std::exchange(other.m_context, nullptr))
+        , m_hud(std::move(other.m_hud))
     {}
 
     GameUI& GameUI::operator=(GameUI&& other) noexcept
@@ -82,6 +88,7 @@ namespace Abomination::UI
             m_platformBackend = std::move(other.m_platformBackend);
             m_rendererBackend = std::move(other.m_rendererBackend);
             m_context = std::exchange(other.m_context, nullptr);
+            m_hud = std::move(other.m_hud);
         }
 
         return *this;
@@ -102,6 +109,7 @@ namespace Abomination::UI
         // is destroyed only after that.
         Rml::Shutdown();
         m_context = nullptr;
+        m_hud.reset();
     }
 
     void GameUI::Update(glm::vec2 viewportSize, bool isInputEnabled)
@@ -115,6 +123,12 @@ namespace Abomination::UI
 
         m_platformBackend->SetInputEnabled(isInputEnabled);
         m_context->Update();
+    }
+
+    void GameUI::UpdateHUD(const Gameplay::GameplayState& gameplay, const entt::registry& registry, glm::vec2 viewportSize,
+                           float deltaTime)
+    {
+        m_hud->Update(gameplay, registry, viewportSize, deltaTime);
     }
 
     int GameUI::Render(glm::vec2 viewportSize, const Renderer::GLShaderProgram& program)

@@ -201,12 +201,12 @@ set(LIBRARY_SOURCES
     Renderer/OpenGL/RenderCommands.cpp
     Renderer/OpenGL/ShaderInterface.h
 
-    UI/CrosshairOverlay.h
-    UI/CrosshairOverlay.cpp
     UI/DebugOverlay.h
     UI/DebugOverlay.cpp
     UI/GameUI.h
     UI/GameUI.cpp
+    UI/HUD.h
+    UI/HUD.cpp
     UI/ImGuiLibrary.h
     UI/ImGuiLibrary.cpp
     UI/UIScale.h

@@ -51,6 +51,7 @@ namespace Abomination::Renderer
         void ReleaseTexture(Rml::TextureHandle texture) override;
         void EnableScissorRegion(bool enable) override;
         void SetScissorRegion(Rml::Rectanglei region) override;
+        void SetTransform(const Rml::Matrix4f* transform) override;
 
     private:
         // One piece of geometry RmlUi compiled: its vertices and indices in video memory. Declared in this order so the

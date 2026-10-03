@@ -2,6 +2,7 @@
 
 #include "Audio/SoundEvent.h"
 #include "Core/Math/Random.h"
+#include "Gameplay/Weapons/Ammo.h"
 #include "Gameplay/Weapons/Crosshair.h"
 
 #include <glm/trigonometric.hpp>
@@ -32,6 +33,10 @@ namespace Abomination::Gameplay
         // (meters per second added to its velocity along the pellet). All six pellets at close range: 60 damage.
         float damagePerPellet = 10.0f;
         float knockbackPerPellet = 0.8f;
+
+        // What a shot takes from the ammunition of the player (see Ammo); without enough of it the weapon does not fire.
+        AmmoType ammoType = AmmoType::Shells;
+        int ammoPerShot = 1;
     };
 
     // One pellet of the last shot, for the debug lines.
@@ -55,6 +60,9 @@ namespace Abomination::Gameplay
 
         Audio::SoundEvent fireSound;
 
+        // The click of a press of Fire without enough ammunition.
+        Audio::SoundEvent emptySound;
+
         // Played once per shot that hurt something, and once per shot that killed something (instead of the hit).
         Audio::SoundEvent hitSound;
         Audio::SoundEvent killSound;
@@ -66,6 +74,10 @@ namespace Abomination::Gameplay
 
         // How many shots so far, for the pulse of the crosshair (like hitCount).
         int shotCount = 0;
+
+        // How many presses of Fire so far found too little ammunition, for the blinking of the ammunition in the HUD (like
+        // hitCount).
+        int emptyClickCount = 0;
 
         // Seconds until the next shot is possible; 0 or less: ready.
         float cooldown = 0.0f;

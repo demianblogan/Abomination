@@ -1,8 +1,11 @@
 #include "UI/DebugOverlay.h"
 
 #include "Core/Time/FrameLimiter.h"
+#include "Gameplay/Characters/Armor.h"
+#include "Gameplay/Characters/Health.h"
 #include "Gameplay/GameplayState.h"
 #include "Gameplay/Player/LandingDip.h"
+#include "Gameplay/Weapons/Ammo.h"
 #include "Gameplay/Weapons/ViewRecoil.h"
 #include "Gameplay/Weapons/Weapon.h"
 #include "Gameplay/Weapons/WeaponViewModel.h"
@@ -15,6 +18,7 @@
 #include "UI/Windows/EffectsWindow.h"
 #include "UI/Windows/MovementWindow.h"
 #include "UI/Windows/PerformanceWindow.h"
+#include "UI/Windows/PlayerWindow.h"
 #include "UI/Windows/RendererWindow.h"
 #include "UI/Windows/WeaponWindow.h"
 
@@ -138,6 +142,11 @@ namespace Abomination::UI
                 DrawCollisionWindow(&m_isCollisionWindowOpen, context.collisionSettings, context.cameraCast,
                                     context.collisionBrushCount);
 
+            if (m_isPlayerWindowOpen)
+                DrawPlayerWindow(&m_isPlayerWindowOpen, registry.get<Gameplay::Health>(gameplay.player),
+                                 registry.get<Gameplay::Armor>(gameplay.player),
+                                 registry.get<Gameplay::Ammo>(gameplay.player));
+
             if (m_isMovementWindowOpen)
                 DrawMovementWindow(&m_isMovementWindowOpen, gameplay.physicsSettings, gameplay.movementSettings,
                                    registry.get<Gameplay::LandingDip>(gameplay.player),
@@ -215,6 +224,7 @@ namespace Abomination::UI
         ImGui::MenuItem("Movement", nullptr, &m_isMovementWindowOpen);
         ImGui::Separator();
 
+        ImGui::MenuItem("Player", nullptr, &m_isPlayerWindowOpen);
         ImGui::MenuItem("Weapon", nullptr, &m_isWeaponWindowOpen);
         ImGui::MenuItem("Effects", nullptr, &m_isEffectsWindowOpen);
 

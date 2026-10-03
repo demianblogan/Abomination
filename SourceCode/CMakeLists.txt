@@ -223,6 +223,8 @@ set(LIBRARY_SOURCES
     UI/Windows/MovementWindow.cpp
     UI/Windows/PerformanceWindow.h
     UI/Windows/PerformanceWindow.cpp
+    UI/Windows/PlayerWindow.h
+    UI/Windows/PlayerWindow.cpp
     UI/Windows/RendererWindow.h
     UI/Windows/RendererWindow.cpp
     UI/Windows/WeaponWindow.h

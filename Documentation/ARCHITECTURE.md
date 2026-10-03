@@ -176,7 +176,8 @@ A module may depend only on modules **below** it in this diagram.
   mode, V-Sync, FPS limit, UI scale), then one item per debug window that
   opens and closes it with one click and stays highlighted while it is open,
   grouped by part of the engine: *Performance*, *Console* | *Entities*,
-  *Assets*, *Renderer*, *Audio* | *Collisions*, *Movement* | *Weapon* (tabs:
+  *Assets*, *Renderer*, *Audio* | *Collisions*, *Movement* | *Player* (health,
+  armor, ammunition, test buttons), *Weapon* (tabs:
   Shot, Crosshair, Recoil, In hands), *Effects*. One file per window; all
   closed at the first start; every window except the console can be resized;
   the tuning windows share the sliders of `UI/Widgets`. The font size is one
@@ -567,6 +568,13 @@ player entity                                free-fly camera entity
   (`Core::IntersectRay`, the slab method); it takes `damagePerPellet` and
   pushes a character along the pellet. One hit or kill sound per shot; the
   weapon counts hits and kills (`hitCount`, `killCount`) for the markers.
+- **Health, armor and ammunition of the player**: `Health` (100), `Armor`
+  (starts at 0, takes two thirds of every hit while it lasts, see
+  `ApplyDamage(Health&, Armor&, damage)`) and `Ammo` (four kinds, shells,
+  bullets, rockets and cells, shared by the weapons that use them; 100 shells
+  at the start). A weapon takes `ammoPerShot` of its `ammoType` per shot and
+  does not fire without it; a new press of Fire then clicks (`emptySound`) and
+  counts `emptyClickCount` for the HUD.
 - **Crosshair** (`Gameplay::CrosshairSettings`, one per weapon): a circle
   exactly as wide as the spread on the screen
   (`CalculateSpreadRadiusOnScreen`), a dot, and hit and kill markers — four

@@ -131,6 +131,7 @@ namespace Abomination::UI
         bool m_isEntitiesWindowOpen = false;
         bool m_isRendererWindowOpen = false;
         bool m_isCollisionWindowOpen = false;
+        bool m_isPlayerWindowOpen = false;
         bool m_isMovementWindowOpen = false;
         bool m_isAudioWindowOpen = false;
         bool m_isWeaponWindowOpen = false;

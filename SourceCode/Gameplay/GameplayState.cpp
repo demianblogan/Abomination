@@ -1,8 +1,11 @@
 #include "Gameplay/GameplayState.h"
 
 #include "Audio/AudioEngine.h"
+#include "Gameplay/Characters/Armor.h"
+#include "Gameplay/Characters/Health.h"
 #include "Gameplay/Player/LandingDip.h"
 #include "Gameplay/Player/Player.h"
+#include "Gameplay/Weapons/Ammo.h"
 #include "Gameplay/Weapons/ViewRecoil.h"
 #include "Gameplay/Weapons/Weapon.h"
 #include "Gameplay/Weapons/WeaponViewModel.h"
@@ -13,6 +16,11 @@
 
 namespace Abomination::Gameplay
 {
+    namespace
+    {
+        constexpr int StartingShells = 100;
+    }
+
     GameplayState CreateGameplayState(entt::registry& registry, const World::PlayerStart& playerStart,
                                       Audio::AudioEngine& audio, Renderer::RenderAssets& renderAssets)
     {
@@ -44,11 +52,21 @@ namespace Abomination::Gameplay
         registry.emplace<LandingDip>(state.player);
         registry.emplace<ViewRecoil>(state.player);
 
+        // The player starts with full health, no armor and 100 shells for the shotgun (pickups add more in 0.6).
+        registry.emplace<Health>(state.player);
+        registry.emplace<Armor>(state.player);
+        Ammo& ammo = registry.emplace<Ammo>(state.player);
+        AddAmmo(ammo, AmmoType::Shells, StartingShells);
+
         // The shotgun itself: what it shoots and how it sounds. One recording, its pitch changed by up to 5% every shot.
         Weapon& weapon = registry.emplace<Weapon>(state.player);
         weapon.fireSound = audio.LoadSoundEvent("Sounds/Weapons/Shotgun/Fire", 1, Core::AssetLifetime::Global);
         weapon.fireSound.pitchVariation = 0.05f;
         weapon.fireSound.maxVoices = 2;
+
+        // The click of the trigger when the shells run out.
+        weapon.emptySound = audio.LoadSoundEvent("Sounds/Weapons/Shotgun/DryFire", 1, Core::AssetLifetime::Global);
+        weapon.emptySound.maxVoices = 1;
 
         // The confirmation that a shot hurt or killed something (temporary sounds from Kenney's Impact Sounds).
         weapon.hitSound = audio.LoadSoundEvent("Sounds/Weapons/Hit", 3, Core::AssetLifetime::Global);

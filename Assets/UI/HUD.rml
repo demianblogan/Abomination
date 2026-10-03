@@ -1,0 +1,39 @@
+<rml>
+<head>
+    <title>HUD</title>
+    <link type="text/rcss" href="Base.rcss"/>
+    <link type="text/rcss" href="HUD.rcss"/>
+</head>
+<!-- The HUD of the game (see UI::HUD): the numbers come from the data model "hud"; the vignettes, the crosshair, the
+     arcs of the damage direction, the shake, the pulse and the blinking are moved by code every frame. -->
+<body data-model="hud">
+    <img class="vignette" id="vignette-damage" src="Images/VignetteDamage.png"/>
+    <img class="vignette" id="vignette-heal" src="Images/VignetteHeal.png"/>
+
+    <div id="crosshair">
+        <div id="crosshair-circle"></div>
+        <div id="crosshair-dot"></div>
+        <div class="marker" id="marker-0"></div>
+        <div class="marker" id="marker-1"></div>
+        <div class="marker" id="marker-2"></div>
+        <div class="marker" id="marker-3"></div>
+        <img class="damage-arc" id="damage-arc-0" src="Images/DamageArc.png"/>
+        <img class="damage-arc" id="damage-arc-1" src="Images/DamageArc.png"/>
+        <img class="damage-arc" id="damage-arc-2" src="Images/DamageArc.png"/>
+        <img class="damage-arc" id="damage-arc-3" src="Images/DamageArc.png"/>
+    </div>
+
+    <div class="counters left" id="counters-left">
+        <div class="counter" data-if="armor > 0"><img src="Icons/Armor.png"/><span>{{armor}}</span></div>
+        <div class="counter" id="health-counter" data-class-low="health <= lowHealth">
+            <img src="Icons/Health.png"/><span>{{health}}</span>
+        </div>
+    </div>
+
+    <div class="counters right">
+        <div class="counter" id="ammo-counter" data-class-low="ammo <= 10">
+            <span>{{ammo}}</span><img data-attr-src="ammoIcon"/>
+        </div>
+    </div>
+</body>
+</rml>

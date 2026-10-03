@@ -3,6 +3,7 @@ find_package(Stb REQUIRED)  # ImageTests writes test PNG files with stb_image_wr
 
 # --- Unit tests: one executable for all tests, mirrors SourceCode/ ------------
 set(TEST_SOURCES
+    Audio/AudioEngineTests.cpp
     Audio/SoundStoreTests.cpp
     Audio/VoiceSelectionTests.cpp
     Core/VersionTests.cpp
@@ -26,11 +27,14 @@ set(TEST_SOURCES
 
     Gameplay/SpinTests.cpp
     Gameplay/Camera/FreeFlyCameraControllerTests.cpp
+    Gameplay/Characters/ArmorTests.cpp
     Gameplay/Effects/EffectsTests.cpp
     Gameplay/Effects/ParticlesTests.cpp
+    Gameplay/Player/DamageReactionTests.cpp
     Gameplay/Player/LandingDipTests.cpp
     Gameplay/Player/PlayerSystemTests.cpp
     Gameplay/Player/PlayerTests.cpp
+    Gameplay/Weapons/AmmoTests.cpp
     Gameplay/Weapons/CrosshairTests.cpp
     Gameplay/Weapons/WeaponTests.cpp
     Gameplay/Weapons/WeaponViewModelMotionTests.cpp

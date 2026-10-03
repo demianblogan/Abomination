@@ -26,6 +26,7 @@ set(LIBRARY_SOURCES
     Audio/SoundClip.h
     Audio/SoundClip.cpp
     Audio/SoundEvent.h
+    Audio/SoundGroup.h
     Audio/SoundStore.h
     Audio/SoundStore.cpp
     Audio/VoiceSelection.h
@@ -83,8 +84,10 @@ set(LIBRARY_SOURCES
     Gameplay/Camera/MouseLook.cpp
     Gameplay/Camera/ViewSystem.h
     Gameplay/Camera/ViewSystem.cpp
+    Gameplay/Characters/Armor.h
     Gameplay/Characters/CharacterCollision.h
     Gameplay/Characters/CharacterCollision.cpp
+    Gameplay/Characters/DamageKind.h
     Gameplay/Characters/Health.h
     Gameplay/Characters/TargetDummy.h
     Gameplay/Characters/TargetDummy.cpp
@@ -92,6 +95,8 @@ set(LIBRARY_SOURCES
     Gameplay/Effects/Effects.cpp
     Gameplay/Effects/Particles.h
     Gameplay/Effects/Particles.cpp
+    Gameplay/Player/DamageReaction.h
+    Gameplay/Player/DamageReaction.cpp
     Gameplay/Player/LandingDip.h
     Gameplay/Player/LandingDip.cpp
     Gameplay/Player/Player.h
@@ -100,6 +105,7 @@ set(LIBRARY_SOURCES
     Gameplay/Player/PlayerController.cpp
     Gameplay/Player/PlayerSystem.h
     Gameplay/Player/PlayerSystem.cpp
+    Gameplay/Weapons/Ammo.h
     Gameplay/Weapons/Crosshair.h
     Gameplay/Weapons/Crosshair.cpp
     Gameplay/Weapons/ViewRecoil.h
@@ -195,12 +201,12 @@ set(LIBRARY_SOURCES
     Renderer/OpenGL/RenderCommands.cpp
     Renderer/OpenGL/ShaderInterface.h
 
-    UI/CrosshairOverlay.h
-    UI/CrosshairOverlay.cpp
     UI/DebugOverlay.h
     UI/DebugOverlay.cpp
     UI/GameUI.h
     UI/GameUI.cpp
+    UI/HUD.h
+    UI/HUD.cpp
     UI/ImGuiLibrary.h
     UI/ImGuiLibrary.cpp
     UI/UIScale.h
@@ -223,6 +229,8 @@ set(LIBRARY_SOURCES
     UI/Windows/MovementWindow.cpp
     UI/Windows/PerformanceWindow.h
     UI/Windows/PerformanceWindow.cpp
+    UI/Windows/PlayerWindow.h
+    UI/Windows/PlayerWindow.cpp
     UI/Windows/RendererWindow.h
     UI/Windows/RendererWindow.cpp
     UI/Windows/WeaponWindow.h

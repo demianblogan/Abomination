@@ -3,7 +3,6 @@
 #include "Core/BuildConfiguration.h"
 #include "Platform/ImGuiPlatformBackend.h"
 #include "Renderer/ImGuiRendererBackend.h"
-#include "UI/CrosshairOverlay.h"
 #include "UI/ImGuiLibrary.h"
 #include "UI/Windows/AudioWindow.h"
 #include "UI/Windows/ConsoleWindow.h"
@@ -72,7 +71,7 @@ namespace Abomination::UI
         Audio::AudioEngine& audio;
 
         // The player and their tunable settings: the gameplay windows find the components of the player in the registry
-        // (its movement, weapon, view model, recoil), the crosshair is drawn while the player is controlled.
+        // (its movement, weapon, view model, recoil).
         Gameplay::GameplayState& gameplay;
     };
 
@@ -131,6 +130,7 @@ namespace Abomination::UI
         bool m_isEntitiesWindowOpen = false;
         bool m_isRendererWindowOpen = false;
         bool m_isCollisionWindowOpen = false;
+        bool m_isPlayerWindowOpen = false;
         bool m_isMovementWindowOpen = false;
         bool m_isAudioWindowOpen = false;
         bool m_isWeaponWindowOpen = false;
@@ -139,7 +139,6 @@ namespace Abomination::UI
         EntitiesWindow m_entitiesWindow;
         AudioWindow m_audioWindow;
         ConsoleWindow m_consoleWindow;
-        CrosshairOverlay m_crosshair;
 
         // The UI scale chosen in Display > UI scale, and the full scale (with the display scale of Windows) the
         // style was last built for; 0 until the first frame. Not saved between runs yet: settings files come with the

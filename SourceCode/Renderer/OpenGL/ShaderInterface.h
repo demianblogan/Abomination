@@ -56,4 +56,7 @@ namespace Abomination::Renderer
     // Uniforms besides the projection (ProjectionUniform): how far the geometry is moved, in pixels. The texture is
     // uniAlbedoTexture (AlbedoTextureUnit).
     inline constexpr std::uint32_t GameUITranslationUniform = 3;
+
+    // The transform of the element (a rotation of a hit marker line, CSS "transform"), applied after the translation.
+    inline constexpr std::uint32_t GameUITransformUniform = 4;
 }

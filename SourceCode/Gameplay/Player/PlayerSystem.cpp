@@ -85,9 +85,7 @@ namespace Abomination::Gameplay
             const float volume = CalculateLandingVolume(-sounds.previousVerticalSpeed);
             if (volume > 0.0f)
             {
-                Audio::SoundEvent landing = sounds.land;
-                landing.volume *= volume;
-                audio.Play(landing, position);
+                audio.Play(sounds.land, position, false, volume);
             }
         }
 

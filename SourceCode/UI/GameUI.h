@@ -1,5 +1,6 @@
 #pragma once
 
+#include <entt/entt.hpp>
 #include <glm/vec2.hpp>
 
 #include <expected>
@@ -10,6 +11,11 @@
 namespace Rml
 {
     class Context;
+}
+
+namespace Abomination::Gameplay
+{
+    struct GameplayState;
 }
 
 namespace Abomination::Platform
@@ -26,6 +32,8 @@ namespace Abomination::Renderer
 
 namespace Abomination::UI
 {
+    class HUD;
+
     // The game interface (the HUD, the death screen, later the menus), built with RmlUi: documents written like web pages
     // (.rml, like HTML) with style sheets (.rcss, like CSS) in Assets/UI. RmlUi lays them out, handles the mouse and the
     // keyboard, and draws them through the two backends (Platform for SDL, Renderer for OpenGL), the way the debug overlay
@@ -55,6 +63,10 @@ namespace Abomination::UI
         // mouse and the keyboard (only while the cursor is free). Lets RmlUi update its animations and layout.
         void Update(glm::vec2 viewportSize, bool isInputEnabled);
 
+        // Once per frame, before Update: the HUD shows the state of the player (see HUD).
+        void UpdateHUD(const Gameplay::GameplayState& gameplay, const entt::registry& registry, glm::vec2 viewportSize,
+                       float deltaTime);
+
         // Draws the visible documents over the game with the program (Shaders/GameUI). Returns the number of draw calls.
         int Render(glm::vec2 viewportSize, const Renderer::GLShaderProgram& program);
 
@@ -72,5 +84,8 @@ namespace Abomination::UI
 
         // Owned by RmlUi; destroyed with it in Rml::Shutdown().
         Rml::Context* m_context = nullptr;
+
+        // On the heap: its data model keeps the addresses of its values (see HUD::Load).
+        std::unique_ptr<HUD> m_hud;
     };
 }

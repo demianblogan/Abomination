@@ -3,12 +3,16 @@
 #include "Audio/SoundEvent.h"
 #include "Core/Assets/AssetLifetime.h"
 #include "UI/UIScale.h"
+#include "UI/Widgets.h"
 
 #include <glm/geometric.hpp>
 #include <imgui.h>
 
+#include <cstddef>
 #include <format>
 #include <string>
+#include <utility>
+#include <vector>
 
 namespace Abomination::UI
 {
@@ -67,15 +71,86 @@ namespace Abomination::UI
         ImGui::Text("Playing voices: %zu / %zu", audio.GetPlayingVoiceCount(), Audio::AudioEngine::VoiceCount);
         ImGui::SetItemTooltip("A voice is one sound playing. When all are busy, the oldest sound is cut off.");
 
-        float volume = audio.GetMasterVolume();
-        ImGui::SetNextItemWidth(ScaleToUI(180.0f));
-        if (ImGui::SliderFloat("Master volume", &volume, 0.0f, 1.0f, "%.2f"))
-            audio.SetMasterVolume(volume);
-
+        DrawVolumes(audio);
+        DrawSoundEvents(audio);
         DrawTestSound(audio);
         DrawSoundList(audio);
 
         ImGui::End();
+    }
+
+    void AudioWindow::DrawVolumes(Audio::AudioEngine& audio)
+    {
+        // The volume a sound plays at is master x group x its own volume (see Audio::SoundGroup); the groups will be the
+        // volume sliders of the options menu (0.8).
+        ImGui::SeparatorText("Volume");
+        float masterVolume = audio.GetMasterVolume();
+        if (DrawSlider("Master", masterVolume, 0.0f, 1.0f, "%.2f", "Every sound of the game."))
+            audio.SetMasterVolume(masterVolume);
+
+        for (std::size_t index = 0; index < Audio::SoundGroupCount; ++index)
+        {
+            const auto group = static_cast<Audio::SoundGroup>(index);
+            float volume = audio.GetGroupVolume(group);
+            if (DrawSlider(Audio::SoundGroupNames[index].data(), volume, 0.0f, 1.0f, "%.2f"))
+                audio.SetGroupVolume(group, volume);
+        }
+    }
+
+    void AudioWindow::DrawSoundEvents(Audio::AudioEngine& audio)
+    {
+        ImGui::SeparatorText("Sound events");
+        ImGui::TextUnformatted("Tune the volume of every sound here, then write the numbers into the code.");
+
+        // A table: one row per event. The flags give it borders between the columns and lighter and darker rows.
+        constexpr ImGuiTableFlags TableFlags =
+            ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit;
+        if (!ImGui::BeginTable("SoundEvents", 5, TableFlags))
+            return;
+
+        ImGui::TableSetupColumn("");
+        ImGui::TableSetupColumn("Event");
+        ImGui::TableSetupColumn("Group");
+        ImGui::TableSetupColumn("Volume");
+        ImGui::TableSetupColumn("Pitch +-");
+        ImGui::TableHeadersRow();
+
+        // The event is played after the table, so playing does not happen in the middle of reading the list.
+        Audio::SoundEventHandle eventToPlay;
+        for (const auto& [name, handle] : audio.ListSoundEvents())
+        {
+            Audio::SoundEvent* event = audio.GetSoundEvent(handle);
+            ImGui::PushID(name.c_str());
+            ImGui::TableNextRow();
+
+            ImGui::TableNextColumn();
+            if (ImGui::SmallButton("Play"))
+                eventToPlay = handle;
+
+            ImGui::TableNextColumn();
+            ImGui::TextUnformatted(name.c_str());
+            if (event->variants.empty())
+                ImGui::SetItemTooltip("No sound files yet: the event plays nothing.");
+
+            ImGui::TableNextColumn();
+            ImGui::TextUnformatted(Audio::SoundGroupNames[static_cast<std::size_t>(event->group)].data());
+
+            // "##" hides the labels: the column headers say what the sliders are.
+            ImGui::TableNextColumn();
+            ImGui::SetNextItemWidth(ScaleToUI(120.0f));
+            ImGui::SliderFloat("##Volume", &event->volume, 0.0f, 2.0f, "%.2f");
+            ImGui::SetItemTooltip("Its own volume, before the group and the master. Above 1: louder than recorded.");
+
+            ImGui::TableNextColumn();
+            ImGui::SetNextItemWidth(ScaleToUI(100.0f));
+            ImGui::SliderFloat("##Pitch", &event->pitchVariation, 0.0f, 0.3f, "%.2f");
+            ImGui::SetItemTooltip("How much the pitch changes at random every play: 0.05 is up to 5%% lower or higher.");
+
+            ImGui::PopID();
+        }
+        ImGui::EndTable();
+
+        audio.Play(eventToPlay);
     }
 
     void AudioWindow::DrawTestSound(Audio::AudioEngine& audio)
@@ -115,7 +190,8 @@ namespace Abomination::UI
 
     void AudioWindow::DrawSoundList(Audio::AudioEngine& audio)
     {
-        ImGui::SeparatorText("Loaded sounds");
+        if (!ImGui::CollapsingHeader("Loaded files"))
+            return;
 
         // The sounds are played after the list is drawn: playing does not change the list, but it keeps the visitor
         // free of side effects on the engine it reads.

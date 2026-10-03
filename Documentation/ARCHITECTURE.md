@@ -129,7 +129,7 @@ A module may depend only on modules **below** it in this diagram.
 | `AI`          | Enemy behaviour, pathfinding                                    | Planned |
 | `Audio`       | Sounds (miniaudio): sound store, voices, 2D and 3D sound; music later | 0.3 |
 | `Gameplay`    | Game rules: the player (entity, controller, view), free-fly camera, mouse look, spin (0.1–0.2); the shotgun in the hands, shooting, damage, recoil, effects, crosshair, target dummies (0.3); enemies (0.4) | 0.1 |
-| `UI`          | Dear ImGui debug overlay: menu bar, performance, assets, entity inspector, renderer, collision, movement, in-game console (0.1–0.2); audio, view model, weapon, effects windows, the crosshair (0.3); the game interface on RmlUi (`GameUI`, 0.4): HUD, death screen, later the menus | 0.1 |
+| `UI`          | Dear ImGui debug overlay: menu bar, performance, assets, entity inspector, renderer, collision, movement, in-game console (0.1–0.2); audio, view model, weapon, effects windows (0.3); the game interface on RmlUi (`GameUI`, 0.4): the HUD with the crosshair (`HUD`), the death screen, later the menus | 0.1 |
 | `Save`        | Serialization of the game state                                 | Planned |
 | `Application` | Startup, shutdown, main loop, switching between game states     | 0.1     |
 
@@ -172,11 +172,25 @@ A module may depend only on modules **below** it in this diagram.
   fonts are Oswald Bold (text, HUD) and Cormorant SC Bold (titles), drawn by
   FreeType; a test checks that both have every letter of the five languages.
   It gets the mouse only while the cursor is free.
+- **The HUD** (`UI::HUD`, `Assets/UI/HUD.rml`): health in the bottom left
+  corner with armor above it (hidden while there is none), the ammunition of
+  the weapon in the bottom right with the icon of its kind, the crosshair in
+  the middle; icons as high as the digits, numbers red when low. It reacts to
+  the counts the game keeps (`DamageReaction`, `Weapon`): a blow shows the red
+  vignette (stronger for a bigger blow), shakes the health and armor and puts
+  an arc around the crosshair towards where it came from (the arc keeps
+  pointing there while the player turns); healing shows the green vignette;
+  at low health the number pulses with every beat of the heart; an empty click
+  blinks the ammunition twice. The numbers reach the document through a data
+  model (`{{health}}`); everything that moves is moved by code every frame
+  (the renderer backend applies CSS transforms). Shown while the player is
+  controlled and alive.
 - **The debug overlay** has a main menu bar (F1): the *Display* menu (screen
   mode, V-Sync, FPS limit, UI scale), then one item per debug window that
   opens and closes it with one click and stays highlighted while it is open,
   grouped by part of the engine: *Performance*, *Console* | *Entities*,
-  *Assets*, *Renderer*, *Audio* | *Collisions*, *Movement* | *Weapon* (tabs:
+  *Assets*, *Renderer*, *Audio* | *Collisions*, *Movement* | *Player* (health,
+  armor, ammunition, test buttons), *Weapon* (tabs:
   Shot, Crosshair, Recoil, In hands), *Effects*. One file per window; all
   closed at the first start; every window except the console can be resized;
   the tuning windows share the sliders of `UI/Widgets`. The font size is one
@@ -567,11 +581,32 @@ player entity                                free-fly camera entity
   (`Core::IntersectRay`, the slab method); it takes `damagePerPellet` and
   pushes a character along the pellet. One hit or kill sound per shot; the
   weapon counts hits and kills (`hitCount`, `killCount`) for the markers.
+- **Health, armor and ammunition of the player**: `Health` (100), `Armor`
+  (starts at 0, takes two thirds of every hit while it lasts, see
+  `ApplyDamage(Health&, Armor&, damage)`) and `Ammo` (four kinds, shells,
+  bullets, rockets and cells, shared by the weapons that use them; 100 shells
+  at the start). A weapon takes `ammoPerShot` of its `ammoType` per shot and
+  does not fire without it; a new press of Fire then clicks (`emptySound`) and
+  counts `emptyClickCount` for the HUD.
+- **The player feels damage and healing** (`Gameplay::DamageReaction`):
+  `DamagePlayer` hurts through the armor and plays the blow by its
+  `DamageKind` (a melee strike for now) with a cry of pain, or the death cry
+  when it kills; the view punches in a random direction (pitch, yaw and a
+  tilt on springs, only the picture moves, like the recoil); a strong blow
+  muffles the effects and the music for a moment (`AudioEngine::SetMuffle`, a
+  low-pass filter between those groups and the speakers; the voice of the
+  player stays clear). `HealPlayer` heals with a sigh of relief. At 25 health
+  or less the heart is heard once a second (one recording of two beats, the
+  HUD pulses with each). Counts of blows, heals and
+  heartbeats and the direction of the last blow are kept for the HUD. The
+  voice of the player (jump, hurt, death, relief) is recorded by the author,
+  in the Voice group. All values are tuned in the Player window.
 - **Crosshair** (`Gameplay::CrosshairSettings`, one per weapon): a circle
   exactly as wide as the spread on the screen
   (`CalculateSpreadRadiusOnScreen`), a dot, and hit and kill markers — four
-  diagonal lines that flick outwards and fade. Drawn with ImGui's foreground
-  lines (`UI::CrosshairOverlay`) until the HUD of 0.4.
+  diagonal lines that flick outwards and fade. Part of the HUD (`UI::HUD`):
+  RmlUi elements moved every frame (the circle is a box with a rounded
+  border, a marker line is turned by its CSS transform); sizes in dp.
 - **Characters collide with each other**: a moving character traces through
   the level brushes plus a box brush for every other character
   (`GatherCollisionBrushes`, `World::CreateBoxCollisionBrush`). A character
@@ -698,12 +733,20 @@ Renderer::RenderAssets                     all graphics stores, owned by Applica
   samples of its clip in place, so sounds are removed only after every voice
   is stopped (`AudioEngine::RemoveSounds`). The game plays **sound events**
   (`Audio::SoundEvent`): a few variants chosen at random, a random pitch
-  (±5%) and a limit of copies playing at once (`ChooseVoice`: the oldest copy
-  makes room). A sound plays in 2D, "in the head" (the player's own body), or
+  (±5%), its own volume and a limit of copies playing at once (`ChooseVoice`:
+  the oldest copy makes room). The engine keeps the events by name and hands
+  out handles (`SoundEventHandle`), like the stores of assets, so a volume
+  tuned once changes the sound everywhere. Every event belongs to a
+  `SoundGroup` (Effects, Voice, Music) with its own volume, a miniaudio sound
+  group: a sound plays at master × group × its own volume; the groups will be
+  the volume sliders of the options menu (0.8). A sound plays in 2D, "in the head" (the player's own body), or
   in 3D at a position; the listener is put at the eyes of the camera every
   frame. Without a sound card the game runs silently. A missing sound file
   becomes a short beep, the audible magenta texture. Audio window (Audio in
-  the menu bar: volume, voices, sounds, a repeating 3D test sound).
+  the menu bar): the master and group volumes, every sound event with sliders
+  for its volume and pitch variation and a Play button (to balance the sounds
+  without rebuilding; the numbers then go into the code, later into the
+  configuration files of 0.6), the loaded files, a repeating 3D test sound.
 - `Renderer::RenderAssets` groups the stores of all graphics assets. Code that
   draws gets it as one parameter; a new graphics asset type adds a member.
 - **Fallbacks:** a missing or broken texture becomes a magenta and black
@@ -785,7 +828,7 @@ is `Abomination::Core::Clock`. These modules are split already:
 | `Core` | `BuildConfiguration`, `Version` | `Time/` (clock, frame timer, fixed timestep, FPS limit, statistics), `Logging/`, `Files/` (files, images), `Math/` (units, planes, polygons, bounding boxes and rays, random numbers, springs), `Assets/` (handles, cache, lifetimes), `Scene/` (`Name`, `Transform`, interpolation) |
 | `Renderer` | `RenderSystem`, `RenderSettings`, `MeshRenderer`, `ModelRenderer`, `DrawOffset`, `ImGuiRendererBackend`, `RmlUiRendererBackend` | `OpenGL/` (wrappers of OpenGL objects, loader, debug output, shader interface), `Assets/` (meshes, models, glTF loading and the stores), `Camera/` (`CameraLens`, `View`), `Debug/` (debug lines), `Sprites/` (sprite batch and renderer) |
 | `Gameplay` | `GameplayState`, `Spin` | `Player/` (player, controller, its system, landing dip), `Camera/` (free-fly camera, mouse look, the view), `Weapons/` (weapon, its system, the weapon in the hands and its motion, recoil, crosshair), `Effects/` (effects, particles), `Characters/` (health, collisions between characters, target dummies) |
-| `UI` | `DebugOverlay`, `ImGuiLibrary`, `UIScale`, `Widgets`, `CrosshairOverlay`, `GameUI` | `Windows/` (one file per debug window) |
+| `UI` | `DebugOverlay`, `ImGuiLibrary`, `UIScale`, `Widgets`, `GameUI`, `HUD` | `Windows/` (one file per debug window) |
 
 A module is split when its folder no longer shows its parts at a glance
 (around 20 files); the tests in `Tests/` follow the same folders.

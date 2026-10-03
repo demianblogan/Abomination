@@ -1,0 +1,114 @@
+/* The HUD of the game. Sizes are in dp: 1 dp is 1 pixel in a window 1080 pixels high, so the HUD keeps its share of
+   the screen at any resolution. */
+
+body
+{
+    width: 100%;
+    height: 100%;
+    font-family: Oswald;
+    font-weight: bold;
+    color: #f0e6d2;
+}
+
+/* Health, armor and ammunition in the bottom corners: an icon and a big number with a dark outline, readable on any
+   wall. */
+.counters
+{
+    position: absolute;
+    bottom: 24dp;
+}
+
+.counters.left
+{
+    left: 36dp;
+}
+
+.counters.right
+{
+    right: 36dp;
+}
+
+/* An icon and its number side by side, centered on each other. The digits of Oswald are 0.83 of the font size high
+   (53 dp at 64 dp). The shape of an icon fills about 70% of its picture (its outline and chipped edges leave a margin),
+   so a 76 dp icon shows a shape as high as the digits. */
+.counter
+{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    height: 84dp;
+    font-size: 64dp;
+    font-effect: outline(3dp #0c0a08);
+}
+
+.counters.right .counter
+{
+    justify-content: flex-end;
+}
+
+.counter img
+{
+    width: 76dp;
+    height: 76dp;
+    margin: 0 8dp;
+}
+
+/* The health (its icon and number together) pulses from its middle with the heart. */
+#health-counter
+{
+    transform-origin: 50% 50%;
+}
+
+/* Little left: the number turns red. */
+.counter.low
+{
+    color: #e8382a;
+}
+
+/* The vignettes cover the whole screen; their opacity is set by code (0: not seen). */
+.vignette
+{
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+}
+
+/* The crosshair: a point in the middle of the screen; its parts are placed around it by code (the circle is as wide as
+   the spread of the weapon, the markers move and fade, the arcs turn towards blows). */
+#crosshair
+{
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 0;
+    height: 0;
+}
+
+#crosshair-circle, #crosshair-dot
+{
+    position: absolute;
+}
+
+/* A line of a hit marker: it starts at the middle of the screen and is turned and pushed outwards by its transform. */
+.marker
+{
+    position: absolute;
+    left: 0;
+    top: 0;
+    transform-origin: 0 50%;
+}
+
+/* An arc of the damage direction: centered on the middle of the screen, turned and pushed out by its transform. */
+.damage-arc
+{
+    position: absolute;
+    width: 168dp;
+    height: 56dp;
+    left: -84dp;
+    top: -28dp;
+    transform-origin: 50% 50%;
+    opacity: 0;
+}

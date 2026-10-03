@@ -5,7 +5,8 @@
 namespace Abomination::Gameplay
 {
     // A hit marker: four short diagonal lines around the crosshair that flash for a moment when a shot hurts something,
-    // moving a little outwards (or inwards) and fading out. Sizes are in pixels at 100% UI scale.
+    // moving a little outwards (or inwards) and fading out. Sizes are in dp: pixels in a window 1080 pixels high (see
+    // UI::HUD).
     struct HitMarkerSettings
     {
         glm::vec4 color{1.0f, 1.0f, 1.0f, 1.0f};
@@ -23,7 +24,7 @@ namespace Abomination::Gameplay
     };
 
     // How the crosshair of a weapon looks. Every weapon has its own (see Weapon): the shotgun shows a circle as wide as
-    // the spread of its pellets; later weapons may have other shapes (0.7). Sizes are in pixels at 100% UI scale.
+    // the spread of its pellets; later weapons may have other shapes (0.7). Sizes are in dp, like the hit markers.
     struct CrosshairSettings
     {
         glm::vec4 color{1.0f, 1.0f, 1.0f, 0.85f};

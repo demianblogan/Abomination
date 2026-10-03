@@ -199,10 +199,24 @@ namespace Abomination::Gameplay
         weapon->secondsSinceLastShot += tickDuration;
 
         // Holding Fire keeps shooting at the rhythm of the weapon; a press between two ticks counts too.
-        const bool wantsToFire = canShoot && (actions.IsActionActive(Input::Action::Fire) || weapon->isFireRequested);
+        const bool wasFirePressed = weapon->isFireRequested;
+        const bool wantsToFire = canShoot && (actions.IsActionActive(Input::Action::Fire) || wasFirePressed);
         weapon->isFireRequested = false;
         if (!wantsToFire || weapon->cooldown > 0.0f)
             return false;
+
+        // No shot without ammunition (an entity without an Ammo component, like a test, shoots without counting). A new
+        // press clicks, so the player knows why nothing happens; holding Fire clicks only once, not at every tick.
+        if (Ammo* ammo = registry.try_get<Ammo>(state.player);
+            ammo != nullptr && !TryUseAmmo(*ammo, weapon->settings.ammoType, weapon->settings.ammoPerShot))
+        {
+            if (wasFirePressed)
+            {
+                audio.Play(weapon->emptySound);
+                ++weapon->emptyClickCount;
+            }
+            return false;
+        }
 
         // The wait restarts from the moment the weapon became ready, not from now: at 60 ticks per second the rhythm
         // stays exactly timeBetweenShots instead of drifting by up to a tick with every shot. It never goes below 0,

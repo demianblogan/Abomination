@@ -151,7 +151,7 @@ namespace Abomination::UI
 
             if (m_isWeaponWindowOpen)
                 DrawWeaponWindow(&m_isWeaponWindowOpen, weapon, registry.get<Gameplay::ViewRecoil>(gameplay.player),
-                                 weaponViewModel);
+                                 weaponViewModel, gameplay.shells, registry);
         }
 
         // The console is drawn even while the rest of the overlay is hidden: it has its own key.

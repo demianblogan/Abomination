@@ -10,6 +10,7 @@
 
 #include <glad/gl.h>
 #include <glm/ext/matrix_clip_space.hpp>
+#include <glm/ext/matrix_transform.hpp>
 
 namespace Abomination::Renderer
 {
@@ -154,7 +155,8 @@ namespace Abomination::Renderer
 
     RenderStatistics DrawWeaponViewModel(ModelHandle model, const glm::mat4& eyeSpaceMatrix, float verticalFOV,
                                          float aspectRatio, const RenderAssets& assets, ShaderHandle shader,
-                                         const SystemShaders& systemShaders, const RenderSettings& settings)
+                                         const SystemShaders& systemShaders, const RenderSettings& settings,
+                                         std::span<const ModelPartOffset> partOffsets)
     {
         RenderStatistics statistics;
 
@@ -175,7 +177,15 @@ namespace Abomination::Renderer
             .statistics = statistics,
         };
         for (const ModelPart& part : assets.models.Get(model).parts)
-            DrawMesh(pass, shader, part.texture, part.mesh, eyeSpaceMatrix * part.transform);
+        {
+            // A moved part is shifted in the coordinates of the model, before the model is placed at the eyes.
+            glm::mat4 partMatrix = part.transform;
+            for (const ModelPartOffset& partOffset : partOffsets)
+                if (partOffset.partName == part.name)
+                    partMatrix = glm::translate(glm::mat4(1.0f), partOffset.offset) * partMatrix;
+
+            DrawMesh(pass, shader, part.texture, part.mesh, eyeSpaceMatrix * partMatrix);
+        }
 
         EndMeshPass();
 

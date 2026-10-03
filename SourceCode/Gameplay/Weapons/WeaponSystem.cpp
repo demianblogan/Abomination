@@ -168,6 +168,9 @@ namespace Abomination::Gameplay
 
             KickWeaponViewModelRecoil(weaponViewModel->motion, weaponViewModel->motionSettings);
 
+            // The pump starts its movement a moment after the shot (see PumpAction).
+            weaponViewModel->pump.secondsSinceShot = 0.0f;
+
             // The flash at the muzzle of the weapon in the hands, turned differently every shot.
             weaponViewModel->flashTimeLeft = state.effects.settings.flashDuration;
             weaponViewModel->flashRotation = state.effects.random.GetFloat(0.0f, 2.0f * std::numbers::pi_v<float>);
@@ -219,9 +222,9 @@ namespace Abomination::Gameplay
         }
 
         // The wait restarts from the moment the weapon became ready, not from now: at 60 ticks per second the rhythm
-        // stays exactly timeBetweenShots instead of drifting by up to a tick with every shot. It never goes below 0,
+        // stays exactly the shot cycle instead of drifting by up to a tick with every shot. It never goes below 0,
         // so a long pause does not store up shots.
-        weapon->cooldown = std::max(weapon->cooldown, 0.0f) + weapon->settings.timeBetweenShots;
+        weapon->cooldown = std::max(weapon->cooldown, 0.0f) + CalculateShotCycleDuration(weapon->settings.pumpAction);
 
         // The eyes as they are in this tick (not interpolated: the simulation shoots from where the player really is).
         const Core::Transform eyes = CalculatePlayerEyeTransform(registry.get<Core::Transform>(state.player),

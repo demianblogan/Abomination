@@ -12,6 +12,8 @@
 #include <limits>
 #include <format>
 #include <optional>
+#include <span>
+#include <unordered_map>
 #include <utility>
 
 namespace Abomination::Renderer
@@ -43,7 +45,7 @@ namespace Abomination::Renderer
         std::filesystem::path fullPath = m_assetsDirectory / path;
         fullPath.make_preferred();
 
-        const std::expected<ModelData, std::string> data = LoadGLTFFile(fullPath);
+        std::expected<ModelData, std::string> data = LoadGLTFFile(fullPath);
         if (!data.has_value())
         {
             Core::Log::Write(LogCategory::Renderer, LogLevel::Warning, "Model {} replaced by the fallback: {}", path,
@@ -51,6 +53,24 @@ namespace Abomination::Renderer
             m_fallbackPaths.insert(path);
 
             return m_cache.Add(path, m_fallbackModel, lifetime);
+        }
+
+        // The pieces the game moves on their own become parts, and the copies left behind them get their textures. A split
+        // that takes nothing (the model file was changed) is only a warning: the model is drawn as the file has it.
+        std::unordered_map<std::string, TextureHandle> backingTextures;
+        const auto splits = m_partSplits.find(path);
+        const std::span<const ModelPartSplit> pathSplits =
+            splits != m_partSplits.end() ? std::span<const ModelPartSplit>(splits->second) : std::span<const ModelPartSplit>();
+        for (const ModelPartSplit& split : pathSplits)
+        {
+            if (!SplitModelPart(*data, split))
+            {
+                Core::Log::Write(LogCategory::Renderer, LogLevel::Warning, "Model {}: no piece of part {} for part {}", path,
+                                 split.sourcePartName, split.partName);
+                continue;
+            }
+            if (!split.backingPartName.empty())
+                backingTextures[split.backingPartName] = textures.Load(split.backingTexturePath, lifetime);
         }
 
         // Only the images the parts use become textures, named after the model. A model file often holds more (normal and
@@ -70,7 +90,9 @@ namespace Abomination::Renderer
             model.parts.push_back(ModelPart{
                 .name = partData.name,
                 .mesh = meshes.Add(std::format("{}#{}", path, partData.name), partData.mesh, lifetime),
-                .texture = partData.imageIndex.has_value() ? getImageTexture(*partData.imageIndex) : TextureHandle{},
+                .texture = partData.imageIndex.has_value()         ? getImageTexture(*partData.imageIndex)
+                           : backingTextures.contains(partData.name) ? backingTextures.at(partData.name)
+                                                                     : TextureHandle{},
                 .transform = partData.transform,
             });
         }
@@ -97,6 +119,26 @@ namespace Abomination::Renderer
         const glm::mat4 centering = glm::translate(glm::mat4(1.0f), -center);
         for (ModelPart& part : model.parts)
             part.transform = centering * part.transform;
+
+        // The box of every part, in the centered coordinates. The parts follow data->parts one to one.
+        for (std::size_t partIndex = 0; partIndex < model.parts.size(); ++partIndex)
+        {
+            glm::vec3 partMinimum(std::numeric_limits<float>::max());
+            glm::vec3 partMaximum(std::numeric_limits<float>::lowest());
+            for (const MeshVertex& vertex : data->parts[partIndex].mesh.vertices)
+            {
+                const glm::vec3 position(model.parts[partIndex].transform * glm::vec4(vertex.position, 1.0f));
+                partMinimum = glm::min(partMinimum, position);
+                partMaximum = glm::max(partMaximum, position);
+            }
+
+            // A part without vertices keeps an empty box at the middle of the model.
+            if (partMinimum.x <= partMaximum.x)
+            {
+                model.parts[partIndex].center = (partMinimum + partMaximum) * 0.5f;
+                model.parts[partIndex].size = partMaximum - partMinimum;
+            }
+        }
 
         // The front: the average of the vertices near the frontmost one (the end of a barrel), in centered coordinates.
         // The middle of the box would not do: the stock and the trigger guard pull it below the barrel.
@@ -144,6 +186,15 @@ namespace Abomination::Renderer
     const std::string* ModelStore::GetPath(ModelHandle handle) const
     {
         return m_cache.GetPath(handle);
+    }
+
+    void ModelStore::SetPartSplits(const std::string& path, std::vector<ModelPartSplit> splits)
+    {
+        if (m_cache.Find(path).has_value())
+            Core::Log::Write(LogCategory::Renderer, LogLevel::Warning,
+                             "Model {} is already loaded: its parts are split only when it is loaded again", path);
+
+        m_partSplits[path] = std::move(splits);
     }
 
     std::size_t ModelStore::GetCount() const noexcept

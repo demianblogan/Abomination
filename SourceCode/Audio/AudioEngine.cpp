@@ -298,6 +298,18 @@ namespace Abomination::Audio
             ReleaseVoice(voice);
     }
 
+    void AudioEngine::FadeOut(VoiceId voiceId, float seconds)
+    {
+        if (voiceId.startOrder == 0 || voiceId.index >= VoiceCount)
+            return;
+
+        // miniaudio lowers the volume to 0 over the time and then stops the sound; a stopped voice is free for the next
+        // Play(), like one that has played to its end.
+        Voice& voice = m_implementation->voices[voiceId.index];
+        if (voice.startOrder == voiceId.startOrder && voice.isInitialized)
+            ma_sound_stop_with_fade_in_milliseconds(&voice.sound, static_cast<ma_uint64>(seconds * 1000.0f));
+    }
+
     void AudioEngine::StopAll()
     {
         for (Voice& voice : m_implementation->voices)

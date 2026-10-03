@@ -1,5 +1,6 @@
 #include "UI/Windows/WeaponWindow.h"
 
+#include "Gameplay/Weapons/Shells.h"
 #include "Gameplay/Weapons/ViewRecoil.h"
 #include "Gameplay/Weapons/Weapon.h"
 #include "Gameplay/Weapons/WeaponViewModel.h"
@@ -63,12 +64,33 @@ namespace Abomination::UI
             ImGui::Text("Group at 10 m:  %.2f m wide", widthAtTenMeters);
 
             DrawSlider("Range", settings.range, 5.0f, 200.0f, "%.0f m", "Pellets fly this far and hit nothing beyond it.");
-            DrawSlider("Time between shots", settings.timeBetweenShots, 0.1f, 2.0f, "%.2f s",
-                       "The rhythm of the weapon: holding Fire shoots again after this time.");
             DrawSlider("Damage per pellet", settings.damagePerPellet, 0.0f, 50.0f, "%.1f",
                        "Health one pellet takes. A target dummy has 100.");
             DrawSlider("Knockback per pellet", settings.knockbackPerPellet, 0.0f, 5.0f, "%.2f m/s",
                        "How hard one pellet pushes what it hits away from the shooter.");
+
+            // The cycle of a shot sets the rhythm: holding Fire shoots again when the pump is forward again.
+            Gameplay::PumpActionSettings& pump = settings.pumpAction;
+            ImGui::SeparatorText("Shot cycle");
+            ImGui::Text("Time between shots: %.2f s", Gameplay::CalculateShotCycleDuration(pump));
+            DrawSlider("Recoil time", pump.recoilDuration, 0.0f, 1.0f, "%.2f s",
+                       "From the shot until the weapon is brought to the chest: the recoil plays out first.");
+            DrawSlider("To the chest", pump.raiseDuration, 0.02f, 0.5f, "%.2f s",
+                       "How long the weapon takes to turn and tilt to the chest.");
+            DrawSlider("Pump back", pump.backDuration, 0.02f, 0.5f, "%.2f s", "How long the pump takes to go back.");
+            DrawSlider("Pump hold", pump.holdDuration, 0.0f, 0.3f, "%.2f s", "How long it stays at the back.");
+            DrawSlider("Pump forward", pump.forwardDuration, 0.02f, 0.5f, "%.2f s", "How long it takes to come forward.");
+            DrawSlider("Back to aim", pump.lowerDuration, 0.02f, 0.5f, "%.2f s",
+                       "How long the weapon takes to come back from the chest.");
+            DrawCentimeterSlider("Pump travel", pump.travel, 0.0f, 15.0f, "How far the pump goes back along the barrel.");
+            DrawDegreeSlider("Turn", pump.turnAngle, 0.0f, 60.0f, "%.0f deg",
+                             "How far the barrel swings across towards the body, around the stock.");
+            DrawDegreeSlider("Lift", pump.liftAngle, 0.0f, 20.0f, "%.1f deg",
+                             "How far the barrel turns up, around the stock.");
+            DrawSlider("Turn point", pump.turnPivot, 0.0f, 1.0f, "%.2f",
+                       "Where the turn and the lift go around: 0 the end of the stock, 0.5 the middle, 1 the muzzle.");
+            DrawDegreeSlider("Tilt", pump.tiltAngle, 0.0f, 90.0f, "%.0f deg",
+                             "How far the weapon tilts on its side towards the body, around its barrel.");
 
             ImGui::Checkbox("Show pellet lines", &weapon.areShotLinesVisible);
             ImGui::SetItemTooltip("Lines of the pellets of the last shot for 2 seconds: yellow where they hit a character,\n"
@@ -213,8 +235,64 @@ namespace Abomination::UI
         }
     }
 
+    namespace
+    {
+        void DrawShellsTab(Gameplay::Shells& shells, entt::registry& registry)
+        {
+            Gameplay::ShellSettings& settings = shells.settings;
+            ImGui::Text("Shells in the level: %zu", shells.shells.size());
+
+            ImGui::SeparatorText("Throw");
+            DrawSlider("To the side", settings.sideSpeed, 0.0f, 6.0f, "%.2f m/s",
+                       "How fast the shell flies out to the right side of the weapon.");
+            DrawSlider("Up", settings.upSpeed, -2.0f, 4.0f, "%.2f m/s", "How fast it flies up (of the weapon).");
+            DrawSlider("Back", settings.backSpeed, -2.0f, 3.0f, "%.2f m/s", "How fast it flies back, towards the stock.");
+            DrawSlider("Speed variation", settings.speedVariation, 0.0f, 0.6f, "%.2f",
+                       "How much every throw changes the speed (0.2: by up to 20%).");
+            DrawDegreeSlider("Spin", settings.spinSpeed, 0.0f, 3000.0f, "%.0f deg/s", "How fast it turns end over end.");
+            DrawCentimeterSlider("Window right", settings.windowOffset.x, -5.0f, 5.0f,
+                                 "Moves the place it comes out of along the weapon's right.");
+            DrawCentimeterSlider("Window up", settings.windowOffset.y, -5.0f, 5.0f,
+                                 "Moves the place it comes out of along the weapon's up.");
+            DrawCentimeterSlider("Window back", settings.windowOffset.z, -20.0f, 20.0f,
+                                 "Moves the place it comes out of along the barrel, towards the stock.");
+
+            ImGui::SeparatorText("Bounces");
+            DrawSlider("Bounce", settings.bounce, 0.0f, 1.0f, "%.2f",
+                       "The part of the speed into a surface it jumps back with.");
+            DrawSlider("Slide", settings.slide, 0.0f, 1.0f, "%.2f",
+                       "The part of the speed along a surface it keeps after a bounce.");
+            DrawSlider("Rest speed", settings.restSpeed, 0.05f, 2.0f, "%.2f m/s", "Slower than this on a floor it lies down.");
+            DrawIntSlider("Maximum count", settings.maximumCount, 1, 100,
+                          "How many shells lie in the level; a new one replaces the oldest.");
+            DrawSlider("Sound from", settings.soundSpeed, 0.0f, 3.0f, "%.2f m/s",
+                       "A bounce is heard when the shell hits a surface faster than this.");
+            DrawSlider("Full volume at", settings.fullVolumeSpeed, 0.5f, 8.0f, "%.2f m/s");
+            DrawSlider("Sound fade-out", settings.soundFadeOut, 0.0f, 1.0f, "%.2f s",
+                       "How long the ringing of the last bounce fades out once the shell lies still.");
+
+            ImGui::SeparatorText("Smoke");
+            DrawIntSlider("Window puffs", settings.windowSmokeCount, 0, 10, "Puffs of smoke out of the window.");
+            DrawSlider("Window lifetime", settings.windowSmokeLifetime, 0.1f, 2.0f, "%.2f s");
+            DrawCentimeterSlider("Window size", settings.windowSmokeHalfSize, 0.5f, 20.0f, "Half the size of a puff.");
+            DrawSlider("Trail duration", settings.trailDuration, 0.0f, 2.0f, "%.2f s",
+                       "How long the shell trails smoke after the throw.");
+            DrawSlider("Trail interval", settings.trailInterval, 0.005f, 0.2f, "%.3f s",
+                       "Time between two puffs of the trail.");
+            DrawSlider("Trail lifetime", settings.trailLifetime, 0.1f, 2.0f, "%.2f s");
+            DrawCentimeterSlider("Trail size", settings.trailHalfSize, 0.2f, 10.0f, "Half the size of a puff of the trail.");
+
+            ImGui::Separator();
+            if (ImGui::Button("Reset"))
+                settings = Gameplay::ShellSettings{};
+            ImGui::SameLine();
+            if (ImGui::Button("Remove shells"))
+                Gameplay::ClearShells(shells, registry);
+        }
+    }
+
     void DrawWeaponWindow(bool* isOpen, Gameplay::Weapon& weapon, Gameplay::ViewRecoil& viewRecoil,
-                          Gameplay::WeaponViewModel& weaponViewModel)
+                          Gameplay::WeaponViewModel& weaponViewModel, Gameplay::Shells& shells, entt::registry& registry)
     {
         ImGui::SetNextWindowPos(ScaleToUI(InitialPosition), ImGuiCond_FirstUseEver);
         if (!ImGui::Begin("Weapon", isOpen))
@@ -247,6 +325,12 @@ namespace Abomination::UI
             if (ImGui::BeginTabItem("In hands"))
             {
                 DrawInHandsTab(weaponViewModel);
+                ImGui::EndTabItem();
+            }
+
+            if (ImGui::BeginTabItem("Shells"))
+            {
+                DrawShellsTab(shells, registry);
                 ImGui::EndTabItem();
             }
 

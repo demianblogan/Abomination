@@ -88,11 +88,11 @@ namespace Abomination::Gameplay
         return registry.get<Renderer::CameraLens>(GetViewEntity(state));
     }
 
-    void UpdateViewEffects(GameplayState& state, entt::registry& registry, float deltaTime)
+    void UpdateViewEffects(GameplayState& state, entt::registry& registry, Audio::AudioEngine& audio, float deltaTime)
     {
         // The weapon swings with what the ticks of this frame did to the player (a landing, the speed) and with the view
         // turned this frame.
-        UpdateWeaponViewModel(state, registry, deltaTime);
+        UpdateWeaponViewModel(state, registry, audio, deltaTime);
         UpdatePlayerLandingDip(state, registry, deltaTime);
         UpdatePlayerViewRecoil(state, registry, deltaTime);
         state.effects.particles.Update(deltaTime, state.physicsSettings.gravity);

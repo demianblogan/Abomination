@@ -28,5 +28,5 @@ namespace Abomination::Gameplay
     // Once per frame, after the ticks (deltaTime, seconds): everything that only moves the picture, every frame so it is
     // as smooth as the view: the weapon in the hands (see UpdateWeaponViewModel), the landing dip and the recoil of the view,
     // and the particles.
-    void UpdateViewEffects(GameplayState& state, entt::registry& registry, float deltaTime);
+    void UpdateViewEffects(GameplayState& state, entt::registry& registry, Audio::AudioEngine& audio, float deltaTime);
 }

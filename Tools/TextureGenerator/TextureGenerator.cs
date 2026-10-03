@@ -1001,4 +1001,113 @@ public static class TextureGen
             sheet.Save(previewPath, ImageFormat.Png);
         }
     }
+
+    // ---------- shotgun shell ----------
+    // The texture of an ejected shotgun shell, wrapped around a short cylinder built by code (see
+    // Gameplay::CreateShellMesh): the horizontal axis goes around it, the vertical one along it, from its bottom (row 0)
+    // to its top. A tarnished brass base, a worn red plastic tube with a darker crimp at the top. 16 x 16, pixelated like
+    // the textures of the world (it is drawn in the world, with their filtering).
+    const int ShellTextureSize = 16;
+
+    static Bitmap ShellTexture(int seed)
+    {
+        double[] brassLight = Hex("#C8A04A"), brassDark = Hex("#5A4016");
+        double[] redLight = Hex("#A8281C"), redDark = Hex("#4A0E08");
+        double[] crimp = Hex("#2E0806"), rim = Hex("#3A2A10");
+        Bitmap bmp = new Bitmap(ShellTextureSize, ShellTextureSize, PixelFormat.Format32bppArgb);
+        for (int y = 0; y < ShellTextureSize; y++)
+            for (int x = 0; x < ShellTextureSize; x++)
+            {
+                // Rows from the bottom of the shell: the image is stored top row first, so row 0 is the last line.
+                int row = ShellTextureSize - 1 - y;
+
+                // Light falls from one side: the columns around the middle of the texture are the lit side.
+                double around = Math.Cos((x + 0.5) / ShellTextureSize * 2 * Math.PI);
+                double rough = Fbm(x * 4, row * 4, 8, 8, 2, seed);
+                double shade = 0.45 + around * 0.3 + (rough - 0.5) * 0.5;
+
+                double[] c;
+                if (row == 0)
+                    c = rim;
+                else if (row < 4)
+                    c = Mix(brassDark, brassLight, Math.Max(0, Math.Min(1, shade + 0.1)));
+                else if (row == 4)
+                    c = Mix(rim, brassDark, 0.5);
+                else if (row >= ShellTextureSize - 2)
+                    c = Mix(crimp, redDark, Math.Max(0, Math.Min(1, shade)) * 0.6);
+                else
+                    c = Mix(redDark, redLight, Math.Max(0, Math.Min(1, shade)));
+
+                // Scratches and grime.
+                if (Rand(x, row, seed + 3) < 0.08)
+                    c = Mix(c, Hex("#1A1712"), 0.5);
+                else if (Rand(x, row, seed + 5) < 0.05)
+                    c = Mix(c, Hex("#E0C080"), 0.3);
+                bmp.SetPixel(x, y, ToColor(c));
+            }
+        return bmp;
+    }
+
+    // Writes the texture of the shell into weaponsDirectory, and a preview of it into previewPath: the texture enlarged,
+    // and a shell drawn from the side with it.
+    public static void RunShell(string weaponsDirectory, string previewPath)
+    {
+        Directory.CreateDirectory(weaponsDirectory);
+        Bitmap texture = ShellTexture(401);
+        texture.Save(Path.Combine(weaponsDirectory, "ShotgunShell.png"), ImageFormat.Png);
+
+        using (Bitmap sheet = new Bitmap(16 * 12 + 16 * 6 + 48, 16 * 12 + 16, PixelFormat.Format32bppArgb))
+        using (Graphics g = Graphics.FromImage(sheet))
+        {
+            g.Clear(ToColor(Silt));
+            g.InterpolationMode = InterpolationMode.NearestNeighbor;
+            g.PixelOffsetMode = PixelOffsetMode.Half;
+            g.DrawImage(texture, 8, 8, 16 * 12, 16 * 12);
+
+            // The shell from the side: the front half of the texture (columns 4 to 11) is what faces the viewer.
+            g.DrawImage(texture, new Rectangle(16 * 12 + 32, 8, 8 * 6, 16 * 12), new Rectangle(4, 0, 8, 16), GraphicsUnit.Pixel);
+            Directory.CreateDirectory(Path.GetDirectoryName(previewPath));
+            sheet.Save(previewPath, ImageFormat.Png);
+        }
+    }
+
+    // ---------- the opening behind the shotgun bolt ----------
+    // The bolt of the shotgun model slides back with the pump (see Renderer::ModelPartSplit) and uncovers this: a 16 x 16
+    // texture of the dark inside of the receiver, almost black, with the dim brass glint of the chamber at its bottom.
+    static Bitmap OpeningTexture(int seed)
+    {
+        double[] black = Hex("#0A0908"), soot = Hex("#1E1C18"), brass = Hex("#5A4016");
+        Bitmap bmp = new Bitmap(16, 16, PixelFormat.Format32bppArgb);
+        for (int y = 0; y < 16; y++)
+            for (int x = 0; x < 16; x++)
+            {
+                double rough = Fbm(x * 4, y * 4, 8, 8, 2, seed);
+                double[] c = Mix(black, soot, rough);
+
+                // The chamber: a dim glint along the bottom rows (the image is stored top row first).
+                if (y >= 12)
+                    c = Mix(c, brass, 0.25 + (y - 12) * 0.08 + (rough - 0.5) * 0.2);
+                bmp.SetPixel(x, y, ToColor(c));
+            }
+        return bmp;
+    }
+
+    // Writes the texture of the opening into weaponsDirectory, and a preview of it, enlarged, into previewPath.
+    public static void RunBoltOpening(string weaponsDirectory, string previewPath)
+    {
+        Directory.CreateDirectory(weaponsDirectory);
+        Bitmap opening = OpeningTexture(509);
+        opening.Save(Path.Combine(weaponsDirectory, "ShotgunOpening.png"), ImageFormat.Png);
+
+        using (Bitmap sheet = new Bitmap(16 * 10 + 16, 16 * 10 + 16, PixelFormat.Format32bppArgb))
+        using (Graphics g = Graphics.FromImage(sheet))
+        {
+            g.Clear(ToColor(Silt));
+            g.InterpolationMode = InterpolationMode.NearestNeighbor;
+            g.PixelOffsetMode = PixelOffsetMode.Half;
+            g.DrawImage(opening, 8, 8, 16 * 10, 16 * 10);
+            Directory.CreateDirectory(Path.GetDirectoryName(previewPath));
+            sheet.Save(previewPath, ImageFormat.Png);
+        }
+    }
 }

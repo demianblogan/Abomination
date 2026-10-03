@@ -601,6 +601,20 @@ player entity                                free-fly camera entity
   heartbeats and the direction of the last blow are kept for the HUD. The
   voice of the player (jump, hurt, death, relief) is recorded by the author,
   in the Voice group. All values are tuned in the Player window.
+- **Pump action** (`Gameplay::PumpAction`): the cycle of a shot is part of the
+  weapon (`WeaponSettings::pumpAction`), one phase after another: the recoil
+  plays out; the weapon is brought to the chest (turned around the end of its
+  stock, so the barrel swings across towards the middle of the body and up
+  around a point a little in front of the middle of the weapon, and tilted on its side around the
+  barrel; to the left when held on the right or in the middle, to the right
+  when held on the left); the pump is worked there (back with a quick start
+  and a soft stop, a short hold, forward smoothly); the weapon goes back to the
+  aim. The next shot comes only after it, so the cycle is the time between
+  shots. The model has no animation: the parts named in
+  `PumpAction::partNames` (the pump and the slide) are moved along the barrel
+  by code, through the part offsets of `Renderer::DrawWeaponViewModel`. The
+  sound of the pump starts so that its first clack comes when the pump reaches
+  the back. Tuned in the Weapon window (Shot tab).
 - **Crosshair** (`Gameplay::CrosshairSettings`, one per weapon): a circle
   exactly as wide as the spread on the screen
   (`CalculateSpreadRadiusOnScreen`), a dot, and hit and kill markers — four

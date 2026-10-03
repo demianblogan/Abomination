@@ -36,6 +36,7 @@ set(TEST_SOURCES
     Gameplay/Player/PlayerTests.cpp
     Gameplay/Weapons/AmmoTests.cpp
     Gameplay/Weapons/CrosshairTests.cpp
+    Gameplay/Weapons/PumpActionTests.cpp
     Gameplay/Weapons/WeaponTests.cpp
     Gameplay/Weapons/WeaponViewModelMotionTests.cpp
     Gameplay/Weapons/WeaponViewModelTests.cpp

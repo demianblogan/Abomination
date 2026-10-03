@@ -30,6 +30,7 @@
 #include <chrono>
 #include <span>
 #include <utility>
+#include <vector>
 
 namespace Abomination
 {
@@ -159,7 +160,7 @@ namespace Abomination
 
             // What only moves the picture (the weapon in the hands, the view, the particles) moves every frame, after the
             // ticks of this frame, so it is as smooth as the view.
-            Gameplay::UpdateViewEffects(m_gameplay, m_registry, frameTimer.GetDeltaTime());
+            Gameplay::UpdateViewEffects(m_gameplay, m_registry, m_audio, frameTimer.GetDeltaTime());
             Gameplay::UpdateDamageReaction(m_gameplay, m_registry, m_audio, frameTimer.GetDeltaTime());
 
             frameStatistics.AddFrame(frameTimer.GetDeltaTime(), tickCount);
@@ -389,10 +390,16 @@ namespace Abomination
         if (weaponViewModel == nullptr || m_gameplay.controlMode != Gameplay::ControlMode::Player)
             return;
 
+        // The parts that move with the pump go back along the barrel: the model points along -Z, so back is +Z.
+        std::vector<Renderer::ModelPartOffset> partOffsets;
+        for (const std::string& partName : weaponViewModel->pump.partNames)
+            partOffsets.push_back({.partName = partName, .offset = {0.0f, 0.0f, weaponViewModel->pump.travel}});
+
         const Renderer::RenderStatistics statistics =
             Renderer::DrawWeaponViewModel(weaponViewModel->model, Gameplay::CalculateWeaponViewModelMatrix(*weaponViewModel),
                                           weaponViewModel->verticalFOV, aspectRatio, m_renderAssets,
-                                          weaponViewModel->shaderProgram, m_systemShaders, m_renderSettings);
+                                          weaponViewModel->shaderProgram, m_systemShaders, m_renderSettings,
+                                          partOffsets);
         m_renderStatistics.drawCallCount += statistics.drawCallCount;
         m_renderStatistics.triangleCount += statistics.triangleCount;
 

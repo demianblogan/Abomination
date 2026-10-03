@@ -4,6 +4,7 @@
 #include "Core/Math/Random.h"
 #include "Gameplay/Weapons/Ammo.h"
 #include "Gameplay/Weapons/Crosshair.h"
+#include "Gameplay/Weapons/PumpAction.h"
 
 #include <glm/trigonometric.hpp>
 #include <glm/vec3.hpp>
@@ -26,8 +27,9 @@ namespace Abomination::Gameplay
         // Pellets fly this far (meters) and hit nothing beyond it.
         float range = 100.0f;
 
-        // Seconds from one shot to the next, the pump-action rhythm.
-        float timeBetweenShots = 0.8f;
+        // The cycle of a shot: the recoil plays out, then the pump is worked; the next shot comes after it (see
+        // PumpAction.h). It sets the rhythm of the weapon.
+        PumpActionSettings pumpAction;
 
         // What one pellet does to what it hits: the damage it takes from its Health, and how hard it pushes it away
         // (meters per second added to its velocity along the pellet). All six pellets at close range: 60 damage.
@@ -62,6 +64,9 @@ namespace Abomination::Gameplay
 
         // The click of a press of Fire without enough ammunition.
         Audio::SoundEventHandle emptySound;
+
+        // The pump worked after a shot (see PumpAction).
+        Audio::SoundEventHandle pumpSound;
 
         // Played once per shot that hurt something, and once per shot that killed something (instead of the hit).
         Audio::SoundEventHandle hitSound;

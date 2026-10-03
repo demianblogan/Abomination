@@ -63,12 +63,33 @@ namespace Abomination::UI
             ImGui::Text("Group at 10 m:  %.2f m wide", widthAtTenMeters);
 
             DrawSlider("Range", settings.range, 5.0f, 200.0f, "%.0f m", "Pellets fly this far and hit nothing beyond it.");
-            DrawSlider("Time between shots", settings.timeBetweenShots, 0.1f, 2.0f, "%.2f s",
-                       "The rhythm of the weapon: holding Fire shoots again after this time.");
             DrawSlider("Damage per pellet", settings.damagePerPellet, 0.0f, 50.0f, "%.1f",
                        "Health one pellet takes. A target dummy has 100.");
             DrawSlider("Knockback per pellet", settings.knockbackPerPellet, 0.0f, 5.0f, "%.2f m/s",
                        "How hard one pellet pushes what it hits away from the shooter.");
+
+            // The cycle of a shot sets the rhythm: holding Fire shoots again when the pump is forward again.
+            Gameplay::PumpActionSettings& pump = settings.pumpAction;
+            ImGui::SeparatorText("Shot cycle");
+            ImGui::Text("Time between shots: %.2f s", Gameplay::CalculateShotCycleDuration(pump));
+            DrawSlider("Recoil time", pump.recoilDuration, 0.0f, 1.0f, "%.2f s",
+                       "From the shot until the weapon is brought to the chest: the recoil plays out first.");
+            DrawSlider("To the chest", pump.raiseDuration, 0.02f, 0.5f, "%.2f s",
+                       "How long the weapon takes to turn and tilt to the chest.");
+            DrawSlider("Pump back", pump.backDuration, 0.02f, 0.5f, "%.2f s", "How long the pump takes to go back.");
+            DrawSlider("Pump hold", pump.holdDuration, 0.0f, 0.3f, "%.2f s", "How long it stays at the back.");
+            DrawSlider("Pump forward", pump.forwardDuration, 0.02f, 0.5f, "%.2f s", "How long it takes to come forward.");
+            DrawSlider("Back to aim", pump.lowerDuration, 0.02f, 0.5f, "%.2f s",
+                       "How long the weapon takes to come back from the chest.");
+            DrawCentimeterSlider("Pump travel", pump.travel, 0.0f, 15.0f, "How far the pump goes back along the barrel.");
+            DrawDegreeSlider("Turn", pump.turnAngle, 0.0f, 60.0f, "%.0f deg",
+                             "How far the barrel swings across towards the body, around the stock.");
+            DrawDegreeSlider("Lift", pump.liftAngle, 0.0f, 20.0f, "%.1f deg",
+                             "How far the barrel turns up, around the stock.");
+            DrawSlider("Turn point", pump.turnPivot, 0.0f, 1.0f, "%.2f",
+                       "Where the turn and the lift go around: 0 the end of the stock, 0.5 the middle, 1 the muzzle.");
+            DrawDegreeSlider("Tilt", pump.tiltAngle, 0.0f, 90.0f, "%.0f deg",
+                             "How far the weapon tilts on its side towards the body, around its barrel.");
 
             ImGui::Checkbox("Show pellet lines", &weapon.areShotLinesVisible);
             ImGui::SetItemTooltip("Lines of the pellets of the last shot for 2 seconds: yellow where they hit a character,\n"

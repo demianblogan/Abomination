@@ -108,6 +108,8 @@ set(LIBRARY_SOURCES
     Gameplay/Weapons/Ammo.h
     Gameplay/Weapons/Crosshair.h
     Gameplay/Weapons/Crosshair.cpp
+    Gameplay/Weapons/PumpAction.h
+    Gameplay/Weapons/PumpAction.cpp
     Gameplay/Weapons/ViewRecoil.h
     Gameplay/Weapons/ViewRecoil.cpp
     Gameplay/Weapons/Weapon.h

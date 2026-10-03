@@ -48,15 +48,25 @@ namespace Abomination::Renderer
                                 const RenderAssets& assets, const SystemShaders& systemShaders,
                                 const RenderSettings& settings);
 
-    // Draws the weapon in the hands of the player (a "view model"), after the world: over everything drawn before, with
-    // its own field of view (verticalFOV, radians), so it never goes into walls and a wider field of view of the world
-    // does not stretch it. eyeSpaceMatrix places the model relative to the eyes: meters, +X to the right, +Y up, -Z
-    // forward (the direction the player looks). aspectRatio is that of the window (above 0).
     // The projection the weapon in the hands is drawn with (see DrawWeaponViewModel): its own vertical field of view (radians)
     // and near and far planes close to the eyes. Sprites drawn with the weapon (its muzzle flash) use it too.
     [[nodiscard]] glm::mat4 CalculateWeaponViewModelProjection(float verticalFOV, float aspectRatio);
 
+    // A part of a model moved from its place in the model (meters, in the coordinates of the model): the pump of a
+    // shotgun pulled back. partName is the name the artist gave the part (see ModelPart::name).
+    struct ModelPartOffset
+    {
+        std::string_view partName;
+        glm::vec3 offset{0.0f};
+    };
+
+    // Draws the weapon in the hands of the player (a "view model"), after the world: over everything drawn before, with
+    // its own field of view (verticalFOV, radians), so it never goes into walls and a wider field of view of the world
+    // does not stretch it. eyeSpaceMatrix places the model relative to the eyes: meters, +X to the right, +Y up, -Z
+    // forward (the direction the player looks). aspectRatio is that of the window (above 0). partOffsets move parts of
+    // the model (the pump), the others stay where the model has them.
     RenderStatistics DrawWeaponViewModel(ModelHandle model, const glm::mat4& eyeSpaceMatrix, float verticalFOV,
                                          float aspectRatio, const RenderAssets& assets, ShaderHandle shader,
-                                         const SystemShaders& systemShaders, const RenderSettings& settings);
+                                         const SystemShaders& systemShaders, const RenderSettings& settings,
+                                         std::span<const ModelPartOffset> partOffsets = {});
 }

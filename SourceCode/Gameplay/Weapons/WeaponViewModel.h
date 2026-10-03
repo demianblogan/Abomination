@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Gameplay/GameplayState.h"
+#include "Gameplay/Weapons/PumpAction.h"
 #include "Gameplay/Weapons/WeaponViewModelMotion.h"
 #include "Renderer/Assets/ModelStore.h"
 #include "Renderer/Assets/ShaderStore.h"
@@ -51,6 +52,9 @@ namespace Abomination::Gameplay
         // Where the muzzle is in the model (meters): the flash appears there.
         glm::vec3 muzzle{0.0f};
 
+        // The pump that moves back and forth after every shot (see PumpAction.h).
+        PumpAction pump;
+
         // How much longer the muzzle flash is shown (seconds; 0 or less: not shown) and its rotation, new every shot.
         float flashTimeLeft = 0.0f;
         float flashRotation = 0.0f;
@@ -66,7 +70,8 @@ namespace Abomination::Gameplay
     // The model itself is not mirrored on the left: a mirrored weapon would have its parts on the wrong side.
     [[nodiscard]] glm::mat4 CalculateWeaponViewModelMatrix(const WeaponViewModel& weaponViewModel);
 
-    // Once per frame (deltaTime, seconds): moves the motion of the player's weapon with what the player does (see
-    // UpdateWeaponViewModelMotion).
-    void UpdateWeaponViewModel(const GameplayState& state, entt::registry& registry, float deltaTime);
+    // Once per frame (deltaTime, seconds): moves the motion of the player.s weapon with what the player does (see
+    // UpdateWeaponViewModelMotion) and works the pump after a shot, with its sound.
+    void UpdateWeaponViewModel(const GameplayState& state, entt::registry& registry, Audio::AudioEngine& audio,
+                               float deltaTime);
 }

@@ -70,6 +70,13 @@ namespace Abomination::Gameplay
 
             // The model points along -Z, so its front is the end of the barrel.
             .muzzle = renderAssets.models.Get(shotgun).front,
+
+            // The pump and the slide behind it move together when the pump is worked; the weapon is turned to the chest
+            // around a point along its length.
+            .pump = {
+                .partNames = {"Pump_low_Shotgun_0", "Slide_low_Shotgun_0"},
+                .modelLength = renderAssets.models.Get(shotgun).size.z,
+            },
         });
 
         state.effects.textures = LoadEffectTextures(renderAssets.textures);
@@ -90,6 +97,9 @@ namespace Abomination::Gameplay
 
         // The click of the trigger when the shells run out.
         weapon.emptySound = LoadEvent(audio, "Sounds/Weapons/Shotgun/DryFire", 1, Audio::SoundGroup::Effects, 1);
+
+        // The pump after a shot: one recording of both clacks, back and forward (see PumpSoundBackClackTime).
+        weapon.pumpSound = LoadEvent(audio, "Sounds/Weapons/Shotgun/Pump", 1, Audio::SoundGroup::Effects, 1);
 
         // The confirmation that a shot hurt or killed something (temporary sounds from Kenney's Impact Sounds).
         weapon.hitSound = LoadEvent(audio, "Sounds/Weapons/Hit", 3, Audio::SoundGroup::Effects, 2);

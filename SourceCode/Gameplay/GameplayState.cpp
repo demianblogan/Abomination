@@ -14,11 +14,24 @@
 
 #include <glm/vec3.hpp>
 
+#include <string>
+
 namespace Abomination::Gameplay
 {
     namespace
     {
         constexpr int StartingShells = 100;
+
+        // Loads a sound event for the whole game (see AudioEngine::LoadSoundEvent) and sets how many copies of it may play at
+        // once. The volumes are tuned in the Audio window of the debug overlay.
+        Audio::SoundEventHandle LoadEvent(Audio::AudioEngine& audio, const std::string& path, int variantCount,
+                                          Audio::SoundGroup group, int maxVoices)
+        {
+            const Audio::SoundEventHandle event =
+                audio.LoadSoundEvent(path, variantCount, group, Core::AssetLifetime::Global);
+            audio.GetSoundEvent(event)->maxVoices = maxVoices;
+            return event;
+        }
     }
 
     GameplayState CreateGameplayState(entt::registry& registry, const World::PlayerStart& playerStart,
@@ -33,8 +46,7 @@ namespace Abomination::Gameplay
         // A jump itself makes no sound: the feet only push off. The jump will be the voice of the player (a short effort
         // sound), recorded separately; until then the jump event has no variants and plays nothing.
         // One landing at a time: a new one cuts the old one off.
-        state.playerSounds.land = audio.LoadSoundEvent("Sounds/Player/Land", 3, Core::AssetLifetime::Global);
-        state.playerSounds.land.maxVoices = 1;
+        state.playerSounds.land = LoadEvent(audio, "Sounds/Player/Land", 3, Audio::SoundGroup::Effects, 1);
 
         // The shotgun in the hands, for the whole game (the pickups and weapon switching of later versions will change
         // which model it is).
@@ -60,19 +72,14 @@ namespace Abomination::Gameplay
 
         // The shotgun itself: what it shoots and how it sounds. One recording, its pitch changed by up to 5% every shot.
         Weapon& weapon = registry.emplace<Weapon>(state.player);
-        weapon.fireSound = audio.LoadSoundEvent("Sounds/Weapons/Shotgun/Fire", 1, Core::AssetLifetime::Global);
-        weapon.fireSound.pitchVariation = 0.05f;
-        weapon.fireSound.maxVoices = 2;
+        weapon.fireSound = LoadEvent(audio, "Sounds/Weapons/Shotgun/Fire", 1, Audio::SoundGroup::Effects, 2);
 
         // The click of the trigger when the shells run out.
-        weapon.emptySound = audio.LoadSoundEvent("Sounds/Weapons/Shotgun/DryFire", 1, Core::AssetLifetime::Global);
-        weapon.emptySound.maxVoices = 1;
+        weapon.emptySound = LoadEvent(audio, "Sounds/Weapons/Shotgun/DryFire", 1, Audio::SoundGroup::Effects, 1);
 
         // The confirmation that a shot hurt or killed something (temporary sounds from Kenney's Impact Sounds).
-        weapon.hitSound = audio.LoadSoundEvent("Sounds/Weapons/Hit", 3, Core::AssetLifetime::Global);
-        weapon.hitSound.maxVoices = 2;
-        weapon.killSound = audio.LoadSoundEvent("Sounds/Weapons/Kill", 3, Core::AssetLifetime::Global);
-        weapon.killSound.maxVoices = 2;
+        weapon.hitSound = LoadEvent(audio, "Sounds/Weapons/Hit", 3, Audio::SoundGroup::Effects, 2);
+        weapon.killSound = LoadEvent(audio, "Sounds/Weapons/Kill", 3, Audio::SoundGroup::Effects, 2);
 
         return state;
     }

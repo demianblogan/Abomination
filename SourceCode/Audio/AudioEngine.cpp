@@ -1,6 +1,7 @@
 #include "Audio/AudioEngine.h"
 
 #include "Audio/VoiceSelection.h"
+#include "Core/Assets/AssetCache.h"
 #include "Core/Logging/Log.h"
 #include "Core/Math/Random.h"
 
@@ -8,6 +9,7 @@
 
 #include <algorithm>
 #include <array>
+#include <string>
 #include <utility>
 
 namespace Abomination::Audio
@@ -63,8 +65,13 @@ namespace Abomination::Audio
             for (Voice& voice : voices)
                 ReleaseVoice(voice);
 
+            // The groups after the voices that play into them, the engine last.
             if (hasDevice)
+            {
+                for (ma_sound_group& group : groups)
+                    ma_sound_group_uninit(&group);
                 ma_engine_uninit(&engine);
+            }
         }
 
         // Neither copied nor moved: miniaudio points into it (see m_implementation).
@@ -72,6 +79,9 @@ namespace Abomination::Audio
         Implementation& operator=(const Implementation&) = delete;
 
         SoundStore sounds;
+
+        // The sound events, by name ("Sounds/Weapons/Shotgun/Fire"): whoever plays one keeps its handle.
+        Core::AssetCache<SoundEvent> events;
 
         // The miniaudio engine: the sound card, the mixer, the listener.
         ma_engine engine{};
@@ -83,6 +93,11 @@ namespace Abomination::Audio
         std::uint64_t nextStartOrder = 1;
 
         float masterVolume = 1.0f;
+
+        // One miniaudio sound group per SoundGroup: every voice plays into the group of its event, and the volume of a
+        // group applies to all of its voices at once.
+        std::array<ma_sound_group, SoundGroupCount> groups{};
+        std::array<float, SoundGroupCount> groupVolumes{1.0f, 1.0f, 1.0f};
 
         // The last listener given to SetListener(); looks along -Z like a new miniaudio listener.
         glm::vec3 listenerPosition{0.0f};
@@ -104,6 +119,11 @@ namespace Abomination::Audio
         }
 
         m_implementation->hasDevice = true;
+
+        // A group is a mixer channel between the voices and the master: 0 flags, attached to the engine (nullptr parent).
+        for (ma_sound_group& group : m_implementation->groups)
+            ma_sound_group_init(&m_implementation->engine, 0, nullptr, &group);
+
         Core::Log::Write(LogCategory::Audio, LogLevel::Info, "Audio started: {} Hz, {} channels",
                          ma_engine_get_sample_rate(&m_implementation->engine),
                          ma_engine_get_channels(&m_implementation->engine));
@@ -118,20 +138,49 @@ namespace Abomination::Audio
         return m_implementation->sounds.Load(path, lifetime);
     }
 
-    SoundEvent AudioEngine::LoadSoundEvent(const std::string& pathWithoutNumber, int variantCount,
-                                           Core::AssetLifetime lifetime)
+    SoundEventHandle AudioEngine::LoadSoundEvent(const std::string& pathWithoutNumber, int variantCount,
+                                                 SoundGroup group, Core::AssetLifetime lifetime)
     {
-        SoundEvent event;
+        Core::AssetCache<SoundEvent>& events = m_implementation->events;
+        if (const std::optional<SoundEventHandle> loaded = events.Find(pathWithoutNumber); loaded.has_value())
+        {
+            events.ExtendLifetime(*loaded, lifetime);
+            return *loaded;
+        }
+
+        SoundEvent event{.group = group};
         for (int variant = 1; variant <= variantCount; ++variant)
             event.variants.push_back(LoadSound(pathWithoutNumber + std::to_string(variant) + ".ogg", lifetime));
 
-        return event;
+        return events.Add(pathWithoutNumber, std::move(event), lifetime);
+    }
+
+    SoundEvent* AudioEngine::GetSoundEvent(SoundEventHandle handle)
+    {
+        return m_implementation->events.Get(handle);
+    }
+
+    const SoundEvent* AudioEngine::GetSoundEvent(SoundEventHandle handle) const
+    {
+        return m_implementation->events.Get(handle);
+    }
+
+    std::vector<std::pair<std::string, SoundEventHandle>> AudioEngine::ListSoundEvents() const
+    {
+        const Core::AssetCache<SoundEvent>& events = m_implementation->events;
+        std::vector<std::pair<std::string, SoundEventHandle>> list;
+        events.VisitAssets([&](const std::string& name, const SoundEvent&, Core::AssetLifetime)
+        {
+            list.emplace_back(name, *events.Find(name));
+        });
+        return list;
     }
 
     void AudioEngine::RemoveSounds(Core::AssetLifetime lifetime)
     {
         StopAll();
         m_implementation->sounds.RemoveAll(lifetime);
+        m_implementation->events.RemoveAll(lifetime);
     }
 
     const SoundStore& AudioEngine::GetSounds() const noexcept
@@ -139,7 +188,14 @@ namespace Abomination::Audio
         return m_implementation->sounds;
     }
 
-    VoiceId AudioEngine::Play(const SoundEvent& event, std::optional<glm::vec3> position, bool isLooping)
+    VoiceId AudioEngine::Play(SoundEventHandle eventHandle, std::optional<glm::vec3> position, bool isLooping,
+                              float volumeScale)
+    {
+        const SoundEvent* event = GetSoundEvent(eventHandle);
+        return event != nullptr ? Play(*event, position, isLooping, volumeScale) : VoiceId{};
+    }
+
+    VoiceId AudioEngine::Play(const SoundEvent& event, std::optional<glm::vec3> position, bool isLooping, float volumeScale)
     {
         Implementation& state = *m_implementation;
         if (!state.hasDevice || event.variants.empty())
@@ -170,7 +226,8 @@ namespace Abomination::Audio
 
         // A 2D sound skips spatialization: it plays as recorded, whatever the listener does.
         const ma_uint32 flags = position.has_value() ? 0 : MA_SOUND_FLAG_NO_SPATIALIZATION;
-        if (ma_sound_init_from_data_source(&state.engine, &voice.buffer, flags, nullptr, &voice.sound) != MA_SUCCESS)
+        ma_sound_group* group = &state.groups[static_cast<std::size_t>(event.group)];
+        if (ma_sound_init_from_data_source(&state.engine, &voice.buffer, flags, group, &voice.sound) != MA_SUCCESS)
         {
             ma_audio_buffer_ref_uninit(&voice.buffer);
             Core::Log::Write(LogCategory::Audio, LogLevel::Warning, "A sound could not be started");
@@ -182,7 +239,7 @@ namespace Abomination::Audio
         voice.eventKey = event.variants.front();
         voice.startOrder = state.nextStartOrder++;
 
-        ma_sound_set_volume(&voice.sound, event.volume);
+        ma_sound_set_volume(&voice.sound, event.volume * volumeScale);
         ma_sound_set_pitch(&voice.sound, 1.0f + state.random.GetFloat(-event.pitchVariation, event.pitchVariation));
         ma_sound_set_looping(&voice.sound, isLooping ? MA_TRUE : MA_FALSE);
         if (position.has_value())
@@ -248,6 +305,19 @@ namespace Abomination::Audio
     float AudioEngine::GetMasterVolume() const noexcept
     {
         return m_implementation->masterVolume;
+    }
+
+    void AudioEngine::SetGroupVolume(SoundGroup group, float volume)
+    {
+        const auto index = static_cast<std::size_t>(group);
+        m_implementation->groupVolumes[index] = std::clamp(volume, 0.0f, 1.0f);
+        if (m_implementation->hasDevice)
+            ma_sound_group_set_volume(&m_implementation->groups[index], m_implementation->groupVolumes[index]);
+    }
+
+    float AudioEngine::GetGroupVolume(SoundGroup group) const noexcept
+    {
+        return m_implementation->groupVolumes[static_cast<std::size_t>(group)];
     }
 
     std::size_t AudioEngine::GetPlayingVoiceCount() const

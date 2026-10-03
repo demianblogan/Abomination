@@ -58,14 +58,14 @@ namespace Abomination::Gameplay
         // How its crosshair and hit markers look.
         CrosshairSettings crosshair;
 
-        Audio::SoundEvent fireSound;
+        Audio::SoundEventHandle fireSound;
 
         // The click of a press of Fire without enough ammunition.
-        Audio::SoundEvent emptySound;
+        Audio::SoundEventHandle emptySound;
 
         // Played once per shot that hurt something, and once per shot that killed something (instead of the hit).
-        Audio::SoundEvent hitSound;
-        Audio::SoundEvent killSound;
+        Audio::SoundEventHandle hitSound;
+        Audio::SoundEventHandle killSound;
 
         // How many shots so far hurt something and how many killed something. They only grow: whoever shows hit markers
         // (the crosshair) remembers the numbers it has seen and starts a marker when one grows.

@@ -38,8 +38,8 @@ namespace Abomination::Gameplay
     struct PlayerSounds
     {
         // The voice of the player jumping (an effort sound) and the feet landing on the ground.
-        Audio::SoundEvent jump;
-        Audio::SoundEvent land;
+        Audio::SoundEventHandle jump;
+        Audio::SoundEventHandle land;
 
         // The player stood on the ground in the last tick, and their vertical speed then (meters per second, negative
         // while falling). A landing is noticed one tick later, when the physics has already stopped the fall, so the

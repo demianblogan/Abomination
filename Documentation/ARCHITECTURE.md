@@ -706,12 +706,20 @@ Renderer::RenderAssets                     all graphics stores, owned by Applica
   samples of its clip in place, so sounds are removed only after every voice
   is stopped (`AudioEngine::RemoveSounds`). The game plays **sound events**
   (`Audio::SoundEvent`): a few variants chosen at random, a random pitch
-  (±5%) and a limit of copies playing at once (`ChooseVoice`: the oldest copy
-  makes room). A sound plays in 2D, "in the head" (the player's own body), or
+  (±5%), its own volume and a limit of copies playing at once (`ChooseVoice`:
+  the oldest copy makes room). The engine keeps the events by name and hands
+  out handles (`SoundEventHandle`), like the stores of assets, so a volume
+  tuned once changes the sound everywhere. Every event belongs to a
+  `SoundGroup` (Effects, Voice, Music) with its own volume, a miniaudio sound
+  group: a sound plays at master × group × its own volume; the groups will be
+  the volume sliders of the options menu (0.8). A sound plays in 2D, "in the head" (the player's own body), or
   in 3D at a position; the listener is put at the eyes of the camera every
   frame. Without a sound card the game runs silently. A missing sound file
   becomes a short beep, the audible magenta texture. Audio window (Audio in
-  the menu bar: volume, voices, sounds, a repeating 3D test sound).
+  the menu bar): the master and group volumes, every sound event with sliders
+  for its volume and pitch variation and a Play button (to balance the sounds
+  without rebuilding; the numbers then go into the code, later into the
+  configuration files of 0.6), the loaded files, a repeating 3D test sound.
 - `Renderer::RenderAssets` groups the stores of all graphics assets. Code that
   draws gets it as one parameter; a new graphics asset type adds a member.
 - **Fallbacks:** a missing or broken texture becomes a magenta and black

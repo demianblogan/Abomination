@@ -26,6 +26,7 @@ set(LIBRARY_SOURCES
     Audio/SoundClip.h
     Audio/SoundClip.cpp
     Audio/SoundEvent.h
+    Audio/SoundGroup.h
     Audio/SoundStore.h
     Audio/SoundStore.cpp
     Audio/VoiceSelection.h

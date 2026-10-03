@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Audio/SoundEvent.h"
+#include "Audio/SoundGroup.h"
 #include "Audio/SoundStore.h"
 #include "Core/Assets/AssetLifetime.h"
 
@@ -12,6 +13,8 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <utility>
+#include <vector>
 
 namespace Abomination::Audio
 {
@@ -54,20 +57,35 @@ namespace Abomination::Audio
         [[nodiscard]] SoundHandle LoadSound(const std::string& path, Core::AssetLifetime lifetime);
 
         // Loads the variants of a sound event, numbered from 1: "Sounds/Weapons/Hit" with 3 variants loads
-        // Sounds/Weapons/Hit1.ogg, Hit2.ogg and Hit3.ogg. The other values of the event are the defaults of SoundEvent.
-        [[nodiscard]] SoundEvent LoadSoundEvent(const std::string& pathWithoutNumber, int variantCount,
-                                                Core::AssetLifetime lifetime);
+        // Sounds/Weapons/Hit1.ogg, Hit2.ogg and Hit3.ogg, and keeps the event under that name, in the group. The other
+        // values of the event are the defaults of SoundEvent; change them with GetSoundEvent. Loading a name again gives
+        // the same handle and keeps the values already set (the longer lifetime wins, like for assets).
+        [[nodiscard]] SoundEventHandle LoadSoundEvent(const std::string& pathWithoutNumber, int variantCount,
+                                                      SoundGroup group, Core::AssetLifetime lifetime);
 
-        // Stops every voice and removes every sound of the lifetime group. The voices are stopped first: a voice reads the
-        // samples of its sound while it plays, from the thread of miniaudio.
+        // The event of the handle, to read or change its values, or nullptr for an invalid handle.
+        [[nodiscard]] SoundEvent* GetSoundEvent(SoundEventHandle handle);
+        [[nodiscard]] const SoundEvent* GetSoundEvent(SoundEventHandle handle) const;
+
+        // Every loaded event, with its name, for the Audio window of the debug overlay.
+        [[nodiscard]] std::vector<std::pair<std::string, SoundEventHandle>> ListSoundEvents() const;
+
+        // Stops every voice and removes every sound and sound event of the lifetime group. The voices are stopped first: a
+        // voice reads the samples of its sound while it plays, from the thread of miniaudio.
         void RemoveSounds(Core::AssetLifetime lifetime);
 
         [[nodiscard]] const SoundStore& GetSounds() const noexcept;
 
         // Plays one variant of the event, chosen at random, with a random pitch (see SoundEvent). position: where the
-        // sound is in the world (game meters), or nothing for a 2D sound. A looping sound plays until Stop().
-        // Returns the voice, or an id without a voice if nothing was started (no sound card, no variants).
-        VoiceId Play(const SoundEvent& event, std::optional<glm::vec3> position = std::nullopt, bool isLooping = false);
+        // sound is in the world (game meters), or nothing for a 2D sound. A looping sound plays until Stop(). volumeScale
+        // multiplies the volume of the event for this one play (a softer landing). Returns the voice, or an id without a
+        // voice if nothing was started (no sound card, an invalid handle, no variants).
+        VoiceId Play(SoundEventHandle event, std::optional<glm::vec3> position = std::nullopt, bool isLooping = false,
+                     float volumeScale = 1.0f);
+
+        // Plays an event that is not kept by the engine (a test sound of the debug overlay), the same way.
+        VoiceId Play(const SoundEvent& event, std::optional<glm::vec3> position = std::nullopt, bool isLooping = false,
+                     float volumeScale = 1.0f);
 
         // Stops the sound if the voice still plays it.
         void Stop(VoiceId voice);
@@ -85,6 +103,10 @@ namespace Abomination::Audio
         // The volume of everything, 0 (silence) to 1.
         void SetMasterVolume(float volume);
         [[nodiscard]] float GetMasterVolume() const noexcept;
+
+        // The volume of a group of sounds, 0 to 1 (see SoundGroup).
+        void SetGroupVolume(SoundGroup group, float volume);
+        [[nodiscard]] float GetGroupVolume(SoundGroup group) const noexcept;
 
         // How many voices play a sound right now (for the Audio window).
         [[nodiscard]] std::size_t GetPlayingVoiceCount() const;

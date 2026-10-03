@@ -42,6 +42,7 @@ the license check before a commercial release.
 | `UI/HUD.rml`, `UI/HUD.rcss` | Alone Bull | — | Own work | — | The HUD: health, armor, ammunition, crosshair, vignettes, arcs of the damage direction |
 | `UI/Icons/Health.png`, `Armor.png`, `Shells.png`, `Bullets.png`, `Rockets.png`, `Cells.png`, `KeyBronze.png`, `KeySilver.png`, `KeyGold.png` | Alone Bull | `Tools/TextureGenerator` (32×32, saved 4× larger with every pixel a 4×4 block) | Own work | — | Icons of the HUD in the style of the world: health, armor, the four kinds of ammunition, the three keys |
 | `UI/Images/VignetteDamage.png`, `VignetteHeal.png`, `DamageArc.png` | Alone Bull | `Tools/TextureGenerator` (vignettes 128×72, arc 48×16, saved 4× larger with every pixel a 4×4 block) | Own work | — | Effects of the HUD: the red vignette of a blow, the light green glow of healing, the arc that shows where a blow came from |
+| `Textures/Weapons/ShotgunShell.png` | Alone Bull | `Tools/TextureGenerator` (16×16) | Own work | — | The ejected shotgun shell: a tarnished brass base, a worn red tube, a dark crimp |
 | `Textures/Episode1/Wall_MossyBrick.png` | Alone Bull | `Tools/TextureGenerator` (64×64) | Own work | — | Old brick wall with moss, cracks and damp streaks |
 | `Textures/Episode1/Floor_WetFlagstone.png` | Alone Bull | `Tools/TextureGenerator` (64×64) | Own work | — | Wet stone slabs with mud in the joints |
 | `Textures/Episode1/Floor_RottenPlanks.png` | Alone Bull | `Tools/TextureGenerator` (64×64) | Own work | — | Rotten wooden planks with nails (stairs, bridges) |

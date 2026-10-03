@@ -193,20 +193,24 @@ namespace Abomination::Renderer
 
         ASSERT_TRUE(model.has_value()) << model.error();
         ASSERT_TRUE(model->skeleton.has_value());
+
+        // The node above the joints of the skin ("Armature") is part of the skeleton too, first: it may be animated.
         const std::vector<SkeletonJoint>& joints = model->skeleton->joints;
-        ASSERT_EQ(joints.size(), 2u);
-        EXPECT_EQ(joints[0].name, "Root");
+        ASSERT_EQ(joints.size(), 3u);
+        EXPECT_EQ(joints[0].name, "Armature");
         EXPECT_FALSE(joints[0].parent.has_value());
-        EXPECT_EQ(joints[1].name, "Tip");
+        EXPECT_FLOAT_EQ(joints[0].translation.z, 3.0f);
+        EXPECT_EQ(joints[1].name, "Root");
         EXPECT_EQ(joints[1].parent, 0u);
-        EXPECT_FLOAT_EQ(joints[1].translation.y, 1.0f);
+        EXPECT_EQ(joints[2].name, "Tip");
+        EXPECT_EQ(joints[2].parent, 1u);
+        EXPECT_FLOAT_EQ(joints[2].translation.y, 1.0f);
 
-        // The inverse bind matrix goes with its joint: "Tip" was first in the skin, its matrix moves down by 1.
-        EXPECT_FLOAT_EQ(joints[1].inverseBindMatrix[3][1], -1.0f);
-        EXPECT_FLOAT_EQ(joints[0].inverseBindMatrix[3][1], 0.0f);
-
-        // The node above the root joint places the skeleton.
-        EXPECT_FLOAT_EQ(model->skeleton->rootTransform[3][2], 3.0f);
+        // The inverse bind matrix goes with its joint: "Tip" was first in the skin, its matrix moves down by 1. The node
+        // above the skin has none (the identity).
+        EXPECT_FLOAT_EQ(joints[2].inverseBindMatrix[3][1], -1.0f);
+        EXPECT_FLOAT_EQ(joints[1].inverseBindMatrix[3][1], 0.0f);
+        EXPECT_EQ(joints[0].inverseBindMatrix, glm::mat4(1.0f));
     }
 
     TEST_F(GLTFLoaderTest, SkinnedVerticesReferToOrderedJoints)
@@ -223,12 +227,12 @@ namespace Abomination::Renderer
         EXPECT_EQ(body->transform, glm::mat4(1.0f));
         EXPECT_FALSE(body->parentJoint.has_value());
 
-        // Skin joint 0 ("Tip") is joint 1 of the skeleton, skin joint 1 ("Root") is joint 0.
+        // Skin joint 0 ("Tip") is joint 2 of the skeleton, skin joint 1 ("Root") is joint 1.
         ASSERT_EQ(body->mesh.skin.size(), 3u);
-        EXPECT_EQ(body->mesh.skin[0].joints.x, 1u);
-        EXPECT_EQ(body->mesh.skin[1].joints.x, 0u);
-        // The unused slots (weight 0) hold skin joint 0 too, which becomes joint 1 like the others.
-        EXPECT_EQ(body->mesh.skin[2].joints, glm::uvec4(1u, 0u, 1u, 1u));
+        EXPECT_EQ(body->mesh.skin[0].joints.x, 2u);
+        EXPECT_EQ(body->mesh.skin[1].joints.x, 1u);
+        // The unused slots (weight 0) hold skin joint 0 too, which becomes joint 2 like the others.
+        EXPECT_EQ(body->mesh.skin[2].joints, glm::uvec4(2u, 1u, 2u, 2u));
 
         // The weights 0.25 and 0.25 are made to add up to 1.
         EXPECT_FLOAT_EQ(body->mesh.skin[2].weights.x, 0.5f);
@@ -244,7 +248,7 @@ namespace Abomination::Renderer
         ASSERT_TRUE(model.has_value()) << model.error();
         const auto scythe = std::ranges::find(model->parts, "Scythe", &ModelPartData::name);
         ASSERT_NE(scythe, model->parts.end());
-        EXPECT_EQ(scythe->parentJoint, 1u);
+        EXPECT_EQ(scythe->parentJoint, 2u);
         EXPECT_FLOAT_EQ(scythe->transform[3][2], 1.0f);
         EXPECT_TRUE(scythe->mesh.skin.empty());
     }
@@ -263,7 +267,7 @@ namespace Abomination::Renderer
         ASSERT_EQ(clip.channels.size(), 1u);
 
         const AnimationChannelData& channel = clip.channels[0];
-        EXPECT_EQ(channel.joint, 1u);
+        EXPECT_EQ(channel.joint, 2u);
         EXPECT_EQ(channel.path, AnimationPath::Rotation);
         EXPECT_EQ(channel.interpolation, AnimationInterpolation::Linear);
         EXPECT_EQ(channel.times, (std::vector<float>{0.0f, 2.0f}));

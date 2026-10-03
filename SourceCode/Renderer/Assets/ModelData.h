@@ -67,8 +67,8 @@ namespace Abomination::Renderer
     {
         std::vector<SkeletonJoint> joints;
 
-        // Where the root joints hang in the model: the transform of the nodes above them in the file (a model exported
-        // in centimeters has a scale of 0.01 here).
+        // Where the root joints hang in the model. The glTF loader takes the nodes above the joints of the skin into the
+        // skeleton (they may be animated), so for a loaded model this is the identity.
         glm::mat4 rootTransform{1.0f};
     };
 

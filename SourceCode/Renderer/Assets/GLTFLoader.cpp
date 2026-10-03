@@ -180,42 +180,50 @@ namespace Abomination::Renderer
             return nullptr;
         }
 
+        // The skeleton is the joints of the skin and every node above them. The nodes above are not bones the skin
+        // follows, but they may be animated too: Blender turns the root bone of an FBX ("mixamorig:Hips") into the
+        // armature node itself, and the movement of the hips is then an animation of that node. Leaving them out would
+        // lose it, and everything below would stand still while it should sway, turn and step. They get the identity as
+        // their inverse bind matrix: no vertex follows them directly.
         std::expected<SkeletonReading, std::string> ReadSkeleton(const cgltf_skin& skin)
         {
             const std::span skinJoints(skin.joints, skin.joints_count);
 
-            // The joints of the skin, so FindParentJoint can tell them from other nodes; the numbers are filled below.
-            std::unordered_map<const cgltf_node*, std::size_t> skinJointNodes;
-            for (const cgltf_node* node : skinJoints)
-                skinJointNodes.emplace(node, 0);
+            // The nodes of the skeleton: the joints of the skin and their ancestors, each once. The numbers in the map are
+            // filled below.
+            std::vector<const cgltf_node*> nodes;
+            std::unordered_map<const cgltf_node*, std::size_t> skeletonNodes;
+            for (const cgltf_node* joint : skinJoints)
+                for (const cgltf_node* node = joint; node != nullptr; node = node->parent)
+                    if (skeletonNodes.emplace(node, 0).second)
+                        nodes.push_back(node);
 
-            // The file may list the joints in any order. They are taken parents first: in every round, the joints whose
-            // parent joint is already taken (or which have none) are taken. A skeleton of N joints needs at most N rounds.
+            // Where every node is in the skin (for its inverse bind matrix and for the numbers the vertices use).
+            std::unordered_map<const cgltf_node*, std::size_t> skinIndexOfNode;
+            for (std::size_t skinIndex = 0; skinIndex < skinJoints.size(); ++skinIndex)
+                skinIndexOfNode.emplace(skinJoints[skinIndex], skinIndex);
+
+            // The file may list the joints in any order. They are taken parents first: in every round, the nodes whose
+            // parent is already taken (or which have none) are taken. A skeleton of N nodes needs at most N rounds.
             SkeletonReading reading;
             reading.jointOfSkinIndex.resize(skinJoints.size());
-            std::vector<bool> isTaken(skinJoints.size(), false);
-            bool hasRootTransform = false;
-            while (reading.skeleton.joints.size() < skinJoints.size())
+            std::vector<bool> isTaken(nodes.size(), false);
+            while (reading.skeleton.joints.size() < nodes.size())
             {
                 const std::size_t takenBefore = reading.skeleton.joints.size();
-                for (std::size_t skinIndex = 0; skinIndex < skinJoints.size(); ++skinIndex)
+                for (std::size_t nodeIndex = 0; nodeIndex < nodes.size(); ++nodeIndex)
                 {
-                    const cgltf_node& node = *skinJoints[skinIndex];
-                    const cgltf_node* parentJoint = FindParentJoint(node, skinJointNodes);
-                    if (isTaken[skinIndex] || (parentJoint != nullptr && !reading.jointOfNode.contains(parentJoint)))
+                    const cgltf_node& node = *nodes[nodeIndex];
+                    if (isTaken[nodeIndex] || (node.parent != nullptr && !reading.jointOfNode.contains(node.parent)))
                         continue;
 
-                    // A node between two joints would move the child, but only joints are animated and combined: such a
-                    // skeleton is not supported (exporters do not make them).
-                    if (parentJoint != nullptr && node.parent != parentJoint)
-                        return std::unexpected("a joint hangs from its parent joint through another node");
                     if (node.has_matrix)
                         return std::unexpected("a joint is placed by a matrix instead of translation, rotation and scale");
 
                     SkeletonJoint joint;
-                    joint.name = node.name != nullptr ? node.name : std::format("joint{}", skinIndex);
-                    if (parentJoint != nullptr)
-                        joint.parent = reading.jointOfNode.at(parentJoint);
+                    joint.name = node.name != nullptr ? node.name : std::format("joint{}", nodeIndex);
+                    if (node.parent != nullptr)
+                        joint.parent = reading.jointOfNode.at(node.parent);
                     if (node.has_translation)
                         joint.translation = glm::make_vec3(node.translation);
 
@@ -224,20 +232,18 @@ namespace Abomination::Renderer
                         joint.rotation = glm::quat(node.rotation[3], node.rotation[0], node.rotation[1], node.rotation[2]);
                     if (node.has_scale)
                         joint.scale = glm::make_vec3(node.scale);
-                    if (skin.inverse_bind_matrices != nullptr)
-                        cgltf_accessor_read_float(skin.inverse_bind_matrices, skinIndex,
-                                                  glm::value_ptr(joint.inverseBindMatrix), 16);
 
-                    // The nodes above the first root joint place the whole skeleton in the model.
-                    if (parentJoint == nullptr && !hasRootTransform && node.parent != nullptr)
+                    const std::size_t jointIndex = reading.skeleton.joints.size();
+                    if (const auto skinIndex = skinIndexOfNode.find(&node); skinIndex != skinIndexOfNode.end())
                     {
-                        cgltf_node_transform_world(node.parent, glm::value_ptr(reading.skeleton.rootTransform));
-                        hasRootTransform = true;
+                        if (skin.inverse_bind_matrices != nullptr)
+                            cgltf_accessor_read_float(skin.inverse_bind_matrices, skinIndex->second,
+                                                      glm::value_ptr(joint.inverseBindMatrix), 16);
+                        reading.jointOfSkinIndex[skinIndex->second] = jointIndex;
                     }
 
-                    isTaken[skinIndex] = true;
-                    reading.jointOfSkinIndex[skinIndex] = reading.skeleton.joints.size();
-                    reading.jointOfNode.emplace(&node, reading.skeleton.joints.size());
+                    isTaken[nodeIndex] = true;
+                    reading.jointOfNode.emplace(&node, jointIndex);
                     reading.skeleton.joints.push_back(std::move(joint));
                 }
 

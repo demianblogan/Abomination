@@ -316,7 +316,7 @@ namespace Abomination
             // In the order things cover each other: the solid world, the see-through effects in it, the debug lines, the
             // weapon in the hands, and the game interface over everything.
             m_renderStatistics = Renderer::DrawMeshes(m_registry, view, interpolationFactor, m_renderAssets,
-                                                      m_systemShaders, m_renderSettings);
+                                                      m_systemShaders, m_renderSettings, m_skinningBuffer);
             DrawEffects(view);
 
             AddDebugLines(cameraTransform, interpolationFactor);
@@ -409,7 +409,7 @@ namespace Abomination
             Renderer::DrawWeaponViewModel(weaponViewModel->model, Gameplay::CalculateWeaponViewModelMatrix(*weaponViewModel),
                                           weaponViewModel->verticalFOV, aspectRatio, m_renderAssets,
                                           weaponViewModel->shaderProgram, m_systemShaders, m_renderSettings,
-                                          partOffsets);
+                                          m_skinningBuffer, partOffsets);
         m_renderStatistics.drawCallCount += statistics.drawCallCount;
         m_renderStatistics.triangleCount += statistics.triangleCount;
 

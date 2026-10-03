@@ -2,8 +2,10 @@
 
 #include "Core/Scene/Transform.h"
 #include "Core/Scene/TransformInterpolation.h"
+#include "Renderer/Animation/SkeletonPose.h"
 #include "Renderer/DrawOffset.h"
 #include "Renderer/MeshRenderer.h"
+#include "Renderer/ModelPose.h"
 #include "Renderer/ModelRenderer.h"
 #include "Renderer/OpenGL/RenderCommands.h"
 #include "Renderer/OpenGL/ShaderInterface.h"
@@ -11,6 +13,9 @@
 #include <glad/gl.h>
 #include <glm/ext/matrix_clip_space.hpp>
 #include <glm/ext/matrix_transform.hpp>
+
+#include <span>
+#include <vector>
 
 namespace Abomination::Renderer
 {
@@ -46,8 +51,9 @@ namespace Abomination::Renderer
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         }
 
-        // What every mesh of one drawing pass shares: where the assets are, how to draw, where the scene is seen from and
-        // where the work is counted. Passed to DrawMesh as one value instead of six parameters repeated for every mesh.
+        // What every mesh of one drawing pass shares: where the assets are, how to draw, where the scene is seen from, where
+        // the work is counted and where skinned meshes put their joints. Passed to DrawMesh as one value instead of seven
+        // parameters repeated for every mesh.
         struct MeshPass
         {
             const RenderAssets& assets;
@@ -56,13 +62,15 @@ namespace Abomination::Renderer
             glm::mat4 viewMatrix{1.0f};
             glm::mat4 projectionMatrix{1.0f};
             RenderStatistics& statistics;
+            SkinningBuffer& skinning;
         };
 
-        // Draws one mesh with its texture, placed by modelMatrix and seen through the matrices of the pass.
+        // Draws one mesh with its texture, placed by modelMatrix and seen through the matrices of the pass. A skinned mesh is
+        // bent by skinningMatrices first (one per joint of its skeleton; drawn unbent without them).
         // In wireframe mode every mesh is drawn with the wireframe shader instead of its own; the texture is still
         // bound, but that shader does not read it.
         void DrawMesh(const MeshPass& pass, ShaderHandle shader, TextureHandle textureHandle, MeshHandle meshHandle,
-                      const glm::mat4& modelMatrix)
+                      const glm::mat4& modelMatrix, std::span<const glm::mat4> skinningMatrices = {})
         {
             // The handles are turned into objects at the moment of use (see AssetCache::Get).
             const GLShaderProgram& shaderProgram =
@@ -76,11 +84,52 @@ namespace Abomination::Renderer
             shaderProgram.SetUniform(ModelUniform, modelMatrix);
             shaderProgram.SetUniform(ViewUniform, pass.viewMatrix);
             shaderProgram.SetUniform(ProjectionUniform, pass.projectionMatrix);
+
+            // The uniform stays set in the program until it is set again, so it is set for every mesh, skinned or not.
+            const bool isSkinned = mesh.IsSkinned() && !skinningMatrices.empty();
+            shaderProgram.SetUniform(IsSkinnedUniform, isSkinned);
+            if (isSkinned)
+                pass.skinning.Upload(skinningMatrices);
+
             texture.Bind(AlbedoTextureUnit);
             mesh.Draw();
 
             ++pass.statistics.drawCallCount;
             pass.statistics.triangleCount += static_cast<int>(mesh.GetIndexCount() / 3);
+        }
+    }
+
+    namespace
+    {
+        // Draws a model part by part, placed by placement (the entity in the world, or the weapon at the eyes). Each
+        // part is first placed in the model, then the model is placed: matrices apply from right to left, so the part's
+        // transform is on the right. A model with a skeleton is drawn in pose (the matrix of every joint, see ModelPose)
+        // or, without one, at rest: its skinned parts are bent by the joints, and a part held by a joint goes where that
+        // joint is. partOffsets move parts by name in the coordinates of the model (the pump of the shotgun).
+        void DrawModel(const MeshPass& pass, const Model& model, ShaderHandle shader, const glm::mat4& placement,
+                       const ModelPose* pose, std::span<const ModelPartOffset> partOffsets = {})
+        {
+            std::span<const glm::mat4> jointMatrices = model.restJointMatrices;
+            if (pose != nullptr && pose->jointMatrices.size() == model.restJointMatrices.size())
+                jointMatrices = pose->jointMatrices;
+
+            std::vector<glm::mat4> skinningMatrices;
+            if (model.skeleton.has_value())
+                CalculateSkinningMatrices(*model.skeleton, jointMatrices, skinningMatrices);
+
+            for (const ModelPart& part : model.parts)
+            {
+                glm::mat4 partMatrix = part.transform;
+                if (part.parentJoint.has_value() && *part.parentJoint < jointMatrices.size())
+                    partMatrix = model.skeletonTransform * jointMatrices[*part.parentJoint] * part.transform;
+
+                for (const ModelPartOffset& partOffset : partOffsets)
+                    if (partOffset.partName == part.name)
+                        partMatrix = glm::translate(glm::mat4(1.0f), partOffset.offset) * partMatrix;
+
+                DrawMesh(pass, shader, part.texture, part.mesh, placement * partMatrix,
+                         part.isSkinned ? std::span<const glm::mat4>(skinningMatrices) : std::span<const glm::mat4>());
+            }
         }
     }
 
@@ -101,7 +150,7 @@ namespace Abomination::Renderer
 
     RenderStatistics DrawMeshes(const entt::registry& registry, const View& view, float interpolationFactor,
                                 const RenderAssets& assets, const SystemShaders& systemShaders,
-                                const RenderSettings& settings)
+                                const RenderSettings& settings, SkinningBuffer& skinning)
     {
         RenderStatistics statistics;
         BeginMeshPass(settings);
@@ -125,6 +174,7 @@ namespace Abomination::Renderer
             .viewMatrix = view.viewMatrix,
             .projectionMatrix = view.projectionMatrix,
             .statistics = statistics,
+            .skinning = skinning,
         };
 
         // An EnTT view (not to be confused with the camera View): all entities that have both components (const: this
@@ -138,14 +188,13 @@ namespace Abomination::Renderer
             DrawMesh(pass, meshRenderer.shaderProgram, meshRenderer.texture, meshRenderer.mesh, modelMatrix);
         });
 
-        // A model is drawn part by part: each part is first placed in the model (part.transform), then the model is placed
-        // in the world. Matrices apply from right to left, so the part's transform is on the right.
+        // A model is drawn part by part (see DrawModel), in the pose its animation gives it, if it has one.
         const auto modelEntities = registry.view<const Core::Transform, const ModelRenderer>();
         modelEntities.each([&](entt::entity entity, const Core::Transform&, const ModelRenderer& modelRenderer)
         {
             const glm::mat4 entityMatrix = Core::CalculateModelMatrix(calculateDrawnTransform(entity));
-            for (const ModelPart& part : assets.models.Get(modelRenderer.model).parts)
-                DrawMesh(pass, modelRenderer.shaderProgram, part.texture, part.mesh, entityMatrix * part.transform);
+            DrawModel(pass, assets.models.Get(modelRenderer.model), modelRenderer.shaderProgram, entityMatrix,
+                      registry.try_get<ModelPose>(entity));
         });
 
         EndMeshPass();
@@ -156,7 +205,7 @@ namespace Abomination::Renderer
     RenderStatistics DrawWeaponViewModel(ModelHandle model, const glm::mat4& eyeSpaceMatrix, float verticalFOV,
                                          float aspectRatio, const RenderAssets& assets, ShaderHandle shader,
                                          const SystemShaders& systemShaders, const RenderSettings& settings,
-                                         std::span<const ModelPartOffset> partOffsets)
+                                         SkinningBuffer& skinning, std::span<const ModelPartOffset> partOffsets)
     {
         RenderStatistics statistics;
 
@@ -175,17 +224,11 @@ namespace Abomination::Renderer
             .viewMatrix = glm::mat4(1.0f),
             .projectionMatrix = CalculateWeaponViewModelProjection(verticalFOV, aspectRatio),
             .statistics = statistics,
+            .skinning = skinning,
         };
-        for (const ModelPart& part : assets.models.Get(model).parts)
-        {
-            // A moved part is shifted in the coordinates of the model, before the model is placed at the eyes.
-            glm::mat4 partMatrix = part.transform;
-            for (const ModelPartOffset& partOffset : partOffsets)
-                if (partOffset.partName == part.name)
-                    partMatrix = glm::translate(glm::mat4(1.0f), partOffset.offset) * partMatrix;
 
-            DrawMesh(pass, shader, part.texture, part.mesh, eyeSpaceMatrix * partMatrix);
-        }
+        // A moved part (the pump) is shifted in the coordinates of the model, before the model is placed at the eyes.
+        DrawModel(pass, assets.models.Get(model), shader, eyeSpaceMatrix, nullptr, partOffsets);
 
         EndMeshPass();
 

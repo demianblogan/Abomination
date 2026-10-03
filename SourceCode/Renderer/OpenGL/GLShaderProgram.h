@@ -37,11 +37,12 @@ namespace Abomination::Renderer
         // Makes this program the one that processes the next draw calls.
         void Use() const;
 
-        // Sets a uniform of this program: a value that is the same for all vertices of a draw call (a mat4, a vec2 or a
-        // float). location must match layout(location = N) of the uniform in the shader.
+        // Sets a uniform of this program: a value that is the same for all vertices of a draw call (a mat4, a vec2, a
+        // float or a bool). location must match layout(location = N) of the uniform in the shader.
         void SetUniform(std::uint32_t location, const glm::mat4& value) const;
         void SetUniform(std::uint32_t location, const glm::vec2& value) const;
         void SetUniform(std::uint32_t location, float value) const;
+        void SetUniform(std::uint32_t location, bool value) const;
 
     private:
         explicit GLShaderProgram(std::uint32_t programID) noexcept;

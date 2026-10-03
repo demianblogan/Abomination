@@ -51,6 +51,7 @@ set(TEST_SOURCES
 
     Platform/WindowSizingTests.cpp
 
+    Renderer/Animation/SkeletonPoseTests.cpp
     Renderer/Assets/GLTFLoaderTests.cpp
     Renderer/Assets/MeshPrimitivesTests.cpp
     Renderer/Assets/ModelPartSplitTests.cpp

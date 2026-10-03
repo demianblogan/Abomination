@@ -155,16 +155,21 @@ set(LIBRARY_SOURCES
     Renderer/ImGuiRendererBackend.cpp
     Renderer/DrawOffset.h
     Renderer/MeshRenderer.h
+    Renderer/ModelPose.h
     Renderer/ModelRenderer.h
     Renderer/RenderSettings.h
     Renderer/RenderSystem.h
     Renderer/RenderSystem.cpp
     Renderer/RmlUiRendererBackend.h
     Renderer/RmlUiRendererBackend.cpp
+    Renderer/SkinningBuffer.h
+    Renderer/SkinningBuffer.cpp
     Renderer/Sprites/SpriteBatch.h
     Renderer/Sprites/SpriteBatch.cpp
     Renderer/Sprites/SpriteRenderer.h
     Renderer/Sprites/SpriteRenderer.cpp
+    Renderer/Animation/SkeletonPose.h
+    Renderer/Animation/SkeletonPose.cpp
     Renderer/Assets/GLTFLoader.h
     Renderer/Assets/GLTFLoader.cpp
     Renderer/Assets/Mesh.h

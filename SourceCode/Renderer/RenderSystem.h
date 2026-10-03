@@ -4,6 +4,7 @@
 #include "Renderer/Assets/ShaderStore.h"
 #include "Renderer/Camera/View.h"
 #include "Renderer/RenderSettings.h"
+#include "Renderer/SkinningBuffer.h"
 
 #include <entt/entt.hpp>
 
@@ -42,11 +43,13 @@ namespace Abomination::Renderer
     // Entities with a Core::PreviousTransform are drawn at fraction interpolationFactor of the way from their previous
     // to their current transform (see Core/Scene/TransformInterpolation.h); the others at their current transform.
     // settings choose how to draw: filled, with the shader of every entity, or as a wireframe, with the wireframe shader
-    // of systemShaders for every entity. Only reads the registry: drawing never changes the game.
+    // of systemShaders for every entity. A model with a skeleton is drawn in the pose of its Renderer::ModelPose, or at
+    // rest without one; skinning holds the joint matrices of the skinned mesh being drawn. Only reads the registry:
+    // drawing never changes the game.
     // Returns how much was drawn.
     RenderStatistics DrawMeshes(const entt::registry& registry, const View& view, float interpolationFactor,
                                 const RenderAssets& assets, const SystemShaders& systemShaders,
-                                const RenderSettings& settings);
+                                const RenderSettings& settings, SkinningBuffer& skinning);
 
     // The projection the weapon in the hands is drawn with (see DrawWeaponViewModel): its own vertical field of view (radians)
     // and near and far planes close to the eyes. Sprites drawn with the weapon (its muzzle flash) use it too.
@@ -68,5 +71,6 @@ namespace Abomination::Renderer
     RenderStatistics DrawWeaponViewModel(ModelHandle model, const glm::mat4& eyeSpaceMatrix, float verticalFOV,
                                          float aspectRatio, const RenderAssets& assets, ShaderHandle shader,
                                          const SystemShaders& systemShaders, const RenderSettings& settings,
+                                         SkinningBuffer& skinning,
                                          std::span<const ModelPartOffset> partOffsets = {});
 }

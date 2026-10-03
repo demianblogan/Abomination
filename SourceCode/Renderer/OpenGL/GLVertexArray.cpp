@@ -69,6 +69,17 @@ namespace Abomination::Renderer
         glVertexArrayAttribBinding(m_vertexArrayID, attributeIndex, bindingIndex);
     }
 
+    void GLVertexArray::SetUnsignedIntAttribute(std::uint32_t attributeIndex, std::uint32_t bindingIndex,
+                                                int componentCount, std::size_t offset)
+    {
+        // The same three steps; glVertexArrayAttribIFormat ("I": integer) keeps the numbers integers. The float version
+        // would turn joint 3 into 3.0, which a shader cannot use to index an array.
+        glEnableVertexArrayAttrib(m_vertexArrayID, attributeIndex);
+        glVertexArrayAttribIFormat(m_vertexArrayID, attributeIndex, componentCount, GL_UNSIGNED_INT,
+                                   static_cast<GLuint>(offset));
+        glVertexArrayAttribBinding(m_vertexArrayID, attributeIndex, bindingIndex);
+    }
+
     void GLVertexArray::SetIndexBuffer(const GLBuffer& buffer)
     {
         // The old way: glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, id) while the vertex array is bound.

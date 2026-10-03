@@ -15,6 +15,19 @@ namespace Abomination::Renderer
     inline constexpr std::uint32_t MeshTexCoordAttribute = 1;
     inline constexpr std::uint32_t MeshNormalAttribute = 2;
 
+    // A skinned mesh has two more inputs, from its second vertex buffer (see VertexSkin): the joints that pull a vertex
+    // (uvec4) and how much (vec4). A rigid mesh leaves them disabled, and the shader does not read them.
+    inline constexpr std::uint32_t MeshJointsAttribute = 3;
+    inline constexpr std::uint32_t MeshWeightsAttribute = 4;
+
+    // The uniform that tells TexturedShaded and Wireframe whether the mesh is skinned: layout(location = 3) uniform bool.
+    inline constexpr std::uint32_t IsSkinnedUniform = 3;
+
+    // The matrices of the joints of a skinned mesh (see CalculateSkinningMatrices), read by the vertex shader from a
+    // shader storage buffer: layout(std430, binding = 0) readonly buffer. Unlike a uniform array, it has no small size
+    // limit, and the whole array is uploaded with one call.
+    inline constexpr std::uint32_t JointMatricesStorageBinding = 0;
+
     // The texture unit of uniAlbedoTexture: layout(binding = 0) uniform sampler2D.
     inline constexpr std::uint32_t AlbedoTextureUnit = 0;
 

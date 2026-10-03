@@ -11,13 +11,19 @@
 #include <glm/mat3x3.hpp>
 #include <glm/matrix.hpp>
 
+#include <algorithm>
+#include <cstddef>
 #include <cstdlib>
 #include <cstring>
 #include <format>
 #include <memory>
+#include <optional>
 #include <span>
+#include <string>
 #include <string_view>
+#include <unordered_map>
 #include <utility>
+#include <vector>
 
 // How a glTF file is organized, from the top down (only the parts read here):
 //   node      - a place in the tree of the model: moved, turned and scaled relative to its parent; may have a mesh.
@@ -26,6 +32,8 @@
 //   accessor  - how to read one attribute from the binary data: where it starts, how many elements, of which type.
 //   material  - how a surface looks; here only its base color texture is used.
 //   image     - a picture (PNG, JPG) stored in the binary data of the file or in a file next to it.
+//   skin      - the joints (nodes) that bend a skinned mesh, and their inverse bind matrices.
+//   animation - channels, each moving one property (translation, rotation, scale) of one node through keys over time.
 // cgltf parses the JSON part and links everything with pointers; the code below walks these pointers.
 namespace Abomination::Renderer
 {
@@ -71,7 +79,8 @@ namespace Abomination::Renderer
         }
 
         // Reads the triangles of one primitive into mesh data, in the coordinates of its node.
-        std::expected<MeshData, std::string> ReadPrimitive(const cgltf_primitive& primitive, bool isMirrored)
+        std::expected<MeshData, std::string> ReadPrimitive(const cgltf_primitive& primitive, bool isMirrored,
+                                                           const std::vector<std::size_t>* jointOfSkinIndex)
         {
             if (primitive.type != cgltf_primitive_type_triangles)
                 return std::unexpected("only triangles are supported");
@@ -102,6 +111,36 @@ namespace Abomination::Renderer
                 }
             }
 
+            // The skin of a skinned mesh: which joints pull every vertex and how much. The file numbers the joints by their
+            // place in its skin; jointOfSkinIndex turns that into their place in SkeletonData::joints (see ReadSkeleton).
+            if (jointOfSkinIndex != nullptr)
+            {
+                const cgltf_accessor* joints = FindAttribute(primitive, cgltf_attribute_type_joints);
+                const cgltf_accessor* weights = FindAttribute(primitive, cgltf_attribute_type_weights);
+                if (joints == nullptr || weights == nullptr || joints->count != positions->count ||
+                    weights->count != positions->count)
+                    return std::unexpected("a skinned primitive has no joints and weights for every vertex");
+
+                mesh.skin.resize(positions->count);
+                for (cgltf_size index = 0; index < positions->count; ++index)
+                {
+                    VertexSkin& skin = mesh.skin[index];
+                    cgltf_uint skinJoints[4] = {};
+                    cgltf_accessor_read_uint(joints, index, skinJoints, 4);
+                    cgltf_accessor_read_float(weights, index, glm::value_ptr(skin.weights), 4);
+                    for (int slot = 0; slot < 4; ++slot)
+                    {
+                        if (skinJoints[slot] >= jointOfSkinIndex->size())
+                            return std::unexpected("a vertex refers to a joint the skin does not have");
+                        skin.joints[slot] = static_cast<glm::uint>((*jointOfSkinIndex)[skinJoints[slot]]);
+                    }
+
+                    // Exporters round the weights; they must add up to 1, or the vertex would shrink towards the origin.
+                    const float sum = skin.weights.x + skin.weights.y + skin.weights.z + skin.weights.w;
+                    skin.weights = sum > 0.0f ? skin.weights / sum : glm::vec4(1.0f, 0.0f, 0.0f, 0.0f);
+                }
+            }
+
             // Without indices every three vertices in a row are a triangle.
             const cgltf_size indexCount = primitive.indices != nullptr ? primitive.indices->count : positions->count;
             mesh.indices.resize(indexCount);
@@ -117,6 +156,160 @@ namespace Abomination::Renderer
                     std::swap(mesh.indices[triangle + 1], mesh.indices[triangle + 2]);
 
             return mesh;
+        }
+
+        // The skeleton of a skin, and how to find its joints by the numbers the file uses.
+        struct SkeletonReading
+        {
+            SkeletonData skeleton;
+
+            // The place in skeleton.joints of the joint number N of the skin (the vertices use these numbers).
+            std::vector<std::size_t> jointOfSkinIndex;
+
+            // The place in skeleton.joints of the joint of a node (animation channels and held parts name nodes).
+            std::unordered_map<const cgltf_node*, std::size_t> jointOfNode;
+        };
+
+        // The joint the node hangs from: its nearest ancestor that is a joint of the skeleton, or nullptr.
+        const cgltf_node* FindParentJoint(const cgltf_node& node,
+                                          const std::unordered_map<const cgltf_node*, std::size_t>& joints)
+        {
+            for (const cgltf_node* ancestor = node.parent; ancestor != nullptr; ancestor = ancestor->parent)
+                if (joints.contains(ancestor))
+                    return ancestor;
+            return nullptr;
+        }
+
+        std::expected<SkeletonReading, std::string> ReadSkeleton(const cgltf_skin& skin)
+        {
+            const std::span skinJoints(skin.joints, skin.joints_count);
+
+            // The joints of the skin, so FindParentJoint can tell them from other nodes; the numbers are filled below.
+            std::unordered_map<const cgltf_node*, std::size_t> skinJointNodes;
+            for (const cgltf_node* node : skinJoints)
+                skinJointNodes.emplace(node, 0);
+
+            // The file may list the joints in any order. They are taken parents first: in every round, the joints whose
+            // parent joint is already taken (or which have none) are taken. A skeleton of N joints needs at most N rounds.
+            SkeletonReading reading;
+            reading.jointOfSkinIndex.resize(skinJoints.size());
+            std::vector<bool> isTaken(skinJoints.size(), false);
+            bool hasRootTransform = false;
+            while (reading.skeleton.joints.size() < skinJoints.size())
+            {
+                const std::size_t takenBefore = reading.skeleton.joints.size();
+                for (std::size_t skinIndex = 0; skinIndex < skinJoints.size(); ++skinIndex)
+                {
+                    const cgltf_node& node = *skinJoints[skinIndex];
+                    const cgltf_node* parentJoint = FindParentJoint(node, skinJointNodes);
+                    if (isTaken[skinIndex] || (parentJoint != nullptr && !reading.jointOfNode.contains(parentJoint)))
+                        continue;
+
+                    // A node between two joints would move the child, but only joints are animated and combined: such a
+                    // skeleton is not supported (exporters do not make them).
+                    if (parentJoint != nullptr && node.parent != parentJoint)
+                        return std::unexpected("a joint hangs from its parent joint through another node");
+                    if (node.has_matrix)
+                        return std::unexpected("a joint is placed by a matrix instead of translation, rotation and scale");
+
+                    SkeletonJoint joint;
+                    joint.name = node.name != nullptr ? node.name : std::format("joint{}", skinIndex);
+                    if (parentJoint != nullptr)
+                        joint.parent = reading.jointOfNode.at(parentJoint);
+                    if (node.has_translation)
+                        joint.translation = glm::make_vec3(node.translation);
+
+                    // glTF stores a rotation as (x, y, z, w); glm::quat is built as (w, x, y, z).
+                    if (node.has_rotation)
+                        joint.rotation = glm::quat(node.rotation[3], node.rotation[0], node.rotation[1], node.rotation[2]);
+                    if (node.has_scale)
+                        joint.scale = glm::make_vec3(node.scale);
+                    if (skin.inverse_bind_matrices != nullptr)
+                        cgltf_accessor_read_float(skin.inverse_bind_matrices, skinIndex,
+                                                  glm::value_ptr(joint.inverseBindMatrix), 16);
+
+                    // The nodes above the first root joint place the whole skeleton in the model.
+                    if (parentJoint == nullptr && !hasRootTransform && node.parent != nullptr)
+                    {
+                        cgltf_node_transform_world(node.parent, glm::value_ptr(reading.skeleton.rootTransform));
+                        hasRootTransform = true;
+                    }
+
+                    isTaken[skinIndex] = true;
+                    reading.jointOfSkinIndex[skinIndex] = reading.skeleton.joints.size();
+                    reading.jointOfNode.emplace(&node, reading.skeleton.joints.size());
+                    reading.skeleton.joints.push_back(std::move(joint));
+                }
+
+                if (reading.skeleton.joints.size() == takenBefore)
+                    return std::unexpected("the joints of the skin do not form a tree");
+            }
+
+            return reading;
+        }
+
+        // The animation clips of the file, with only the channels that move joints of the skeleton (a clip may also move
+        // other nodes, like a camera, which the game does not animate).
+        std::vector<AnimationClipData> ReadAnimations(const cgltf_data& data,
+                                                      const std::unordered_map<const cgltf_node*, std::size_t>& jointOfNode)
+        {
+            std::vector<AnimationClipData> clips;
+            for (const cgltf_animation& animation : std::span(data.animations, data.animations_count))
+            {
+                AnimationClipData clip;
+                clip.name = animation.name != nullptr ? animation.name : std::format("clip{}", clips.size());
+                for (const cgltf_animation_channel& channel : std::span(animation.channels, animation.channels_count))
+                {
+                    const auto joint = jointOfNode.find(channel.target_node);
+                    if (joint == jointOfNode.end())
+                        continue;
+
+                    AnimationChannelData result{.joint = joint->second};
+                    int componentCount = 3;
+                    switch (channel.target_path)
+                    {
+                    case cgltf_animation_path_type_translation:
+                        result.path = AnimationPath::Translation;
+                        break;
+                    case cgltf_animation_path_type_rotation:
+                        result.path = AnimationPath::Rotation;
+                        componentCount = 4;
+                        break;
+                    case cgltf_animation_path_type_scale:
+                        result.path = AnimationPath::Scale;
+                        break;
+                    default:
+                        continue;
+                    }
+
+                    // A cubic spline stores three values per key (the tangent in, the value, the tangent out); only the
+                    // value is kept, and the channel changes linearly between keys: close enough for exported clips,
+                    // which have a key on every frame.
+                    const cgltf_animation_sampler& sampler = *channel.sampler;
+                    const bool isCubic = sampler.interpolation == cgltf_interpolation_type_cubic_spline;
+                    result.interpolation = sampler.interpolation == cgltf_interpolation_type_step
+                                               ? AnimationInterpolation::Step
+                                               : AnimationInterpolation::Linear;
+
+                    result.times.resize(sampler.input->count);
+                    result.values.resize(sampler.input->count);
+                    for (cgltf_size key = 0; key < sampler.input->count; ++key)
+                    {
+                        cgltf_accessor_read_float(sampler.input, key, &result.times[key], 1);
+                        const cgltf_size valueIndex = isCubic ? key * 3 + 1 : key;
+                        cgltf_accessor_read_float(sampler.output, valueIndex, glm::value_ptr(result.values[key]),
+                                                  componentCount);
+                    }
+
+                    if (!result.times.empty())
+                        clip.duration = std::max(clip.duration, result.times.back());
+                    clip.channels.push_back(std::move(result));
+                }
+
+                if (!clip.channels.empty())
+                    clips.push_back(std::move(clip));
+            }
+            return clips;
         }
 
         // Decodes one image of the file: from the binary data of a .glb, or from a file next to a .gltf.
@@ -179,23 +372,55 @@ namespace Abomination::Renderer
             model.images.push_back(decoded.has_value() ? std::move(*decoded) : Core::Image{});
         }
 
+        // The skeleton, before the parts that refer to its joints. One skin per model: a character is one skinned body.
+        if (data->skins_count > 1)
+            return std::unexpected(std::format("only one skin per model is supported: {}", pathText));
+
+        std::optional<SkeletonReading> skeleton;
+        if (data->skins_count == 1)
+        {
+            std::expected<SkeletonReading, std::string> reading = ReadSkeleton(data->skins[0]);
+            if (!reading.has_value())
+                return std::unexpected(std::format("{}: {}", pathText, reading.error()));
+            skeleton = std::move(*reading);
+        }
+
         // Every node with a mesh gives one part per primitive.
         for (const cgltf_node& node : std::span(data->nodes, data->nodes_count))
         {
             if (node.mesh == nullptr)
                 continue;
 
-            // The whole chain of transforms from the root of the tree to this node, as one matrix (column-major, like
-            // glm). A negative determinant means the transform mirrors the part (see ReadPrimitive).
+            // Where the part is: a skinned mesh is placed by its skeleton (glTF ignores the transform of its node); a mesh
+            // under a joint is placed relative to that joint (the chain of transforms from the joint down to the node);
+            // any other mesh by the whole chain of transforms from the root of the tree to its node. All as matrices,
+            // column-major like glm. A negative determinant means the transform mirrors the part (see ReadPrimitive).
             glm::mat4 transform(1.0f);
-            cgltf_node_transform_world(&node, glm::value_ptr(transform));
+            std::optional<std::size_t> parentJoint;
+            const bool isSkinned = node.skin != nullptr && skeleton.has_value();
+            const cgltf_node* holdingJoint = skeleton.has_value() ? FindParentJoint(node, skeleton->jointOfNode) : nullptr;
+            if (!isSkinned && holdingJoint != nullptr)
+            {
+                for (const cgltf_node* link = &node; link != holdingJoint; link = link->parent)
+                {
+                    glm::mat4 local(1.0f);
+                    cgltf_node_transform_local(link, glm::value_ptr(local));
+                    transform = local * transform;
+                }
+                parentJoint = skeleton->jointOfNode.at(holdingJoint);
+            }
+            else if (!isSkinned)
+            {
+                cgltf_node_transform_world(&node, glm::value_ptr(transform));
+            }
             const bool isMirrored = glm::determinant(glm::mat3(transform)) < 0.0f;
 
             const std::span primitives(node.mesh->primitives, node.mesh->primitives_count);
             for (std::size_t primitiveIndex = 0; primitiveIndex < primitives.size(); ++primitiveIndex)
             {
                 const cgltf_primitive& primitive = primitives[primitiveIndex];
-                std::expected<MeshData, std::string> mesh = ReadPrimitive(primitive, isMirrored);
+                std::expected<MeshData, std::string> mesh =
+                    ReadPrimitive(primitive, isMirrored, isSkinned ? &skeleton->jointOfSkinIndex : nullptr);
                 if (!mesh.has_value())
                     return std::unexpected(std::format("{}: {}", pathText, mesh.error()));
 
@@ -204,7 +429,8 @@ namespace Abomination::Renderer
                 if (primitives.size() > 1)
                     name += std::format("#{}", primitiveIndex);
 
-                ModelPartData part{.name = std::move(name), .mesh = std::move(*mesh), .transform = transform};
+                ModelPartData part{
+                    .name = std::move(name), .mesh = std::move(*mesh), .transform = transform, .parentJoint = parentJoint};
 
                 // The base color texture of the material, if it has one, as an index into model.images.
                 const cgltf_material* material = primitive.material;
@@ -221,6 +447,12 @@ namespace Abomination::Renderer
 
         if (model.parts.empty())
             return std::unexpected(std::format("the model has no meshes: {}", pathText));
+
+        if (skeleton.has_value())
+        {
+            model.animations = ReadAnimations(*data, skeleton->jointOfNode);
+            model.skeleton = std::move(skeleton->skeleton);
+        }
 
         return model;
     }

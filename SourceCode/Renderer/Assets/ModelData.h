@@ -3,7 +3,10 @@
 #include "Core/Files/Image.h"
 #include "Renderer/Assets/MeshData.h"
 
+#include <glm/gtc/quaternion.hpp>
 #include <glm/mat4x4.hpp>
+#include <glm/vec3.hpp>
+#include <glm/vec4.hpp>
 
 #include <cstddef>
 #include <optional>
@@ -12,8 +15,8 @@
 
 namespace Abomination::Renderer
 {
-    // One part of a model: a piece with one texture that moves as a whole. The shotgun has five: the body, the pump,
-    // the trigger, the shell and the loading gate. Keeping the parts apart (not merged into one mesh) lets the game move
+    // One part of a model: a piece with one texture that moves as a whole. The shotgun has ten: the body, the pump,
+    // the barrel, the stock, the loading gate and others. Keeping the parts apart (not merged into one mesh) lets the game move
     // one of them later, for example slide the pump back after a shot.
     struct ModelPartData
     {
@@ -30,6 +33,78 @@ namespace Abomination::Renderer
 
         // The index of the base color texture of the part in ModelData::images; none for an untextured part.
         std::optional<std::size_t> imageIndex;
+
+        // A part held by a joint of the skeleton (the scythe in a hand): the index of the joint in SkeletonData::joints,
+        // and then transform places the part relative to that joint, so it moves with it. A skinned part (its mesh has a
+        // skin) has neither: the skeleton places every vertex, and transform is the identity.
+        std::optional<std::size_t> parentJoint;
+    };
+
+    // One joint (a "bone") of a skeleton: a node of the model file that skinned vertices follow (see VertexSkin).
+    struct SkeletonJoint
+    {
+        std::string name;
+
+        // The joint it hangs from (an index into SkeletonData::joints, always smaller than this joint's own), or none for a
+        // root joint, which hangs from SkeletonData::rootTransform.
+        std::optional<std::size_t> parent;
+
+        // Where it is relative to its parent when no animation moves it (the rest pose): moved, turned and scaled. An
+        // animation replaces these three, each on its own (see AnimationChannelData).
+        glm::vec3 translation{0.0f};
+        glm::quat rotation{1.0f, 0.0f, 0.0f, 0.0f};
+        glm::vec3 scale{1.0f};
+
+        // Takes a vertex from the model into the space of this joint as it was when the skin was bound to the
+        // skeleton (the inverse of the joint's transform in the model then). The joint's transform now times this matrix
+        // moves the vertex as far as the joint has moved since then.
+        glm::mat4 inverseBindMatrix{1.0f};
+    };
+
+    // The skeleton of a model: its joints, parents before their children, so one pass from the first to the last can
+    // combine every joint with its already combined parent.
+    struct SkeletonData
+    {
+        std::vector<SkeletonJoint> joints;
+
+        // Where the root joints hang in the model: the transform of the nodes above them in the file (a model exported
+        // in centimeters has a scale of 0.01 here).
+        glm::mat4 rootTransform{1.0f};
+    };
+
+    // What an animation channel moves: the place of a joint, its rotation, or its scale.
+    enum class AnimationPath
+    {
+        Translation,
+        Rotation,
+        Scale,
+    };
+
+    // How a channel goes from one key to the next: jumps (Step) or changes evenly (Linear; a rotation along the shortest
+    // arc, see Renderer::SampleAnimationChannel).
+    enum class AnimationInterpolation
+    {
+        Step,
+        Linear,
+    };
+
+    // One property of one joint over time: keys at times (seconds, rising), with a value each. A translation or a scale
+    // uses x, y and z of the value; a rotation is a quaternion stored as (x, y, z, w), as in glTF.
+    struct AnimationChannelData
+    {
+        std::size_t joint = 0;
+        AnimationPath path = AnimationPath::Translation;
+        AnimationInterpolation interpolation = AnimationInterpolation::Linear;
+        std::vector<float> times;
+        std::vector<glm::vec4> values;
+    };
+
+    // An animation clip ("Walk", "Attack"): channels that move joints of the skeleton over duration seconds.
+    struct AnimationClipData
+    {
+        std::string name;
+        float duration = 0.0f;
+        std::vector<AnimationChannelData> channels;
     };
 
     // A model read from a file, in ordinary memory, before it is uploaded to the GPU. Needs no OpenGL, so it can be
@@ -40,5 +115,10 @@ namespace Abomination::Renderer
 
         // The base color textures of the parts, decoded. An image that could not be decoded is left empty (width 0).
         std::vector<Core::Image> images;
+
+        // The skeleton that bends the skinned parts and holds the parts with a parentJoint, and its animation clips. A
+        // rigid model (the shotgun) has neither.
+        std::optional<SkeletonData> skeleton;
+        std::vector<AnimationClipData> animations;
     };
 }

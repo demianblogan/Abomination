@@ -12,7 +12,8 @@ namespace Abomination::Renderer
     // separate buffer and image files next to it). glTF is the standard format for 3D models of games and the web; every
     // modelling program exports it.
     //
-    // Only what the game draws now is read: triangles with positions, normals and texture coordinates, and the base color
-    // texture of their material. Other textures (normals, metalness), animations and skins are ignored for now.
+    // What the game uses is read: triangles with positions, normals and texture coordinates, the base color texture of
+    // their material, and a skeleton with its skin and animation clips (one per model). Other textures (normals,
+    // metalness) and morph targets are ignored.
     [[nodiscard]] std::expected<ModelData, std::string> LoadGLTFFile(const std::filesystem::path& path);
 }

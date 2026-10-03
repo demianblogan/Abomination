@@ -85,7 +85,6 @@ namespace Abomination::Audio
             {
                 for (ma_sound_group& group : groups)
                     ma_sound_group_uninit(&group);
-                ma_lpf_node_uninit(&muffleFilter, nullptr);
                 ma_engine_uninit(&engine);
             }
         }
@@ -115,10 +114,6 @@ namespace Abomination::Audio
         std::array<ma_sound_group, SoundGroupCount> groups{};
         std::array<float, SoundGroupCount> groupVolumes{1.0f, 1.0f, 1.0f};
 
-        // The low-pass filter the effects and the music pass through on their way to the speakers (see SetMuffle).
-        ma_lpf_node muffleFilter{};
-        float muffle = 0.0f;
-
         // The last listener given to SetListener(); looks along -Z like a new miniaudio listener.
         glm::vec3 listenerPosition{0.0f};
         glm::vec3 listenerForward{0.0f, 0.0f, -1.0f};
@@ -143,20 +138,6 @@ namespace Abomination::Audio
         // A group is a mixer channel between the voices and the master: 0 flags, attached to the engine (nullptr parent).
         for (ma_sound_group& group : m_implementation->groups)
             ma_sound_group_init(&m_implementation->engine, 0, nullptr, &group);
-
-        // The effects and the music go through the muffle filter to the endpoint (the speakers); the voice goes straight
-        // there. A miniaudio engine is a graph of nodes: every node sends its output into the input of another one.
-        ma_engine* engine = &m_implementation->engine;
-        const ma_lpf_node_config filterConfig = ma_lpf_node_config_init(ma_engine_get_channels(engine),
-                                                                        ma_engine_get_sample_rate(engine), ClearCutoff,
-                                                                        MuffleFilterOrder);
-        ma_lpf_node_init(ma_engine_get_node_graph(engine), &filterConfig, nullptr, &m_implementation->muffleFilter);
-        ma_node_attach_output_bus(&m_implementation->muffleFilter, 0, ma_engine_get_endpoint(engine), 0);
-        for (const SoundGroup group : {SoundGroup::Effects, SoundGroup::Music})
-        {
-            ma_sound_group* soundGroup = &m_implementation->groups[static_cast<std::size_t>(group)];
-            ma_node_attach_output_bus(soundGroup, 0, &m_implementation->muffleFilter, 0);
-        }
 
         Core::Log::Write(LogCategory::Audio, LogLevel::Info, "Audio started: {} Hz, {} channels",
                          ma_engine_get_sample_rate(&m_implementation->engine),
@@ -352,31 +333,6 @@ namespace Abomination::Audio
     float AudioEngine::GetGroupVolume(SoundGroup group) const noexcept
     {
         return m_implementation->groupVolumes[static_cast<std::size_t>(group)];
-    }
-
-    void AudioEngine::SetMuffle(float amount)
-    {
-        Implementation& state = *m_implementation;
-        amount = std::clamp(amount, 0.0f, 1.0f);
-
-        // Recalculating the filter costs a little and may click while sound plays through it, so it is done only when the
-        // amount has really changed.
-        if (std::abs(amount - state.muffle) < 0.01f && !(amount == 0.0f && state.muffle != 0.0f))
-            return;
-
-        state.muffle = amount;
-        if (!state.hasDevice)
-            return;
-
-        const ma_lpf_config config = ma_lpf_config_init(ma_format_f32, ma_engine_get_channels(&state.engine),
-                                                        ma_engine_get_sample_rate(&state.engine),
-                                                        CalculateMuffleCutoff(amount), MuffleFilterOrder);
-        ma_lpf_node_reinit(&config, &state.muffleFilter);
-    }
-
-    float AudioEngine::GetMuffle() const noexcept
-    {
-        return m_implementation->muffle;
     }
 
     std::size_t AudioEngine::GetPlayingVoiceCount() const

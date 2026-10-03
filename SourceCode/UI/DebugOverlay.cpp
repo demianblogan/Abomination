@@ -1,11 +1,8 @@
 #include "UI/DebugOverlay.h"
 
 #include "Core/Time/FrameLimiter.h"
-#include "Gameplay/Characters/Armor.h"
-#include "Gameplay/Characters/Health.h"
 #include "Gameplay/GameplayState.h"
 #include "Gameplay/Player/LandingDip.h"
-#include "Gameplay/Weapons/Ammo.h"
 #include "Gameplay/Weapons/ViewRecoil.h"
 #include "Gameplay/Weapons/Weapon.h"
 #include "Gameplay/Weapons/WeaponViewModel.h"
@@ -143,9 +140,7 @@ namespace Abomination::UI
                                     context.collisionBrushCount);
 
             if (m_isPlayerWindowOpen)
-                DrawPlayerWindow(&m_isPlayerWindowOpen, registry.get<Gameplay::Health>(gameplay.player),
-                                 registry.get<Gameplay::Armor>(gameplay.player),
-                                 registry.get<Gameplay::Ammo>(gameplay.player));
+                DrawPlayerWindow(&m_isPlayerWindowOpen, gameplay, registry, context.audio);
 
             if (m_isMovementWindowOpen)
                 DrawMovementWindow(&m_isMovementWindowOpen, gameplay.physicsSettings, gameplay.movementSettings,

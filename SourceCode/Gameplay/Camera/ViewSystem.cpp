@@ -2,6 +2,7 @@
 
 #include "Core/Scene/TransformInterpolation.h"
 #include "Gameplay/Camera/MouseLook.h"
+#include "Gameplay/Player/DamageReaction.h"
 #include "Gameplay/Player/LandingDip.h"
 #include "Gameplay/Player/Player.h"
 #include "Gameplay/Weapons/ViewRecoil.h"
@@ -9,6 +10,7 @@
 #include "Renderer/Camera/CameraLens.h"
 
 #include <glm/common.hpp>
+#include <glm/gtc/quaternion.hpp>
 
 namespace Abomination::Gameplay
 {
@@ -64,7 +66,18 @@ namespace Abomination::Gameplay
             if (const ViewRecoil* recoil = registry.try_get<ViewRecoil>(state.player); recoil != nullptr)
                 look.pitch += recoil->pitch;
 
-            return CalculatePlayerEyeTransform(interpolated, look, stepOffset + dipOffset);
+            // A blow jerks the picture too: turned, and tilted around the direction of the view (see DamageReaction).
+            const DamageReaction* reaction = registry.try_get<DamageReaction>(state.player);
+            if (reaction != nullptr)
+            {
+                look.pitch += reaction->punchPitch;
+                look.yaw += reaction->punchYaw;
+            }
+
+            Core::Transform eyes = CalculatePlayerEyeTransform(interpolated, look, stepOffset + dipOffset);
+            if (reaction != nullptr)
+                eyes.rotation = eyes.rotation * glm::angleAxis(reaction->punchRoll, Core::LocalForward);
+            return eyes;
         }
 
         return interpolated;

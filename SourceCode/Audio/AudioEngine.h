@@ -108,6 +108,11 @@ namespace Abomination::Audio
         void SetGroupVolume(SoundGroup group, float volume);
         [[nodiscard]] float GetGroupVolume(SoundGroup group) const noexcept;
 
+        // Muffles the world, as if the ears were ringing after a blow: 0 sounds as usual, 1 lets only the low tones through.
+        // The effects and the music are muffled; the voice of the player is not (it is in their head).
+        void SetMuffle(float amount);
+        [[nodiscard]] float GetMuffle() const noexcept;
+
         // How many voices play a sound right now (for the Audio window).
         [[nodiscard]] std::size_t GetPlayingVoiceCount() const;
 

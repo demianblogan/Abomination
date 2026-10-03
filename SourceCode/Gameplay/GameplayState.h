@@ -2,12 +2,14 @@
 
 #include "Audio/SoundEvent.h"
 #include "Gameplay/Camera/FreeFlyCameraController.h"
+#include "Gameplay/Characters/DamageKind.h"
 #include "Gameplay/Effects/Effects.h"
 #include "Gameplay/Player/PlayerController.h"
 #include "Physics/CharacterMovement.h"
 
 #include <entt/entt.hpp>
 
+#include <array>
 #include <vector>
 
 namespace Abomination::Audio
@@ -40,6 +42,14 @@ namespace Abomination::Gameplay
         // The voice of the player jumping (an effort sound) and the feet landing on the ground.
         Audio::SoundEventHandle jump;
         Audio::SoundEventHandle land;
+
+        // The voice of the player when hurt, when killed and when healed (a sigh of relief), the sound of a blow by its
+        // kind, and the beat of the heart at low health (see DamageReaction).
+        Audio::SoundEventHandle hurt;
+        Audio::SoundEventHandle death;
+        Audio::SoundEventHandle relief;
+        std::array<Audio::SoundEventHandle, DamageKindCount> hits;
+        Audio::SoundEventHandle heartbeat;
 
         // The player stood on the ground in the last tick, and their vertical speed then (meters per second, negative
         // while falling). A landing is noticed one tick later, when the physics has already stopped the fall, so the

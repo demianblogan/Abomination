@@ -9,6 +9,7 @@
 #include "Gameplay/Camera/FreeFlyCameraSystem.h"
 #include "Gameplay/Camera/ViewSystem.h"
 #include "Gameplay/Characters/TargetDummy.h"
+#include "Gameplay/Player/DamageReaction.h"
 #include "Gameplay/Player/PlayerSystem.h"
 #include "Gameplay/Spin.h"
 #include "Gameplay/Weapons/WeaponSystem.h"
@@ -159,6 +160,7 @@ namespace Abomination
             // What only moves the picture (the weapon in the hands, the view, the particles) moves every frame, after the
             // ticks of this frame, so it is as smooth as the view.
             Gameplay::UpdateViewEffects(m_gameplay, m_registry, frameTimer.GetDeltaTime());
+            Gameplay::UpdateDamageReaction(m_gameplay, m_registry, m_audio, frameTimer.GetDeltaTime());
 
             frameStatistics.AddFrame(frameTimer.GetDeltaTime(), tickCount);
 

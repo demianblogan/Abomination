@@ -575,6 +575,19 @@ player entity                                free-fly camera entity
   at the start). A weapon takes `ammoPerShot` of its `ammoType` per shot and
   does not fire without it; a new press of Fire then clicks (`emptySound`) and
   counts `emptyClickCount` for the HUD.
+- **The player feels damage and healing** (`Gameplay::DamageReaction`):
+  `DamagePlayer` hurts through the armor and plays the blow by its
+  `DamageKind` (a melee strike for now) with a cry of pain, or the death cry
+  when it kills; the view punches in a random direction (pitch, yaw and a
+  tilt on springs, only the picture moves, like the recoil); a strong blow
+  muffles the effects and the music for a moment (`AudioEngine::SetMuffle`, a
+  low-pass filter between those groups and the speakers; the voice of the
+  player stays clear). `HealPlayer` heals with a sigh of relief. At 25 health
+  or less the heart is heard once a second (one recording of two beats, the
+  HUD pulses with each). Counts of blows, heals and
+  heartbeats and the direction of the last blow are kept for the HUD. The
+  voice of the player (jump, hurt, death, relief) is recorded by the author,
+  in the Voice group. All values are tuned in the Player window.
 - **Crosshair** (`Gameplay::CrosshairSettings`, one per weapon): a circle
   exactly as wide as the spread on the screen
   (`CalculateSpreadRadiusOnScreen`), a dot, and hit and kill markers — four

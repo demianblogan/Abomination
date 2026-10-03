@@ -30,6 +30,7 @@ set(TEST_SOURCES
     Gameplay/Characters/ArmorTests.cpp
     Gameplay/Effects/EffectsTests.cpp
     Gameplay/Effects/ParticlesTests.cpp
+    Gameplay/Player/DamageReactionTests.cpp
     Gameplay/Player/LandingDipTests.cpp
     Gameplay/Player/PlayerSystemTests.cpp
     Gameplay/Player/PlayerTests.cpp

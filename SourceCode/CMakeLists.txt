@@ -84,8 +84,10 @@ set(LIBRARY_SOURCES
     Gameplay/Camera/MouseLook.cpp
     Gameplay/Camera/ViewSystem.h
     Gameplay/Camera/ViewSystem.cpp
+    Gameplay/Characters/Armor.h
     Gameplay/Characters/CharacterCollision.h
     Gameplay/Characters/CharacterCollision.cpp
+    Gameplay/Characters/DamageKind.h
     Gameplay/Characters/Health.h
     Gameplay/Characters/TargetDummy.h
     Gameplay/Characters/TargetDummy.cpp
@@ -93,6 +95,8 @@ set(LIBRARY_SOURCES
     Gameplay/Effects/Effects.cpp
     Gameplay/Effects/Particles.h
     Gameplay/Effects/Particles.cpp
+    Gameplay/Player/DamageReaction.h
+    Gameplay/Player/DamageReaction.cpp
     Gameplay/Player/LandingDip.h
     Gameplay/Player/LandingDip.cpp
     Gameplay/Player/Player.h
@@ -101,6 +105,7 @@ set(LIBRARY_SOURCES
     Gameplay/Player/PlayerController.cpp
     Gameplay/Player/PlayerSystem.h
     Gameplay/Player/PlayerSystem.cpp
+    Gameplay/Weapons/Ammo.h
     Gameplay/Weapons/Crosshair.h
     Gameplay/Weapons/Crosshair.cpp
     Gameplay/Weapons/ViewRecoil.h

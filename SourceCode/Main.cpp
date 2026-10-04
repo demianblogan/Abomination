@@ -30,8 +30,15 @@ namespace
     // is destroyed when the function returns, while logging still works and can record the shutdown.
     int RunApplication(LogHistory& logHistory)
     {
-        // CMake copies the Assets folder of the repository next to the executable on every build.
-        const std::filesystem::path assetsDirectory = Platform::GetExecutableDirectory() / "Assets";
+        // CMake copies the Assets folder of the repository next to the executable on every build: the game finds its
+        // files there, the same way it will after installation. A Debug build reads the Assets folder of the
+        // repository itself instead, so a map saved in TrenchBroom (or any edited asset) is seen after a level reload,
+        // without a build. If that folder is gone (the executable was moved to another computer), the copy is used.
+        std::filesystem::path assetsDirectory = Platform::GetExecutableDirectory() / "Assets";
+#ifdef ABOMINATION_SOURCE_ASSETS_DIRECTORY
+        if (std::filesystem::is_directory(ABOMINATION_SOURCE_ASSETS_DIRECTORY))
+            assetsDirectory = ABOMINATION_SOURCE_ASSETS_DIRECTORY;
+#endif
 
         std::expected<Application, std::string> application = Application::Create(assetsDirectory, logHistory);
         if (!application.has_value())

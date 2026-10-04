@@ -14,6 +14,7 @@
 #include "UI/Windows/AssetsWindow.h"
 #include "UI/Windows/CollisionWindow.h"
 #include "UI/Windows/EffectsWindow.h"
+#include "UI/Windows/EnemiesWindow.h"
 #include "UI/Windows/MovementWindow.h"
 #include "UI/Windows/PerformanceWindow.h"
 #include "UI/Windows/PlayerWindow.h"
@@ -151,6 +152,9 @@ namespace Abomination::UI
                                    registry.get<Gameplay::LandingDip>(gameplay.player),
                                    registry.get<Physics::CharacterBody>(gameplay.player));
 
+            if (m_isEnemiesWindowOpen)
+                DrawEnemiesWindow(&m_isEnemiesWindowOpen, gameplay, registry);
+
             if (m_isEffectsWindowOpen)
                 DrawEffectsWindow(&m_isEffectsWindowOpen, gameplay.effects);
 
@@ -220,6 +224,7 @@ namespace Abomination::UI
         ImGui::Separator();
 
         ImGui::MenuItem("Player", nullptr, &m_isPlayerWindowOpen);
+        ImGui::MenuItem("Enemies", nullptr, &m_isEnemiesWindowOpen);
         ImGui::MenuItem("Weapon", nullptr, &m_isWeaponWindowOpen);
         ImGui::MenuItem("Effects", nullptr, &m_isEffectsWindowOpen);
 

@@ -95,6 +95,8 @@ set(LIBRARY_SOURCES
     Gameplay/Effects/Effects.cpp
     Gameplay/Effects/Particles.h
     Gameplay/Effects/Particles.cpp
+    Gameplay/Enemies/DogMind.h
+    Gameplay/Enemies/DogMind.cpp
     Gameplay/Enemies/Monsters.h
     Gameplay/Enemies/Monsters.cpp
     Gameplay/Player/DamageReaction.h
@@ -242,6 +244,8 @@ set(LIBRARY_SOURCES
     UI/Windows/ConsoleWindow.cpp
     UI/Windows/EffectsWindow.h
     UI/Windows/EffectsWindow.cpp
+    UI/Windows/EnemiesWindow.h
+    UI/Windows/EnemiesWindow.cpp
     UI/Windows/EntitiesWindow.h
     UI/Windows/EntitiesWindow.cpp
     UI/Windows/MovementWindow.h
@@ -330,3 +334,8 @@ add_custom_target(CopyAssets ALL
     VERBATIM
 )
 add_dependencies(Abomination CopyAssets)
+
+# A Debug build reads the Assets folder of the repository directly (see Main.cpp), so edited assets need no build.
+target_compile_definitions(Abomination PRIVATE
+    "$<$<CONFIG:Debug>:ABOMINATION_SOURCE_ASSETS_DIRECTORY=\"${PROJECT_SOURCE_DIR}/Assets\">"
+)

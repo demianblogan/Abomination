@@ -4,6 +4,7 @@
 #include "Gameplay/Camera/FreeFlyCameraController.h"
 #include "Gameplay/Characters/DamageKind.h"
 #include "Gameplay/Effects/Effects.h"
+#include "Gameplay/Enemies/DogMind.h"
 #include "Gameplay/Player/PlayerController.h"
 #include "Gameplay/Weapons/Shells.h"
 #include "Physics/CharacterMovement.h"
@@ -83,6 +84,13 @@ namespace Abomination::Gameplay
 
         // The monsters of the level (see Monsters.h); replaced when the level is.
         std::vector<entt::entity> monsters;
+
+        // How every dog sees, hears, moves and bites (tuned in the Enemy window, see DogMind.h).
+        DogSettings dogSettings;
+
+        // Debug (the Enemies window): the monsters stand and decide nothing; the senses of the dogs are drawn.
+        bool areMonstersFrozen = false;
+        bool areDogSensesVisible = false;
 
         // The visual effects of shots (see Effects.h).
         Effects effects;

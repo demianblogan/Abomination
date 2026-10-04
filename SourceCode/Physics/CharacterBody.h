@@ -19,6 +19,10 @@ namespace Abomination::Physics
         // The box stands on a surface flat enough to walk on. Walking, friction and jumping depend on it.
         bool isOnGround = false;
 
+        // The normal of the ground it stands on (straight up on a floor, tilted on a slope). Walking follows it, so a
+        // character goes up and down a slope along it instead of flying off it.
+        glm::vec3 groundNormal{0.0f, 1.0f, 0.0f};
+
         // How high the box walked up a step in the last tick (0 if it did not). The view of the player uses it to glide up
         // stairs instead of jumping (see Gameplay::StepSmoothing).
         float steppedUpHeight = 0.0f;

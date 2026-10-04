@@ -21,7 +21,15 @@ namespace Abomination::World
         Core::BoundingBox bounds;
     };
 
-    // Builds the collision brushes of all brushes of an entity (the world).
+    // Which brushes BuildCollisionBrushes builds: all (what characters collide with), or all but clip (what shots and
+    // sight are stopped by; see IsClipBrush).
+    enum class BrushSelection
+    {
+        All,
+        WithoutClip,
+    };
+
+    // Builds the collision brushes of the brushes of an entity (the world) that selection picks.
     //
     // Every brush also gets bevel planes: the sides of its bounding box (normals along +X, -X, +Y, -Y, +Z, -Z) that the
     // brush does not have as faces yet. They cut nothing off the brush itself, which is inside its box anyway. They are
@@ -31,7 +39,7 @@ namespace Abomination::World
     //
     // Faces without a plane (three points on one line) and faces that do not touch the brush are left out. A brush with
     // no faces left is left out completely.
-    [[nodiscard]] std::vector<CollisionBrush> BuildCollisionBrushes(const MapEntity& entity);
+    [[nodiscard]] std::vector<CollisionBrush> BuildCollisionBrushes(const MapEntity& entity, BrushSelection selection);
 
     // A brush in the shape of an axis-aligned box (game meters): its six planes and bounds. Characters collide with each
     // other through such brushes: the box of every other character is added to the brushes of the level while a

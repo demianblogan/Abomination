@@ -33,7 +33,7 @@ namespace Abomination::World
             const std::expected<MapData, std::string> map = ParseMap(CubeMap);
             EXPECT_TRUE(map.has_value());
 
-            return BuildCollisionBrushes(map.value().entities.at(0));
+            return BuildCollisionBrushes(map.value().entities.at(0), BrushSelection::All);
         }
 
         // A camera 5 meters in front of the cube (along +Z), looking at it: along -Z, which is where a camera without

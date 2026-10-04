@@ -45,14 +45,18 @@ namespace Abomination::World
         // Where the monsters of the map stand (see MonsterStart).
         [[nodiscard]] const std::vector<MonsterStart>& GetMonsterStarts() const noexcept;
 
-        // The solid brushes of the world, for collision (see CollisionBrush).
+        // The solid brushes of the world that characters collide with, clip included (see CollisionBrush, IsClipBrush).
         [[nodiscard]] const std::vector<CollisionBrush>& GetCollisionBrushes() const noexcept;
+
+        // The brushes that stop shots, shells and sight: all but clip.
+        [[nodiscard]] const std::vector<CollisionBrush>& GetShotBrushes() const noexcept;
 
     private:
         // The entities of the level: those that draw the static geometry (one per texture) and the models standing in it.
         std::vector<entt::entity> m_entities;
 
         std::vector<CollisionBrush> m_collisionBrushes;
+        std::vector<CollisionBrush> m_shotBrushes;
 
         PlayerStart m_playerStart;
         std::vector<MonsterStart> m_monsterStarts;

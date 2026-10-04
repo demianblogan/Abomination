@@ -240,10 +240,18 @@ namespace Abomination::Physics
     bool IsOnGround(std::span<const World::CollisionBrush> brushes, const glm::dvec3& position,
                     const glm::dvec3& halfExtents)
     {
+        return FindGroundNormal(brushes, position, halfExtents).has_value();
+    }
+
+    std::optional<glm::vec3> FindGroundNormal(std::span<const World::CollisionBrush> brushes, const glm::dvec3& position,
+                                              const glm::dvec3& halfExtents)
+    {
         const glm::dvec3 below = position - glm::dvec3(0.0, GroundCheckDistance, 0.0);
         const World::TraceResult trace = World::TraceBox(brushes, position, below, halfExtents);
+        if (trace.fraction >= 1.0 || trace.hitNormal.y < MinimumGroundNormalY)
+            return std::nullopt;
 
-        return trace.fraction < 1.0 && trace.hitNormal.y >= MinimumGroundNormalY;
+        return glm::vec3(trace.hitNormal);
     }
 
     void AirAccelerate(glm::vec3& velocity, const glm::vec3& wishDirection, float wishSpeed, float maxWishSpeed,
@@ -346,11 +354,36 @@ namespace Abomination::Physics
 
         if (body.isOnGround)
         {
-            // Gravity would keep pushing the box into the floor every tick, and on a slope the push would turn into
-            // sliding down it: on the ground it does nothing, and the vertical speed is dropped.
-            body.velocity.y = glm::max(body.velocity.y, 0.0f);
+            // Walking is worked out on a flat floor, then laid on the ground, like PM_WalkMove of Quake 3. First the
+            // velocity is made horizontal, keeping its speed: gravity does nothing on the ground (it would push the box
+            // into the floor every tick, and down a slope), and the vertical part of a walk along a slope comes back
+            // below.
+            const float groundSpeed = glm::length(body.velocity);
+            const float horizontalSpeed = glm::length(glm::vec2(body.velocity.x, body.velocity.z));
+            body.velocity.y = 0.0f;
+            if (horizontalSpeed > StandingSpeed)
+                body.velocity *= groundSpeed / horizontalSpeed;
+
             ApplyFriction(body.velocity, movementSettings, deltaTime);
             Accelerate(body.velocity, wishDirection, wishSpeed, movementSettings.groundAcceleration, deltaTime);
+
+            // Then it is laid along the ground, keeping its direction seen from above and its speed. Without it, walking
+            // up a slope turned into flying up off it (the collision bent the velocity upwards, so the character left
+            // the ground: the jump sound on every clip ramp), and walking down ran off the slope into the air.
+            //
+            // The vertical part that keeps the move on the plane of the ground: a point of the plane stays on it when
+            // dot(normal, move) = 0, so normal.x * x + normal.y * y + normal.z * z = 0, and y = -(normal.x * x +
+            // normal.z * z) / normal.y. For example, 7 m/s straight up a 45 degree slope: y = 7, a move of (7, 7),
+            // scaled back to 7 m/s: (4.95, 4.95). (Removing the part along the normal instead, as for a wall, shortens
+            // only the part up the slope; given back its speed, the move turned more and more sideways every tick.)
+            // On a floor the normal is straight up, y is 0, and the velocity stays as it is.
+            const float speed = glm::length(body.velocity);
+            const glm::vec3& normal = body.groundNormal;
+            const glm::vec3 alongGround(body.velocity.x, -(normal.x * body.velocity.x + normal.z * body.velocity.z) / normal.y,
+                                        body.velocity.z);
+            const float alongLength = glm::length(alongGround);
+            if (speed > StandingSpeed && alongLength > StandingSpeed)
+                body.velocity = alongGround * (speed / alongLength);
         }
         else
         {
@@ -371,8 +404,30 @@ namespace Abomination::Physics
                                                  movementSettings.stepHeight, deltaTime);
         else
             SlideMove(brushes, position, body.velocity, body.halfExtents, deltaTime);
+
+        // Still on the ground: walking down stairs or over the top of a slope, the box stays on it instead of flying a
+        // little and landing (the landing sound, the dip of the view, a dog bouncing down a ramp). If there is walkable
+        // ground within a step below a box that stood on the ground and did not jump, the box is put down on it. (A jump or
+        // a push off the ground, like the leap of a dog, takes the box off the ground before the move.)
+        const bool wasOnGround = body.isOnGround;
+        std::optional<glm::vec3> groundNormal = FindGroundNormal(brushes, position, body.halfExtents);
+        if (!groundNormal.has_value() && wasOnGround && !command.wantsToJump)
+        {
+            const glm::dvec3 stepDown(0.0, movementSettings.stepHeight, 0.0);
+            const World::TraceResult down = World::TraceBox(brushes, position, position - stepDown, body.halfExtents);
+            if (down.fraction < 1.0 && !down.startsInSolid && down.hitNormal.y >= MinimumGroundNormalY)
+            {
+                position = down.endPosition;
+                groundNormal = glm::vec3(down.hitNormal);
+                body.velocity.y = glm::min(body.velocity.y, 0.0f);
+            }
+        }
         transform.position = glm::vec3(position);
 
-        body.isOnGround = body.velocity.y <= MaximumGroundUpwardSpeed && IsOnGround(brushes, position, body.halfExtents);
+        // Moving away from the ground (along its normal) faster than MaximumGroundUpwardSpeed is a jump: the box is in
+        // the air even if the ground is right below. Along the normal, not straight up: walking up a slope moves up too.
+        body.isOnGround = groundNormal.has_value() &&
+                          glm::dot(body.velocity, *groundNormal) <= MaximumGroundUpwardSpeed;
+        body.groundNormal = body.isOnGround ? *groundNormal : glm::vec3(0.0f, 1.0f, 0.0f);
     }
 }

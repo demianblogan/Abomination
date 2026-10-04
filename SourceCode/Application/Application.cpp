@@ -174,7 +174,7 @@ namespace Abomination
             // The shells fly out of the weapon as it is seen: from the eyes between the last two ticks.
             const Core::Transform eyes =
                 Gameplay::CalculateViewTransform(m_gameplay, m_registry, m_fixedTimestep.GetInterpolationFactor());
-            Gameplay::UpdateShells(m_gameplay, m_registry, eyes, m_level.GetCollisionBrushes(), m_audio,
+            Gameplay::UpdateShells(m_gameplay, m_registry, eyes, m_level.GetShotBrushes(), m_audio,
                                    frameTimer.GetDeltaTime());
             Gameplay::UpdateDamageReaction(m_gameplay, m_registry, m_audio, frameTimer.GetDeltaTime());
 
@@ -261,10 +261,13 @@ namespace Abomination
         // First of all: remember where every interpolated entity is before this tick moves anything.
         Core::StorePreviousTransforms(m_registry);
 
+        // Characters collide with clip; shots and sight go through it (see World::IsClipBrush).
         const std::span<const World::CollisionBrush> brushes = m_level.GetCollisionBrushes();
+        const std::span<const World::CollisionBrush> shotBrushes = m_level.GetShotBrushes();
         Gameplay::UpdatePlayer(m_gameplay, m_registry, m_actionStates, brushes, tickDuration);
         Gameplay::UpdatePlayerSounds(m_gameplay, m_registry, m_audio);
-        Gameplay::UpdateWeapon(m_gameplay, m_registry, m_actionStates, m_canPlayerShoot, brushes, m_audio, tickDuration);
+        Gameplay::UpdateWeapon(m_gameplay, m_registry, m_actionStates, m_canPlayerShoot, shotBrushes, m_audio,
+                               tickDuration);
         Gameplay::UpdateFreeFlyCamera(m_gameplay, m_registry, m_actionStates, brushes,
                                       m_collisionSettings.doesCameraCollide, tickDuration);
         Gameplay::UpdateMonsters(m_gameplay, m_registry, brushes, m_audio, tickDuration);

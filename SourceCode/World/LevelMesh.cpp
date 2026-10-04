@@ -24,6 +24,10 @@ namespace Abomination::World
 
         for (const MapBrush& brush : entity.brushes)
         {
+            // Clip is never drawn: only characters feel it.
+            if (IsClipBrush(brush))
+                continue;
+
             ++counts.brushCount;
 
             // One polygon per face, in the order of brush.faces: polygons[i] is the shape of brush.faces[i].

@@ -7,6 +7,7 @@
 
 #include <glm/vec3.hpp>
 
+#include <optional>
 #include <span>
 
 namespace Abomination::Physics
@@ -125,6 +126,10 @@ namespace Abomination::Physics
     // within GroundCheckDistance.
     [[nodiscard]] bool IsOnGround(std::span<const World::CollisionBrush> brushes, const glm::dvec3& position,
                                   const glm::dvec3& halfExtents);
+
+    // The same, giving the normal of that ground; none if there is none.
+    [[nodiscard]] std::optional<glm::vec3> FindGroundNormal(std::span<const World::CollisionBrush> brushes,
+                                                            const glm::dvec3& position, const glm::dvec3& halfExtents);
 
     // One tick of a character: a jump starts if it is wished and the character stands on the ground; on the ground,
     // friction slows it down and the command speeds it up; in the air, gravity pulls it down and the command bends the

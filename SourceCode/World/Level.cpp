@@ -135,7 +135,8 @@ namespace Abomination::World
         };
         LevelMesh levelMesh = BuildLevelMesh(*world, getTextureSize);
         level.m_statistics = levelMesh.statistics;
-        level.m_collisionBrushes = BuildCollisionBrushes(*world);
+        level.m_collisionBrushes = BuildCollisionBrushes(*world, BrushSelection::All);
+        level.m_shotBrushes = BuildCollisionBrushes(*world, BrushSelection::WithoutClip);
 
         // One entity per texture: every one is one draw call with its own texture. The textures were loaded above, so
         // Load() only returns their handles now.
@@ -217,5 +218,10 @@ namespace Abomination::World
     const std::vector<CollisionBrush>& Level::GetCollisionBrushes() const noexcept
     {
         return m_collisionBrushes;
+    }
+
+    const std::vector<CollisionBrush>& Level::GetShotBrushes() const noexcept
+    {
+        return m_shotBrushes;
     }
 }

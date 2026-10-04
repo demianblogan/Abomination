@@ -111,7 +111,7 @@ namespace Abomination::Physics
             const std::expected<World::MapData, std::string> map = World::ParseMap(TestMapPart);
             EXPECT_TRUE(map.has_value());
 
-            return World::BuildCollisionBrushes(map->entities.front());
+            return World::BuildCollisionBrushes(map->entities.front(), World::BrushSelection::All);
         }
     }
 

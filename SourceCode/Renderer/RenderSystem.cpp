@@ -123,7 +123,7 @@ namespace Abomination::Renderer
                 glm::mat4 partMatrix = part.transform;
                 if (part.parentJoint.has_value() && *part.parentJoint < jointMatrices.size())
                 {
-                    // The adjustment is in meters, but the joint's space may be scaled (a model made in other units, by 1/10000):
+                    // The adjustment is in meters, but the joint's space may be scaled (a model in other units):
                     // it is scaled into that space first, so a centimeter stays a centimeter.
                     const glm::mat4& joint = jointMatrices[*part.parentJoint];
                     glm::mat4 adjustment(1.0f);
@@ -218,13 +218,15 @@ namespace Abomination::Renderer
     RenderStatistics DrawWeaponViewModel(ModelHandle model, const glm::mat4& eyeSpaceMatrix, float verticalFOV,
                                          float aspectRatio, const RenderAssets& assets, ShaderHandle shader,
                                          const SystemShaders& systemShaders, const RenderSettings& settings,
-                                         SkinningBuffer& skinning, std::span<const ModelPartOffset> partOffsets)
+                                         SkinningBuffer& skinning, std::span<const ModelPartOffset> partOffsets,
+                                         const ModelPose* pose, bool clearsDepth, const View* worldView)
     {
         RenderStatistics statistics;
 
         // What the world drew into the depth buffer is forgotten: the weapon is drawn over everything, so it never goes
         // into a wall however close the player stands to it. Its own depth still sorts its parts among themselves.
-        ClearDepth();
+        if (clearsDepth)
+            ClearDepth();
         BeginMeshPass(settings);
 
         // The weapon is placed relative to the eyes, so no view matrix is needed (the identity: the eyes are at the
@@ -234,14 +236,15 @@ namespace Abomination::Renderer
             .assets = assets,
             .systemShaders = systemShaders,
             .settings = settings,
-            .viewMatrix = glm::mat4(1.0f),
-            .projectionMatrix = CalculateWeaponViewModelProjection(verticalFOV, aspectRatio),
+            .viewMatrix = worldView != nullptr ? worldView->viewMatrix : glm::mat4(1.0f),
+            .projectionMatrix = worldView != nullptr ? worldView->projectionMatrix
+                                                     : CalculateWeaponViewModelProjection(verticalFOV, aspectRatio),
             .statistics = statistics,
             .skinning = skinning,
         };
 
         // A moved part (the pump) is shifted in the coordinates of the model, before the model is placed at the eyes.
-        DrawModel(pass, assets.models.Get(model), shader, eyeSpaceMatrix, nullptr, partOffsets);
+        DrawModel(pass, assets.models.Get(model), shader, eyeSpaceMatrix, pose, partOffsets);
 
         EndMeshPass();
 

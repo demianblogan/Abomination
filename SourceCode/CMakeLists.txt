@@ -91,12 +91,12 @@ set(LIBRARY_SOURCES
     Gameplay/Characters/CharacterCollision.cpp
     Gameplay/Characters/DamageKind.h
     Gameplay/Characters/Health.h
-    Gameplay/Characters/TargetDummy.h
-    Gameplay/Characters/TargetDummy.cpp
     Gameplay/Effects/Effects.h
     Gameplay/Effects/Effects.cpp
     Gameplay/Effects/Particles.h
     Gameplay/Effects/Particles.cpp
+    Gameplay/Enemies/Monsters.h
+    Gameplay/Enemies/Monsters.cpp
     Gameplay/Player/DamageReaction.h
     Gameplay/Player/DamageReaction.cpp
     Gameplay/Player/LandingDip.h
@@ -273,6 +273,7 @@ set(LIBRARY_SOURCES
     World/MapData.cpp
     World/MapParser.h
     World/MapParser.cpp
+    World/MonsterStart.h
     World/PlayerStart.h
     World/TextureCoordinates.h
     World/TextureCoordinates.cpp

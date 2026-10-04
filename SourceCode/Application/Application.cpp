@@ -9,7 +9,7 @@
 #include "Gameplay/Animation/Animator.h"
 #include "Gameplay/Camera/FreeFlyCameraSystem.h"
 #include "Gameplay/Camera/ViewSystem.h"
-#include "Gameplay/Characters/TargetDummy.h"
+#include "Gameplay/Enemies/Monsters.h"
 #include "Gameplay/Player/DamageReaction.h"
 #include "Gameplay/Player/Player.h"
 #include "Gameplay/Player/PlayerSystem.h"
@@ -130,7 +130,7 @@ namespace Abomination
 
         // The player appears where the map puts them. The free-fly camera waits at their eyes; F2 switches to it.
         m_gameplay = Gameplay::CreateGameplayState(m_registry, m_level.GetPlayerStart(), m_audio, m_renderAssets);
-        m_gameplay.targetDummies = Gameplay::SpawnTargetDummies(m_registry, m_renderAssets, m_level.GetTargetDummyStarts());
+        m_gameplay.monsters = Gameplay::SpawnMonsters(m_registry, m_renderAssets, m_level.GetMonsterStarts());
         Gameplay::AnimateLevelModels(m_registry, m_renderAssets.models);
     }
 
@@ -267,8 +267,7 @@ namespace Abomination
         Gameplay::UpdateWeapon(m_gameplay, m_registry, m_actionStates, m_canPlayerShoot, brushes, m_audio, tickDuration);
         Gameplay::UpdateFreeFlyCamera(m_gameplay, m_registry, m_actionStates, brushes,
                                       m_collisionSettings.doesCameraCollide, tickDuration);
-        Gameplay::UpdateTargetDummies(m_registry, m_renderAssets, brushes, m_gameplay.physicsSettings,
-                                      m_gameplay.movementSettings, tickDuration);
+        Gameplay::UpdateMonsters(m_registry, brushes, m_gameplay.physicsSettings, m_gameplay.movementSettings, tickDuration);
         Gameplay::UpdateSpinningEntities(m_registry, tickDuration);
     }
 
@@ -284,13 +283,13 @@ namespace Abomination
             return;
         }
 
-        // The dummies first: their models belong to the level and are removed with it.
-        Gameplay::DestroyTargetDummies(m_registry, m_gameplay.targetDummies);
+        // The monsters first: their models belong to the level and are removed with it.
+        Gameplay::DestroyMonsters(m_registry, m_gameplay.monsters);
         m_level.Unload(m_registry, m_renderAssets);
         Gameplay::ClearEffects(m_gameplay.effects);
         Gameplay::ClearShells(m_gameplay.shells, m_registry);
         m_level = World::Level::Create(m_registry, m_renderAssets, *map, StartMapPath);
-        m_gameplay.targetDummies = Gameplay::SpawnTargetDummies(m_registry, m_renderAssets, m_level.GetTargetDummyStarts());
+        m_gameplay.monsters = Gameplay::SpawnMonsters(m_registry, m_renderAssets, m_level.GetMonsterStarts());
         Gameplay::AnimateLevelModels(m_registry, m_renderAssets.models);
     }
 

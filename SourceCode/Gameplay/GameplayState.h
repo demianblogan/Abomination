@@ -81,8 +81,8 @@ namespace Abomination::Gameplay
 
         PlayerSounds playerSounds;
 
-        // The target dummies of the level (see TargetDummy.h); replaced when the level is.
-        std::vector<entt::entity> targetDummies;
+        // The monsters of the level (see Monsters.h); replaced when the level is.
+        std::vector<entt::entity> monsters;
 
         // The visual effects of shots (see Effects.h).
         Effects effects;

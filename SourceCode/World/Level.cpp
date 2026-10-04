@@ -166,10 +166,14 @@ namespace Abomination::World
                 if (entity != entt::null)
                     level.m_entities.push_back(entity);
             }
-            else if (*className == "target_dummy")
+            else if (className->starts_with("monster_"))
             {
-                // Only the place is kept: the dummies are gameplay entities, created by the Gameplay module.
-                level.m_targetDummyStarts.push_back(ReadCharacterStart(mapEntity));
+                // Only the place is kept: monsters are gameplay entities, created by the Gameplay module.
+                MonsterStart start{.className = *className, .yaw = ReadEntityYaw(mapEntity)};
+                if (const std::string* origin = FindProperty(mapEntity, "origin"); origin != nullptr)
+                    if (const std::optional<glm::dvec3> position = ParseVectorProperty(*origin); position.has_value())
+                        start.origin = ConvertMapPosition(*position);
+                level.m_monsterStarts.push_back(std::move(start));
             }
         }
 
@@ -200,9 +204,9 @@ namespace Abomination::World
         return m_playerStart;
     }
 
-    const std::vector<PlayerStart>& Level::GetTargetDummyStarts() const noexcept
+    const std::vector<MonsterStart>& Level::GetMonsterStarts() const noexcept
     {
-        return m_targetDummyStarts;
+        return m_monsterStarts;
     }
 
     const LevelMeshStatistics& Level::GetStatistics() const noexcept

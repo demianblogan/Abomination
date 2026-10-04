@@ -5,8 +5,8 @@
 #include "Core/Scene/Transform.h"
 #include "Gameplay/Camera/MouseLook.h"
 #include "Gameplay/Characters/Health.h"
-#include "Gameplay/Characters/TargetDummy.h"
 #include "Gameplay/Effects/Effects.h"
+#include "Gameplay/Enemies/Monsters.h"
 #include "Gameplay/Player/Player.h"
 #include "Gameplay/Weapons/ViewRecoil.h"
 #include "Gameplay/Weapons/Weapon.h"
@@ -110,7 +110,7 @@ namespace Abomination::Gameplay
             if (ApplyDamage(registry.get<Health>(hit.entity), weapon.settings.damagePerPellet))
             {
                 result.hasKilled = true;
-                DestroyTargetDummy(registry, hit.entity);
+                KillMonster(registry, hit.entity);
             }
             else if (Physics::CharacterBody* body = registry.try_get<Physics::CharacterBody>(hit.entity); body != nullptr)
             {

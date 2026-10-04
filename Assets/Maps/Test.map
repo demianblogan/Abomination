@@ -175,27 +175,13 @@
 }
 // entity 2
 {
-"classname" "misc_model"
-"origin" "-128 -176 68"
-"model" "Models/Weapons/Shotgun.glb"
-"angle" "90"
+"classname" "monster_dog"
+"origin" "-100 -120 0"
+"angle" "0"
 }
 // entity 3
 {
-"classname" "target_dummy"
-"origin" "-100 -120 32"
-"angle" "0"
-}
-// entity 4
-{
-"classname" "target_dummy"
-"origin" "-100 -232 32"
-"angle" "0"
-}
-// entity 5
-{
-"classname" "misc_model"
-"origin" "-100 -176 20"
-"model" "Models/Enemies/Dog.glb"
+"classname" "monster_dog"
+"origin" "-100 -232 0"
 "angle" "0"
 }

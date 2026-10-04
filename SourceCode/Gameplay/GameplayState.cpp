@@ -140,6 +140,7 @@ namespace Abomination::Gameplay
 
         state.effects.textures = LoadEffectTextures(renderAssets.textures);
         state.shells = LoadShells(renderAssets, audio);
+        state.gibs = LoadGibs(renderAssets, audio);
 
         registry.emplace<LandingDip>(state.player);
         registry.emplace<DamageReaction>(state.player);

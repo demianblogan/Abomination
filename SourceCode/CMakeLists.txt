@@ -93,6 +93,8 @@ set(LIBRARY_SOURCES
     Gameplay/Characters/Health.h
     Gameplay/Effects/Effects.h
     Gameplay/Effects/Effects.cpp
+    Gameplay/Effects/Gibs.h
+    Gameplay/Effects/Gibs.cpp
     Gameplay/Effects/Particles.h
     Gameplay/Effects/Particles.cpp
     Gameplay/Enemies/DogMind.h

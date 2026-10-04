@@ -31,6 +31,15 @@ namespace Abomination::UI
             ImGui::SliderInt("Bodies kept", &gameplay.maximumCorpses, 0, 64);
             ImGui::SetItemTooltip("At most this many bodies of dead monsters stay in the level;\n"
                                   "the oldest sinks into the floor.");
+            ImGui::SameLine();
+            ImGui::SetNextItemWidth(ScaleToUI(120.0f));
+            ImGui::SliderFloat("Burst at", &gameplay.gibs.settings.burstDamage, 0.0f, 200.0f, "%.0f");
+            ImGui::SetItemTooltip("A body bursts into gibs once the damage it took beyond death reaches this\n"
+                                  "(40: a close shot at a wounded dog, or one shot at its body).");
+            ImGui::SameLine();
+            ImGui::SetNextItemWidth(ScaleToUI(120.0f));
+            ImGui::SliderInt("Gib groups kept", &gameplay.gibs.settings.maximumGroups, 0, 32);
+            ImGui::SetItemTooltip("At most this many bursts of gibs lie in the level; the oldest sinks into the floor.");
 
             // Every dog with what it does now.
             ImGui::SeparatorText("Dogs");

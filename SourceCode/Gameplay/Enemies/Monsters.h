@@ -77,6 +77,9 @@ namespace Abomination::Gameplay
         // How far it has sunk into the floor (meters), once it sinks.
         bool isSinking = false;
         float sunkDepth = 0.0f;
+
+        // How far its box was lowered when it lay down (see LowerCorpse): its model is drawn that much higher.
+        float raise = 0.0f;
     };
 
     // How fast an old body sinks into the floor: through its whole height in about a second.

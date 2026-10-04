@@ -176,6 +176,7 @@ namespace Abomination
                 Gameplay::CalculateViewTransform(m_gameplay, m_registry, m_fixedTimestep.GetInterpolationFactor());
             Gameplay::UpdateShells(m_gameplay, m_registry, eyes, m_level.GetShotBrushes(), m_audio,
                                    frameTimer.GetDeltaTime());
+            Gameplay::UpdateGibs(m_gameplay, m_registry, m_level.GetShotBrushes(), frameTimer.GetDeltaTime());
             Gameplay::UpdateDamageReaction(m_gameplay, m_registry, m_audio, frameTimer.GetDeltaTime());
 
             frameStatistics.AddFrame(frameTimer.GetDeltaTime(), tickCount);
@@ -291,6 +292,7 @@ namespace Abomination
         m_level.Unload(m_registry, m_renderAssets);
         Gameplay::ClearEffects(m_gameplay.effects);
         Gameplay::ClearShells(m_gameplay.shells, m_registry);
+        Gameplay::ClearGibs(m_gameplay.gibs, m_registry);
         m_level = World::Level::Create(m_registry, m_renderAssets, *map, StartMapPath);
         m_gameplay.monsters = Gameplay::SpawnMonsters(m_registry, m_renderAssets, m_level.GetMonsterStarts());
         Gameplay::AnimateLevelModels(m_registry, m_renderAssets.models);

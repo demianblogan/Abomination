@@ -133,9 +133,44 @@ namespace Abomination::Gameplay
 
         // The bodies of the dead: they fall and slide (a shot pushes them) through the level, but not against
         // characters; when there are more than state.maximumCorpses, the oldest sink into the floor and are gone.
-        void UpdateCorpses(GameplayState& state, entt::registry& registry, std::span<const World::CollisionBrush> brushes,
-                           float tickDuration)
+        // A dead dog lies flat: its box is lowered to half its height, the bottom where it was, so shots above the body
+        // pass over it. Tells how far the middle of the box went down: the model is drawn that much higher, where it was.
+        float LowerCorpse(entt::registry& registry, entt::entity entity)
         {
+            Physics::CharacterBody& body = registry.get<Physics::CharacterBody>(entity);
+            const auto lowered = static_cast<float>(body.halfExtents.y * 0.5);
+            body.halfExtents.y *= 0.5;
+            registry.get<Core::Transform>(entity).position.y -= lowered;
+            registry.get<Core::PreviousTransform>(entity).value.position.y -= lowered;
+            return lowered;
+        }
+
+        // A body (alive a moment ago, or already lying) that took enough damage beyond death bursts into gibs, flying
+        // away from shotFrom (the eyes of the player, who shot it), and is gone. Tells whether it burst.
+        bool BurstIfTornApart(GameplayState& state, entt::registry& registry, Audio::AudioEngine& audio, entt::entity entity,
+                              const glm::vec3& shotFrom)
+        {
+            const Health* health = registry.try_get<Health>(entity);
+            if (health == nullptr || health->overkill < state.gibs.settings.burstDamage)
+                return false;
+
+            const glm::vec3 center = registry.get<Core::Transform>(entity).position;
+            const glm::vec3 halfExtents(registry.get<Physics::CharacterBody>(entity).halfExtents);
+            BurstIntoGibs(state, registry, audio, center, halfExtents, center - shotFrom);
+            registry.destroy(entity);
+            return true;
+        }
+
+        void UpdateCorpses(GameplayState& state, entt::registry& registry, std::span<const World::CollisionBrush> brushes,
+                           Audio::AudioEngine& audio, const glm::vec3& shotFrom, float tickDuration)
+        {
+            // Bodies shot to pieces burst.
+            std::vector<entt::entity> corpseEntities;
+            for (const auto [entity, corpse] : registry.view<const Corpse>().each())
+                corpseEntities.push_back(entity);
+            for (const entt::entity entity : corpseEntities)
+                static_cast<void>(BurstIfTornApart(state, registry, audio, entity, shotFrom));
+
             // Too many bodies: the oldest ones that do not sink yet start to. A sinking body takes no more shots.
             std::vector<std::pair<std::uint64_t, entt::entity>> lying;
             for (const auto [entity, corpse] : registry.view<const Corpse>().each())
@@ -169,12 +204,12 @@ namespace Abomination::Gameplay
                 if (corpse.isSinking)
                     corpse.sunkDepth += CorpseSinkSpeed * tickDuration;
                 registry.replace<Renderer::DrawOffset>(entity, Renderer::DrawOffset{
-                    .offset = glm::vec3(0.0f, fit.offset - corpse.sunkDepth, 0.0f),
-                    .previousOffset = glm::vec3(0.0f, fit.offset - depthBefore, 0.0f),
+                    .offset = glm::vec3(0.0f, fit.offset + corpse.raise - corpse.sunkDepth, 0.0f),
+                    .previousOffset = glm::vec3(0.0f, fit.offset + corpse.raise - depthBefore, 0.0f),
                     .pitch = fit.pitch,
                     .previousPitch = fit.pitch,
                 });
-                if (corpse.sunkDepth > 2.0f * static_cast<float>(body.halfExtents.y))
+                if (corpse.sunkDepth > 2.0f * (static_cast<float>(body.halfExtents.y) + corpse.raise))
                     gone.push_back(entity);
             }
             registry.destroy(gone.begin(), gone.end());
@@ -214,17 +249,21 @@ namespace Abomination::Gameplay
         const Weapon* weapon = registry.try_get<Weapon>(state.player);
         const glm::vec3 playerEyes = player->position + glm::vec3(0.0f, PlayerEyeHeight, 0.0f);
 
-        // The dogs killed since the last tick (a shot took all their health) die: a yelp where they were, their death
-        // clip, and they are dogs no more but bodies (see Corpse).
+        // The dogs killed since the last tick (a shot took all their health) die. A blow that left enough over tears
+        // the dog apart at once (gibs); otherwise a yelp where it was, its death clip, and it is a dog no more but a
+        // body (see Corpse).
         std::vector<entt::entity> killed;
         for (const auto [entity, dog, health] : registry.view<const Dog, const Health>().each())
             if (health.current <= 0.0f)
                 killed.push_back(entity);
         for (const entt::entity entity : killed)
         {
+            if (BurstIfTornApart(state, registry, audio, entity, playerEyes))
+                continue;
+
             audio.Play(state.dogSounds.death, registry.get<Core::Transform>(entity).position);
             registry.remove<Dog>(entity);
-            registry.emplace<Corpse>(entity, Corpse{.order = state.nextCorpseOrder++});
+            registry.emplace<Corpse>(entity, Corpse{.order = state.nextCorpseOrder++, .raise = LowerCorpse(registry, entity)});
 
             Animator& animator = registry.get<Animator>(entity);
             animator.speed = 1.0f;
@@ -232,7 +271,7 @@ namespace Abomination::Gameplay
             if (death != animator.segments.end())
                 PlayAnimation(animator, static_cast<std::size_t>(death - animator.segments.begin()), 0.1f);
         }
-        UpdateCorpses(state, registry, brushes, tickDuration);
+        UpdateCorpses(state, registry, brushes, audio, playerEyes, tickDuration);
 
         for (const auto [entity, dog, transform, body] : registry.view<Dog, Core::Transform, Physics::CharacterBody>().each())
         {

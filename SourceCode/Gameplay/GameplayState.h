@@ -4,6 +4,7 @@
 #include "Gameplay/Camera/FreeFlyCameraController.h"
 #include "Gameplay/Characters/DamageKind.h"
 #include "Gameplay/Effects/Effects.h"
+#include "Gameplay/Effects/Gibs.h"
 #include "Gameplay/Enemies/DogMind.h"
 #include "Gameplay/Player/PlayerController.h"
 #include "Gameplay/Weapons/Shells.h"
@@ -115,6 +116,9 @@ namespace Abomination::Gameplay
 
         // The spent shells thrown out by the pump (see Shells.h).
         Shells shells;
+
+        // The chunks of bodies torn apart by shots (see Gibs.h).
+        Gibs gibs;
     };
 
     // Tells the model store how the gameplay needs its models split (the bolt of the shotgun is taken out of its body, see

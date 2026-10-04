@@ -12,6 +12,7 @@
 #include <entt/entt.hpp>
 
 #include <array>
+#include <cstdint>
 #include <vector>
 
 namespace Abomination::Audio
@@ -99,6 +100,11 @@ namespace Abomination::Gameplay
 
         // How every dog sees, hears, moves and bites (tuned in the Enemy window, see DogMind.h).
         DogSettings dogSettings;
+
+        // At most this many bodies of dead monsters stay in the level (tuned in the Enemies window); the next death to
+        // number a body by (see Corpse::order).
+        int maximumCorpses = 16;
+        std::uint64_t nextCorpseOrder = 0;
 
         // Debug (the Enemies window): the monsters stand and decide nothing; the senses of the dogs are drawn.
         bool areMonstersFrozen = false;

@@ -256,7 +256,7 @@ A module may depend only on modules **below** it in this diagram.
 6. `Renderer::RenderAssets` is created: the texture store (with its
    checkerboard fallback), the shader store (with its compiled fallback
    program) and the mesh store (with its fallback cube).
-7. `World::LoadMapFile` reads and parses the start map (`Maps/Test.map`).
+7. `World::LoadMapFile` reads and parses the start map (`Maps/Chapel.map`).
    A missing or broken map is a fatal startup error.
 8. `UI::DebugOverlay` creates the ImGui context and both backends, loads its
    font from `Assets/` and its window settings (`DebugOverlay.ini`) from the

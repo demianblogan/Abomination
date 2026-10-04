@@ -125,7 +125,7 @@ monsters of Quake; if time runs out, the navmesh moves to 0.5.
 | 3 | `feat/pump-action`              | ✅     | After every shot the shotgun is brought to the chest and its pump slides back and forth with a click (moved by code); the bolt, taken out of the body of the model, uncovers the window, and a smoking shell flies out, bounces off the level and stays on the floor (the 20 newest) with the sound of its fall |
 | 4 | `feat/skeletal-animation`       | ✅     | Skins, joints and animation clips from glTF (with the nodes above the joints); skinning in the vertex shader; an animation player with named segments, speed and cross-fades; the first enemy model, a fat rotting dog made with Tripo and rigged with the skeleton and clips of a CC0 husky; an Animation window with the skeleton and axes |
 | 5 | `feat/first-person-hands`       | ✅     | Hands holding the shotgun (WRAD ARMS, the texture slightly darkened and dirtied): posed on the shotgun in a Blender scene with IK handles (Hold, and HoldPumpBack with the left hand on the pulled pump), drawn with the weapon's matrix so they follow its recoil, turn and sway, blended between the two poses as the pump moves; the free-fly camera shows the weapon with the hands in the world |
-| 6 | `feat/enemy`                    | ⏳     | The dog, the first enemy: a map entity `monster_dog` placed in TrenchBroom; a character body moved by the player's movement code (sliding along walls, steps, gravity), health, hit by pellets; states idle (looking around, sniffing), patrol (wandering), alert (sight: a trace to the player within range and field of view; hearing: shots), chase (galloping straight at the player), attack (a leaping bite that hurts the player), pain; each with its clip and cross-fades; sound events (silent until recorded); an Enemy window with the ranges and the lines of sight; the target dummies of 0.3 removed; the log level chosen in the running game |
+| 6 | `feat/enemy`                    | ⏳     | The dog, the first enemy: a map entity `monster_dog` placed in TrenchBroom; a character body moved by the player's movement code (sliding along walls, steps, gravity), health, hit by pellets; states idle (looking around, sniffing), patrol (wandering), alert (sight: a trace to the player within range and field of view; hearing: shots), chase (galloping straight at the player), attack (a leaping bite that hurts the player), pain; each with its clip and cross-fades; sound events (silent until recorded); an Enemy window with the ranges and the lines of sight; the target dummies of 0.3 removed; Trace messages of what the dog decides (a Debug build writes from Trace on, the console hides Trace until it is checked) |
 | 7 | `feat/death`                    | ⏳     | The enemy dies with an animation and its body stays; the player dies: a death sound, the view drops to the floor and fades to black, "Game Over" and "Press any key to try again"; any key or mouse button restarts the level |
 | 8 | `feat/navmesh`                  | ⏳     | Recast/Detour: a navmesh built from the brushes when a level loads, paths around walls and up stairs, the navmesh shown in the debug overlay |
 | 9 | `refactor/review-0.4`           | ⏳     | A review of the project, a list of what changed since the last walkthrough, screenshots; release v0.4.0 |
@@ -222,13 +222,6 @@ Ideas that are not assigned to a milestone yet.
   numbers tuned in the running game become the game's settings.
 - **"Reset window positions"** in the View menu, for debug windows saved
   outside a smaller game window.
-- **Log level chosen in the running game** (*Settings > Log level* in the
-  debug overlay, or a console command): `Log::SetMinimumLevel()` instead of
-  the fixed level in `Main.cpp`. Trace messages (written every frame or tick:
-  physics traces, AI decisions, loaded assets) can then be switched on while
-  a bug is reproduced and off again, without rebuilding. Worth doing together
-  with the first real Trace messages (the AI in 0.4); today only OpenGL
-  notifications are written at Trace.
 - **Footsteps that depend on the surface** (stone, wood, …): a table from
   textures to surface materials, the material of every brush plane kept for
   collision, traces report the material they hit, the character body keeps

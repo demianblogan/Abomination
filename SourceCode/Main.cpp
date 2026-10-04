@@ -60,7 +60,9 @@ int main()
 
     Log::Initialize(LogSettings{
         .filePath = Platform::GetExecutableDirectory() / "Abomination.log",
-        .minimumLevel = IsDebugBuild ? LogLevel::Debug : LogLevel::Info,
+        // A Debug build writes everything (the console hides Trace until it is checked); a Release build the short
+        // history of the run.
+        .minimumLevel = IsDebugBuild ? LogLevel::Trace : LogLevel::Info,
         .history = &logHistory,
     });
 

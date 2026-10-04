@@ -209,6 +209,16 @@ namespace Abomination::Gameplay
                                              ? DogDecision{}
                                              : UpdateDogMind(dog.mind, perception, state.dogSettings, tickDuration, dog.random);
 
+            // What it decides, for the log at Trace level (Settings > Log level in the debug overlay).
+            if (dog.mind.state != stateBefore)
+            {
+                Core::Log::Write(LogCategory::Gameplay, LogLevel::Trace, "Dog {}: {} -> {} (player {:.1f} m away{}{})",
+                                 static_cast<std::uint32_t>(entity), DogStateNames[static_cast<std::size_t>(stateBefore)],
+                                 DogStateNames[static_cast<std::size_t>(dog.mind.state)],
+                                 glm::length(perception.playerPosition - perception.position),
+                                 perception.hasLineOfSight ? ", seen" : "", perception.hasShotBeenFired ? ", shot heard" : "");
+            }
+
             // It barks when it notices the player, then again and again after short random pauses while it chases
             // them, like a real dog. It yelps when hit (and still alive: the dead were taken above).
             const DogSettings& dogSettings = state.dogSettings;

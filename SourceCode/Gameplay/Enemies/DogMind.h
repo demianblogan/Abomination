@@ -78,8 +78,9 @@ namespace Abomination::Gameplay
         float biteDuration = 1.0f;
 
         // How much higher or lower the middle of the player may be than the middle of the dog for a bite or a leap
-        // (meters). On one floor it is half a meter (the player is taller); a balcony is 4 m.
-        float attackHeightDifference = 1.2f;
+        // (meters). On one floor it is half a meter (the player is taller), a player on the back of the dog is 1.3 higher
+        // (before they slide off); a balcony is 4 m.
+        float attackHeightDifference = 1.5f;
 
         // The leap: from leapRangeMinimum to leapRangeMaximum away it crouches, and leapTakeoffTime after the start
         // (the moment its clip pushes off) jumps to where the player is then, rising leapHeight on the way, no faster

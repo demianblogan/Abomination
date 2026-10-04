@@ -107,10 +107,10 @@ namespace Abomination::Gameplay
 
             // The damage, and the push along the pellet, if the entity can move.
             result.hasHurt = true;
+            // A killed monster dies in its own update (see UpdateMonsters).
             if (ApplyDamage(registry.get<Health>(hit.entity), weapon.settings.damagePerPellet))
             {
                 result.hasKilled = true;
-                KillMonster(registry, hit.entity);
             }
             else if (Physics::CharacterBody* body = registry.try_get<Physics::CharacterBody>(hit.entity); body != nullptr)
             {

@@ -98,6 +98,18 @@ namespace Abomination::Gameplay
             LoadEvent(audio, "Sounds/Player/HitMelee", 1, Audio::SoundGroup::Effects, 2);
         sounds.heartbeat = LoadEvent(audio, "Sounds/Player/Heartbeat", 1, Audio::SoundGroup::Effects, 2);
 
+        // The blow of a melee hit is quieter: the attacker brings its own sound (the bite of a dog), which the blow
+        // and the cry of the player drowned at full volume.
+        audio.GetSoundEvent(sounds.hits[static_cast<std::size_t>(DamageKind::Melee)])->volume = 0.5f;
+
+        // The dogs: every sound of a dog at most twice at once (two dogs barking together are enough of a pack).
+        DogSounds& dogSounds = state.dogSounds;
+        dogSounds.bark = LoadEvent(audio, "Sounds/Enemies/Dog/Bark", 1, Audio::SoundGroup::Effects, 2);
+        dogSounds.bite = LoadEvent(audio, "Sounds/Enemies/Dog/Bite", 1, Audio::SoundGroup::Effects, 2);
+        dogSounds.land = LoadEvent(audio, "Sounds/Enemies/Dog/Land", 1, Audio::SoundGroup::Effects, 2);
+        dogSounds.hurt = LoadEvent(audio, "Sounds/Enemies/Dog/Hurt", 1, Audio::SoundGroup::Effects, 2);
+        dogSounds.death = LoadEvent(audio, "Sounds/Enemies/Dog/Death", 1, Audio::SoundGroup::Effects, 2);
+
         // A heart always beats at the same pitch: a changing one does not sound like a heart.
         audio.GetSoundEvent(sounds.heartbeat)->pitchVariation = 0.0f;
 

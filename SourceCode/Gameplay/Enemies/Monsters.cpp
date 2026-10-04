@@ -146,12 +146,6 @@ namespace Abomination::Gameplay
                 registry.destroy(entity);
     }
 
-    void KillMonster(entt::registry& registry, entt::entity monster)
-    {
-        if (registry.valid(monster) && registry.all_of<Dog>(monster))
-            registry.destroy(monster);
-    }
-
     void UpdateMonsters(GameplayState& state, entt::registry& registry, std::span<const World::CollisionBrush> brushes,
                         std::span<const World::CollisionBrush> sightBrushes,
                         Audio::AudioEngine& audio, float tickDuration)
@@ -163,6 +157,20 @@ namespace Abomination::Gameplay
         const Health* playerHealth = registry.try_get<Health>(state.player);
         const Weapon* weapon = registry.try_get<Weapon>(state.player);
         const glm::vec3 playerEyes = player->position + glm::vec3(0.0f, PlayerEyeHeight, 0.0f);
+
+        // The dogs killed since the last tick (a shot took all their health) die: a yelp where they were, and they
+        // are gone. Until the deaths of feat/death they simply disappear.
+        std::vector<entt::entity> killed;
+        const auto dogs = registry.view<const Dog, const Core::Transform, const Health>();
+        for (const auto [entity, dog, transform, health] : dogs.each())
+        {
+            if (health.current <= 0.0f)
+            {
+                audio.Play(state.dogSounds.death, transform.position);
+                killed.push_back(entity);
+            }
+        }
+        registry.destroy(killed.begin(), killed.end());
 
         for (const auto [entity, dog, transform, body] : registry.view<Dog, Core::Transform, Physics::CharacterBody>().each())
         {
@@ -195,10 +203,24 @@ namespace Abomination::Gameplay
                 dog.lastShotCount = weapon->shotCount;
             }
 
+            const DogState stateBefore = dog.mind.state;
             // A frozen dog (the Enemies window) stands where it is and decides nothing.
             const DogDecision decision = state.areMonstersFrozen
                                              ? DogDecision{}
                                              : UpdateDogMind(dog.mind, perception, state.dogSettings, tickDuration, dog.random);
+
+            // It barks when it notices the player, then again and again after short random pauses while it chases
+            // them, like a real dog. It yelps when hit (and still alive: the dead were taken above).
+            const DogSettings& dogSettings = state.dogSettings;
+            const bool barksNow = dog.mind.state == DogState::Alert && stateBefore != DogState::Alert;
+            dog.barkTimer -= tickDuration;
+            if (barksNow || (dog.mind.state == DogState::Chase && dog.barkTimer <= 0.0f))
+            {
+                audio.Play(state.dogSounds.bark, transform.position);
+                dog.barkTimer = dog.random.GetFloat(dogSettings.barkIntervalMinimum, dogSettings.barkIntervalMaximum);
+            }
+            if (perception.wasHurt)
+                audio.Play(state.dogSounds.hurt, transform.position);
 
             // It turns to where it goes or looks, no faster than its turn speed.
             if (glm::dot(decision.faceDirection, decision.faceDirection) > 1e-6f)
@@ -245,6 +267,10 @@ namespace Abomination::Gameplay
             const bool wasOnGround = body.isOnGround;
             Physics::UpdateCharacter(body, transform, obstacles, state.physicsSettings, movement, command, tickDuration);
 
+            // The paws hit the ground at the end of a leap.
+            if (!wasOnGround && body.isOnGround && dog.mind.state == DogState::Leap && dog.mind.hasLeapt)
+                audio.Play(state.dogSounds.land, transform.position);
+
             // Wanting to move but hardly moving (a quarter of the way it wanted) for a while: something is in the way.
             // Not after one tick: starting from a stop, the body speeds up over a few ticks, and its first steps are
             // short (that once stopped every patrol at its first step).
@@ -283,6 +309,7 @@ namespace Abomination::Gameplay
 
             if (decision.bites)
             {
+                audio.Play(state.dogSounds.bite, transform.position);
                 DamagePlayer(state, registry, audio,
                              PlayerDamage{.amount = state.dogSettings.damage, .kind = DamageKind::Melee,
                                           .sourcePosition = transform.position});

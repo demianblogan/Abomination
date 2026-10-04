@@ -177,6 +177,10 @@ far:
   as one mesh is too slow.
 - **0.6** — pickups spin and bob in place, like in Quake (the `Spin`
   component made for the old demo crates is kept for them).
+  Sound mixer in the Audio window of the debug overlay: a volume slider and a
+  play button for every sound event, saved to a data-driven config, so the
+  whole mix is balanced by ear (the bite of the dog is drowned by the blow
+  and the cry of the player, the yelp of a hit dog by the shotgun).
 - **0.8** — every gameplay component must be serializable; keep this in mind
   from 0.2 onwards. Options menu, *Display > FPS limit*: a list of common
   monitor refresh rates (30, 60, 75, 90, 100, 120, 144, 165, 180, 240, 280,

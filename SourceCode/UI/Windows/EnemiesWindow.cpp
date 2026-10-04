@@ -67,6 +67,11 @@ namespace Abomination::UI
             DrawSlider("Idle at most", settings.idleTimeMaximum, 0.0f, 20.0f, "%.1f s");
             DrawSlider("Give up walk after", settings.patrolTime, 1.0f, 30.0f, "%.1f s");
 
+            ImGui::SeparatorText("Voice");
+            DrawSlider("Bark at least every", settings.barkIntervalMinimum, 0.1f, 10.0f, "%.1f s");
+            DrawSlider("Bark at most every", settings.barkIntervalMaximum, 0.1f, 10.0f, "%.1f s",
+                       "While it chases the player it barks after a random pause between these.");
+
             ImGui::SeparatorText("Attack");
             DrawSlider("Damage", settings.damage, 0.0f, 100.0f, "%.0f", "Health one bite takes from the player.");
             DrawSlider("Bite range", settings.biteRange, 0.3f, 4.0f, "%.2f m", "Closer than this it stops and bites.");

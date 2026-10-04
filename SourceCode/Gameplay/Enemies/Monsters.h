@@ -58,6 +58,9 @@ namespace Abomination::Gameplay
         float blockedTime = 0.0f;
         bool isBlocked = false;
 
+        // The time left until its next bark in a chase.
+        float barkTimer = 0.0f;
+
         // Its own random numbers, so dogs placed together do not all wander the same way.
         Core::Random random;
     };
@@ -69,12 +72,11 @@ namespace Abomination::Gameplay
     // Destroys the entities of the monsters (before the level is replaced).
     void DestroyMonsters(entt::registry& registry, std::span<const entt::entity> monsters);
 
-    // A monster was killed. Until the deaths of feat/death it simply disappears.
-    void KillMonster(entt::registry& registry, entt::entity monster);
-
-    // Once per tick: every dog perceives the player (sight, the sound of shots, being hurt), decides what to do (see
+    // Once per tick: first the dogs with no health left (killed by a shot) die: they yelp and are gone, until the deaths
+    // of feat/death. Then every dog perceives the player (sight, the sound of shots, being hurt), decides what to do (see
     // UpdateDogMind) and does it: moves through the level like a character (sliding along walls, up steps, falling),
-    // turns, plays the clip of its state and bites. state.dogSettings tunes all dogs.
+    // turns, plays the clip of its state and bites; it barks, bites, lands and yelps with the sounds of
+    // state.dogSounds. state.dogSettings tunes all dogs.
     // brushes are what the dogs walk on and against (clip included), sightBrushes what hides the player (no clip).
     void UpdateMonsters(GameplayState& state, entt::registry& registry, std::span<const World::CollisionBrush> brushes,
                         std::span<const World::CollisionBrush> sightBrushes,

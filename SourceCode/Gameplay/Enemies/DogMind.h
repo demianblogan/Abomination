@@ -64,6 +64,10 @@ namespace Abomination::Gameplay
 
         float alertTime = 0.5f;
 
+        // While it chases the player it barks again and again, each time after a random pause between these.
+        float barkIntervalMinimum = 0.8f;
+        float barkIntervalMaximum = 2.0f;
+
         // The bite: closer than biteRange it bites, biteTime after the start (still running in while the player is
         // farther than most of biteRange), hurting the player if they are within biteReach then; the bite is over after
         // biteDuration. A short biteTime: a long one let the player step out of every bite.

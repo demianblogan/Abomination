@@ -20,6 +20,7 @@
       "default-features": false
     },
     "miniaudio",
+    "recastnavigation",
     "rmlui",
     "sdl3",
     {

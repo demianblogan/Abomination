@@ -239,4 +239,21 @@ namespace Abomination::Gameplay
             bites += Step(mind, PlayerInFront(1.5f), settings, random).bites ? 1 : 0;
         EXPECT_EQ(bites, 1);
     }
+
+    TEST(DogMind, ChaseRunsToTheNextCornerOfThePath)
+    {
+        DogMind mind{.state = DogState::Chase};
+        Core::Random random(11);
+        const DogSettings settings;
+
+        // The player is 10 m ahead, behind a wall; the path turns at a corner 3 m to the right (+X) first.
+        DogPerception perception = PlayerInFront(10.0f);
+        perception.hasLineOfSight = false;
+        perception.wayPoint = glm::vec3(3.0f, 0.0f, 0.0f);
+
+        const DogDecision decision = Step(mind, perception, settings, random);
+        EXPECT_EQ(mind.state, DogState::Chase);
+        EXPECT_GT(decision.faceDirection.x, 0.99f);
+        EXPECT_FLOAT_EQ(decision.speed, settings.runSpeed);
+    }
 }

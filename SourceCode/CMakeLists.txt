@@ -1,6 +1,7 @@
 # --- Dependencies ------------------------------------------------------------
 find_package(glm CONFIG REQUIRED)
 find_package(imgui CONFIG REQUIRED)
+find_package(recastnavigation CONFIG REQUIRED)
 find_package(RmlUi CONFIG REQUIRED)
 find_package(SDL3 CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
@@ -146,6 +147,8 @@ set(LIBRARY_SOURCES
     Input/Mouse.h
     Input/Mouse.cpp
 
+    Navigation/NavMesh.h
+    Navigation/NavMesh.cpp
     Physics/CharacterBody.h
     Physics/CharacterMovement.h
     Physics/CharacterMovement.cpp
@@ -286,6 +289,8 @@ set(LIBRARY_SOURCES
     World/MapParser.h
     World/MapParser.cpp
     World/MonsterStart.h
+    World/NavMeshGeometry.h
+    World/NavMeshGeometry.cpp
     World/PlayerStart.h
     World/TextureCoordinates.h
     World/TextureCoordinates.cpp
@@ -306,6 +311,8 @@ target_link_libraries(AbominationCore
     PRIVATE
         GLAD                  # Only Renderer/*.cpp include GLAD, no header does
         imgui::imgui          # Only .cpp files include ImGui, no header does
+        RecastNavigation::Recast  # Only Navigation/*.cpp include Recast (it builds the navmesh) and Detour (it
+        RecastNavigation::Detour  # finds paths on it); no header does
         RmlUi::RmlUi          # Only the RmlUi backends (Platform, Renderer) and UI/GameUI.cpp include RmlUi
         SDL3::SDL3            # Only Platform/*.cpp include SDL, no header does
         spdlog::spdlog        # Only Log.cpp includes spdlog, Log.h does not

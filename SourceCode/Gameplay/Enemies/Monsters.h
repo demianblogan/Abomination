@@ -16,6 +16,11 @@ namespace Abomination::Audio
     class AudioEngine;
 }
 
+namespace Abomination::Navigation
+{
+    class NavMesh;
+}
+
 namespace Abomination::Renderer
 {
     class DebugLines;
@@ -62,6 +67,12 @@ namespace Abomination::Gameplay
         // The time left until its next bark in a chase.
         float barkTimer = 0.0f;
 
+        // The way it runs (chase) or walks (patrol) around walls: the corners of its path on the navmesh, the first one
+        // where it was when the path was found; empty while the way is straight. The time until the path is found
+        // again (the player moves).
+        std::vector<glm::vec3> path;
+        float repathTimer = 0.0f;
+
         // Its own random numbers, so dogs placed together do not all wander the same way.
         Core::Random random;
     };
@@ -98,9 +109,10 @@ namespace Abomination::Gameplay
     // does it: moves through the level like a character (sliding along walls, up steps, falling), turns, plays the clip
     // of its state and bites; it barks, bites, lands and yelps with the sounds of state.dogSounds. state.dogSettings
     // tunes all dogs.
-    // brushes are what the dogs walk on and against (clip included), sightBrushes what hides the player (no clip).
+    // brushes are what the dogs walk on and against (clip included), sightBrushes what hides the player (no clip),
+    // navMesh where they find their way around walls (none: straight at the player).
     void UpdateMonsters(GameplayState& state, entt::registry& registry, std::span<const World::CollisionBrush> brushes,
-                        std::span<const World::CollisionBrush> sightBrushes,
+                        std::span<const World::CollisionBrush> sightBrushes, const Navigation::NavMesh* navMesh,
                         Audio::AudioEngine& audio, float tickDuration);
 
     // Debug, with state.areDogSensesVisible: the senses of every dog as lines on the floor around it: its field of view
@@ -108,4 +120,8 @@ namespace Abomination::Gameplay
     // (blue) and the area it patrols around where it appeared (green). interpolationFactor places it as it is drawn.
     void AddMonsterDebugLines(const GameplayState& state, const entt::registry& registry, float interpolationFactor,
                               Renderer::DebugLines& lines);
+
+    // Debug, with state.isNavMeshVisible: the polygons of the navmesh as lines a little above the floor (none if the level
+    // has no navmesh).
+    void AddNavMeshDebugLines(const GameplayState& state, const Navigation::NavMesh* navMesh, Renderer::DebugLines& lines);
 }

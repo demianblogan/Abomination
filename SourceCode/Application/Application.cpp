@@ -283,7 +283,7 @@ namespace Abomination
                                tickDuration);
         Gameplay::UpdateFreeFlyCamera(m_gameplay, m_registry, m_actionStates, brushes,
                                       m_collisionSettings.doesCameraCollide, tickDuration);
-        Gameplay::UpdateMonsters(m_gameplay, m_registry, brushes, shotBrushes, m_audio, tickDuration);
+        Gameplay::UpdateMonsters(m_gameplay, m_registry, brushes, shotBrushes, m_level.GetNavMesh(), m_audio, tickDuration);
         Gameplay::UpdateSpinningEntities(m_registry, tickDuration);
     }
 
@@ -407,6 +407,7 @@ namespace Abomination
         Gameplay::AddWeaponDebugLines(m_gameplay, m_registry, m_debugLines);
         Gameplay::AddAnimatorDebugLines(m_registry, m_renderAssets.models, interpolationFactor, m_debugLines);
         Gameplay::AddMonsterDebugLines(m_gameplay, m_registry, interpolationFactor, m_debugLines);
+        Gameplay::AddNavMeshDebugLines(m_gameplay, m_level.GetNavMesh(), m_debugLines);
 
         if (m_renderSettings.areWorldAxesVisible)
         {

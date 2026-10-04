@@ -12,6 +12,7 @@
 #include "Gameplay/Player/DamageReaction.h"
 #include "Gameplay/Player/Player.h"
 #include "Gameplay/Weapons/Weapon.h"
+#include "Navigation/NavMesh.h"
 #include "Physics/CharacterBody.h"
 #include "Physics/CharacterMovement.h"
 #include "Renderer/Assets/RenderAssets.h"
@@ -20,6 +21,7 @@
 #include "Renderer/ModelRenderer.h"
 #include "World/CollisionTrace.h"
 #include "World/MonsterStart.h"
+#include "World/PlayerStart.h"
 
 #include <glm/geometric.hpp>
 #include <glm/gtc/quaternion.hpp>
@@ -132,6 +134,54 @@ namespace Abomination::Gameplay
         }
 
         // The bodies of the dead: they fall and slide (a shot pushes them) through the level, but not against
+
+        // How often the path of a dog is found again: the player moves, the old path goes where they were.
+        constexpr float RepathInterval = 0.2f;
+
+        // A corner of the path closer than this (along the floor) is reached: the dog turns to the next one.
+        constexpr float CornerReachDistance = 0.4f;
+
+        // A path ending farther than this from where it should go does not get there.
+        constexpr float UnreachableDistance = 1.0f;
+
+        // Where the dog at feet runs to on its way to goal (feet to feet): the next corner of its path on the navmesh, or
+        // none while the way is straight (or there is no navmesh or no goal). The path is found again every
+        // RepathInterval.
+        std::optional<glm::vec3> FindWayPoint(Dog& dog, const glm::vec3& feet, const std::optional<glm::vec3>& goal,
+                                              const Navigation::NavMesh* navMesh, float tickDuration)
+        {
+            if (!goal.has_value() || navMesh == nullptr)
+            {
+                dog.path.clear();
+                return std::nullopt;
+            }
+
+            dog.repathTimer -= tickDuration;
+            if (dog.repathTimer <= 0.0f)
+            {
+                dog.repathTimer = RepathInterval;
+                if (navMesh->IsStraightWayClear(feet, *goal))
+                    dog.path.clear();
+                else
+                    dog.path = navMesh->FindPath(feet, *goal);
+
+                // A path that ends far from the goal cannot reach it (the player is below a ledge the navmesh does not
+                // lead down from): the dog runs straight at it instead, and jumps down, as without the navmesh.
+                if (!dog.path.empty() && glm::distance(dog.path.back(), *goal) > UnreachableDistance)
+                    dog.path.clear();
+            }
+            if (dog.path.size() < 2)
+                return std::nullopt;
+
+            // The corners it has reached are dropped: the first one left is where it was, the second where it goes.
+            const auto alongFloor = [](const glm::vec3& a, const glm::vec3& b)
+            {
+                return glm::length(glm::vec2(a.x - b.x, a.z - b.z));
+            };
+            while (dog.path.size() > 2 && alongFloor(dog.path[1], feet) < CornerReachDistance)
+                dog.path.erase(dog.path.begin());
+            return dog.path[1];
+        }
         // characters; when there are more than state.maximumCorpses, the oldest sink into the floor and are gone.
         // A dead dog lies flat: its box is lowered to half its height, the bottom where it was, so shots above the body
         // pass over it. Tells how far the middle of the box went down: the model is drawn that much higher, where it was.
@@ -238,7 +288,7 @@ namespace Abomination::Gameplay
     }
 
     void UpdateMonsters(GameplayState& state, entt::registry& registry, std::span<const World::CollisionBrush> brushes,
-                        std::span<const World::CollisionBrush> sightBrushes,
+                        std::span<const World::CollisionBrush> sightBrushes, const Navigation::NavMesh* navMesh,
                         Audio::AudioEngine& audio, float tickDuration)
     {
         // What every dog can perceive of the player: where they are, whether they live, and the shots of their weapon.
@@ -304,13 +354,39 @@ namespace Abomination::Gameplay
                 dog.lastShotCount = weapon->shotCount;
             }
 
+            // Its way around walls: towards the player in a chase, towards its target on a patrol (feet to feet: the
+            // navmesh lies on the floor).
+            const glm::vec3 dogFeet = transform.position - glm::vec3(0.0f, static_cast<float>(DogHalfExtents.y), 0.0f);
+            std::optional<glm::vec3> goalFeet;
+            if (dog.mind.state == DogState::Chase)
+                goalFeet = player->position - glm::vec3(0.0f, static_cast<float>(World::PlayerHalfExtents.y), 0.0f);
+            else if (dog.mind.state == DogState::Patrol)
+                goalFeet = dog.mind.patrolTarget - glm::vec3(0.0f, static_cast<float>(DogHalfExtents.y), 0.0f);
+            perception.wayPoint = FindWayPoint(dog, dogFeet, goalFeet, navMesh, tickDuration);
+
             const DogState stateBefore = dog.mind.state;
             // A frozen dog (the Enemies window) stands where it is and decides nothing.
             const DogDecision decision = state.areMonstersFrozen
                                              ? DogDecision{}
                                              : UpdateDogMind(dog.mind, perception, state.dogSettings, tickDuration, dog.random);
 
-            // What it decides, for the log at Trace level (Settings > Log level in the debug overlay).
+            // A new patrol goes to a point of the navmesh around where the dog appeared, one it can walk to, instead of
+            // anywhere around it (perhaps inside a wall). A new chase or patrol finds its way at once.
+            if (dog.mind.state != stateBefore)
+            {
+                dog.path.clear();
+                dog.repathTimer = 0.0f;
+            }
+            if (dog.mind.state == DogState::Patrol && stateBefore != DogState::Patrol && navMesh != nullptr)
+            {
+                const glm::vec3 homeFeet = dog.home - glm::vec3(0.0f, static_cast<float>(DogHalfExtents.y), 0.0f);
+                const std::optional<glm::vec3> target = navMesh->FindRandomPointAround(
+                    homeFeet, state.dogSettings.patrolRadius, [&dog] { return dog.random.GetFloat(0.0f, 1.0f); });
+                if (target.has_value())
+                    dog.mind.patrolTarget = *target + glm::vec3(0.0f, static_cast<float>(DogHalfExtents.y), 0.0f);
+            }
+
+            // What it decides, for the log at Trace level (seen in the console with Trace checked).
             if (dog.mind.state != stateBefore)
             {
                 Core::Log::Write(LogCategory::Gameplay, LogLevel::Trace, "Dog {}: {} -> {} (player {:.1f} m away{}{})",
@@ -508,11 +584,34 @@ namespace Abomination::Gameplay
                 previous = point;
             }
 
+            // Its way around walls: from where it is through the corners of its path (white).
+            if (dog.path.size() >= 2)
+            {
+                const glm::vec3 lift(0.0f, 0.06f, 0.0f);
+                const glm::vec3 pathColor(1.0f, 1.0f, 1.0f);
+                lines.AddLine(floor + lift, dog.path[1] + lift, pathColor);
+                for (std::size_t corner = 2; corner < dog.path.size(); ++corner)
+                    lines.AddLine(dog.path[corner - 1] + lift, dog.path[corner] + lift, pathColor);
+            }
+
             addCircle(floor, settings.senseRadius, glm::vec3(1.0f, 0.5f, 0.1f));
             addCircle(floor, settings.hearingRange, glm::vec3(0.3f, 0.5f, 1.0f));
 
             // The patrol area stays where the dog appeared.
             addCircle(dog.home + glm::vec3(0.0f, floorOffset, 0.0f), settings.patrolRadius, glm::vec3(0.3f, 1.0f, 0.3f));
         }
+    }
+
+    void AddNavMeshDebugLines(const GameplayState& state, const Navigation::NavMesh* navMesh, Renderer::DebugLines& lines)
+    {
+        if (!state.isNavMeshVisible || navMesh == nullptr)
+            return;
+
+        // A little above the floor, so the lines are not hidden in it.
+        constexpr glm::vec3 Lift{0.0f, 0.04f, 0.0f};
+        constexpr glm::vec3 Color{0.3f, 0.95f, 0.55f};
+        for (const Navigation::NavMeshPolygon& polygon : navMesh->GetPolygons())
+            for (std::size_t corner = 0; corner < polygon.size(); ++corner)
+                lines.AddLine(polygon[corner] + Lift, polygon[(corner + 1) % polygon.size()] + Lift, Color);
     }
 }

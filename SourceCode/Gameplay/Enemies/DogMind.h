@@ -6,6 +6,7 @@
 #include <glm/vec3.hpp>
 
 #include <array>
+#include <optional>
 #include <string_view>
 
 // What the dog decides, tick by tick, from what it perceives: a small state machine, like the monsters of Quake. It
@@ -133,6 +134,10 @@ namespace Abomination::Gameplay
 
         // How fast things fall (m/s², Physics::PhysicsSettings::gravity): a leap is aimed with it.
         float gravity = 25.0f;
+
+        // Where to run to on the way to the player (chase) or to the patrol target (patrol): the next corner of the
+        // path around walls (found on the navmesh by Monsters.cpp). None: straight at the player or the target.
+        std::optional<glm::vec3> wayPoint;
     };
 
     // The state of the mind between ticks.

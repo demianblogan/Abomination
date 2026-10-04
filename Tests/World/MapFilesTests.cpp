@@ -10,7 +10,7 @@
 namespace Abomination::World
 {
     // Every map of the game reads without errors, and every brush of it is a closed solid: each of its faces is a real
-    // polygon (none is cut away, none has three points on one line). A map written by a script (Tools/MapGenerator) or
+    // polygon (none is cut away, none has three points on one line). A map saved from TrenchBroom or
     // edited by hand is checked here before the game loads it.
     TEST(MapFiles, EveryMapReadsAndEveryBrushIsClosed)
     {

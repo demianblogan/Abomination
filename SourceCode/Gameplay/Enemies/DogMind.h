@@ -78,8 +78,9 @@ namespace Abomination::Gameplay
         float biteDuration = 1.0f;
 
         // How much higher or lower the middle of the player may be than the middle of the dog for a bite or a leap
-        // (meters). On one floor it is half a meter (the player is taller); a balcony is 4 m.
-        float attackHeightDifference = 1.2f;
+        // (meters). On one floor it is half a meter (the player is taller), a player on the back of the dog is 1.3 higher
+        // (before they slide off); a balcony is 4 m.
+        float attackHeightDifference = 1.5f;
 
         // The leap: from leapRangeMinimum to leapRangeMaximum away it crouches, and leapTakeoffTime after the start
         // (the moment its clip pushes off) jumps to where the player is then, rising leapHeight on the way, no faster
@@ -92,6 +93,11 @@ namespace Abomination::Gameplay
         float leapSpeedMaximum = 12.0f;
         float leapRecoveryTime = 0.25f;
         float leapCooldown = 2.5f;
+
+        // Up onto something it cannot walk onto (the altar): it jumps to a player whose feet are at most jumpUpHeight above
+        // its own (a little more than the player jumps), rising jumpUpClearance higher on the way.
+        float jumpUpHeight = 1.6f;
+        float jumpUpClearance = 0.4f;
 
         float damage = 10.0f;
         float painTime = 0.4f;
@@ -142,6 +148,13 @@ namespace Abomination::Gameplay
         // Where to run to on the way to the player (chase) or to the patrol target (patrol): the next corner of the
         // path around walls (found on the navmesh by Monsters.cpp). None: straight at the player or the target.
         std::optional<glm::vec3> wayPoint;
+
+        // It stands at the end of a path that cannot reach the player (the player is up on the altar): it can get no
+        // closer, and waits there, facing them, instead of running into the wall.
+        bool cannotGetCloser = false;
+
+        // How much higher the feet of the player are than its own (meters; negative: lower).
+        float playerFeetAbove = 0.0f;
     };
 
     // The state of the mind between ticks.
@@ -162,6 +175,9 @@ namespace Abomination::Gameplay
         // The leap has pushed off, and when it ends (its time in the state: takeoff, flight, recovery).
         bool hasLeapt = false;
         float leapEndTime = 0.0f;
+
+        // How much higher the leap lands than it starts (up onto the altar; 0 on the same floor).
+        float leapRise = 0.0f;
     };
 
     // What the dog does this tick, decided by UpdateDogMind.

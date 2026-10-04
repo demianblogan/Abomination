@@ -138,8 +138,6 @@ namespace Abomination::Gameplay
             return entity;
         }
 
-        // The bodies of the dead: they fall and slide (a shot pushes them) through the level, but not against
-
         // How often the path of a dog is found again: the player moves, the old path goes where they were.
         constexpr float RepathInterval = 0.2f;
 
@@ -148,6 +146,13 @@ namespace Abomination::Gameplay
 
         // A path ending farther than this from where it should go does not get there.
         constexpr float UnreachableDistance = 1.0f;
+
+        // A goal lower than this below the feet of the dog is under a ledge: the dog jumps down to it.
+        constexpr float LedgeDrop = 0.6f;
+
+        // A dog closer than this (along the floor) to the end of a path that cannot reach the player waits there: other
+        // dogs crowding the same place keep it from getting much closer.
+        constexpr float WaitDistance = 1.5f;
 
         // Where the dog at feet runs to on its way to goal (feet to feet): the next corner of its path on the navmesh, or
         // none while the way is straight (or there is no navmesh or no goal). The path is found again every
@@ -165,15 +170,22 @@ namespace Abomination::Gameplay
             if (dog.repathTimer <= 0.0f)
             {
                 dog.repathTimer = RepathInterval;
+                dog.isPathShort = false;
                 if (navMesh->IsStraightWayClear(feet, *goal))
                     dog.path.clear();
                 else
                     dog.path = navMesh->FindPath(feet, *goal);
 
-                // A path that ends far from the goal cannot reach it (the player is below a ledge the navmesh does not
-                // lead down from): the dog runs straight at it instead, and jumps down, as without the navmesh.
+                // A path that ends far from the goal cannot reach it. A goal below (the player under a ledge the navmesh
+                // does not lead down from): the dog runs straight at it instead, and jumps down, as without the
+                // navmesh. A goal above (the player on the altar): it runs as close as it can, and waits there.
                 if (!dog.path.empty() && glm::distance(dog.path.back(), *goal) > UnreachableDistance)
-                    dog.path.clear();
+                {
+                    if (goal->y < feet.y - LedgeDrop)
+                        dog.path.clear();
+                    else
+                        dog.isPathShort = true;
+                }
             }
             if (dog.path.size() < 2)
                 return std::nullopt;
@@ -187,7 +199,6 @@ namespace Abomination::Gameplay
                 dog.path.erase(dog.path.begin());
             return dog.path[1];
         }
-        // characters; when there are more than state.maximumCorpses, the oldest sink into the floor and are gone.
         // A dead dog lies flat: its box is lowered to half its height, the bottom where it was, so shots above the body
         // pass over it. Tells how far the middle of the box went down: the model is drawn that much higher, where it was.
         float LowerCorpse(entt::registry& registry, entt::entity entity)
@@ -216,6 +227,8 @@ namespace Abomination::Gameplay
             return true;
         }
 
+        // The bodies of the dead: they fall and slide (a shot pushes them) through the level, but not against
+        // characters; when there are more than state.maximumCorpses, the oldest sink into the floor and are gone.
         void UpdateCorpses(GameplayState& state, entt::registry& registry, std::span<const World::CollisionBrush> brushes,
                            Audio::AudioEngine& audio, const glm::vec3& shotFrom, float tickDuration)
         {
@@ -368,6 +381,12 @@ namespace Abomination::Gameplay
             else if (dog.mind.state == DogState::Patrol)
                 goalFeet = dog.mind.patrolTarget - glm::vec3(0.0f, static_cast<float>(DogHalfExtents.y), 0.0f);
             perception.wayPoint = FindWayPoint(dog, dogFeet, goalFeet, navMesh, tickDuration);
+            // At the end of a path that cannot reach the player: it can get no closer, and waits there.
+            glm::vec2 toPathEnd(0.0f);
+            if (!dog.path.empty())
+                toPathEnd = glm::vec2(dog.path.back().x - dogFeet.x, dog.path.back().z - dogFeet.z);
+            perception.cannotGetCloser = dog.isPathShort && glm::length(toPathEnd) < WaitDistance;
+            perception.playerFeetAbove = player->position.y - static_cast<float>(World::PlayerHalfExtents.y) - dogFeet.y;
 
             const DogState stateBefore = dog.mind.state;
             // A frozen dog (the Enemies window) stands where it is and decides nothing.

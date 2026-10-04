@@ -11,8 +11,10 @@
 #include "Renderer/Debug/DebugLines.h"
 
 #include <glm/common.hpp>
+#include <glm/geometric.hpp>
 #include <glm/vec3.hpp>
 
+#include <cmath>
 #include <optional>
 #include <vector>
 
@@ -25,6 +27,43 @@ namespace Abomination::Gameplay
 
         // The boxes of the other characters: cyan, apart from the orange of the brushes.
         constexpr glm::vec3 CharacterBoxColor{0.2f, 0.85f, 1.0f};
+
+        // How fast the player slides off the head of a character (meters per second, along the floor).
+        constexpr float SlideOffSpeed = 4.0f;
+
+        // The player may not stand on another character: on the back of a dog the dog could not reach them, and ran on
+        // the spot under them. Standing on something that is not the level, they are pushed off it, away from the middle
+        // of the character below, and fall.
+        void SlideOffCharacters(GameplayState& state, entt::registry& registry,
+                                std::span<const World::CollisionBrush> brushes, Physics::CharacterBody& body,
+                                const Core::Transform& transform)
+        {
+            if (!body.isOnGround || Physics::IsOnGround(brushes, glm::dvec3(transform.position), body.halfExtents))
+                return;
+
+            const auto characters = registry.view<const Physics::CharacterBody, const Core::Transform>();
+            for (const auto [entity, other, otherTransform] : characters.each())
+            {
+                if (entity == state.player)
+                    continue;
+
+                // The character under the player: their boxes overlap seen from above.
+                const glm::vec3 offset = transform.position - otherTransform.position;
+                const bool isBelow = std::abs(offset.x) < static_cast<float>(body.halfExtents.x + other.halfExtents.x) &&
+                                     std::abs(offset.z) < static_cast<float>(body.halfExtents.z + other.halfExtents.z) &&
+                                     offset.y > 0.0f;
+                if (!isBelow)
+                    continue;
+
+                glm::vec3 away(offset.x, 0.0f, offset.z);
+                const float length = glm::length(away);
+                away = length > 1e-3f ? away / length : glm::vec3(1.0f, 0.0f, 0.0f);
+                body.velocity.x = away.x * SlideOffSpeed;
+                body.velocity.z = away.z * SlideOffSpeed;
+                body.isOnGround = false;
+                return;
+            }
+        }
     }
 
     void UpdatePlayerLook(GameplayState& state, entt::registry& registry, const Input::ActionStates& actions,
@@ -49,8 +88,10 @@ namespace Abomination::Gameplay
         // The player stops at the walls and at the other characters (the target dummies, later enemies).
         Physics::CharacterBody& body = registry.get<Physics::CharacterBody>(state.player);
         const std::vector<World::CollisionBrush> obstacles = GatherCollisionBrushes(registry, brushes, state.player);
-        Physics::UpdateCharacter(body, registry.get<Core::Transform>(state.player), obstacles, state.physicsSettings,
-                                 state.movementSettings, command, tickDuration);
+        Core::Transform& transform = registry.get<Core::Transform>(state.player);
+        Physics::UpdateCharacter(body, transform, obstacles, state.physicsSettings, state.movementSettings, command,
+                                 tickDuration);
+        SlideOffCharacters(state, registry, brushes, body, transform);
         UpdateStepSmoothing(registry.get<StepSmoothing>(state.player), body.steppedUpHeight, tickDuration);
     }
 

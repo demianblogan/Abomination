@@ -270,4 +270,44 @@ namespace Abomination::Gameplay
             EXPECT_FALSE(Step(mind, perception, settings, random).bites);
         EXPECT_EQ(mind.state, DogState::Chase);
     }
+
+    TEST(DogMind, WaitsWhereItCanGetNoCloser)
+    {
+        DogMind mind{.state = DogState::Chase};
+        Core::Random random(13);
+        const DogSettings settings;
+
+        // The player stands up on the altar, out of reach; the dog has run to the closest place it can get to.
+        DogPerception perception = PlayerInFront(2.0f);
+        perception.playerPosition.y = 2.0f;
+        perception.cannotGetCloser = true;
+
+        const DogDecision decision = Step(mind, perception, settings, random);
+        EXPECT_EQ(mind.state, DogState::Chase);
+        EXPECT_FLOAT_EQ(decision.speed, 0.0f);
+        EXPECT_LT(decision.faceDirection.z, -0.99f);
+        EXPECT_FALSE(decision.bites);
+    }
+
+    TEST(DogMind, JumpsUpToPlayerOnTheAltar)
+    {
+        DogMind mind{.state = DogState::Chase};
+        Core::Random random(14);
+        const DogSettings settings;
+
+        // The player stands 1.5 m higher (up on the altar), 1 m away: the dog leaps up, higher than the altar.
+        DogPerception perception = PlayerInFront(1.0f);
+        perception.playerPosition.y = 2.0f;
+        perception.playerFeetAbove = 1.5f;
+        static_cast<void>(Step(mind, perception, settings, random));
+        ASSERT_EQ(mind.state, DogState::Leap);
+
+        DogDecision leap;
+        while (glm::dot(leap.impulse, leap.impulse) == 0.0f && mind.stateTime < 1.0f)
+            leap = Step(mind, perception, settings, random);
+
+        // Rising to 1.5 + 0.4 m takes sqrt(2 x 25 x 1.9) = 9.75 m/s up: its apex is above the altar.
+        EXPECT_NEAR(leap.impulse.y, 9.747f, 0.01f);
+        EXPECT_LT(leap.impulse.z, 0.0f);
+    }
 }

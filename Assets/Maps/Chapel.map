@@ -1,6 +1,6 @@
 // Game: Abomination
 // Format: Valve
-// Generator: Tools/MapGenerator (the first version of the chapel)
+// Generator: TrenchBroom 2026.2 (Build v2026.2 Release Win64)
 // entity 0
 {
 "mapversion" "220"
@@ -784,11 +784,11 @@
 }
 // brush 81
 {
-( 192 736 0 ) ( 192 737 0 ) ( 192 736 1 ) Common/Clip [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
-( 576 736 0 ) ( 576 735 0 ) ( 576 736 1 ) Common/Clip [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
-( 192 832 0 ) ( 193 832 0 ) ( 192 832 1 ) Common/Clip [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
-( 192 736 0 ) ( 192 735 0 ) ( 193 736 0 ) Common/Clip [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
-( 192 736 0 ) ( 192 738 1 ) ( 193 736 0 ) Common/Clip [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 192 704 0 ) ( 192 705 0 ) ( 192 704 1 ) Common/Clip [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 576 704 0 ) ( 576 703 0 ) ( 576 704 1 ) Common/Clip [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 192 800 0 ) ( 193 800 0 ) ( 192 800 1 ) Common/Clip [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 192 704 0 ) ( 192 703 0 ) ( 193 704 0 ) Common/Clip [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 192 704 0 ) ( 192 706 1 ) ( 193 704 0 ) Common/Clip [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
 }
 // brush 82
 {

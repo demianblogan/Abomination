@@ -13,6 +13,11 @@ namespace Abomination::Gameplay
         // A dog facing a target within this angle walks; farther off it first turns on the spot.
         constexpr float WalkAngle = glm::radians(12.0f);
 
+        // The player higher than this above the feet of the dog is up on something (more than a step): the dog jumps up
+        // to them, not more often than every JumpUpCooldown seconds (a jump that fell short is tried again soon).
+        constexpr float ClimbHeight = 0.6f;
+        constexpr float JumpUpCooldown = 1.0f;
+
         // The horizontal part of a direction, of length 1; zero if it has none (straight up or down, or zero).
         glm::vec3 Horizontal(glm::vec3 direction)
         {
@@ -26,22 +31,35 @@ namespace Abomination::Gameplay
             return glm::length(glm::vec3(a.x - b.x, 0.0f, a.z - b.z));
         }
 
-        // The push of a leap that lands where the player is, rising leapHeight on the way (a throw, ignoring the
-        // height difference of the two places).
+        // The push of a leap that lands where the player is (a throw), and how long it is in the air.
         //
         // Thrown up at speed v, a body rises until gravity g has taken all of v: for v / g seconds, to the height
         // v² / (2g). So rising h takes v = sqrt(2gh), and the whole flight up and down lasts t = 2v / g. To cover the
         // distance d along the ground in that time it goes d / t. For example, with g = 25 m/s² and h = 0.6 m: v =
         // sqrt(30) = 5.5 m/s up, t = 0.44 s in the air, and 3 m away 6.8 m/s forward.
-        glm::vec3 CalculateLeapImpulse(const DogPerception& perception, const DogSettings& settings)
+        struct Leap
         {
-            const float upSpeed = std::sqrt(2.0f * perception.gravity * settings.leapHeight);
-            const float flightTime = 2.0f * upSpeed / perception.gravity;
+            glm::vec3 impulse{0.0f};
+            float flightTime = 0.0f;
+        };
+
+        // A leap that lands rise higher than it starts (0: on the same floor; up to jumpUpHeight: up onto the altar).
+        // It rises to its apex, the higher of leapHeight and rise + jumpUpClearance, in v / g, and falls from there to
+        // rise in sqrt(2 (apex - rise) / g): a fall from height d takes sqrt(2d / g).
+        Leap CalculateLeap(const DogPerception& perception, const DogSettings& settings, float rise)
+        {
+            const float apex = std::max(settings.leapHeight, rise + settings.jumpUpClearance);
+            const float upSpeed = std::sqrt(2.0f * perception.gravity * apex);
+            const float flightTime =
+                upSpeed / perception.gravity + std::sqrt(2.0f * (apex - rise) / perception.gravity);
             const float distance = HorizontalDistance(perception.playerPosition, perception.position);
             const float forwardSpeed = std::min(distance / flightTime, settings.leapSpeedMaximum);
 
-            return Horizontal(perception.playerPosition - perception.position) * forwardSpeed +
-                   glm::vec3(0.0f, upSpeed, 0.0f);
+            return Leap{
+                .impulse = Horizontal(perception.playerPosition - perception.position) * forwardSpeed +
+                           glm::vec3(0.0f, upSpeed, 0.0f),
+                .flightTime = flightTime,
+            };
         }
 
         void Enter(DogMind& mind, DogState state)
@@ -142,12 +160,22 @@ namespace Abomination::Gameplay
                 EnterIdle(mind, settings, random);
             else if (isOnSameLevel && playerDistance <= settings.biteRange)
                 Enter(mind, DogState::Bite);
+            // The player is up on something it cannot walk onto, but not too high (the altar): it jumps up to them.
+            else if (perception.playerFeetAbove > ClimbHeight && perception.playerFeetAbove <= settings.jumpUpHeight &&
+                     playerDistance <= settings.leapRangeMaximum && mind.timeSinceLeap >= JumpUpCooldown)
+            {
+                Enter(mind, DogState::Leap);
+                mind.timeSinceLeap = 0.0f;
+                mind.leapRise = perception.playerFeetAbove;
+                mind.leapEndTime = settings.leapTakeoffTime + settings.leapRecoveryTime;
+            }
             else if (isOnSameLevel && playerDistance >= settings.leapRangeMinimum &&
                      playerDistance <= settings.leapRangeMaximum &&
                      mind.timeSinceLeap >= settings.leapCooldown && CanSeePlayer(perception, settings))
             {
                 Enter(mind, DogState::Leap);
                 mind.timeSinceLeap = 0.0f;
+                mind.leapRise = 0.0f;
                 mind.leapEndTime = settings.leapTakeoffTime + settings.leapRecoveryTime;
             }
             break;
@@ -196,9 +224,17 @@ namespace Abomination::Gameplay
             break;
 
         case DogState::Chase:
+            decision.turnSpeed = settings.runTurnSpeed;
+            if (perception.cannotGetCloser)
+            {
+                // As close as it can get: it stands and faces the player (barking, see Monsters.cpp), waiting for them to
+                // come down.
+                decision.faceDirection = toPlayer;
+                decision.animation = "Idle";
+                break;
+            }
             // At the player, or at the next corner of the path around what is in the way.
             decision.faceDirection = Horizontal(perception.wayPoint.value_or(perception.playerPosition) - perception.position);
-            decision.turnSpeed = settings.runTurnSpeed;
             decision.speed = settings.runSpeed;
             decision.animation = "Gallop";
             decision.animationSpeed = settings.runAnimationSpeed;
@@ -218,12 +254,11 @@ namespace Abomination::Gameplay
                 if (!mind.hasLeapt && mind.stateTime >= settings.leapTakeoffTime)
                 {
                     mind.hasLeapt = true;
-                    decision.impulse = CalculateLeapImpulse(perception, settings);
+                    const Leap leap = CalculateLeap(perception, settings, mind.leapRise);
+                    decision.impulse = leap.impulse;
 
-                    // It is in the air for the time a throw up at the speed of the impulse takes to come down (see
-                    // CalculateLeapImpulse), then recovers.
-                    const float flightTime = 2.0f * decision.impulse.y / perception.gravity;
-                    mind.leapEndTime = mind.stateTime + flightTime + settings.leapRecoveryTime;
+                    // It is in the air until it lands (see CalculateLeap), then recovers.
+                    mind.leapEndTime = mind.stateTime + leap.flightTime + settings.leapRecoveryTime;
                 }
 
                 // In the air it bites the moment it reaches the player: a leap that lands on them hurts at once, one

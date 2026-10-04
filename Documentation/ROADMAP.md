@@ -175,7 +175,10 @@ far:
   and framebuffer (gamma correction) together with lighting; shader hot reload.
   Visibility of level parts (BSP leaves and PVS, or portals) in the level
   compiler, if measurements on large maps show that drawing the whole level
-  as one mesh is too slow.
+  as one mesh is too slow. Fall damage for the player (none today: a jump
+  from the balcony of the chapel hurts nothing): above a safe fall speed the
+  landing takes health, with its own sound and a stronger landing dip, like
+  Quake (a long fall hurts, a jump down a flight of stairs does not).
 - **0.6** — pickups spin and bob in place, like in Quake (the `Spin`
   component made for the old demo crates is kept for them).
   Sound mixer in the Audio window of the debug overlay: a volume slider and a

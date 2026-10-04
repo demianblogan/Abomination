@@ -125,7 +125,7 @@ monsters of Quake; if time runs out, the navmesh moves to 0.5.
 | 3 | `feat/pump-action`              | ✅     | After every shot the shotgun is brought to the chest and its pump slides back and forth with a click (moved by code); the bolt, taken out of the body of the model, uncovers the window, and a smoking shell flies out, bounces off the level and stays on the floor (the 20 newest) with the sound of its fall |
 | 4 | `feat/skeletal-animation`       | ✅     | Skins, joints and animation clips from glTF (with the nodes above the joints); skinning in the vertex shader; an animation player with named segments, speed and cross-fades; the first enemy model, a fat rotting dog made with Tripo and rigged with the skeleton and clips of a CC0 husky; an Animation window with the skeleton and axes |
 | 5 | `feat/first-person-hands`       | ✅     | Hands holding the shotgun (WRAD ARMS, the texture slightly darkened and dirtied): posed on the shotgun in a Blender scene with IK handles (Hold, and HoldPumpBack with the left hand on the pulled pump), drawn with the weapon's matrix so they follow its recoil, turn and sway, blended between the two poses as the pump moves; the free-fly camera shows the weapon with the hands in the world |
-| 6 | `feat/enemy`                    | ⏳     | The first enemy, a melee monster: states (idle, alert, chase, attack, pain, death), sight (a trace to the player) and hearing (shots), a strike that hurts the player; the target dummies of 0.3 removed; the log level chosen in the running game |
+| 6 | `feat/enemy`                    | ✅     | The dog, the first enemy: a map entity `monster_dog` placed in TrenchBroom; a character body moved by the player's movement code (sliding along walls, steps, gravity), health, hit by pellets; states idle (looking around, sniffing), patrol (wandering), alert (sight: a trace to the player within range and field of view; hearing: shots), chase (galloping straight at the player), attack (a leaping bite that hurts the player), pain; each with its clip and cross-fades; its sounds (bark, bite, landing, yelp, death); clip brushes for smooth stairs, walking along slopes, the model fitted to the ground; an Enemy window with the ranges and the lines of sight; the target dummies of 0.3 removed; Trace messages of what the dog decides (a Debug build writes from Trace on, the console hides Trace until it is checked) |
 | 7 | `feat/death`                    | ⏳     | The enemy dies with an animation and its body stays; the player dies: a death sound, the view drops to the floor and fades to black, "Game Over" and "Press any key to try again"; any key or mouse button restarts the level |
 | 8 | `feat/navmesh`                  | ⏳     | Recast/Detour: a navmesh built from the brushes when a level loads, paths around walls and up stairs, the navmesh shown in the debug overlay |
 | 9 | `refactor/review-0.4`           | ⏳     | A review of the project, a list of what changed since the last walkthrough, screenshots; release v0.4.0 |
@@ -177,6 +177,10 @@ far:
   as one mesh is too slow.
 - **0.6** — pickups spin and bob in place, like in Quake (the `Spin`
   component made for the old demo crates is kept for them).
+  Sound mixer in the Audio window of the debug overlay: a volume slider and a
+  play button for every sound event, saved to a data-driven config, so the
+  whole mix is balanced by ear (the bite of the dog is drowned by the blow
+  and the cry of the player, the yelp of a hit dog by the shotgun).
 - **0.8** — every gameplay component must be serializable; keep this in mind
   from 0.2 onwards. Options menu, *Display > FPS limit*: a list of common
   monitor refresh rates (30, 60, 75, 90, 100, 120, 144, 165, 180, 240, 280,
@@ -218,13 +222,6 @@ Ideas that are not assigned to a milestone yet.
   numbers tuned in the running game become the game's settings.
 - **"Reset window positions"** in the View menu, for debug windows saved
   outside a smaller game window.
-- **Log level chosen in the running game** (*Settings > Log level* in the
-  debug overlay, or a console command): `Log::SetMinimumLevel()` instead of
-  the fixed level in `Main.cpp`. Trace messages (written every frame or tick:
-  physics traces, AI decisions, loaded assets) can then be switched on while
-  a bug is reproduced and off again, without rebuilding. Worth doing together
-  with the first real Trace messages (the AI in 0.4); today only OpenGL
-  notifications are written at Trace.
 - **Footsteps that depend on the surface** (stone, wood, …): a table from
   textures to surface materials, the material of every brush plane kept for
   collision, traces report the material they hit, the character body keeps

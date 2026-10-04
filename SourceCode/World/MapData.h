@@ -60,4 +60,12 @@ namespace Abomination::World
 
     // The value of a property, or nullptr if the entity does not have it.
     [[nodiscard]] const std::string* FindProperty(const MapEntity& entity, const std::string& key);
+
+    // The texture of clip brushes: invisible walls and ramps that only characters collide with, as in Quake. A ramp of
+    // clip laid over a stair lets characters walk up and down it smoothly, while the steps are still seen. Shots,
+    // shells and sight go through clip (see Level::GetShotBrushes).
+    inline constexpr std::string_view ClipTextureName = "Common/Clip";
+
+    // Whether a brush is clip: any of its faces has the clip texture.
+    [[nodiscard]] bool IsClipBrush(const MapBrush& brush);
 }

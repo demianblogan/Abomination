@@ -58,6 +58,13 @@ can be placed. This is described by two files kept in the repository:
    the ceiling.
 5. **Stairs.** In the tool options of the shape tool choose *Stairs* and draw
    a staircase of 4–6 steps against a wall.
+   Then cover it with a ramp of clip: a brush with the texture
+   `Common/Clip` (purple, *CLIP*) from the bottom of the first step to the
+   top of the last (draw a box over the stairs, then move its top edge with
+   the vertex tool). Clip is never drawn in the game; characters walk on it,
+   so they go up and down the stairs smoothly instead of jumping from step to
+   step, while shots and sight go through it. Clip also makes invisible
+   walls.
 6. **Player start.** In the entity browser (right panel) drag
    `info_player_start` onto the floor.
 7. **Model.** Drag `misc_model` into the room: it shows the model of its
@@ -67,8 +74,9 @@ can be placed. This is described by two files kept in the repository:
 ## Seeing the map in the game
 
 The game loads `Assets/Maps/Test.map` at startup: save the map in
-TrenchBroom, build (so the changed file is copied next to the executable)
-and start the game. The player appears at `info_player_start`, looking in the
+TrenchBroom and reload the level (a Debug build reads `Assets` of the
+repository; a Release build reads the copy made next to the executable on
+every build), or start the game. The player appears at `info_player_start`, looking in the
 direction of its angle. A player start placed on the floor puts the player on
 the floor; one placed higher lets the player fall at the start (like in
 Quake). F2 switches to the free-fly camera to look at the map from anywhere.

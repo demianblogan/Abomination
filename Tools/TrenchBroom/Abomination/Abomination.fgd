@@ -19,9 +19,10 @@
     angle(integer) : "Direction the model faces, in degrees around the vertical axis" : 0
 ]
 
-// A target to shoot at until the first enemy (0.3 only): it takes damage, is pushed by shots and comes back 3 seconds
-// after it is destroyed. The box is that of the player.
-@PointClass size(-16 -16 -24, 16 16 32) color(255 200 0) model({ "path": "Models/Enemies/Dummy.glb", "scale": 32 }) = target_dummy : "Target dummy"
+// The dog, a melee monster: it wanders, sniffs, notices the player by sight or by the sound of shots, runs at them and
+// bites. Its box is 34 units across (as long as the dog, so its muzzle and tail stay inside) and 24 tall, its origin at
+// the bottom, between the paws, like the origin of its model: placed on the floor, the dog stands on it.
+@PointClass size(-17 -17 0, 17 17 24) color(200 40 40) model({ "path": "Models/Enemies/Dog.glb", "scale": 32 }) = monster_dog : "Dog"
 [
-    angle(integer) : "Direction the dummy faces, in degrees around the vertical axis" : 0
+    angle(integer) : "Direction the dog faces, in degrees around the vertical axis" : 0
 ]

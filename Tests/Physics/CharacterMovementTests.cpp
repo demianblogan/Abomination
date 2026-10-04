@@ -334,4 +334,64 @@ namespace Abomination::Physics
         EXPECT_NEAR(transform.position.z, -1.5f, 0.01f); // stopped at the face of the step
         EXPECT_EQ(body.steppedUpHeight, 0.0f);
     }
+
+    TEST(CharacterMovement, WalkingUpAndDownSteepRampStaysOnGround)
+    {
+        // A floor at y = 0, a ramp of 45 degrees (a clip ramp over stairs) rising from x = 0 (its top is y = x) and a
+        // platform at its top, y = 10 from x = 10.
+        World::CollisionBrush ramp = CreateBoxBrush({0.0, -1.0, -50.0}, {10.0, 10.0, 50.0});
+        const double halfSqrt2 = std::sqrt(0.5);
+        ramp.planes[2] = {.normal = {-halfSqrt2, halfSqrt2, 0.0}, .distanceFromOrigin = 0.0};
+        ramp.planes.push_back({.normal = {0.0, 1.0, 0.0}, .distanceFromOrigin = 10.0});
+        const std::vector<World::CollisionBrush> brushes = {CreateBoxBrush({-50.0, -1.0, -50.0}, {50.0, 0.0, 50.0}), ramp,
+                                                            CreateBoxBrush({10.0, -1.0, -50.0}, {50.0, 10.0, 50.0})};
+
+        CharacterBody body{.halfExtents = HalfExtents, .isOnGround = true};
+        Core::Transform transform{.position = {-3.0f, static_cast<float>(HalfExtents.y + World::SurfaceEpsilon), 0.0f}};
+
+        // Up for 2 seconds at 7 m/s: never off the ground (it used to fly off the ramp: the jump sound on every step).
+        int ticksInAir = 0;
+        for (int tick = 0; tick < 120; ++tick)
+        {
+            UpdateCharacter(body, transform, brushes, PhysicsSettings{}, MovementSettings{}, {.wishDirection = {1, 0, 0}},
+                            TickDuration);
+            ticksInAir += body.isOnGround ? 0 : 1;
+        }
+        EXPECT_EQ(ticksInAir, 0);
+        EXPECT_GT(transform.position.y, 3.0f);
+
+        // And down again: no flying off the slope either.
+        for (int tick = 0; tick < 120; ++tick)
+        {
+            UpdateCharacter(body, transform, brushes, PhysicsSettings{}, MovementSettings{},
+                            {.wishDirection = {-1, 0, 0}}, TickDuration);
+            ticksInAir += body.isOnGround ? 0 : 1;
+        }
+        EXPECT_EQ(ticksInAir, 0);
+        EXPECT_LT(transform.position.y, 1.0f);
+    }
+
+    TEST(CharacterMovement, WalkingUpRampKeepsDirection)
+    {
+        // The ramp of 45 degrees of the test above, walked up a little to the side (1 m sideways for every 5 forward).
+        World::CollisionBrush ramp = CreateBoxBrush({0.0, -1.0, -50.0}, {10.0, 10.0, 50.0});
+        const double halfSqrt2 = std::sqrt(0.5);
+        ramp.planes[2] = {.normal = {-halfSqrt2, halfSqrt2, 0.0}, .distanceFromOrigin = 0.0};
+        ramp.planes.push_back({.normal = {0.0, 1.0, 0.0}, .distanceFromOrigin = 10.0});
+        const std::vector<World::CollisionBrush> brushes = {CreateBoxBrush({-50.0, -1.0, -50.0}, {50.0, 0.0, 50.0}), ramp};
+
+        CharacterBody body{.halfExtents = HalfExtents, .isOnGround = true};
+        Core::Transform transform{.position = {0.0f, static_cast<float>(HalfExtents.y + World::SurfaceEpsilon) + 0.5f, 0.0f}};
+        const glm::vec3 start = transform.position;
+        const glm::vec3 wish = glm::normalize(glm::vec3(5.0f, 0.0f, 1.0f));
+
+        for (int tick = 0; tick < 60; ++tick)
+            UpdateCharacter(body, transform, brushes, PhysicsSettings{}, MovementSettings{}, {.wishDirection = wish},
+                            TickDuration);
+
+        // Seen from above it went the way it was walked: it did not turn sideways (it once did, more every tick).
+        const glm::vec3 moved = transform.position - start;
+        EXPECT_GT(moved.y, 2.0f);
+        EXPECT_NEAR(moved.z / moved.x, 0.2f, 0.01f);
+    }
 }

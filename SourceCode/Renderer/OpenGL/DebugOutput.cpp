@@ -56,7 +56,7 @@ namespace Abomination::Renderer
         }
 
         // Driver severities mapped to our log levels. Notifications are informational messages that some drivers
-        // send very often (for example, where a buffer is stored), so they go to Trace, which is normally disabled.
+        // send very often (for example, where a buffer is stored); they are switched off in EnableDebugOutput.
         constexpr LogLevel ConvertSeverityToLogLevel(GLenum severity) noexcept
         {
             switch (severity)
@@ -108,6 +108,12 @@ namespace Abomination::Renderer
         glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
 
         glDebugMessageCallback(HandleDebugMessage, nullptr);
+
+        // Notifications are not sent at all: some drivers send them very often (NVIDIA tells where a buffer is stored on
+        // every update of it), and a Debug build writes the log from Trace on (the level they would get), so they would
+        // flood the log and the console. glDebugMessageControl filters by source, type, severity and id; GL_DONT_CARE
+        // matches any, and GL_FALSE switches the matching messages off.
+        glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DEBUG_SEVERITY_NOTIFICATION, 0, nullptr, GL_FALSE);
 
         Core::Log::Write(LogCategory::Renderer, LogLevel::Info, "OpenGL debug output enabled");
     }

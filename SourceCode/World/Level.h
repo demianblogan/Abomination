@@ -4,6 +4,7 @@
 #include "World/CollisionBrush.h"
 #include "World/LevelMesh.h"
 #include "World/MapData.h"
+#include "World/MonsterStart.h"
 #include "World/PlayerStart.h"
 
 #include <entt/entt.hpp>
@@ -29,8 +30,7 @@ namespace Abomination::World
         //   - the models (misc_model): one entity each, with the model file of the "model" property at the origin of the
         //     map entity, turned by its angle; the model goes to the Level lifetime group;
         //   - the player start (info_player_start): not an entity, its position and angle are kept;
-        //   - the target dummies (target_dummy): not entities either, only their places are kept for the Gameplay module
-        //     (a temporary target to shoot at until the first enemy, 0.4).
+        //   - the monsters (monster_dog, ...): not entities either, only their places are kept for the Gameplay module.
         // Problems (no world, no player start) are logged; the level is then partly or fully empty.
         [[nodiscard]] static Level Create(entt::registry& registry, Renderer::RenderAssets& assets, const MapData& map,
                                           const std::string& mapPath);
@@ -42,20 +42,24 @@ namespace Abomination::World
         [[nodiscard]] const PlayerStart& GetPlayerStart() const noexcept;
         [[nodiscard]] const LevelMeshStatistics& GetStatistics() const noexcept;
 
-        // Where the target dummies of the map stand (their box is that of the player).
-        [[nodiscard]] const std::vector<PlayerStart>& GetTargetDummyStarts() const noexcept;
+        // Where the monsters of the map stand (see MonsterStart).
+        [[nodiscard]] const std::vector<MonsterStart>& GetMonsterStarts() const noexcept;
 
-        // The solid brushes of the world, for collision (see CollisionBrush).
+        // The solid brushes of the world that characters collide with, clip included (see CollisionBrush, IsClipBrush).
         [[nodiscard]] const std::vector<CollisionBrush>& GetCollisionBrushes() const noexcept;
+
+        // The brushes that stop shots, shells and sight: all but clip.
+        [[nodiscard]] const std::vector<CollisionBrush>& GetShotBrushes() const noexcept;
 
     private:
         // The entities of the level: those that draw the static geometry (one per texture) and the models standing in it.
         std::vector<entt::entity> m_entities;
 
         std::vector<CollisionBrush> m_collisionBrushes;
+        std::vector<CollisionBrush> m_shotBrushes;
 
         PlayerStart m_playerStart;
-        std::vector<PlayerStart> m_targetDummyStarts;
+        std::vector<MonsterStart> m_monsterStarts;
         LevelMeshStatistics m_statistics;
     };
 }

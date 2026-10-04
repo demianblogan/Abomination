@@ -4,6 +4,7 @@
 #include "Gameplay/Camera/FreeFlyCameraController.h"
 #include "Gameplay/Characters/DamageKind.h"
 #include "Gameplay/Effects/Effects.h"
+#include "Gameplay/Enemies/DogMind.h"
 #include "Gameplay/Player/PlayerController.h"
 #include "Gameplay/Weapons/Shells.h"
 #include "Physics/CharacterMovement.h"
@@ -59,6 +60,17 @@ namespace Abomination::Gameplay
         float previousVerticalSpeed = 0.0f;
     };
 
+    // The sounds of the dogs, played where the dog is (see UpdateMonsters): a bark when it notices the player, the bite
+    // that hurts, the landing of a leap, a yelp when hit, and its death.
+    struct DogSounds
+    {
+        Audio::SoundEventHandle bark;
+        Audio::SoundEventHandle bite;
+        Audio::SoundEventHandle land;
+        Audio::SoundEventHandle hurt;
+        Audio::SoundEventHandle death;
+    };
+
     // What the gameplay systems share between frames: the entities the input controls, the controllers that turn input
     // into what those entities do, and the settings of their movement. The components of the entities live in the
     // registry; this holds only the entity numbers. Application owns it and passes it to the systems (PlayerSystem.h,
@@ -80,9 +92,17 @@ namespace Abomination::Gameplay
         Physics::MovementSettings movementSettings;
 
         PlayerSounds playerSounds;
+        DogSounds dogSounds;
 
-        // The target dummies of the level (see TargetDummy.h); replaced when the level is.
-        std::vector<entt::entity> targetDummies;
+        // The monsters of the level (see Monsters.h); replaced when the level is.
+        std::vector<entt::entity> monsters;
+
+        // How every dog sees, hears, moves and bites (tuned in the Enemy window, see DogMind.h).
+        DogSettings dogSettings;
+
+        // Debug (the Enemies window): the monsters stand and decide nothing; the senses of the dogs are drawn.
+        bool areMonstersFrozen = false;
+        bool areDogSensesVisible = false;
 
         // The visual effects of shots (see Effects.h).
         Effects effects;

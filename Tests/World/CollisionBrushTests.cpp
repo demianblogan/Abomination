@@ -52,7 +52,7 @@ namespace Abomination::World
             const std::expected<MapData, std::string> map = ParseMap(mapText);
             EXPECT_TRUE(map.has_value()) << (map.has_value() ? "" : map.error());
 
-            return BuildCollisionBrushes(map.value().entities.at(0));
+            return BuildCollisionBrushes(map.value().entities.at(0), BrushSelection::All);
         }
 
         void ExpectNear(const glm::dvec3& actual, const glm::dvec3& expected)
@@ -132,9 +132,23 @@ namespace Abomination::World
         MapEntity world = map.value().entities.at(0);
         world.brushes[0].faces.push_back(MapFace{.points = {glm::dvec3(0.0), glm::dvec3(1.0), glm::dvec3(2.0)}});
 
-        const std::vector<CollisionBrush> brushes = BuildCollisionBrushes(world);
+        const std::vector<CollisionBrush> brushes = BuildCollisionBrushes(world, BrushSelection::All);
 
         ASSERT_EQ(brushes.size(), 1u);
         EXPECT_EQ(brushes[0].planes.size(), 6u);
+    }
+
+    TEST(CollisionBrush, ClipStopsCharactersButNotShots)
+    {
+        const std::expected<MapData, std::string> map = ParseMap(CubeMap);
+        ASSERT_TRUE(map.has_value());
+        MapEntity world = map.value().entities.at(0);
+        world.brushes.push_back(world.brushes[0]);
+        world.brushes[1].faces[0].textureName = std::string(ClipTextureName);
+
+        EXPECT_FALSE(IsClipBrush(world.brushes[0]));
+        EXPECT_TRUE(IsClipBrush(world.brushes[1]));
+        EXPECT_EQ(BuildCollisionBrushes(world, BrushSelection::All).size(), 2u);
+        EXPECT_EQ(BuildCollisionBrushes(world, BrushSelection::WithoutClip).size(), 1u);
     }
 }

@@ -5,6 +5,7 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <utility>
 #include <vector>
 
 namespace Abomination::Core
@@ -42,6 +43,13 @@ namespace Abomination::UI
             return flags;
         }
 
+        static constexpr LevelFlags MakeAllTrueButTrace()
+        {
+            LevelFlags flags = MakeAllTrue<LevelFlags>();
+            flags[std::to_underlying(Core::LogLevel::Trace)] = false;
+            return flags;
+        }
+
         void DrawToolbar(Core::LogHistory& history);
         void DrawMessages(const Core::LogHistory& history);
 
@@ -51,9 +59,10 @@ namespace Abomination::UI
         float m_opacity = 0.85f;
         float m_heightFraction = 0.4f;
 
-        // Which levels and which categories (modules) are shown, all at first. The index is the numeric value of
-        // Core::LogLevel or Core::LogCategory.
-        LevelFlags m_visibleLevels = MakeAllTrue<LevelFlags>();
+        // Which levels and which categories (modules) are shown: all at first, but Trace (the many small messages of a
+        // Debug build: what the dogs decide, OpenGL notifications), shown with its check box in Levels. The index is
+        // the numeric value of Core::LogLevel or Core::LogCategory.
+        LevelFlags m_visibleLevels = MakeAllTrueButTrace();
         CategoryFlags m_visibleCategories = MakeAllTrue<CategoryFlags>();
 
         // Keep the newest message in sight: scroll to the bottom when a message arrives. m_seenAddedEntryCount is the

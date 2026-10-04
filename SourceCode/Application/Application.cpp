@@ -9,7 +9,7 @@
 #include "Gameplay/Animation/Animator.h"
 #include "Gameplay/Camera/FreeFlyCameraSystem.h"
 #include "Gameplay/Camera/ViewSystem.h"
-#include "Gameplay/Characters/TargetDummy.h"
+#include "Gameplay/Enemies/Monsters.h"
 #include "Gameplay/Player/DamageReaction.h"
 #include "Gameplay/Player/Player.h"
 #include "Gameplay/Player/PlayerSystem.h"
@@ -130,7 +130,7 @@ namespace Abomination
 
         // The player appears where the map puts them. The free-fly camera waits at their eyes; F2 switches to it.
         m_gameplay = Gameplay::CreateGameplayState(m_registry, m_level.GetPlayerStart(), m_audio, m_renderAssets);
-        m_gameplay.targetDummies = Gameplay::SpawnTargetDummies(m_registry, m_renderAssets, m_level.GetTargetDummyStarts());
+        m_gameplay.monsters = Gameplay::SpawnMonsters(m_registry, m_renderAssets, m_level.GetMonsterStarts());
         Gameplay::AnimateLevelModels(m_registry, m_renderAssets.models);
     }
 
@@ -174,7 +174,7 @@ namespace Abomination
             // The shells fly out of the weapon as it is seen: from the eyes between the last two ticks.
             const Core::Transform eyes =
                 Gameplay::CalculateViewTransform(m_gameplay, m_registry, m_fixedTimestep.GetInterpolationFactor());
-            Gameplay::UpdateShells(m_gameplay, m_registry, eyes, m_level.GetCollisionBrushes(), m_audio,
+            Gameplay::UpdateShells(m_gameplay, m_registry, eyes, m_level.GetShotBrushes(), m_audio,
                                    frameTimer.GetDeltaTime());
             Gameplay::UpdateDamageReaction(m_gameplay, m_registry, m_audio, frameTimer.GetDeltaTime());
 
@@ -261,14 +261,16 @@ namespace Abomination
         // First of all: remember where every interpolated entity is before this tick moves anything.
         Core::StorePreviousTransforms(m_registry);
 
+        // Characters collide with clip; shots and sight go through it (see World::IsClipBrush).
         const std::span<const World::CollisionBrush> brushes = m_level.GetCollisionBrushes();
+        const std::span<const World::CollisionBrush> shotBrushes = m_level.GetShotBrushes();
         Gameplay::UpdatePlayer(m_gameplay, m_registry, m_actionStates, brushes, tickDuration);
         Gameplay::UpdatePlayerSounds(m_gameplay, m_registry, m_audio);
-        Gameplay::UpdateWeapon(m_gameplay, m_registry, m_actionStates, m_canPlayerShoot, brushes, m_audio, tickDuration);
+        Gameplay::UpdateWeapon(m_gameplay, m_registry, m_actionStates, m_canPlayerShoot, shotBrushes, m_audio,
+                               tickDuration);
         Gameplay::UpdateFreeFlyCamera(m_gameplay, m_registry, m_actionStates, brushes,
                                       m_collisionSettings.doesCameraCollide, tickDuration);
-        Gameplay::UpdateTargetDummies(m_registry, m_renderAssets, brushes, m_gameplay.physicsSettings,
-                                      m_gameplay.movementSettings, tickDuration);
+        Gameplay::UpdateMonsters(m_gameplay, m_registry, brushes, shotBrushes, m_audio, tickDuration);
         Gameplay::UpdateSpinningEntities(m_registry, tickDuration);
     }
 
@@ -284,13 +286,13 @@ namespace Abomination
             return;
         }
 
-        // The dummies first: their models belong to the level and are removed with it.
-        Gameplay::DestroyTargetDummies(m_registry, m_gameplay.targetDummies);
+        // The monsters first: their models belong to the level and are removed with it.
+        Gameplay::DestroyMonsters(m_registry, m_gameplay.monsters);
         m_level.Unload(m_registry, m_renderAssets);
         Gameplay::ClearEffects(m_gameplay.effects);
         Gameplay::ClearShells(m_gameplay.shells, m_registry);
         m_level = World::Level::Create(m_registry, m_renderAssets, *map, StartMapPath);
-        m_gameplay.targetDummies = Gameplay::SpawnTargetDummies(m_registry, m_renderAssets, m_level.GetTargetDummyStarts());
+        m_gameplay.monsters = Gameplay::SpawnMonsters(m_registry, m_renderAssets, m_level.GetMonsterStarts());
         Gameplay::AnimateLevelModels(m_registry, m_renderAssets.models);
     }
 
@@ -390,6 +392,7 @@ namespace Abomination
             Gameplay::AddCharacterDebugBoxes(m_gameplay, m_registry, interpolationFactor, m_debugLines);
         Gameplay::AddWeaponDebugLines(m_gameplay, m_registry, m_debugLines);
         Gameplay::AddAnimatorDebugLines(m_registry, m_renderAssets.models, interpolationFactor, m_debugLines);
+        Gameplay::AddMonsterDebugLines(m_gameplay, m_registry, interpolationFactor, m_debugLines);
 
         if (m_renderSettings.areWorldAxesVisible)
         {

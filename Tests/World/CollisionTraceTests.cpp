@@ -54,7 +54,7 @@ namespace Abomination::World
             const std::expected<MapData, std::string> map = ParseMap(mapText);
             EXPECT_TRUE(map.has_value()) << (map.has_value() ? "" : map.error());
 
-            return BuildCollisionBrushes(map.value().entities.at(0));
+            return BuildCollisionBrushes(map.value().entities.at(0), BrushSelection::All);
         }
 
         // The same brush moved by offset: every point p of a plane becomes p + offset, so dot(normal, p) grows by

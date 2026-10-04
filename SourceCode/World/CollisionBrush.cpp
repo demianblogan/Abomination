@@ -45,13 +45,16 @@ namespace Abomination::World
         }
     }
 
-    std::vector<CollisionBrush> BuildCollisionBrushes(const MapEntity& entity)
+    std::vector<CollisionBrush> BuildCollisionBrushes(const MapEntity& entity, BrushSelection selection)
     {
         std::vector<CollisionBrush> brushes;
         brushes.reserve(entity.brushes.size());
 
         for (const MapBrush& mapBrush : entity.brushes)
         {
+            if (selection == BrushSelection::WithoutClip && IsClipBrush(mapBrush))
+                continue;
+
             CollisionBrush brush;
             std::vector<glm::dvec3> vertices;
 

@@ -105,6 +105,11 @@ namespace Abomination::Gameplay
         const glm::vec3 toPlayer = Horizontal(perception.playerPosition - perception.position);
         const float playerDistance = HorizontalDistance(perception.playerPosition, perception.position);
 
+        // Teeth reach the player only on about the same level: a player on a balcony right above the dog is close along
+        // the floor but out of reach.
+        const bool isOnSameLevel =
+            std::abs(perception.playerPosition.y - perception.position.y) <= settings.attackHeightDifference;
+
         // A hit makes it flinch, whatever it does, except in the middle of a leap or a bite.
         if (perception.wasHurt && perception.isPlayerAlive && mind.state != DogState::Leap && mind.state != DogState::Bite)
             Enter(mind, DogState::Pain);
@@ -135,9 +140,10 @@ namespace Abomination::Gameplay
         case DogState::Chase:
             if (!perception.isPlayerAlive || playerDistance > settings.loseDistance)
                 EnterIdle(mind, settings, random);
-            else if (playerDistance <= settings.biteRange)
+            else if (isOnSameLevel && playerDistance <= settings.biteRange)
                 Enter(mind, DogState::Bite);
-            else if (playerDistance >= settings.leapRangeMinimum && playerDistance <= settings.leapRangeMaximum &&
+            else if (isOnSameLevel && playerDistance >= settings.leapRangeMinimum &&
+                     playerDistance <= settings.leapRangeMaximum &&
                      mind.timeSinceLeap >= settings.leapCooldown && CanSeePlayer(perception, settings))
             {
                 Enter(mind, DogState::Leap);
@@ -205,7 +211,7 @@ namespace Abomination::Gameplay
             decision.faceDirection = toPlayer;
             decision.turnSpeed = settings.runTurnSpeed;
             decision.animation = isLeap ? "Gallop_Jump" : "Attack";
-            const bool isInReach = perception.isPlayerAlive && playerDistance <= settings.biteReach;
+            const bool isInReach = perception.isPlayerAlive && isOnSameLevel && playerDistance <= settings.biteReach;
             if (isLeap)
             {
                 // It crouches, then pushes off at the moment its clip does, towards where the player is now.

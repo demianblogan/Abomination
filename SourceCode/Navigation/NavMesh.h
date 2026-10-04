@@ -28,10 +28,13 @@ namespace Abomination::Navigation
 
         // The agent: how far its middle stays from walls, how much room it needs above the floor, how high a step it
         // walks up and how steep a slope (degrees; the clip ramps over stairs are 45, so a little more).
-        // The defaults are the size of the dog (Gameplay::DogHalfExtents: 17 units to each side, 24 high) and the step
-        // of the movement code (18 units).
-        float agentRadius = 0.53f;
-        float agentHeight = 0.75f;
+        // The defaults are the size of the dog (Gameplay::DogHalfExtents: 20.4 units to each side, 28.8 high) and the
+        // step of the movement code (18 units). Recast takes the agent as a round cylinder, but the dog is a square box that
+        // never turns (like every character in Quake): its corners reach sqrt(2) times as far as its sides, 0.9 m
+        // instead of 0.64. With the radius of its sides, a path along a slanted face (the corner of an octagonal pillar)
+        // ran so close that the corner of the box caught on it; the radius is that of the corners.
+        float agentRadius = 0.9f;
+        float agentHeight = 0.9f;
         float agentClimb = 0.5625f;
         float maximumSlope = 46.0f;
     };

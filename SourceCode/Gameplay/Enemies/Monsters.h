@@ -40,22 +40,27 @@ namespace Abomination::Gameplay
 {
     struct GameplayState;
 
-    // Half the size of the box of the dog: 34 x 24 x 34 units, 1.06 m across and 0.75 m tall. A box does not turn, so it
-    // is as wide as the dog is long (1.1 m) whichever way it faces: its muzzle and tail stay out of the walls. The same box
-    // is set for TrenchBroom (Abomination.fgd).
-    inline constexpr glm::dvec3 DogHalfExtents{Core::MapUnitsToMeters(17.0), Core::MapUnitsToMeters(12.0),
-                                               Core::MapUnitsToMeters(17.0)};
+    // How much bigger the dog is drawn and collides than its model was made (Tools/Blender/RigDog.py, 1.1 m long).
+    inline constexpr float DogScale = 1.2f;
+
+    // Half the size of the box of the dog: 34 x 24 x 34 units at the size of its model, times DogScale: 41 x 29 x 41
+    // units, 1.28 m across and 0.9 m tall. A box does not turn, so it is as wide as the dog is long whichever way it
+    // faces: its muzzle and tail stay out of the walls. The same box is set for TrenchBroom (Abomination.fgd), and the
+    // navmesh is built for it (Navigation::NavMeshSettings).
+    inline constexpr glm::dvec3 DogHalfExtents{Core::MapUnitsToMeters(17.0 * DogScale),
+                                               Core::MapUnitsToMeters(12.0 * DogScale),
+                                               Core::MapUnitsToMeters(17.0 * DogScale)};
 
     // Component of a dog: its mind (see DogMind.h) and what it remembers between ticks to notice changes.
     struct Dog
     {
-        float maximumHealth = 60.0f;
+        float maximumHealth = 90.0f;
         DogMind mind;
 
         // Its health and the count of the player's shots in the last tick: less health means it was hurt, more shots
         // that a shot was fired. -1 until its first tick: a dog spawned after shots (a level reload) must not take the
         // shots fired before it lived for a new one.
-        float lastHealth = 60.0f;
+        float lastHealth = 90.0f;
         int lastShotCount = -1;
 
         // Where it appeared (the center of its body then): it patrols around it. How long it has wanted to move but

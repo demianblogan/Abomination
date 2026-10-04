@@ -73,7 +73,8 @@ can be placed. This is described by two files kept in the repository:
 
 ## Seeing the map in the game
 
-The game loads `Assets/Maps/Test.map` at startup: save the map in
+The game loads `Assets/Maps/Chapel.map` at startup (Test.map, the first test
+room, stays for experiments: change `StartMapPath` in `Application.cpp`): save the map in
 TrenchBroom and reload the level (a Debug build reads `Assets` of the
 repository; a Release build reads the copy made next to the executable on
 every build), or start the game. The player appears at `info_player_start`, looking in the

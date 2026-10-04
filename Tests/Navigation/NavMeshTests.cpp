@@ -67,13 +67,14 @@ namespace Abomination::Navigation
         EXPECT_NEAR(path.front().x, West.x, 0.2f);
         EXPECT_NEAR(path.back().x, East.x, 0.2f);
 
-        // Every corner keeps the dog out of the pillar: at least its radius (0.53 m) from it.
+        // At every corner the box of the dog (0.53 m to each side, never turned) stays out of the pillar (2 m to each
+        // side of the middle): it is clear of it along at least one axis.
         float length = 0.0f;
         for (std::size_t index = 1; index < path.size(); ++index)
         {
             length += glm::distance(path[index - 1], path[index]);
             const glm::vec3& corner = path[index];
-            const bool isInPillar = std::abs(corner.x) < 2.0f + 0.5f && std::abs(corner.z) < 2.0f + 0.5f;
+            const bool isInPillar = std::max(std::abs(corner.x), std::abs(corner.z)) < 2.0f + 0.53f;
             EXPECT_FALSE(isInPillar) << corner.x << " " << corner.z;
         }
         EXPECT_GT(length, 12.0f);

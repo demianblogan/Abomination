@@ -96,9 +96,14 @@ namespace Abomination::Gameplay
             registry.emplace<Core::Name>(entity, "Dog");
 
             // The body stands on the origin of the map entity: its center is half its height above. The model is made to
-            // the size of the dog (Tools/Blender/RigDog.py) and drawn with its middle at the middle of the box.
+            // the size of the dog (Tools/Blender/RigDog.py), drawn DogScale times bigger, with its middle at the middle of
+            // the box.
             const glm::vec3 center = start.origin + glm::vec3(0.0f, static_cast<float>(DogHalfExtents.y), 0.0f);
-            const Core::Transform transform{.position = center, .rotation = glm::angleAxis(start.yaw, Core::WorldUp)};
+            const Core::Transform transform{
+                .position = center,
+                .rotation = glm::angleAxis(start.yaw, Core::WorldUp),
+                .scale = glm::vec3(DogScale),
+            };
             registry.emplace<Core::Transform>(entity, transform);
             registry.emplace<Core::PreviousTransform>(entity, Core::PreviousTransform{.value = transform});
 

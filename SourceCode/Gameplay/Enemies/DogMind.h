@@ -77,6 +77,10 @@ namespace Abomination::Gameplay
         float biteTime = 0.1f;
         float biteDuration = 1.0f;
 
+        // How much higher or lower the middle of the player may be than the middle of the dog for a bite or a leap
+        // (meters). On one floor it is half a meter (the player is taller); a balcony is 4 m.
+        float attackHeightDifference = 1.2f;
+
         // The leap: from leapRangeMinimum to leapRangeMaximum away it crouches, and leapTakeoffTime after the start
         // (the moment its clip pushes off) jumps to where the player is then, rising leapHeight on the way, no faster
         // than leapSpeedMaximum along the ground. In the air it bites as soon as the player is within biteReach. After
@@ -99,7 +103,7 @@ namespace Abomination::Gameplay
         // Its model tilted and lowered to the ground under its paws, pawDistance in front of and behind its middle; tilted
         // at most maximumTilt; gliding to a new fit at heightFollowSpeed and tiltFollowSpeed.
         bool fitsToGround = true;
-        float pawDistance = 0.4f;
+        float pawDistance = 0.48f;
         float maximumTilt = glm::radians(30.0f);
         float heightFollowSpeed = 2.5f;
         float tiltFollowSpeed = glm::radians(180.0f);

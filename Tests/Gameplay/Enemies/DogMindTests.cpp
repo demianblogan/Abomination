@@ -256,4 +256,18 @@ namespace Abomination::Gameplay
         EXPECT_GT(decision.faceDirection.x, 0.99f);
         EXPECT_FLOAT_EQ(decision.speed, settings.runSpeed);
     }
+
+    TEST(DogMind, PlayerOnBalconyAboveIsOutOfReach)
+    {
+        DogMind mind{.state = DogState::Chase};
+        Core::Random random(12);
+        const DogSettings settings;
+
+        // Right above the dog, 4 m higher (on a balcony): close along the floor, but no bite and no leap.
+        DogPerception perception = PlayerInFront(1.0f);
+        perception.playerPosition.y = 4.0f;
+        for (int tick = 0; tick < 60; ++tick)
+            EXPECT_FALSE(Step(mind, perception, settings, random).bites);
+        EXPECT_EQ(mind.state, DogState::Chase);
+    }
 }

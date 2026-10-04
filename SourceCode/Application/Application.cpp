@@ -46,8 +46,8 @@ namespace Abomination
         constexpr glm::vec4 BackgroundColor{0.12f, 0.12f, 0.13f, 1.0f};
 
         // The map loaded at start, relative to the assets folder. Its meshes are named after it in the mesh store
-        // ("Maps/Test.map#Episode1/Wall_MossyBrick").
-        const std::string StartMapPath = "Maps/Test.map";
+        // ("Maps/Chapel.map#Episode1/Wall_MossyBlocks"). Test.map, the first test room, stays for experiments.
+        const std::string StartMapPath = "Maps/Chapel.map";
 
         // The width of debug lines in pixels at 100% display scale.
         constexpr float DebugLineWidth = 2.5f;

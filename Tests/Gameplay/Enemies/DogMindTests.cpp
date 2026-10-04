@@ -114,15 +114,26 @@ namespace Abomination::Gameplay
         const DogSettings settings;
         const DogPerception perception = PlayerInFront(3.0f);
 
-        const DogDecision leap = Step(mind, perception, settings, random);
+        // It crouches first: no push until the takeoff time.
+        const DogDecision crouch = Step(mind, perception, settings, random);
         EXPECT_EQ(mind.state, DogState::Leap);
-        EXPECT_EQ(leap.animation, "Gallop_Jump");
-        EXPECT_LT(leap.impulse.z, 0.0f);
-        EXPECT_GT(leap.impulse.y, 0.0f);
+        EXPECT_EQ(crouch.animation, "Gallop_Jump");
+        EXPECT_EQ(crouch.impulse, glm::vec3(0.0f));
 
-        // The player is still 3 m away when the teeth close: the leap misses (the bite reaches 1.7 m).
+        DogDecision leap;
+        while (glm::dot(leap.impulse, leap.impulse) == 0.0f && mind.stateTime < 1.0f)
+            leap = Step(mind, perception, settings, random);
+        EXPECT_NEAR(mind.stateTime, settings.leapTakeoffTime, Tick);
+
+        // Aimed to land 3 m ahead: up at sqrt(2 g h) = sqrt(2 × 25 × 0.6) = 5.48 m/s, in the air 2 × 5.48 / 25 =
+        // 0.44 s, forward 3 / 0.44 = 6.85 m/s.
+        EXPECT_NEAR(leap.impulse.y, 5.477f, 0.01f);
+        EXPECT_NEAR(leap.impulse.z, -6.847f, 0.01f);
+
+        // The mind does not move the dog: the player stays 3 m from where it perceives itself, and the leap misses
+        // (the bite reaches 1.7 m).
         int bites = 0;
-        for (float time = 0.0f; time < settings.leapDuration - 0.05f; time += Tick)
+        while (mind.state == DogState::Leap)
             bites += Step(mind, perception, settings, random).bites ? 1 : 0;
         EXPECT_EQ(bites, 0);
     }
@@ -190,5 +201,42 @@ namespace Abomination::Gameplay
         static_cast<void>(Step(mind, perception, DogSettings{}, random));
 
         EXPECT_EQ(mind.state, DogState::Idle);
+    }
+
+    TEST(DogMind, LeapBitesTheMomentItReachesThePlayer)
+    {
+        DogMind mind{.state = DogState::Chase};
+        Core::Random random(9);
+        const DogSettings settings;
+
+        static_cast<void>(Step(mind, PlayerInFront(3.0f), settings, random));
+        ASSERT_EQ(mind.state, DogState::Leap);
+
+        // The player within reach while it still crouches: no bite yet.
+        EXPECT_FALSE(Step(mind, PlayerInFront(1.0f), settings, random).bites);
+        while (!mind.hasLeapt)
+            static_cast<void>(Step(mind, PlayerInFront(3.0f), settings, random));
+
+        // Landing on the player on the next tick: the bite comes at once, and only once.
+        EXPECT_TRUE(Step(mind, PlayerInFront(1.0f), settings, random).bites);
+        EXPECT_FALSE(Step(mind, PlayerInFront(1.0f), settings, random).bites);
+    }
+
+    TEST(DogMind, BiteRunsInAtPlayerSteppingBack)
+    {
+        DogMind mind{.state = DogState::Chase};
+        Core::Random random(10);
+        const DogSettings settings;
+
+        static_cast<void>(Step(mind, PlayerInFront(1.2f), settings, random));
+        ASSERT_EQ(mind.state, DogState::Bite);
+
+        // The player stepped back to 1.5 m: the dog runs in until the teeth close (still within its reach of 1.7 m).
+        const DogDecision decision = Step(mind, PlayerInFront(1.5f), settings, random);
+        EXPECT_FLOAT_EQ(decision.speed, settings.runSpeed);
+        int bites = 0;
+        for (float time = 0.0f; time < settings.biteTime + 0.05f; time += Tick)
+            bites += Step(mind, PlayerInFront(1.5f), settings, random).bites ? 1 : 0;
+        EXPECT_EQ(bites, 1);
     }
 }

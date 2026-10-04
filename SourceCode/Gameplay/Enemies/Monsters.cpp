@@ -7,6 +7,7 @@
 #include "Gameplay/Animation/Animator.h"
 #include "Gameplay/Characters/CharacterCollision.h"
 #include "Gameplay/Characters/Health.h"
+#include "Gameplay/Enemies/GroundFit.h"
 #include "Gameplay/GameplayState.h"
 #include "Gameplay/Player/DamageReaction.h"
 #include "Gameplay/Player/Player.h"
@@ -29,6 +30,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <numbers>
+#include <optional>
 #include <string>
 
 namespace Abomination::Gameplay
@@ -42,6 +44,47 @@ namespace Abomination::Gameplay
 
         // A dog that hardly moves for this long while it wants to is blocked.
         constexpr float BlockedTime = 0.3f;
+
+        // Half the size of the thin box traced down to find the ground under a point (1 cm).
+        constexpr double ProbeHalfSize = 0.01;
+
+        // The height of the ground under the point (x, z) of a body whose box stands at bottom: a thin box traced down
+        // from reach above the bottom to reach below it. None if there is no ground within reach. A start inside a
+        // brush means ground even higher (the next step but one of a stair, under the front of a long body): it counts
+        // as ground at the start, reach above the bottom.
+        std::optional<float> FindGround(std::span<const World::CollisionBrush> brushes, float x, float z, float bottom,
+                                        float reach)
+        {
+            const glm::dvec3 start(x, bottom + reach, z);
+            const glm::dvec3 end(x, bottom - reach, z);
+            const World::TraceResult trace = World::TraceBox(brushes, start, end, glm::dvec3(ProbeHalfSize));
+            if (trace.startsInSolid)
+                return bottom + reach;
+            if (trace.fraction >= 1.0)
+                return std::nullopt;
+
+            // The trace stopped with the center of the thin box just above the ground.
+            return static_cast<float>(trace.endPosition.y - ProbeHalfSize);
+        }
+
+        // How many corners of a dog's box centered at position have no ground under them within two steps, like
+        // SV_CheckBottom in Quake: a box hanging over a drop has corners in the air. Two steps, not one: the dog is
+        // longer (1.06 m) than two steps of a steep stair are deep (0.5 m each), so on a stair its hind corners are two
+        // steps below its bottom. The corners are taken a little inside the box, so a corner against a wall does not
+        // start inside it.
+        int CountCornersOverDrop(std::span<const World::CollisionBrush> brushes, const glm::vec3& position, float stepHeight)
+        {
+            const float bottom = position.y - static_cast<float>(DogHalfExtents.y);
+            const float halfX = static_cast<float>(DogHalfExtents.x) - 0.02f;
+            const float halfZ = static_cast<float>(DogHalfExtents.z) - 0.02f;
+            int count = 0;
+            for (const float signX : {-1.0f, 1.0f})
+                for (const float signZ : {-1.0f, 1.0f})
+                    if (!FindGround(brushes, position.x + signX * halfX, position.z + signZ * halfZ, bottom,
+                                    2.0f * stepHeight))
+                        ++count;
+            return count;
+        }
 
         entt::entity SpawnDog(entt::registry& registry, Renderer::RenderAssets& assets, const World::MonsterStart& start)
         {
@@ -60,7 +103,7 @@ namespace Abomination::Gameplay
             const Dog& dog = registry.emplace<Dog>(entity, Dog{.home = center, .random = Core::Random(seed)});
             registry.emplace<Physics::CharacterBody>(entity, Physics::CharacterBody{.halfExtents = DogHalfExtents});
             registry.emplace<Health>(entity, Health{.current = dog.maximumHealth, .maximum = dog.maximumHealth});
-            registry.emplace<StepSmoothing>(entity);
+            registry.emplace<GroundFit>(entity);
             registry.emplace<Renderer::DrawOffset>(entity);
 
             const Renderer::ModelHandle model = assets.LoadModel(DogModelPath, Core::AssetLifetime::Level);
@@ -110,6 +153,7 @@ namespace Abomination::Gameplay
     }
 
     void UpdateMonsters(GameplayState& state, entt::registry& registry, std::span<const World::CollisionBrush> brushes,
+                        std::span<const World::CollisionBrush> sightBrushes,
                         Audio::AudioEngine& audio, float tickDuration)
     {
         // What every dog can perceive of the player: where they are, whether they live, and the shots of their weapon.
@@ -131,13 +175,14 @@ namespace Abomination::Gameplay
                 .isPlayerAlive = playerHealth == nullptr || playerHealth->current > 0.0f,
                 .wasHurt = health < dog.lastHealth,
                 .isBlocked = dog.isBlocked,
+                .gravity = state.physicsSettings.gravity,
             };
             dog.lastHealth = health;
 
             // Sight: a thin trace from its eyes (a little above the middle of its body) to the player's, through the
             // level only (other characters do not hide the player).
             const glm::vec3 dogEyes = transform.position + glm::vec3(0.0f, static_cast<float>(DogHalfExtents.y) * 0.6f, 0.0f);
-            const World::TraceResult sight = World::TraceBox(brushes, glm::dvec3(dogEyes), glm::dvec3(playerEyes),
+            const World::TraceResult sight = World::TraceBox(sightBrushes, glm::dvec3(dogEyes), glm::dvec3(playerEyes),
                                                              glm::dvec3(0.01));
             perception.hasLineOfSight = sight.fraction >= 1.0 && !sight.startsInSolid;
 
@@ -165,9 +210,13 @@ namespace Abomination::Gameplay
             }
 
             // The leap is a push on the body. Walking and running go forward, where it faces now: a dog never moves
-            // sideways, it turns and runs where it looks.
-            if (body.isOnGround)
+            // sideways, it turns and runs where it looks. A push up takes the body off the ground, like a jump: on the
+            // ground the movement would lay the push flat along the floor.
+            if (body.isOnGround && glm::dot(decision.impulse, decision.impulse) > 0.0f)
+            {
                 body.velocity += decision.impulse;
+                body.isOnGround = decision.impulse.y <= 0.0f;
+            }
             Physics::MovementSettings movement = state.movementSettings;
             movement.maxSpeed = decision.speed;
             // Below stopSpeed (3.1 m/s) friction takes at least friction × stopSpeed = 12.5 m/s every second, while a
@@ -181,8 +230,19 @@ namespace Abomination::Gameplay
             const Physics::MoveCommand command{
                 .wishDirection = decision.speed > 0.0f ? glm::normalize(forward) : glm::vec3(0.0f),
             };
+
+            // On the ground a dog goes where it faces at once: its velocity is set, not built up. Through acceleration
+            // and friction (made for the player, who slides a little like in Quake) the velocity of the old direction
+            // died away slowly after every turn, and a chasing dog drifted like on ice. The movement code below still
+            // collides, steps and slopes it; friction and acceleration change it only by a hair now.
+            if (body.isOnGround)
+            {
+                const glm::vec3 run = decision.speed > 0.0f ? glm::normalize(forward) * decision.speed : glm::vec3(0.0f);
+                body.velocity = glm::vec3(run.x, body.velocity.y, run.z);
+            }
             const glm::vec3 positionBefore = transform.position;
             const std::vector<World::CollisionBrush> obstacles = GatherCollisionBrushes(registry, brushes, entity);
+            const bool wasOnGround = body.isOnGround;
             Physics::UpdateCharacter(body, transform, obstacles, state.physicsSettings, movement, command, tickDuration);
 
             // Wanting to move but hardly moving (a quarter of the way it wanted) for a while: something is in the way.
@@ -194,12 +254,32 @@ namespace Abomination::Gameplay
             dog.blockedTime = hardlyMoved ? dog.blockedTime + tickDuration : 0.0f;
             dog.isBlocked = dog.blockedTime >= BlockedTime;
 
-            // The clip of what it does, cross-fading from the one before, at the speed of the state.
-            Animator& animator = registry.get<Animator>(entity);
-            animator.speed = decision.animationSpeed;
-            const auto segment = std::ranges::find(animator.segments, decision.animation, &AnimationSegment::name);
-            if (segment != animator.segments.end())
-                PlayAnimation(animator, static_cast<std::size_t>(segment - animator.segments.begin()), 0.2f);
+            // A patrolling dog does not walk over the edge of a drop: a step that leaves more corners of its box in the
+            // air than before is taken back, and the dog is blocked at once (it stands, then walks elsewhere). Fewer or
+            // as many is allowed, so a dog placed hanging over an edge can still walk off it.
+            const float stepHeight = state.movementSettings.stepHeight;
+            if (state.dogSettings.avoidsLedges && dog.mind.state == DogState::Patrol && wasOnGround &&
+                CountCornersOverDrop(brushes, transform.position, stepHeight) >
+                    CountCornersOverDrop(brushes, positionBefore, stepHeight))
+            {
+                transform.position = positionBefore;
+                body.velocity = glm::vec3(0.0f, body.velocity.y, 0.0f);
+                body.isOnGround = true;
+                body.steppedUpHeight = 0.0f;
+                dog.blockedTime = BlockedTime;
+                dog.isBlocked = true;
+            }
+
+            // The clip of what it does, cross-fading from the one before, at the speed of the state. A frozen dog leaves
+            // its animation alone, so any clip can be picked, paused and scrubbed in the Animation window.
+            if (!state.areMonstersFrozen)
+            {
+                Animator& animator = registry.get<Animator>(entity);
+                animator.speed = decision.animationSpeed;
+                const auto segment = std::ranges::find(animator.segments, decision.animation, &AnimationSegment::name);
+                if (segment != animator.segments.end())
+                    PlayAnimation(animator, static_cast<std::size_t>(segment - animator.segments.begin()), 0.2f);
+            }
 
             if (decision.bites)
             {
@@ -208,12 +288,35 @@ namespace Abomination::Gameplay
                                           .sourcePosition = transform.position});
             }
 
-            // Up a stair the body jumps up at once; the model glides after it.
-            StepSmoothing& smoothing = registry.get<StepSmoothing>(entity);
-            UpdateStepSmoothing(smoothing, body.steppedUpHeight, tickDuration);
+            // The model on the ground under its paws: the heights in front of and behind its middle, along where it
+            // faces, looked for within two steps up and down. Two, not one: on a slope the box rests on one of its bottom
+            // edges and hangs over the rest of it, so the ground under the far paws is up to 0.9 m below the box on a
+            // 45 degree clip ramp; within one step it was not found, counted as level with the box, and the dog tilted
+            // the wrong way (nose down going up). A paw over nothing counts as standing at the bottom of the box. In the
+            // air, or with the fit off, the model goes back to the box, untilted.
+            const DogSettings& settings = state.dogSettings;
+            const float bottom = transform.position.y - static_cast<float>(DogHalfExtents.y);
+            GroundFitTarget target{.offset = 0.0f, .pitch = 0.0f};
+            if (settings.fitsToGround && body.isOnGround && glm::dot(forward, forward) > 1e-6f)
+            {
+                const glm::vec3 pawOffset = glm::normalize(forward) * settings.pawDistance;
+                const glm::vec3 front = transform.position + pawOffset;
+                const glm::vec3 back = transform.position - pawOffset;
+                const float frontGround = FindGround(brushes, front.x, front.z, bottom, 2.0f * stepHeight).value_or(bottom);
+                const float backGround = FindGround(brushes, back.x, back.z, bottom, 2.0f * stepHeight).value_or(bottom);
+                target = CalculateGroundFitTarget(frontGround, backGround, bottom, settings.pawDistance,
+                                                  settings.maximumTilt, stepHeight);
+            }
+
+            // Up a stair the box jumps up at once; the model glides after it.
+            GroundFit& fit = registry.get<GroundFit>(entity);
+            UpdateGroundFit(fit, target, body.steppedUpHeight, settings.heightFollowSpeed, settings.tiltFollowSpeed,
+                            MaximumStepLag, tickDuration);
             registry.replace<Renderer::DrawOffset>(entity, Renderer::DrawOffset{
-                .offset = glm::vec3(0.0f, smoothing.offset, 0.0f),
-                .previousOffset = glm::vec3(0.0f, smoothing.previousOffset, 0.0f),
+                .offset = glm::vec3(0.0f, fit.offset, 0.0f),
+                .previousOffset = glm::vec3(0.0f, fit.previousOffset, 0.0f),
+                .pitch = fit.pitch,
+                .previousPitch = fit.previousPitch,
             });
         }
     }

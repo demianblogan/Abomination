@@ -97,6 +97,8 @@ set(LIBRARY_SOURCES
     Gameplay/Effects/Particles.cpp
     Gameplay/Enemies/DogMind.h
     Gameplay/Enemies/DogMind.cpp
+    Gameplay/Enemies/GroundFit.h
+    Gameplay/Enemies/GroundFit.cpp
     Gameplay/Enemies/Monsters.h
     Gameplay/Enemies/Monsters.cpp
     Gameplay/Player/DamageReaction.h

@@ -75,7 +75,9 @@ namespace Abomination::Gameplay
     // Once per tick: every dog perceives the player (sight, the sound of shots, being hurt), decides what to do (see
     // UpdateDogMind) and does it: moves through the level like a character (sliding along walls, up steps, falling),
     // turns, plays the clip of its state and bites. state.dogSettings tunes all dogs.
+    // brushes are what the dogs walk on and against (clip included), sightBrushes what hides the player (no clip).
     void UpdateMonsters(GameplayState& state, entt::registry& registry, std::span<const World::CollisionBrush> brushes,
+                        std::span<const World::CollisionBrush> sightBrushes,
                         Audio::AudioEngine& audio, float tickDuration);
 
     // Debug, with state.areDogSensesVisible: the senses of every dog as lines on the floor around it: its field of view

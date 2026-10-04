@@ -52,7 +52,7 @@ namespace Abomination::Gameplay
         float runAnimationSpeed = 1.4f;
 
         // How fast it turns: on the spot before a walk, and while running.
-        float turnSpeed = glm::radians(540.0f);
+        float turnSpeed = glm::radians(700.0f);
         float runTurnSpeed = glm::radians(720.0f);
 
         // Idle for a random time between these, then it walks to a point at most patrolRadius from where it appeared,
@@ -64,25 +64,40 @@ namespace Abomination::Gameplay
 
         float alertTime = 0.5f;
 
-        // The bite: closer than biteRange it stops and bites, biteTime after the start, hurting the player if they
-        // are within biteReach then; the bite is over after biteDuration.
+        // The bite: closer than biteRange it bites, biteTime after the start (still running in while the player is
+        // farther than most of biteRange), hurting the player if they are within biteReach then; the bite is over after
+        // biteDuration. A short biteTime: a long one let the player step out of every bite.
         float biteRange = 1.3f;
         float biteReach = 1.7f;
-        float biteTime = 0.35f;
+        float biteTime = 0.1f;
         float biteDuration = 1.0f;
 
-        // The leap: from leapRangeMinimum to leapRangeMaximum away it jumps at the player (forward at leapSpeed, up at
-        // leapUpSpeed), biting leapBiteTime after the start; not again for leapCooldown.
+        // The leap: from leapRangeMinimum to leapRangeMaximum away it crouches, and leapTakeoffTime after the start
+        // (the moment its clip pushes off) jumps to where the player is then, rising leapHeight on the way, no faster
+        // than leapSpeedMaximum along the ground. In the air it bites as soon as the player is within biteReach. After
+        // landing it stands for leapRecoveryTime; it does not leap again for leapCooldown.
         float leapRangeMinimum = 2.2f;
         float leapRangeMaximum = 4.0f;
-        float leapSpeed = 5.5f;
-        float leapUpSpeed = 2.5f;
-        float leapBiteTime = 0.45f;
-        float leapDuration = 0.9f;
+        float leapTakeoffTime = 0.25f;
+        float leapHeight = 0.6f;
+        float leapSpeedMaximum = 12.0f;
+        float leapRecoveryTime = 0.25f;
         float leapCooldown = 2.5f;
 
         float damage = 10.0f;
         float painTime = 0.4f;
+
+        // Its body on stairs and ledges (see Monsters.cpp and GroundFit.h). On a patrol it does not step where a corner
+        // of its box would have no ground under it within two steps (a chasing or leaping dog jumps down after the player).
+        bool avoidsLedges = true;
+
+        // Its model tilted and lowered to the ground under its paws, pawDistance in front of and behind its middle; tilted
+        // at most maximumTilt; gliding to a new fit at heightFollowSpeed and tiltFollowSpeed.
+        bool fitsToGround = true;
+        float pawDistance = 0.4f;
+        float maximumTilt = glm::radians(30.0f);
+        float heightFollowSpeed = 2.5f;
+        float tiltFollowSpeed = glm::radians(180.0f);
     };
 
     // What the dog perceives this tick (gathered by Monsters.cpp).
@@ -111,6 +126,9 @@ namespace Abomination::Gameplay
 
         // It tried to walk or run in the last tick but hardly moved: something is in its way.
         bool isBlocked = false;
+
+        // How fast things fall (m/s², Physics::PhysicsSettings::gravity): a leap is aimed with it.
+        float gravity = 25.0f;
     };
 
     // The state of the mind between ticks.
@@ -127,6 +145,10 @@ namespace Abomination::Gameplay
         // The bite of this attack has been done (it bites once per attack); how long ago it last leapt.
         bool hasBitten = false;
         float timeSinceLeap = 1000.0f;
+
+        // The leap has pushed off, and when it ends (its time in the state: takeoff, flight, recovery).
+        bool hasLeapt = false;
+        float leapEndTime = 0.0f;
     };
 
     // What the dog does this tick, decided by UpdateDogMind.

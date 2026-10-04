@@ -14,6 +14,7 @@
 #include <glm/ext/matrix_clip_space.hpp>
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/geometric.hpp>
+#include <glm/gtc/quaternion.hpp>
 
 #include <span>
 #include <vector>
@@ -173,9 +174,16 @@ namespace Abomination::Renderer
         {
             Core::Transform drawn = Core::CalculateDrawnTransform(registry, entity, interpolationFactor);
 
-            // A character gliding up a stair is drawn below its body (see DrawOffset).
+            // A character gliding up a stair is drawn below its body, a dog on a stair tilted (see DrawOffset).
             if (const DrawOffset* drawOffset = registry.try_get<DrawOffset>(entity); drawOffset != nullptr)
+            {
                 drawn.position += glm::mix(drawOffset->previousOffset, drawOffset->offset, interpolationFactor);
+
+                // Multiplied on the right, the tilt turns the model around its own right axis (after its facing), not
+                // around the right axis of the world.
+                const float pitch = glm::mix(drawOffset->previousPitch, drawOffset->pitch, interpolationFactor);
+                drawn.rotation = drawn.rotation * glm::angleAxis(pitch, Core::LocalRight);
+            }
 
             return drawn;
         };

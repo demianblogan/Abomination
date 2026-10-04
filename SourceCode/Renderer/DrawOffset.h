@@ -12,5 +12,10 @@ namespace Abomination::Renderer
     {
         glm::vec3 offset{0.0f};
         glm::vec3 previousOffset{0.0f};
+
+        // A tilt of the model around its own right axis, in radians: positive raises its front (a dog on a stair, its
+        // front paws a step higher than its hind paws; see Gameplay::GroundFit).
+        float pitch = 0.0f;
+        float previousPitch = 0.0f;
     };
 }

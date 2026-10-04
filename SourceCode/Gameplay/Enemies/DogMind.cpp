@@ -26,11 +26,30 @@ namespace Abomination::Gameplay
             return glm::length(glm::vec3(a.x - b.x, 0.0f, a.z - b.z));
         }
 
+        // The push of a leap that lands where the player is, rising leapHeight on the way (a throw, ignoring the
+        // height difference of the two places).
+        //
+        // Thrown up at speed v, a body rises until gravity g has taken all of v: for v / g seconds, to the height
+        // v² / (2g). So rising h takes v = sqrt(2gh), and the whole flight up and down lasts t = 2v / g. To cover the
+        // distance d along the ground in that time it goes d / t. For example, with g = 25 m/s² and h = 0.6 m: v =
+        // sqrt(30) = 5.5 m/s up, t = 0.44 s in the air, and 3 m away 6.8 m/s forward.
+        glm::vec3 CalculateLeapImpulse(const DogPerception& perception, const DogSettings& settings)
+        {
+            const float upSpeed = std::sqrt(2.0f * perception.gravity * settings.leapHeight);
+            const float flightTime = 2.0f * upSpeed / perception.gravity;
+            const float distance = HorizontalDistance(perception.playerPosition, perception.position);
+            const float forwardSpeed = std::min(distance / flightTime, settings.leapSpeedMaximum);
+
+            return Horizontal(perception.playerPosition - perception.position) * forwardSpeed +
+                   glm::vec3(0.0f, upSpeed, 0.0f);
+        }
+
         void Enter(DogMind& mind, DogState state)
         {
             mind.state = state;
             mind.stateTime = 0.0f;
             mind.hasBitten = false;
+            mind.hasLeapt = false;
         }
 
         void EnterIdle(DogMind& mind, const DogSettings& settings, Core::Random& random)
@@ -123,17 +142,12 @@ namespace Abomination::Gameplay
             {
                 Enter(mind, DogState::Leap);
                 mind.timeSinceLeap = 0.0f;
-                DogDecision leap;
-                leap.impulse = toPlayer * settings.leapSpeed + glm::vec3(0.0f, settings.leapUpSpeed, 0.0f);
-                leap.faceDirection = toPlayer;
-                leap.turnSpeed = settings.runTurnSpeed;
-                leap.animation = "Gallop_Jump";
-                return leap;
+                mind.leapEndTime = settings.leapTakeoffTime + settings.leapRecoveryTime;
             }
             break;
 
         case DogState::Leap:
-            if (mind.stateTime >= settings.leapDuration)
+            if (mind.stateTime >= mind.leapEndTime)
                 Enter(mind, DogState::Chase);
             break;
 
@@ -189,10 +203,41 @@ namespace Abomination::Gameplay
             decision.faceDirection = toPlayer;
             decision.turnSpeed = settings.runTurnSpeed;
             decision.animation = isLeap ? "Gallop_Jump" : "Attack";
-            if (!mind.hasBitten && mind.stateTime >= (isLeap ? settings.leapBiteTime : settings.biteTime))
+            const bool isInReach = perception.isPlayerAlive && playerDistance <= settings.biteReach;
+            if (isLeap)
             {
-                mind.hasBitten = true;
-                decision.bites = perception.isPlayerAlive && playerDistance <= settings.biteReach;
+                // It crouches, then pushes off at the moment its clip does, towards where the player is now.
+                if (!mind.hasLeapt && mind.stateTime >= settings.leapTakeoffTime)
+                {
+                    mind.hasLeapt = true;
+                    decision.impulse = CalculateLeapImpulse(perception, settings);
+
+                    // It is in the air for the time a throw up at the speed of the impulse takes to come down (see
+                    // CalculateLeapImpulse), then recovers.
+                    const float flightTime = 2.0f * decision.impulse.y / perception.gravity;
+                    mind.leapEndTime = mind.stateTime + flightTime + settings.leapRecoveryTime;
+                }
+
+                // In the air it bites the moment it reaches the player: a leap that lands on them hurts at once, one
+                // that falls short does not hurt at all. Not while it still crouches.
+                if (mind.hasLeapt && !mind.hasBitten && isInReach)
+                {
+                    mind.hasBitten = true;
+                    decision.bites = true;
+                }
+            }
+            else
+            {
+                // Until the teeth close it keeps running in at a player who stepped back.
+                if (!mind.hasBitten && playerDistance > settings.biteRange * 0.8f)
+                {
+                    decision.speed = settings.runSpeed;
+                }
+                if (!mind.hasBitten && mind.stateTime >= settings.biteTime)
+                {
+                    mind.hasBitten = true;
+                    decision.bites = isInReach;
+                }
             }
             break;
         }

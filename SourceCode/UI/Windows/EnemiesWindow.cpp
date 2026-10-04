@@ -70,15 +70,36 @@ namespace Abomination::UI
             ImGui::SeparatorText("Attack");
             DrawSlider("Damage", settings.damage, 0.0f, 100.0f, "%.0f", "Health one bite takes from the player.");
             DrawSlider("Bite range", settings.biteRange, 0.3f, 4.0f, "%.2f m", "Closer than this it stops and bites.");
+            DrawSlider("Bite delay", settings.biteTime, 0.0f, 1.0f, "%.2f s",
+                       "How long after the bite starts the teeth close: the time the player has to step away.");
             DrawSlider("Bite reach", settings.biteReach, 0.3f, 4.0f, "%.2f m",
                        "The bite hurts if the player is still within this when the teeth close.");
             DrawSlider("Leap from", settings.leapRangeMinimum, 0.5f, 10.0f, "%.2f m");
             DrawSlider("Leap to", settings.leapRangeMaximum, 0.5f, 15.0f, "%.2f m",
                        "Between these distances it jumps at the player instead of running.");
-            DrawSlider("Leap speed", settings.leapSpeed, 0.0f, 15.0f, "%.2f m/s");
-            DrawSlider("Leap height", settings.leapUpSpeed, 0.0f, 10.0f, "%.2f m/s",
-                       "How fast it goes up at the start of a leap.");
+            DrawSlider("Leap takeoff", settings.leapTakeoffTime, 0.0f, 1.0f, "%.2f s",
+                       "When it pushes off after the leap starts: the moment the jump clip leaves the ground\n"
+                       "(see Clip time in the Animation window).");
+            DrawSlider("Leap height", settings.leapHeight, 0.05f, 2.0f, "%.2f m",
+                       "How high it rises on the way; it always lands where the player was at takeoff.");
+            DrawSlider("Leap max speed", settings.leapSpeedMaximum, 1.0f, 30.0f, "%.1f m/s",
+                       "The fastest it flies along the ground, however far the player is.");
+            DrawSlider("Leap recovery", settings.leapRecoveryTime, 0.0f, 2.0f, "%.2f s",
+                       "How long it stands after landing before it runs again.");
             DrawSlider("Leap cooldown", settings.leapCooldown, 0.0f, 10.0f, "%.1f s");
+
+            ImGui::SeparatorText("Body");
+            ImGui::Checkbox("Avoid ledges", &settings.avoidsLedges);
+            ImGui::SetItemTooltip("On a patrol it does not step where a corner of its box would hang over a drop.");
+            ImGui::Checkbox("Fit to ground", &settings.fitsToGround);
+            ImGui::SetItemTooltip("Its model is tilted and lowered to the ground under its paws (stairs, edges).");
+            DrawSlider("Paw distance", settings.pawDistance, 0.05f, 1.0f, "%.2f m",
+                       "How far in front of and behind its middle the ground is looked for.");
+            DrawDegreeSlider("Maximum tilt", settings.maximumTilt, 0.0f, 60.0f, "%.0f deg");
+            DrawSlider("Height follow", settings.heightFollowSpeed, 0.1f, 10.0f, "%.1f m/s",
+                       "How fast the model glides up and down to the ground.");
+            DrawDegreeSlider("Tilt follow", settings.tiltFollowSpeed, 10.0f, 720.0f, "%.0f deg/s",
+                             "How fast the model tilts to the ground.");
 
             ImGui::Separator();
             if (ImGui::Button("Reset"))

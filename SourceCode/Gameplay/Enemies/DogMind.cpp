@@ -171,8 +171,9 @@ namespace Abomination::Gameplay
 
         case DogState::Patrol:
         {
-            // It turns on the spot until it faces the target, then walks straight to it.
-            const glm::vec3 toTarget = Horizontal(mind.patrolTarget - perception.position);
+            // It turns on the spot until it faces the way, then walks: straight to the target, or to the next corner of
+            // the path around what is in the way.
+            const glm::vec3 toTarget = Horizontal(perception.wayPoint.value_or(mind.patrolTarget) - perception.position);
             decision.faceDirection = toTarget;
             decision.turnSpeed = settings.turnSpeed;
             const bool facesTarget = glm::dot(toTarget, Horizontal(perception.forward)) >= std::cos(WalkAngle);
@@ -189,7 +190,8 @@ namespace Abomination::Gameplay
             break;
 
         case DogState::Chase:
-            decision.faceDirection = toPlayer;
+            // At the player, or at the next corner of the path around what is in the way.
+            decision.faceDirection = Horizontal(perception.wayPoint.value_or(perception.playerPosition) - perception.position);
             decision.turnSpeed = settings.runTurnSpeed;
             decision.speed = settings.runSpeed;
             decision.animation = "Gallop";

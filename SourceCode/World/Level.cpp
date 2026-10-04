@@ -6,11 +6,16 @@
 #include "Renderer/MeshRenderer.h"
 #include "Renderer/ModelRenderer.h"
 #include "World/MapCoordinates.h"
+#include "World/NavMeshGeometry.h"
 
 #include <glm/gtc/quaternion.hpp>
 
 #include <charconv>
+#include <chrono>
+#include <expected>
 #include <optional>
+#include <string>
+#include <utility>
 
 namespace Abomination::World
 {
@@ -138,6 +143,22 @@ namespace Abomination::World
         level.m_collisionBrushes = BuildCollisionBrushes(*world, BrushSelection::All);
         level.m_shotBrushes = BuildCollisionBrushes(*world, BrushSelection::WithoutClip);
 
+        // The navmesh: where the dogs can walk and how they find their way (see Navigation::NavMesh).
+        const auto navMeshStart = std::chrono::steady_clock::now();
+        std::expected<Navigation::NavMesh, std::string> navMesh =
+            Navigation::NavMesh::Build(BuildNavMeshGeometry(*world), Navigation::NavMeshSettings{});
+        const std::chrono::duration<double, std::milli> navMeshTime = std::chrono::steady_clock::now() - navMeshStart;
+        if (navMesh.has_value())
+        {
+            Core::Log::Write(LogCategory::World, LogLevel::Info, "Navmesh built in {:.1f} ms: {} polygons",
+                             navMeshTime.count(), navMesh->GetPolygons().size());
+            level.m_navMesh = std::move(*navMesh);
+        }
+        else
+        {
+            Core::Log::Write(LogCategory::World, LogLevel::Warning, "No navmesh for {}: {}", mapPath, navMesh.error());
+        }
+
         // One entity per texture: every one is one draw call with its own texture. The textures were loaded above, so
         // Load() only returns their handles now.
         const Renderer::ShaderHandle shaderProgram = assets.shaders.Load("Shaders/TexturedShaded");
@@ -223,5 +244,10 @@ namespace Abomination::World
     const std::vector<CollisionBrush>& Level::GetShotBrushes() const noexcept
     {
         return m_shotBrushes;
+    }
+
+    const Navigation::NavMesh* Level::GetNavMesh() const noexcept
+    {
+        return m_navMesh.has_value() ? &*m_navMesh : nullptr;
     }
 }

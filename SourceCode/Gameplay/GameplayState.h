@@ -114,9 +114,11 @@ namespace Abomination::Gameplay
         int maximumCorpses = 16;
         std::uint64_t nextCorpseOrder = 0;
 
-        // Debug (the Enemies window): the monsters stand and decide nothing; the senses of the dogs are drawn.
+        // Debug (the Enemies window): the monsters stand and decide nothing; the senses of the dogs are drawn; the navmesh
+        // is drawn.
         bool areMonstersFrozen = false;
         bool areDogSensesVisible = false;
+        bool isNavMeshVisible = false;
 
         // The visual effects of shots (see Effects.h).
         Effects effects;

@@ -66,6 +66,8 @@ namespace Abomination::Gameplay
 
         // Now: how far the pump is back (meters), and the pose at the chest (radians: the turn of the barrel to the left
         // and up, the counter-clockwise tilt around the barrel). Set every frame by UpdateWeaponViewModel.
+        // How far through its movement the pump is (0 at rest, 1 at the back; see CalculatePumpProgress).
+        float progress = 0.0f;
         float travel = 0.0f;
         float turn = 0.0f;
         float lift = 0.0f;

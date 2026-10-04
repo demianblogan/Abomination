@@ -2,6 +2,7 @@
 
 #include "Gameplay/GameplayState.h"
 #include "Gameplay/Weapons/PumpAction.h"
+#include "Gameplay/Weapons/WeaponHands.h"
 #include "Gameplay/Weapons/WeaponViewModelMotion.h"
 #include "Renderer/Assets/ModelStore.h"
 #include "Renderer/Assets/ShaderStore.h"
@@ -57,6 +58,9 @@ namespace Abomination::Gameplay
 
         // The pump that moves back and forth after every shot (see PumpAction.h).
         PumpAction pump;
+
+        // The hands holding the weapon (see WeaponHands.h).
+        WeaponHands hands;
 
         // How much longer the muzzle flash is shown (seconds; 0 or less: not shown) and its rotation, new every shot.
         float flashTimeLeft = 0.0f;

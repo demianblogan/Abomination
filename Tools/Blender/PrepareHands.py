@@ -1,5 +1,6 @@
 # Prepares the first-person hands WRAD ARMS by wriks (CC0) for the game and exports them to
-# Assets/Models/Weapons/Hands.glb. Run with Blender 5.2 (any folder):
+# Build/Incoming/Models/HandsPrepared.glb, the hands HandsPoseScene.py builds the posing scene with (the game's
+# Assets/Models/Weapons/Hands.glb is exported from that scene by ExportHandsPoses.py). Run with Blender 5.2 (any folder):
 #   blender -b --factory-startup --python Tools/Blender/PrepareHands.py -- <arms.glb> [--preview <folder>]
 #
 # What it does:
@@ -21,7 +22,7 @@ from mathutils import Matrix
 arguments = sys.argv[sys.argv.index("--") + 1:]
 SOURCE = arguments[0]
 PREVIEW = os.path.abspath(arguments[arguments.index("--preview") + 1]) if "--preview" in arguments else None
-TARGET = os.path.join(os.path.dirname(__file__), "..", "..", "Assets", "Models", "Weapons", "Hands.glb")
+TARGET = os.path.join(os.path.dirname(__file__), "..", "..", "Build", "Incoming", "Models", "HandsPrepared.glb")
 TEXTURE_SIZE = 256
 
 # How the skin is made dirtier: how much darker it gets (0.92: 92% of its brightness, a pale skin stays pale), how much

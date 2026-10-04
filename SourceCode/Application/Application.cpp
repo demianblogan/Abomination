@@ -11,6 +11,7 @@
 #include "Gameplay/Camera/ViewSystem.h"
 #include "Gameplay/Characters/TargetDummy.h"
 #include "Gameplay/Player/DamageReaction.h"
+#include "Gameplay/Player/Player.h"
 #include "Gameplay/Player/PlayerSystem.h"
 #include "Gameplay/Spin.h"
 #include "Gameplay/Weapons/Shells.h"
@@ -332,7 +333,7 @@ namespace Abomination
             m_debugLineRenderer.Draw(m_debugLines, view, m_renderAssets.shaders.Get(m_systemShaders.debugLines), viewportSize,
                                      DebugLineWidth * m_window.GetDisplayScale());
 
-            DrawWeaponViewModel(aspectRatio);
+            DrawWeaponViewModel(aspectRatio, view, interpolationFactor);
 
             // The game interface over everything (the HUD); it gets the mouse only while the cursor is free (the debug overlay
             // is open).
@@ -400,27 +401,52 @@ namespace Abomination
         }
     }
 
-    void Application::DrawWeaponViewModel(float aspectRatio)
+    void Application::DrawWeaponViewModel(float aspectRatio, const Renderer::View& view, float interpolationFactor)
     {
-        // Only while the player is controlled: the free-fly camera has no hands.
-        const auto* weaponViewModel = m_registry.try_get<Gameplay::WeaponViewModel>(m_gameplay.player);
-        if (weaponViewModel == nullptr || m_gameplay.controlMode != Gameplay::ControlMode::Player)
+        auto* weaponViewModel = m_registry.try_get<Gameplay::WeaponViewModel>(m_gameplay.player);
+        if (weaponViewModel == nullptr)
             return;
+
+        // Seen by the player, the weapon and the hands are drawn over everything relative to the eyes. Seen from the
+        // free-fly camera, they are drawn in the world at the eyes of the player, through the camera: to look at how the
+        // hands hold the weapon from any side.
+        const bool isSeenByPlayer = m_gameplay.controlMode == Gameplay::ControlMode::Player;
+        glm::mat4 eyesInWorld(1.0f);
+        if (!isSeenByPlayer)
+        {
+            const Core::Transform body = Core::CalculateDrawnTransform(m_registry, m_gameplay.player, interpolationFactor);
+            eyesInWorld = Core::CalculateModelMatrix(
+                Gameplay::CalculatePlayerEyeTransform(body, m_registry.get<Gameplay::LookAngles>(m_gameplay.player)));
+        }
+        const Renderer::View* worldView = isSeenByPlayer ? nullptr : &view;
 
         // The parts that move with the pump go back along the barrel: the model points along -Z, so back is +Z.
         std::vector<Renderer::ModelPartOffset> partOffsets;
         for (const std::string& partName : weaponViewModel->pump.partNames)
             partOffsets.push_back({.partName = partName, .offset = {0.0f, 0.0f, weaponViewModel->pump.travel}});
 
-        const Renderer::RenderStatistics statistics =
-            Renderer::DrawWeaponViewModel(weaponViewModel->model, Gameplay::CalculateWeaponViewModelMatrix(*weaponViewModel),
-                                          weaponViewModel->verticalFOV, aspectRatio, m_renderAssets,
-                                          weaponViewModel->shaderProgram, m_systemShaders, m_renderSettings,
-                                          m_skinningBuffer, partOffsets);
+        const Renderer::RenderStatistics statistics = Renderer::DrawWeaponViewModel(
+            weaponViewModel->model, eyesInWorld * Gameplay::CalculateWeaponViewModelMatrix(*weaponViewModel),
+            weaponViewModel->verticalFOV, aspectRatio, m_renderAssets, weaponViewModel->shaderProgram, m_systemShaders,
+            m_renderSettings, m_skinningBuffer, partOffsets, nullptr, isSeenByPlayer, worldView);
         m_renderStatistics.drawCallCount += statistics.drawCallCount;
         m_renderStatistics.triangleCount += statistics.triangleCount;
 
-        if (weaponViewModel->flashTimeLeft <= 0.0f)
+        // The hands, posed for the weapon as it is now and drawn with it (its depth kept, so they hold it, not cover it).
+        if (weaponViewModel->hands.isVisible)
+        {
+            const Renderer::Model& handsModel = m_renderAssets.models.Get(weaponViewModel->hands.model);
+            Gameplay::CalculateWeaponHandsPose(*weaponViewModel, handsModel);
+            const Renderer::RenderStatistics handsStatistics = Renderer::DrawWeaponViewModel(
+                weaponViewModel->hands.model,
+                eyesInWorld * Gameplay::CalculateWeaponHandsMatrix(*weaponViewModel, handsModel),
+                weaponViewModel->verticalFOV, aspectRatio, m_renderAssets, weaponViewModel->shaderProgram, m_systemShaders,
+                m_renderSettings, m_skinningBuffer, {}, &weaponViewModel->hands.pose, false, worldView);
+            m_renderStatistics.drawCallCount += handsStatistics.drawCallCount;
+            m_renderStatistics.triangleCount += handsStatistics.triangleCount;
+        }
+
+        if (!isSeenByPlayer || weaponViewModel->flashTimeLeft <= 0.0f)
             return;
 
         // The muzzle flash, drawn with the weapon: in the space of the eyes (no view matrix) with the projection of the

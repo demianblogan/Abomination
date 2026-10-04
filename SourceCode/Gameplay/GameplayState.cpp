@@ -119,6 +119,11 @@ namespace Abomination::Gameplay
                 .partNames = {"Pump_low_Shotgun_0", "Slide_low_Shotgun_0", std::string(ShotgunBoltPartName)},
                 .modelLength = renderAssets.models.Get(shotgun).size.z,
             },
+
+            // The hands hold it, as they were posed on it in Blender (see WeaponHands).
+            .hands = {
+                .model = renderAssets.LoadModel("Models/Weapons/Hands.glb", Core::AssetLifetime::Global),
+            },
         });
 
         state.effects.textures = LoadEffectTextures(renderAssets.textures);

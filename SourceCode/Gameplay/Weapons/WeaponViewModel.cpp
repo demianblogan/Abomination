@@ -81,7 +81,8 @@ namespace Abomination::Gameplay
             // or in the middle, to the right for one held on the left.
             const float towardsBody = weaponViewModel->side == WeaponViewModelSide::Left ? -1.0f : 1.0f;
             const float pose = CalculateChestPose(settings, pump.secondsSinceShot);
-            pump.travel = CalculatePumpProgress(settings, pump.secondsSinceShot) * settings.travel;
+            pump.progress = CalculatePumpProgress(settings, pump.secondsSinceShot);
+            pump.travel = pump.progress * settings.travel;
             pump.turn = pose * towardsBody * settings.turnAngle;
             pump.lift = pose * settings.liftAngle;
             pump.turnPivot = settings.turnPivot;

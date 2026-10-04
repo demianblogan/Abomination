@@ -84,10 +84,11 @@ namespace Abomination
         // The steps of Render():
         //   DrawEffects   - the marks on the walls and the particles, seen through the view;
         //   AddDebugLines - the lines of the debug tools of this frame (collision, characters, pellets, world axes);
-        //   DrawWeaponViewModel - the weapon in the hands and its muzzle flash, over everything.
+        //   DrawWeaponViewModel - the weapon in the hands with the hands and its muzzle flash, over everything (in the world
+        //                         when the free-fly camera looks at the player).
         void DrawEffects(const Renderer::View& view);
         void AddDebugLines(const Core::Transform& cameraTransform, float interpolationFactor);
-        void DrawWeaponViewModel(float aspectRatio);
+        void DrawWeaponViewModel(float aspectRatio, const Renderer::View& view, float interpolationFactor);
 
         // Members are destroyed in reverse order of declaration: the overlay and the assets first (they use OpenGL),
         // then the window, then SDL, which the window needs.

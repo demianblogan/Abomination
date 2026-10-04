@@ -3,6 +3,7 @@
 #include "Renderer/Assets/RenderAssets.h"
 #include "Renderer/Assets/ShaderStore.h"
 #include "Renderer/Camera/View.h"
+#include "Renderer/ModelPose.h"
 #include "Renderer/RenderSettings.h"
 #include "Renderer/SkinningBuffer.h"
 
@@ -67,10 +68,14 @@ namespace Abomination::Renderer
     // its own field of view (verticalFOV, radians), so it never goes into walls and a wider field of view of the world
     // does not stretch it. eyeSpaceMatrix places the model relative to the eyes: meters, +X to the right, +Y up, -Z
     // forward (the direction the player looks). aspectRatio is that of the window (above 0). partOffsets move parts of
-    // the model (the pump), the others stay where the model has them.
+    // the model (the pump), the others stay where the model has them. pose draws a model with a skeleton in a pose (the
+    // hands); clearsDepth false draws it with what was drawn before (the hands after the weapon, so they hold it). worldView
+    // draws it in the world instead, seen through that view, eyeSpaceMatrix then placing it in the world (the free-fly
+    // camera looking at the weapon in the hands of the player).
     RenderStatistics DrawWeaponViewModel(ModelHandle model, const glm::mat4& eyeSpaceMatrix, float verticalFOV,
                                          float aspectRatio, const RenderAssets& assets, ShaderHandle shader,
                                          const SystemShaders& systemShaders, const RenderSettings& settings,
                                          SkinningBuffer& skinning,
-                                         std::span<const ModelPartOffset> partOffsets = {});
+                                         std::span<const ModelPartOffset> partOffsets = {}, const ModelPose* pose = nullptr,
+                                         bool clearsDepth = true, const View* worldView = nullptr);
 }

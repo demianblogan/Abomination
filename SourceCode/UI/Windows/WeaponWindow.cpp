@@ -216,6 +216,11 @@ namespace Abomination::UI
             DrawSlider("Spring stiffness", motion.springStiffness, 20.0f, 500.0f, "%.0f",
                        "How fast the weapon comes back after a kick. Bigger: quicker and smaller dips.");
 
+            // The hands holding the weapon, posed in Blender (see Gameplay::WeaponHands).
+            ImGui::SeparatorText("Hands");
+            ImGui::Checkbox("Show hands", &weaponViewModel.hands.isVisible);
+            ImGui::SetItemTooltip("The hands are posed in Blender: Tools/Blender/HandsPoseScene.py and ExportHandsPoses.py.");
+
             ImGui::Separator();
             if (ImGui::Button("Reset"))
             {

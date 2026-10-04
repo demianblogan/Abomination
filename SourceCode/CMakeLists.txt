@@ -120,6 +120,8 @@ set(LIBRARY_SOURCES
     Gameplay/Weapons/Weapon.cpp
     Gameplay/Weapons/WeaponSystem.h
     Gameplay/Weapons/WeaponSystem.cpp
+    Gameplay/Weapons/WeaponHands.h
+    Gameplay/Weapons/WeaponHands.cpp
     Gameplay/Weapons/WeaponViewModel.h
     Gameplay/Weapons/WeaponViewModel.cpp
     Gameplay/Weapons/WeaponViewModelMotion.h

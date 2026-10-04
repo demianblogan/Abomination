@@ -95,6 +95,8 @@ namespace Abomination::UI
                        "How long after the bite starts the teeth close: the time the player has to step away.");
             DrawSlider("Bite reach", settings.biteReach, 0.3f, 4.0f, "%.2f m",
                        "The bite hurts if the player is still within this when the teeth close.");
+            DrawSlider("Attack height", settings.attackHeightDifference, 0.2f, 4.0f, "%.2f m",
+                       "How much higher or lower the player may be for a bite or a leap (a balcony is 4 m).");
             DrawSlider("Leap from", settings.leapRangeMinimum, 0.5f, 10.0f, "%.2f m");
             DrawSlider("Leap to", settings.leapRangeMaximum, 0.5f, 15.0f, "%.2f m",
                        "Between these distances it jumps at the player instead of running.");

@@ -110,6 +110,8 @@ namespace Abomination::UI
             DrawSlider("Leap recovery", settings.leapRecoveryTime, 0.0f, 2.0f, "%.2f s",
                        "How long it stands after landing before it runs again.");
             DrawSlider("Leap cooldown", settings.leapCooldown, 0.0f, 10.0f, "%.1f s");
+            DrawSlider("Jump up to", settings.jumpUpHeight, 0.0f, 4.0f, "%.2f m",
+                       "It jumps up to a player standing at most this much higher (on the altar).");
 
             ImGui::SeparatorText("Body");
             ImGui::Checkbox("Avoid ledges", &settings.avoidsLedges);

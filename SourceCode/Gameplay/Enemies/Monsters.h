@@ -78,6 +78,9 @@ namespace Abomination::Gameplay
         std::vector<glm::vec3> path;
         float repathTimer = 0.0f;
 
+        // Its path ends short of the goal, which it cannot reach (the player on the altar, above it).
+        bool isPathShort = false;
+
         // Its own random numbers, so dogs placed together do not all wander the same way.
         Core::Random random;
     };

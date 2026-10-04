@@ -5,6 +5,7 @@
 #include "Core/Scene/TransformInterpolation.h"
 #include "Gameplay/Characters/CharacterCollision.h"
 #include "Gameplay/Player/Player.h"
+#include "Gameplay/Player/PlayerDeath.h"
 #include "Physics/CharacterBody.h"
 #include "Physics/CharacterMovement.h"
 #include "Renderer/Debug/DebugLines.h"
@@ -29,7 +30,8 @@ namespace Abomination::Gameplay
     void UpdatePlayerLook(GameplayState& state, entt::registry& registry, const Input::ActionStates& actions,
                           glm::vec2 mouseMovement)
     {
-        if (state.controlMode != ControlMode::Player)
+        // The dead do not look around (see PlayerDeath).
+        if (state.controlMode != ControlMode::Player || IsPlayerDead(state))
             return;
 
         state.playerController.CollectFrameInput(actions);
@@ -40,7 +42,7 @@ namespace Abomination::Gameplay
                       std::span<const World::CollisionBrush> brushes, float tickDuration)
     {
         const Physics::MoveCommand command =
-            state.controlMode == ControlMode::Player
+            state.controlMode == ControlMode::Player && !IsPlayerDead(state)
                 ? state.playerController.CreateMoveCommand(registry.get<LookAngles>(state.player), actions)
                 : Physics::MoveCommand{};
 

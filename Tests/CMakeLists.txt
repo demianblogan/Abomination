@@ -29,12 +29,14 @@ set(TEST_SOURCES
     Gameplay/Animation/AnimatorTests.cpp
     Gameplay/Camera/FreeFlyCameraControllerTests.cpp
     Gameplay/Characters/ArmorTests.cpp
+    Gameplay/Characters/HealthTests.cpp
     Gameplay/Enemies/DogMindTests.cpp
     Gameplay/Enemies/GroundFitTests.cpp
     Gameplay/Effects/EffectsTests.cpp
     Gameplay/Effects/ParticlesTests.cpp
     Gameplay/Player/DamageReactionTests.cpp
     Gameplay/Player/LandingDipTests.cpp
+    Gameplay/Player/PlayerDeathTests.cpp
     Gameplay/Player/PlayerSystemTests.cpp
     Gameplay/Player/PlayerTests.cpp
     Gameplay/Weapons/AmmoTests.cpp

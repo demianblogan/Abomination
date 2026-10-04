@@ -1,5 +1,6 @@
 #include "Input/Mouse.h"
 
+#include <algorithm>
 #include <utility>
 
 namespace Abomination::Input
@@ -95,5 +96,10 @@ namespace Abomination::Input
     {
         const std::size_t index = ConvertToIndex(button);
         return IsKnownButton(index) && m_releasedButtons[index];
+    }
+
+    bool Mouse::WasAnyButtonPressed() const noexcept
+    {
+        return std::ranges::any_of(m_pressedButtons, [](bool isPressed) { return isPressed; });
     }
 }

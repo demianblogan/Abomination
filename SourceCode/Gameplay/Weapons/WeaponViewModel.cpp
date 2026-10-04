@@ -27,6 +27,7 @@ namespace Abomination::Gameplay
         }
 
         position += CalculateWeaponViewModelMotionOffset(weaponViewModel.motion, weaponViewModel.motionSettings);
+        position.y -= weaponViewModel.lowered;
 
         // The matrices apply from the right (the last one first): the model is tilted on its side around its barrel (+Z:
         // a positive angle turns the right side up, counter-clockwise as the player sees it); turned around a point along

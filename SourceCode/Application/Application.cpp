@@ -166,6 +166,7 @@ namespace Abomination
 
             // What only moves the picture (the weapon in the hands, the view, the particles) moves every frame, after the
             // ticks of this frame, so it is as smooth as the view.
+            Gameplay::UpdatePlayerDeath(m_gameplay, m_registry, m_audio, frameTimer.GetDeltaTime());
             Gameplay::UpdateViewEffects(m_gameplay, m_registry, m_audio, frameTimer.GetDeltaTime());
 
             // Animated models move every frame too: their poses are only for the eyes.
@@ -176,6 +177,7 @@ namespace Abomination
                 Gameplay::CalculateViewTransform(m_gameplay, m_registry, m_fixedTimestep.GetInterpolationFactor());
             Gameplay::UpdateShells(m_gameplay, m_registry, eyes, m_level.GetShotBrushes(), m_audio,
                                    frameTimer.GetDeltaTime());
+            Gameplay::UpdateGibs(m_gameplay, m_registry, m_level.GetShotBrushes(), frameTimer.GetDeltaTime());
             Gameplay::UpdateDamageReaction(m_gameplay, m_registry, m_audio, frameTimer.GetDeltaTime());
 
             frameStatistics.AddFrame(frameTimer.GetDeltaTime(), tickCount);
@@ -203,6 +205,17 @@ namespace Abomination
         {
             m_isLevelReloadRequested = false;
             ReloadLevel();
+        }
+
+        // Dead, with GAME OVER on the screen: any key or mouse button starts the level again (see PlayerDeath). Not
+        // through the debug overlay or the console, which take the keys for themselves.
+        const bool isAnyInputPressed =
+            m_inputDevices.keyboard.WasAnyKeyPressed() || m_inputDevices.mouse.WasAnyButtonPressed();
+        if (Gameplay::CanRestartAfterDeath(m_gameplay.playerDeath) && isAnyInputPressed && !m_debugOverlay.IsVisible() &&
+            !m_debugOverlay.IsConsoleOpen())
+        {
+            ReloadLevel();
+            Gameplay::RespawnPlayer(m_gameplay, m_registry, m_level.GetPlayerStart());
         }
 
         // Actions of the application itself (not of the game), so they are handled here. Quitting only asks the window to
@@ -251,8 +264,8 @@ namespace Abomination
                                    doesMouseTurnPlayer ? m_inputDevices.mouse.GetMovement() : glm::vec2(0.0f));
         Gameplay::UpdateFreeFlyCameraLook(m_gameplay, m_registry, m_actionStates, m_inputDevices.mouse);
 
-        // The player shoots only while playing: a click on the debug overlay or in the console is not a shot.
-        m_canPlayerShoot = isPlaying;
+        // The player shoots only while playing (and alive): a click on the debug overlay or in the console is not a shot.
+        m_canPlayerShoot = isPlaying && !Gameplay::IsPlayerDead(m_gameplay);
         Gameplay::CollectWeaponInput(m_gameplay, m_registry, m_actionStates, m_canPlayerShoot);
     }
 
@@ -291,6 +304,7 @@ namespace Abomination
         m_level.Unload(m_registry, m_renderAssets);
         Gameplay::ClearEffects(m_gameplay.effects);
         Gameplay::ClearShells(m_gameplay.shells, m_registry);
+        Gameplay::ClearGibs(m_gameplay.gibs, m_registry);
         m_level = World::Level::Create(m_registry, m_renderAssets, *map, StartMapPath);
         m_gameplay.monsters = Gameplay::SpawnMonsters(m_registry, m_renderAssets, m_level.GetMonsterStarts());
         Gameplay::AnimateLevelModels(m_registry, m_renderAssets.models);
@@ -407,8 +421,11 @@ namespace Abomination
     void Application::DrawWeaponViewModel(float aspectRatio, const Renderer::View& view, float interpolationFactor)
     {
         auto* weaponViewModel = m_registry.try_get<Gameplay::WeaponViewModel>(m_gameplay.player);
-        if (weaponViewModel == nullptr)
+        // Dead, the player lowers the weapon out of sight (see PlayerDeath), then it is not drawn at all.
+        const float lowering = Gameplay::CalculateWeaponLowering(m_gameplay.playerDeath);
+        if (weaponViewModel == nullptr || lowering >= 1.0f)
             return;
+        weaponViewModel->lowered = lowering * m_gameplay.playerDeath.settings.weaponLowerDistance;
 
         // Seen by the player, the weapon and the hands are drawn over everything relative to the eyes. Seen from the
         // free-fly camera, they are drawn in the world at the eyes of the player, through the camera: to look at how the

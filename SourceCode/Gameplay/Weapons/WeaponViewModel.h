@@ -40,6 +40,9 @@ namespace Abomination::Gameplay
         // down) and forward (negative: in front, the eyes look along -Z). The model points forward along -Z.
         glm::vec3 offset{0.082f, -0.176f, -0.355f};
 
+        // How far below that it is, lowered out of sight (meters; the dying player lowers it, see PlayerDeath).
+        float lowered = 0.0f;
+
         WeaponViewModelSide side = WeaponViewModelSide::Right;
 
         // The field of view the weapon is drawn with, apart from that of the world (radians, vertical). Narrower than the

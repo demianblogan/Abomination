@@ -1,0 +1,22 @@
+<rml>
+<head>
+    <title>Death</title>
+    <link type="text/rcss" href="Base.rcss"/>
+    <link type="text/rcss" href="DeathScreen.rcss"/>
+</head>
+<!-- The death of the player (see UI::DeathScreen): the edges of the view darken, the eyelids close, then GAME OVER and
+     how to restart on the black. The code moves all of it every frame (see Gameplay::PlayerDeath for the times). -->
+<body>
+    <img id="vignette" src="Images/VignetteDeath.png"/>
+    <img class="eyelid" id="eyelid-top" src="Images/Eyelid.png"/>
+    <img class="eyelid" id="eyelid-bottom" src="Images/Eyelid.png"/>
+    <div id="black"></div>
+    <div id="message">
+        <div id="title-box">
+            <img id="title-glow" src="Images/TitleGlow.png"/>
+            <img id="title" src="Images/GameOver.png"/>
+        </div>
+        <div id="hint">PRESS ANY KEY TO RESTART</div>
+    </div>
+</body>
+</rml>

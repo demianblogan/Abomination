@@ -64,4 +64,9 @@ namespace Abomination::Input
     {
         return m_releasedKeys.test(ConvertToIndex(key));
     }
+
+    bool Keyboard::WasAnyKeyPressed() const noexcept
+    {
+        return m_pressedKeys.any();
+    }
 }

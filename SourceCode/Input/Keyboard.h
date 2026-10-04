@@ -71,6 +71,9 @@ namespace Abomination::Input
         [[nodiscard]] bool WasKeyPressed(Key key) const noexcept;
         [[nodiscard]] bool WasKeyReleased(Key key) const noexcept;
 
+        // Some key went down in this frame (GAME OVER waits for any key).
+        [[nodiscard]] bool WasAnyKeyPressed() const noexcept;
+
     private:
         // One bit per key; the index is the numeric value of Key.
         std::bitset<KeyCount> m_heldKeys;

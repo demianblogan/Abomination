@@ -93,6 +93,8 @@ set(LIBRARY_SOURCES
     Gameplay/Characters/Health.h
     Gameplay/Effects/Effects.h
     Gameplay/Effects/Effects.cpp
+    Gameplay/Effects/Gibs.h
+    Gameplay/Effects/Gibs.cpp
     Gameplay/Effects/Particles.h
     Gameplay/Effects/Particles.cpp
     Gameplay/Enemies/DogMind.h
@@ -109,6 +111,8 @@ set(LIBRARY_SOURCES
     Gameplay/Player/Player.cpp
     Gameplay/Player/PlayerController.h
     Gameplay/Player/PlayerController.cpp
+    Gameplay/Player/PlayerDeath.h
+    Gameplay/Player/PlayerDeath.cpp
     Gameplay/Player/PlayerSystem.h
     Gameplay/Player/PlayerSystem.cpp
     Gameplay/Weapons/Ammo.h
@@ -223,6 +227,8 @@ set(LIBRARY_SOURCES
     Renderer/OpenGL/ShaderInterface.h
 
     UI/DebugOverlay.h
+    UI/DeathScreen.h
+    UI/DeathScreen.cpp
     UI/DebugOverlay.cpp
     UI/GameUI.h
     UI/GameUI.cpp

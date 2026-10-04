@@ -7,6 +7,7 @@
 #include "Gameplay/Characters/Health.h"
 #include "Gameplay/GameplayState.h"
 #include "Gameplay/Player/DamageReaction.h"
+#include "Gameplay/Player/PlayerDeath.h"
 #include "Gameplay/Weapons/Ammo.h"
 #include "Gameplay/Weapons/Crosshair.h"
 #include "Gameplay/Weapons/Weapon.h"
@@ -27,6 +28,7 @@
 #include <format>
 #include <memory>
 #include <numbers>
+#include <string>
 
 namespace Abomination::UI
 {
@@ -146,9 +148,10 @@ namespace Abomination::UI
         if (m_document == nullptr)
             return;
 
-        // Only the living player has a HUD: the free-fly camera shows the world without it, and death hides it at once.
-        const bool isVisible = gameplay.controlMode == Gameplay::ControlMode::Player &&
-                               registry.get<Gameplay::Health>(gameplay.player).current > 0.0f;
+        // Only the living player has a HUD: the free-fly camera shows the world without it, and at death it fades out
+        // (see PlayerDeath). SetProperty takes the value as in a style sheet.
+        const float opacity = Gameplay::CalculateHUDOpacity(gameplay.playerDeath);
+        const bool isVisible = gameplay.controlMode == Gameplay::ControlMode::Player && opacity > 0.0f;
         if (isVisible != m_document->IsVisible())
         {
             if (isVisible)
@@ -156,6 +159,7 @@ namespace Abomination::UI
             else
                 m_document->Hide();
         }
+        m_document->SetProperty("opacity", std::to_string(opacity));
 
         // The counts are followed even while the HUD is hidden, so a blow taken in the free-fly camera does not flash
         // when the HUD comes back.

@@ -10,7 +10,8 @@
 namespace Abomination::Gameplay
 {
     // The brushes a character moves through: those of the level and the box of every other character (every entity with
-    // a Physics::CharacterBody except mover), so characters stop at each other like at walls instead of walking through.
+    // a Physics::CharacterBody except mover), so characters stop at each other like at walls instead of walking through. Bodies
+    // of dead monsters (Corpse) are left out: they are walked through.
     //
     // The level brushes are copied for every character every tick. With a level of a few dozen brushes and a few
     // characters it costs nothing; a large level with many enemies will want a spatial search (a grid or a tree) that

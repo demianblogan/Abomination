@@ -43,6 +43,9 @@ namespace Abomination::Gameplay
         return true;
     }
 
+    // The shells the player starts with (pickups add more in 0.6).
+    inline constexpr int StartingShells = 100;
+
     // Adds amount of the kind, never above its maximum.
     inline void AddAmmo(Ammo& ammo, AmmoType type, int amount)
     {

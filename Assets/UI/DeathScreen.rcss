@@ -1,0 +1,106 @@
+/* The death screen. Sizes are in dp, like the HUD: 1 dp is 1 pixel in a window 1080 pixels high. The code sets the
+   opacity of the vignette and the black, where the eyelids are, and how the message appears. */
+
+body
+{
+    width: 100%;
+    height: 100%;
+    font-family: Oswald;
+    font-weight: bold;
+}
+
+/* The darkened edges of the view, over the whole screen. */
+#vignette
+{
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+}
+
+/* The eyelids: black, with a soft curved edge, more than half the screen high each, so they overlap when closed. The
+   upper one comes down from above the screen; the lower one is the same picture turned upside down and comes up. */
+.eyelid
+{
+    position: absolute;
+    left: 0;
+    width: 100%;
+    height: 60%;
+}
+
+#eyelid-top
+{
+    top: -60%;
+}
+
+#eyelid-bottom
+{
+    bottom: -60%;
+    transform: rotate(180deg);
+}
+
+/* Plain black under the message, once the eyes are closed (no seam between the lids). */
+#black
+{
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #000000;
+    opacity: 0;
+}
+
+/* The message in the middle of the screen, hidden until the code shows it. */
+#message
+{
+    position: absolute;
+    left: 0;
+    top: 30%;
+    width: 100%;
+    text-align: center;
+    display: none;
+}
+
+/* The box of GAME OVER and its glow: the glow, wider than the letters, lies behind them. */
+#title-box
+{
+    position: relative;
+    width: 1120dp;
+    height: 280dp;
+    margin: 0 auto;
+}
+
+/* A soft red glow behind the letters, as of embers; the code lets it breathe. */
+#title-glow
+{
+    position: absolute;
+    left: -160dp;
+    top: -60dp;
+    width: 1440dp;
+    height: 400dp;
+    opacity: 0;
+}
+
+/* GAME OVER: a picture of rusty iron letters (Tools/Blender/MakeGameOverTitle.py, 1600 x 400), centered. The code
+   fades it in and lets it shrink to its size. */
+#title
+{
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 1120dp;
+    height: 280dp;
+    transform-origin: 50% 50%;
+}
+
+#hint
+{
+    margin-top: 36dp;
+    font-size: 30dp;
+    letter-spacing: 4dp;
+    color: #b8ac94;
+    opacity: 0;
+}

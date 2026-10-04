@@ -55,6 +55,9 @@ namespace Abomination::Input
         [[nodiscard]] bool WasButtonPressed(MouseButton button) const noexcept;
         [[nodiscard]] bool WasButtonReleased(MouseButton button) const noexcept;
 
+        // Some button went down in this frame.
+        [[nodiscard]] bool WasAnyButtonPressed() const noexcept;
+
     private:
         // Index 0 is unused: button values start at 1.
         static constexpr std::size_t ButtonSlotCount = 6;

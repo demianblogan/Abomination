@@ -12,6 +12,7 @@
 #include "Gameplay/Player/DamageReaction.h"
 #include "Gameplay/Player/Player.h"
 #include "Gameplay/Weapons/Weapon.h"
+#include "Navigation/NavMesh.h"
 #include "Physics/CharacterBody.h"
 #include "Physics/CharacterMovement.h"
 #include "Renderer/Assets/RenderAssets.h"
@@ -514,5 +515,18 @@ namespace Abomination::Gameplay
             // The patrol area stays where the dog appeared.
             addCircle(dog.home + glm::vec3(0.0f, floorOffset, 0.0f), settings.patrolRadius, glm::vec3(0.3f, 1.0f, 0.3f));
         }
+    }
+
+    void AddNavMeshDebugLines(const GameplayState& state, const Navigation::NavMesh* navMesh, Renderer::DebugLines& lines)
+    {
+        if (!state.isNavMeshVisible || navMesh == nullptr)
+            return;
+
+        // A little above the floor, so the lines are not hidden in it.
+        constexpr glm::vec3 Lift{0.0f, 0.04f, 0.0f};
+        constexpr glm::vec3 Color{0.3f, 0.95f, 0.55f};
+        for (const Navigation::NavMeshPolygon& polygon : navMesh->GetPolygons())
+            for (std::size_t corner = 0; corner < polygon.size(); ++corner)
+                lines.AddLine(polygon[corner] + Lift, polygon[(corner + 1) % polygon.size()] + Lift, Color);
     }
 }

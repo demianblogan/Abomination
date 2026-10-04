@@ -147,6 +147,8 @@ set(LIBRARY_SOURCES
     Input/Mouse.h
     Input/Mouse.cpp
 
+    Navigation/NavMesh.h
+    Navigation/NavMesh.cpp
     Physics/CharacterBody.h
     Physics/CharacterMovement.h
     Physics/CharacterMovement.cpp
@@ -287,6 +289,8 @@ set(LIBRARY_SOURCES
     World/MapParser.h
     World/MapParser.cpp
     World/MonsterStart.h
+    World/NavMeshGeometry.h
+    World/NavMeshGeometry.cpp
     World/PlayerStart.h
     World/TextureCoordinates.h
     World/TextureCoordinates.cpp

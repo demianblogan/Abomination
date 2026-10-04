@@ -16,6 +16,11 @@ namespace Abomination::Audio
     class AudioEngine;
 }
 
+namespace Abomination::Navigation
+{
+    class NavMesh;
+}
+
 namespace Abomination::Renderer
 {
     class DebugLines;
@@ -108,4 +113,8 @@ namespace Abomination::Gameplay
     // (blue) and the area it patrols around where it appeared (green). interpolationFactor places it as it is drawn.
     void AddMonsterDebugLines(const GameplayState& state, const entt::registry& registry, float interpolationFactor,
                               Renderer::DebugLines& lines);
+
+    // Debug, with state.isNavMeshVisible: the polygons of the navmesh as lines a little above the floor (none if the level
+    // has no navmesh).
+    void AddNavMeshDebugLines(const GameplayState& state, const Navigation::NavMesh* navMesh, Renderer::DebugLines& lines);
 }

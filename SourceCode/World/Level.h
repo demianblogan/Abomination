@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Navigation/NavMesh.h"
 #include "Renderer/Assets/RenderAssets.h"
 #include "World/CollisionBrush.h"
 #include "World/LevelMesh.h"
@@ -9,6 +10,7 @@
 
 #include <entt/entt.hpp>
 
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -51,12 +53,16 @@ namespace Abomination::World
         // The brushes that stop shots, shells and sight: all but clip.
         [[nodiscard]] const std::vector<CollisionBrush>& GetShotBrushes() const noexcept;
 
+        // The navmesh of the world, built for the size of the dog; nullptr if it could not be built (logged).
+        [[nodiscard]] const Navigation::NavMesh* GetNavMesh() const noexcept;
+
     private:
         // The entities of the level: those that draw the static geometry (one per texture) and the models standing in it.
         std::vector<entt::entity> m_entities;
 
         std::vector<CollisionBrush> m_collisionBrushes;
         std::vector<CollisionBrush> m_shotBrushes;
+        std::optional<Navigation::NavMesh> m_navMesh;
 
         PlayerStart m_playerStart;
         std::vector<MonsterStart> m_monsterStarts;

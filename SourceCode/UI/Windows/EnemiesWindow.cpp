@@ -27,6 +27,9 @@ namespace Abomination::UI
             ImGui::SameLine();
             ImGui::Checkbox("Freeze", &gameplay.areMonstersFrozen);
             ImGui::SetItemTooltip("Every monster stands where it is and decides nothing.");
+            ImGui::SameLine();
+            ImGui::Checkbox("Show navmesh", &gameplay.isNavMeshVisible);
+            ImGui::SetItemTooltip("The floor the dogs can walk on, cut into the polygons they find their way through.");
             ImGui::SetNextItemWidth(ScaleToUI(120.0f));
             ImGui::SliderInt("Bodies kept", &gameplay.maximumCorpses, 0, 64);
             ImGui::SetItemTooltip("At most this many bodies of dead monsters stay in the level;\n"

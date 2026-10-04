@@ -51,6 +51,7 @@ set(TEST_SOURCES
     Input/KeyboardTests.cpp
     Input/MouseTests.cpp
 
+    Navigation/NavMeshTests.cpp
     Physics/CharacterMovementMapTests.cpp
     Physics/CharacterMovementTests.cpp
 

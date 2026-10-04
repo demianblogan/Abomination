@@ -5,12 +5,16 @@
 #include "Gameplay/Player/DamageReaction.h"
 #include "Gameplay/Player/LandingDip.h"
 #include "Gameplay/Player/Player.h"
+#include "Gameplay/Player/PlayerDeath.h"
 #include "Gameplay/Weapons/ViewRecoil.h"
 #include "Gameplay/Weapons/WeaponViewModel.h"
 #include "Renderer/Camera/CameraLens.h"
+#include "World/PlayerStart.h"
 
 #include <glm/common.hpp>
 #include <glm/gtc/quaternion.hpp>
+
+#include <cmath>
 
 namespace Abomination::Gameplay
 {
@@ -74,9 +78,17 @@ namespace Abomination::Gameplay
                 look.yaw += reaction->punchYaw;
             }
 
-            Core::Transform eyes = CalculatePlayerEyeTransform(interpolated, look, stepOffset + dipOffset);
-            if (reaction != nullptr)
-                eyes.rotation = eyes.rotation * glm::angleAxis(reaction->punchRoll, Core::LocalForward);
+            // Dead, the head drops, jerks back and the player falls on their back (see PlayerDeath): the eyes go down to
+            // the floor and back, away from where the player faced, the pitch is that of the fall, the view tilts.
+            const float eyesAboveFloor = static_cast<float>(World::PlayerHalfExtents.y) + PlayerEyeHeight;
+            const DeathView death = CalculateDeathView(state.playerDeath, eyesAboveFloor, look.pitch);
+            look.pitch = death.pitch;
+
+            Core::Transform eyes = CalculatePlayerEyeTransform(interpolated, look, stepOffset + dipOffset - death.drop);
+            const glm::vec3 facing(-std::sin(look.yaw), 0.0f, -std::cos(look.yaw));
+            eyes.position -= facing * death.back;
+            const float roll = (reaction != nullptr ? reaction->punchRoll : 0.0f) + death.roll;
+            eyes.rotation = eyes.rotation * glm::angleAxis(roll, Core::LocalForward);
             return eyes;
         }
 

@@ -966,6 +966,12 @@ public static class TextureGen
         red.Save(Path.Combine(imagesDirectory, "VignetteDamage.png"), ImageFormat.Png);
         green.Save(Path.Combine(imagesDirectory, "VignetteHeal.png"), ImageFormat.Png);
         arc.Save(Path.Combine(imagesDirectory, "DamageArc.png"), ImageFormat.Png);
+        using (Bitmap deathVignette = DeathVignette())
+            deathVignette.Save(Path.Combine(imagesDirectory, "VignetteDeath.png"), ImageFormat.Png);
+        using (Bitmap eyelid = Eyelid())
+            eyelid.Save(Path.Combine(imagesDirectory, "Eyelid.png"), ImageFormat.Png);
+        using (Bitmap titleGlow = TitleGlow())
+            titleGlow.Save(Path.Combine(imagesDirectory, "TitleGlow.png"), ImageFormat.Png);
 
         // The preview: three frames of a wall (tiled, pixelated like in the game): with the red vignette, with the green
         // one, and with the arc turned towards a blow from the left.
@@ -1002,6 +1008,66 @@ public static class TextureGen
         }
     }
 
+
+    // ---------- death of the player ----------
+    // The eyes of a dying player grow heavy and close (see UI::DeathScreen): a soft black vignette, darkest in the corners,
+    // and an eyelid, black above, its lower edge a soft curve that reaches further down in the middle. Smooth, not
+    // pixelated: they are not drawn things but the dark of closing eyes. The lower eyelid is the same picture turned.
+    const int DeathVignetteWidth = 256, DeathVignetteHeight = 144;
+    const int EyelidWidth = 256, EyelidHeight = 128;
+
+    static Bitmap DeathVignette()
+    {
+        Bitmap bmp = new Bitmap(DeathVignetteWidth, DeathVignetteHeight, PixelFormat.Format32bppArgb);
+        for (int y = 0; y < DeathVignetteHeight; y++)
+            for (int x = 0; x < DeathVignetteWidth; x++)
+            {
+                // The distance from the middle in an ellipse as wide as the picture: 1 at the middle of every edge,
+                // about 1.41 in the corners. Clear inside 0.55, fully dark from 1.25 on.
+                double dx = (x + 0.5) / DeathVignetteWidth * 2 - 1, dy = (y + 0.5) / DeathVignetteHeight * 2 - 1;
+                double distance = Math.Sqrt(dx * dx + dy * dy);
+                double t = Math.Max(0, Math.Min(1, (distance - 0.55) / 0.7));
+                double alpha = t * t * (3 - 2 * t);
+                bmp.SetPixel(x, y, Color.FromArgb((int)Math.Round(alpha * 255), 0, 0, 0));
+            }
+        return bmp;
+    }
+
+    // The glow behind GAME OVER: a soft ellipse of dark blood red, brightest in the middle and fading to nothing at the
+    // edges, as if the iron letters were lit from behind by embers.
+    const int TitleGlowWidth = 256, TitleGlowHeight = 96;
+
+    static Bitmap TitleGlow()
+    {
+        Bitmap bmp = new Bitmap(TitleGlowWidth, TitleGlowHeight, PixelFormat.Format32bppArgb);
+        for (int y = 0; y < TitleGlowHeight; y++)
+            for (int x = 0; x < TitleGlowWidth; x++)
+            {
+                double dx = (x + 0.5) / TitleGlowWidth * 2 - 1, dy = (y + 0.5) / TitleGlowHeight * 2 - 1;
+                double t = Math.Max(0, 1 - Math.Sqrt(dx * dx + dy * dy));
+                double alpha = t * t * (3 - 2 * t);
+                bmp.SetPixel(x, y, Color.FromArgb((int)Math.Round(alpha * 255), 150, 18, 8));
+            }
+        return bmp;
+    }
+
+    static Bitmap Eyelid()
+    {
+        Bitmap bmp = new Bitmap(EyelidWidth, EyelidHeight, PixelFormat.Format32bppArgb);
+        for (int y = 0; y < EyelidHeight; y++)
+            for (int x = 0; x < EyelidWidth; x++)
+            {
+                // The edge of the lid: at 70% of the height at the sides, 95% in the middle (a curve like an eye), and
+                // the dark fading out over the last 25% above it.
+                double across = (x + 0.5) / EyelidWidth * 2 - 1;
+                double edge = 0.95 - 0.25 * across * across;
+                double v = (y + 0.5) / EyelidHeight;
+                double t = Math.Max(0, Math.Min(1, (edge - v) / 0.25));
+                double alpha = t * t * (3 - 2 * t);
+                bmp.SetPixel(x, y, Color.FromArgb((int)Math.Round(alpha * 255), 0, 0, 0));
+            }
+        return bmp;
+    }
     // ---------- shotgun shell ----------
     // The texture of an ejected shotgun shell, wrapped around a short cylinder built by code (see
     // Gameplay::CreateShellMesh): the horizontal axis goes around it, the vertical one along it, from its bottom (row 0)

@@ -24,8 +24,6 @@ namespace Abomination::Gameplay
 {
     namespace
     {
-        constexpr int StartingShells = 100;
-
         constexpr std::string_view ShotgunPath = "Models/Weapons/Shotgun.glb";
         constexpr std::string_view ShotgunBoltPartName = "Bolt";
 
@@ -112,6 +110,10 @@ namespace Abomination::Gameplay
 
         // A heart always beats at the same pitch: a changing one does not sound like a heart.
         audio.GetSoundEvent(sounds.heartbeat)->pitchVariation = 0.0f;
+
+        // GAME OVER: a piece of music, always at its own pitch.
+        sounds.gameOver = LoadEvent(audio, "Sounds/UI/GameOver", 1, Audio::SoundGroup::Music, 1);
+        audio.GetSoundEvent(sounds.gameOver)->pitchVariation = 0.0f;
 
 
         // The shotgun in the hands, for the whole game (the pickups and weapon switching of later versions will change

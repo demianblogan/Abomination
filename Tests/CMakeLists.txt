@@ -36,6 +36,7 @@ set(TEST_SOURCES
     Gameplay/Effects/ParticlesTests.cpp
     Gameplay/Player/DamageReactionTests.cpp
     Gameplay/Player/LandingDipTests.cpp
+    Gameplay/Player/PlayerDeathTests.cpp
     Gameplay/Player/PlayerSystemTests.cpp
     Gameplay/Player/PlayerTests.cpp
     Gameplay/Weapons/AmmoTests.cpp

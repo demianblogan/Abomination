@@ -1,5 +1,7 @@
 #pragma once
 
+#include "UI/DeathScreen.h"
+
 #include <entt/entt.hpp>
 #include <glm/vec2.hpp>
 
@@ -63,7 +65,8 @@ namespace Abomination::UI
         // mouse and the keyboard (only while the cursor is free). Lets RmlUi update its animations and layout.
         void Update(glm::vec2 viewportSize, bool isInputEnabled);
 
-        // Once per frame, before Update: the HUD shows the state of the player (see HUD).
+        // Once per frame, before Update: the HUD shows the state of the player (see HUD), the death screen their death
+        // (see DeathScreen).
         void UpdateHUD(const Gameplay::GameplayState& gameplay, const entt::registry& registry, glm::vec2 viewportSize,
                        float deltaTime);
 
@@ -87,5 +90,8 @@ namespace Abomination::UI
 
         // On the heap: its data model keeps the addresses of its values (see HUD::Load).
         std::unique_ptr<HUD> m_hud;
+
+        // Owned by the context (its document), like the HUD.
+        DeathScreen m_deathScreen;
     };
 }

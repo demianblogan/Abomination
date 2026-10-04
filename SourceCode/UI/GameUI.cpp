@@ -28,6 +28,7 @@ namespace Abomination::UI
 
         // The documents, relative to the assets folder.
         constexpr std::string_view HUDDocumentPath = "UI/HUD.rml";
+        constexpr std::string_view DeathScreenDocumentPath = "UI/DeathScreen.rml";
 
         // The window height the sizes in the documents are written for: 1 dp is 1 pixel in a window 1080 pixels high.
         constexpr float ReferenceHeight = 1080.0f;
@@ -65,6 +66,8 @@ namespace Abomination::UI
         }
 
         gameUI.m_hud = HUD::Load(*gameUI.m_context, Core::ToUTF8String(assetsDirectory / HUDDocumentPath));
+        gameUI.m_deathScreen =
+            DeathScreen::Load(*gameUI.m_context, Core::ToUTF8String(assetsDirectory / DeathScreenDocumentPath));
         gameUI.m_platformBackend->SetContext(gameUI.m_context);
 
         Core::Log::Write(LogCategory::UI, LogLevel::Info, "Game interface started (RmlUi {})", Rml::GetVersion());
@@ -78,6 +81,7 @@ namespace Abomination::UI
         , m_rendererBackend(std::move(other.m_rendererBackend))
         , m_context(std::exchange(other.m_context, nullptr))
         , m_hud(std::move(other.m_hud))
+        , m_deathScreen(std::exchange(other.m_deathScreen, DeathScreen{}))
     {}
 
     GameUI& GameUI::operator=(GameUI&& other) noexcept
@@ -89,6 +93,7 @@ namespace Abomination::UI
             m_rendererBackend = std::move(other.m_rendererBackend);
             m_context = std::exchange(other.m_context, nullptr);
             m_hud = std::move(other.m_hud);
+            m_deathScreen = std::exchange(other.m_deathScreen, DeathScreen{});
         }
 
         return *this;
@@ -110,6 +115,7 @@ namespace Abomination::UI
         Rml::Shutdown();
         m_context = nullptr;
         m_hud.reset();
+        m_deathScreen = DeathScreen{};
     }
 
     void GameUI::Update(glm::vec2 viewportSize, bool isInputEnabled)
@@ -129,6 +135,7 @@ namespace Abomination::UI
                            float deltaTime)
     {
         m_hud->Update(gameplay, registry, viewportSize, deltaTime);
+        m_deathScreen.Update(gameplay);
     }
 
     int GameUI::Render(glm::vec2 viewportSize, const Renderer::GLShaderProgram& program)

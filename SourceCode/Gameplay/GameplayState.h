@@ -7,6 +7,7 @@
 #include "Gameplay/Effects/Gibs.h"
 #include "Gameplay/Enemies/DogMind.h"
 #include "Gameplay/Player/PlayerController.h"
+#include "Gameplay/Player/PlayerDeath.h"
 #include "Gameplay/Weapons/Shells.h"
 #include "Physics/CharacterMovement.h"
 
@@ -55,6 +56,9 @@ namespace Abomination::Gameplay
         std::array<Audio::SoundEventHandle, DamageKindCount> hits;
         Audio::SoundEventHandle heartbeat;
 
+        // The chord of GAME OVER after the death (see PlayerDeath).
+        Audio::SoundEventHandle gameOver;
+
         // The player stood on the ground in the last tick, and their vertical speed then (meters per second, negative
         // while falling). A landing is noticed one tick later, when the physics has already stopped the fall, so the
         // speed of the fall is taken from here.
@@ -92,6 +96,9 @@ namespace Abomination::Gameplay
         // steps). Changed in the Movement window of the debug overlay.
         Physics::PhysicsSettings physicsSettings;
         Physics::MovementSettings movementSettings;
+
+        // The death of the player: the fall of the view, the fade to black, GAME OVER (see PlayerDeath.h).
+        PlayerDeath playerDeath;
 
         PlayerSounds playerSounds;
         DogSounds dogSounds;

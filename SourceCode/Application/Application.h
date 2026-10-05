@@ -17,6 +17,7 @@
 #include "Renderer/Debug/DebugLines.h"
 #include "Renderer/RenderSettings.h"
 #include "Renderer/RenderSystem.h"
+#include "Renderer/SceneFramebuffer.h"
 #include "Renderer/SkinningBuffer.h"
 #include "Renderer/Sprites/SpriteBatch.h"
 #include "Renderer/Sprites/SpriteRenderer.h"
@@ -134,6 +135,9 @@ namespace Abomination
 
         // The joint matrices of the skinned mesh being drawn (characters bent by their skeletons).
         Renderer::SkinningBuffer m_skinningBuffer;
+
+        // The HDR framebuffer the 3D scene is drawn into before it goes onto the screen.
+        Renderer::SceneFramebuffer m_sceneFramebuffer;
 
         // The folder with the game files, for loading maps after startup.
         std::filesystem::path m_assetsDirectory;

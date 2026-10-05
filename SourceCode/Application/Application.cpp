@@ -23,6 +23,7 @@
 #include "Gameplay/Weapons/WeaponViewModel.h"
 #include "Platform/SystemServices.h"
 #include "Renderer/Camera/View.h"
+#include "Renderer/ColorSpace.h"
 #include "Renderer/OpenGL/DebugOutput.h"
 #include "Renderer/OpenGL/GLDebugGroup.h"
 #include "Renderer/OpenGL/GPUProfiling.h"
@@ -386,9 +387,6 @@ namespace Abomination
         const int widthInPixels = m_window.GetWidthInPixels();
         const int heightInPixels = m_window.GetHeightInPixels();
 
-        Renderer::SetViewport(widthInPixels, heightInPixels);
-        Renderer::ClearFrame(BackgroundColor);
-
         // Nothing drawn, nothing counted: a minimized window shows zeros in the Renderer window.
         m_renderStatistics = {};
 
@@ -407,8 +405,12 @@ namespace Abomination
             // The ears are where the eyes are: 3D sounds are heard from the place the scene is seen from.
             m_audio.SetListener(cameraTransform.position, cameraTransform.rotation * Core::LocalForward);
 
+            // The scene is drawn into the HDR framebuffer in linear values, and the background with it: the color above is
+            // given in sRGB, the way it was picked (see Renderer::SceneFramebuffer).
+            m_sceneFramebuffer.Begin(widthInPixels, heightInPixels, Renderer::ConvertSRGBToLinear(BackgroundColor));
+
             // In the order things cover each other: the solid world, the see-through effects in it, the debug lines, the
-            // weapon in the hands, and the game interface over everything.
+            // weapon in the hands; then the scene goes onto the screen, and the game interface is drawn over everything.
             // Every pass is a named group of OpenGL commands, so a frame captured by RenderDoc reads as these passes.
             {
                 Renderer::GLDebugGroup group("World");
@@ -433,6 +435,10 @@ namespace Abomination
             {
                 Renderer::GLDebugGroup group("Weapon");
                 DrawWeaponViewModel(aspectRatio, view, interpolationFactor);
+            }
+            {
+                Renderer::GLDebugGroup group("Present");
+                m_sceneFramebuffer.Present(m_renderAssets.shaders.Get(m_systemShaders.present));
             }
 
             // The game interface over everything (the HUD); it gets the mouse only while the cursor is free (the debug overlay

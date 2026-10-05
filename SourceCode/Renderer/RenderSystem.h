@@ -42,6 +42,9 @@ namespace Abomination::Renderer
 
         // Draws the game interface: the HUD, menus (see RmlUiRendererBackend).
         ShaderHandle gameUI;
+
+        // Writes the HDR scene onto the screen (see SceneFramebuffer).
+        ShaderHandle present;
     };
 
     // Loads the system shaders. Called once at startup, after the stores are created.

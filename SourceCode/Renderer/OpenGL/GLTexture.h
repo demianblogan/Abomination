@@ -23,6 +23,20 @@ namespace Abomination::Renderer
         Smooth,
     };
 
+    // What the numbers of a color texture mean, and so whether the GPU converts them when a shader reads them (see
+    // Documentation/ARCHITECTURE.md, section 6, linear lighting).
+    enum class TextureEncoding
+    {
+        // Colors as image files store them, in sRGB: the GPU turns them into linear values (proportional to the amount of
+        // light) when a shader reads them, for free (GL_SRGB8_ALPHA8). The textures of the world, the models and the
+        // effects, which are lit and blended in linear values.
+        SRGB,
+
+        // The numbers as they are, nothing converted (GL_RGBA8): the game interface, which is drawn and blended in sRGB,
+        // the way its designer saw it.
+        Raw,
+    };
+
     // A 2D texture in video memory: a picture the fragment shader can read colors from.
     // It stores the picture itself and all its mipmap levels (smaller copies for distant surfaces), and uses
     // pixel-crisp filtering for the retro look (or smooth filtering, see TextureFiltering). The texture is deleted in the
@@ -32,9 +46,10 @@ namespace Abomination::Renderer
     public:
         // Uploads the pixels of the image to the GPU and generates the mipmap levels.
         [[nodiscard]] static GLTexture CreateFromImage(const Core::Image& image,
-                                                       TextureFiltering filtering = TextureFiltering::Pixelated);
+                                                       TextureFiltering filtering = TextureFiltering::Pixelated,
+                                                       TextureEncoding encoding = TextureEncoding::SRGB);
 
-        // Loads an image file and calls CreateFromImage(). Returns an error if the file cannot be loaded.
+        // Loads an image file and calls CreateFromImage() (pixelated, sRGB). Returns an error if the file cannot be loaded.
         [[nodiscard]] static std::expected<GLTexture, std::string> CreateFromFile(const std::filesystem::path& path);
 
         GLTexture(const GLTexture&) = delete;

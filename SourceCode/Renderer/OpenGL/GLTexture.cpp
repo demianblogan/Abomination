@@ -25,7 +25,7 @@ namespace Abomination::Renderer
         }
     }
 
-    GLTexture GLTexture::CreateFromImage(const Core::Image& image, TextureFiltering filtering)
+    GLTexture GLTexture::CreateFromImage(const Core::Image& image, TextureFiltering filtering, TextureEncoding encoding)
     {
         // A texture of 0 texels is an OpenGL error, and fewer pixels than the size promises would be read past their end.
         assert(image.width > 0 && image.height > 0);
@@ -36,9 +36,12 @@ namespace Abomination::Renderer
         glCreateTextures(GL_TEXTURE_2D, 1, &textureID);
 
         // Immutable storage for all mipmap levels at once: the format and the size cannot change later.
-        // GL_RGBA8: 4 channels, 8 bits each, the same layout as Core::Image.
+        // Both formats store 4 channels of 8 bits each, the same layout as Core::Image. GL_SRGB8_ALPHA8 also tells the GPU
+        // that red, green and blue are sRGB: it converts them into linear values when a shader reads the texture (alpha
+        // is never converted), and makes the smaller mipmap levels in linear values, so they are not too dark.
+        const GLenum format = encoding == TextureEncoding::SRGB ? GL_SRGB8_ALPHA8 : GL_RGBA8;
         const GLsizei mipmapLevelCount = CalculateMipmapLevelCount(image.width, image.height);
-        glTextureStorage2D(textureID, mipmapLevelCount, GL_RGBA8, image.width, image.height);
+        glTextureStorage2D(textureID, mipmapLevelCount, format, image.width, image.height);
 
         // Copy the pixels into level 0 (the full-size picture). GL_RGBA + GL_UNSIGNED_BYTE describe our data in memory.
         glTextureSubImage2D(textureID, 0, 0, 0, image.width, image.height, GL_RGBA, GL_UNSIGNED_BYTE, image.pixels.data());

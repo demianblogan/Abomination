@@ -180,6 +180,8 @@ set(LIBRARY_SOURCES
     Platform/WindowSizing.cpp
 
     Renderer/ImGuiRendererBackend.h
+    Renderer/ColorSpace.h
+    Renderer/ColorSpace.cpp
     Renderer/ImGuiRendererBackend.cpp
     Renderer/DrawOffset.h
     Renderer/MeshRenderer.h
@@ -190,6 +192,8 @@ set(LIBRARY_SOURCES
     Renderer/RenderSystem.cpp
     Renderer/RmlUiRendererBackend.h
     Renderer/RmlUiRendererBackend.cpp
+    Renderer/SceneFramebuffer.h
+    Renderer/SceneFramebuffer.cpp
     Renderer/SkinningBuffer.h
     Renderer/SkinningBuffer.cpp
     Renderer/Sprites/SpriteBatch.h
@@ -232,6 +236,8 @@ set(LIBRARY_SOURCES
     Renderer/OpenGL/GLBuffer.cpp
     Renderer/OpenGL/GLDebugGroup.h
     Renderer/OpenGL/GLDebugGroup.cpp
+    Renderer/OpenGL/GLFramebuffer.h
+    Renderer/OpenGL/GLFramebuffer.cpp
     Renderer/OpenGL/GLShaderProgram.h
     Renderer/OpenGL/GLShaderProgram.cpp
     Renderer/OpenGL/GLTexture.h

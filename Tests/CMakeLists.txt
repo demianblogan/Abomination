@@ -3,6 +3,7 @@ find_package(Stb REQUIRED)  # ImageTests writes test PNG files with stb_image_wr
 
 # --- Unit tests: one executable for all tests, mirrors SourceCode/ ------------
 set(TEST_SOURCES
+    Application/LaunchOptionsTests.cpp
     Audio/AudioEngineTests.cpp
     Audio/SoundStoreTests.cpp
     Audio/VoiceSelectionTests.cpp

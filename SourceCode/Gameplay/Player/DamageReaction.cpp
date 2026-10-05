@@ -38,9 +38,11 @@ namespace Abomination::Gameplay
         if (health.current <= 0.0f || damage.amount <= 0.0f)
             return false;
 
+        // An invulnerable player (debug) feels the blow like any other, but loses nothing.
         Armor* armor = registry.try_get<Armor>(state.player);
-        const bool isKilled = armor != nullptr ? ApplyDamage(health, *armor, damage.amount)
-                                               : ApplyDamage(health, damage.amount);
+        bool isKilled = false;
+        if (!state.isPlayerInvulnerable)
+            isKilled = armor != nullptr ? ApplyDamage(health, *armor, damage.amount) : ApplyDamage(health, damage.amount);
 
         // The blow is heard whatever it did; the voice either cries out or dies.
         PlayerSounds& sounds = state.playerSounds;

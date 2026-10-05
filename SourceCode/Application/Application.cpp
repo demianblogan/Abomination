@@ -57,7 +57,8 @@ namespace Abomination
     }
 
     std::expected<Application, std::string> Application::Create(const std::filesystem::path& assetsDirectory,
-                                                                Core::LogHistory& logHistory)
+                                                                Core::LogHistory& logHistory,
+                                                                const LaunchOptions& options)
     {
         std::expected<Platform::SDLLibrary, std::string> SDLLibrary = Platform::SDLLibrary::Initialize();
         if (!SDLLibrary.has_value())
@@ -107,12 +108,13 @@ namespace Abomination
         Audio::AudioEngine audio(assetsDirectory);
 
         return Application(std::move(*SDLLibrary), std::move(*window), std::move(audio), std::move(renderAssets), *map,
-                           std::move(*debugOverlay), std::move(*gameUI), assetsDirectory, logHistory);
+                           std::move(*debugOverlay), std::move(*gameUI), assetsDirectory, logHistory, options);
     }
 
     Application::Application(Platform::SDLLibrary SDLLibrary, Platform::Window window, Audio::AudioEngine audio,
                              Renderer::RenderAssets renderAssets, const World::MapData& map, UI::DebugOverlay debugOverlay,
-                             UI::GameUI gameUI, std::filesystem::path assetsDirectory, Core::LogHistory& logHistory)
+                             UI::GameUI gameUI, std::filesystem::path assetsDirectory, Core::LogHistory& logHistory,
+                             const LaunchOptions& options)
         : m_SDLLibrary(std::move(SDLLibrary))
         , m_window(std::move(window))
         , m_audio(std::move(audio))
@@ -137,6 +139,15 @@ namespace Abomination
         m_gameplay = Gameplay::CreateGameplayState(m_registry, m_level.GetPlayerStart(), m_audio, m_renderAssets);
         m_gameplay.monsters = Gameplay::SpawnMonsters(m_registry, m_renderAssets, m_level.GetMonsterStarts());
         Gameplay::AnimateLevelModels(m_registry, m_renderAssets.models);
+
+        // The benchmark: the dogs attack a player who never dies, until the game closes itself (see FixedUpdate).
+        if (options.isBenchmark)
+        {
+            m_gameplay.isPlayerInvulnerable = true;
+            m_benchmarkTicksLeft = BenchmarkDuration * SimulationTicksPerSecond;
+            Core::Log::Write(LogCategory::Core, LogLevel::Info, "Benchmark: {} s, the player is invulnerable, input is ignored",
+                             BenchmarkDuration);
+        }
     }
 
     int Application::Run()
@@ -155,6 +166,12 @@ namespace Abomination
 
             // 1. Input: first the devices get this frame's input, then the actions are calculated from them.
             m_window.ProcessEvents(m_inputDevices);
+
+            // The benchmark plays with nobody at the controls: a touched key or mouse would make two runs differ. The
+            // window still closes from its close button, which is not input of the game.
+            if (m_benchmarkTicksLeft.has_value())
+                m_inputDevices = {};
+
             m_actionStates.Update(m_inputDevices, m_inputBindings);
 
             // 2. Everything that happens once per frame.
@@ -287,6 +304,10 @@ namespace Abomination
                                       m_collisionSettings.doesCameraCollide, tickDuration);
         Gameplay::UpdateMonsters(m_gameplay, m_registry, brushes, shotBrushes, m_level.GetNavMesh(), m_audio, tickDuration);
         Gameplay::UpdateSpinningEntities(m_registry, tickDuration);
+
+        // The benchmark ends after the same number of ticks in every run, however fast the frames are.
+        if (m_benchmarkTicksLeft.has_value() && --*m_benchmarkTicksLeft <= 0)
+            m_window.RequestClose();
     }
 
     void Application::UpdateVisuals(float deltaTime)

@@ -121,6 +121,10 @@ namespace Abomination::Gameplay
         bool areDogSensesVisible = false;
         bool isNavMeshVisible = false;
 
+        // Debug (the Player window, and the benchmark): blows still hit the player with every reaction, but take no
+        // health or armor, so the player never dies.
+        bool isPlayerInvulnerable = false;
+
         // The visual effects of shots (see Effects.h).
         Effects effects;
 

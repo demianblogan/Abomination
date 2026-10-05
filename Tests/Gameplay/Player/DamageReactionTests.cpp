@@ -62,6 +62,20 @@ namespace Abomination::Gameplay
         EXPECT_FALSE(player.GetReaction().lastDamageDirection.has_value());
     }
 
+    TEST(DamageReaction, InvulnerablePlayerFeelsTheBlowButLosesNothing)
+    {
+        TestPlayer player;
+        player.state.isPlayerInvulnerable = true;
+        player.registry.get<Armor>(player.state.player).current = 50.0f;
+
+        const bool isKilled = DamagePlayer(player.state, player.registry, player.audio, {.amount = 500.0f});
+
+        EXPECT_FALSE(isKilled);
+        EXPECT_FLOAT_EQ(player.GetHealth().current, 100.0f);
+        EXPECT_FLOAT_EQ(player.registry.get<Armor>(player.state.player).current, 50.0f);
+        EXPECT_EQ(player.GetReaction().damageCount, 1);
+    }
+
     TEST(DamageReaction, DeadPlayerIsNotHurtOrHealed)
     {
         TestPlayer player;

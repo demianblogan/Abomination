@@ -20,6 +20,8 @@ configure_file(Core/Version.cpp.in ${GENERATED_DIR}/Core/Version.cpp @ONLY)
 set(LIBRARY_SOURCES
     Application/Application.h
     Application/Application.cpp
+    Application/LaunchOptions.h
+    Application/LaunchOptions.cpp
 
     Audio/AudioEngine.h
     Audio/AudioEngine.cpp

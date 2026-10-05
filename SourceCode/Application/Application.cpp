@@ -9,6 +9,7 @@
 #include "Gameplay/Animation/Animator.h"
 #include "Gameplay/Camera/FreeFlyCameraSystem.h"
 #include "Gameplay/Camera/ViewSystem.h"
+#include "Gameplay/Enemies/MonsterDebug.h"
 #include "Gameplay/Enemies/Monsters.h"
 #include "Gameplay/Player/DamageReaction.h"
 #include "Gameplay/Player/Player.h"

@@ -22,7 +22,6 @@ namespace Abomination::Navigation
 
 namespace Abomination::Renderer
 {
-    class DebugLines;
     struct RenderAssets;
 }
 
@@ -101,14 +100,4 @@ namespace Abomination::Gameplay
     void UpdateMonsters(GameplayState& state, entt::registry& registry, std::span<const World::CollisionBrush> brushes,
                         std::span<const World::CollisionBrush> sightBrushes, const Navigation::NavMesh* navMesh,
                         Audio::AudioEngine& audio, float tickDuration);
-
-    // Debug, with state.areDogSensesVisible: the senses of every dog as lines on the floor around it: its field of view
-    // and the range of its sight (yellow), the radius it smells the player in (orange), the range it hears shots in
-    // (blue) and the area it patrols around where it appeared (green). interpolationFactor places it as it is drawn.
-    void AddMonsterDebugLines(const GameplayState& state, const entt::registry& registry, float interpolationFactor,
-                              Renderer::DebugLines& lines);
-
-    // Debug, with state.isNavMeshVisible: the polygons of the navmesh as lines a little above the floor (none if the level
-    // has no navmesh).
-    void AddNavMeshDebugLines(const GameplayState& state, const Navigation::NavMesh* navMesh, Renderer::DebugLines& lines);
 }

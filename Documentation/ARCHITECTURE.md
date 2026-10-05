@@ -126,7 +126,7 @@ A module may depend only on modules **below** it in this diagram.
 
 | Module        | Responsibility                                                  | Status  |
 |---------------|-----------------------------------------------------------------|---------|
-| `Core`        | Time (clock, frame timer, fixed timestep, FPS limit), frame statistics, logging, profiling (starting Tracy, the zone macros), files, image decoding, asset handles, cache and lifetime groups, bounding boxes, `Transform` and the world and local directions, `Name`, transform interpolation, planes and convex polygon clipping, map units and meters (`Units.h`) | 0.1 |
+| `Core`        | Time (clock, frame timer, fixed timestep, FPS limit), frame statistics, logging, profiling (starting Tracy, the zone macros), files, watching files for changes (hot reload), image decoding and PNG writing, asset handles, cache and lifetime groups, bounding boxes, `Transform` and the world and local directions, `Name`, transform interpolation, planes and convex polygon clipping, map units and meters (`Units.h`) | 0.1 |
 | `Input`       | Keyboard and mouse state, actions and bindings (see section 7)  | 0.1     |
 | `Platform`    | SDL3 window (size from the monitor, screen modes), OpenGL context creation, OS events → `Input`, the SDL3 parts of Dear ImGui and RmlUi | 0.1     |
 | `Renderer`    | Everything OpenGL. Exposes a high-level API (see section 6)     | 0.1     |
@@ -402,7 +402,7 @@ Inside the renderer:
   `std::uint32_t` so headers do not need GLAD:
   - `GLShaderProgram` — compiles and links a vertex and a fragment shader
     (from source or files), returns the compiler log on failure, labels the
-    program for debuggers (`glObjectLabel`), sets `mat4`, `vec2` and `float` uniforms;
+    program for debuggers (`glObjectLabel`), sets `mat4`, `vec2`, `float`, `bool` and `int` uniforms;
   - `GLBuffer` — immutable storage (`glNamedBufferStorage`): static (uploaded
     once) or dynamic (fixed size, contents replaced with `Update`);
   - `GLVertexArray` — vertex buffer bindings, float attributes, index buffer
@@ -410,7 +410,16 @@ Inside the renderer:
     binding slots);
   - `GLTexture` — immutable storage with all mipmap levels, pixel-crisp
     filtering (`GL_NEAREST` / `GL_NEAREST_MIPMAP_LINEAR`), repeat wrapping,
-    bound to texture units; knows its size and video memory.
+    bound to texture units; knows its size and video memory. `TextureEncoding`:
+    `SRGB` (`GL_SRGB8_ALPHA8`, the GPU converts the colors into linear values
+    when a shader reads them; the world, models, effects) or `Raw`
+    (`GL_RGBA8`, as stored; the game interface);
+  - `GLFramebuffer` — a picture to draw into instead of the screen: an HDR
+    color texture (`GL_RGBA16F`) and a depth texture (`GL_DEPTH_COMPONENT32F`),
+    labeled for RenderDoc;
+  - `GLDebugGroup` — a scope guard that names the OpenGL commands inside it
+    (`glPushDebugGroup` / `glPopDebugGroup`), so a frame in RenderDoc reads
+    as its passes.
 - `Mesh` — geometry in video memory (vertex buffer, index buffer, vertex
   array) that draws itself; `MeshData` is the same geometry in ordinary memory
   (`MeshPrimitives` builds a cube, `World` builds the level). Vertex layout:
@@ -425,7 +434,10 @@ Inside the renderer:
   shading with a fixed made-up light direction, not real lighting, so walls
   facing different ways stay apart until lightmaps in 0.5; alpha-tested),
   `Wireframe` (one line color), `DebugLines` and `Sprite` (particles, marks,
-  the muzzle flash).
+  the muzzle flash), `Present` (the scene onto the screen, see below). Colors
+  written in the code are sRGB, the way they were picked; the shaders that
+  take them convert them into linear values (`ConvertSRGBToLinear`, the same
+  formula as `Renderer/ColorSpace` in C++).
 - `TextureStore`, `ShaderStore`, `MeshStore`, `ModelStore`, grouped in `RenderAssets` — load
   every texture, shader program, mesh and model once and hand out handles (see
   section 9).
@@ -474,13 +486,49 @@ Inside the renderer:
   What plays which clip is `Gameplay::Animator` (see section 13).
 - **Renderer window** of the debug overlay (Renderer in the menu bar): Solid /
   Wireframe, world axes (arrows along X, Y, Z from the origin, over
-  everything), draw calls and triangles of the last frame, brushes, faces and
+  everything), tone mapping (None / ACES) and exposure, draw calls and
+  triangles of the last frame, brushes, faces and
   triangles of the level, and *Reload*, which loads the map again (a Debug
   build reads it straight from `Assets/` of the repository, so a map saved
   in TrenchBroom shows at once; the game does not have to be closed).
 
-Color textures are uploaded as `GL_RGBA8` without gamma correction for now;
-sRGB textures and an sRGB framebuffer come with lighting in 0.5.
+**The passes of a frame** (`Application::Render`; each one a `GLDebugGroup`):
+
+```
+SceneFramebuffer::Begin   the HDR framebuffer of the size of the window, cleared
+  World                   DrawMeshes: the level and the models
+  Effects                 sprites: marks, particles
+  Debug lines
+  Weapon                  the weapon in the hands, after clearing the depth
+Present                   one triangle over the screen: exposure, tone mapping, sRGB
+Game interface            RmlUi, on the screen, in sRGB
+Debug overlay             ImGui, on the screen
+```
+
+- **Linear lighting.** Image files store colors in sRGB: the numbers are not
+  proportional to the amount of light (128 of 255 is about 21% of white),
+  so that the 256 steps of 8 bits are spent where the eye sees differences.
+  Light is added and multiplied in linear values, which are; adding sRGB
+  numbers makes two lamps several times too bright. So the textures of the
+  world are sRGB textures (the GPU converts them when they are read), the
+  scene is drawn in linear values, and only Present converts them back.
+  The game interface and ImGui stay in sRGB on the screen, as designed.
+- **HDR.** The scene framebuffer keeps values above 1 (`GL_RGBA16F`), so a
+  flame brighter than a white wall stays brighter. `SceneFramebuffer` makes it
+  at the first frame and again when the window changes size.
+- **Present** (`Present.vert`/`.frag`): the triangle is twice as large as the
+  screen (corners from `gl_VertexID`, no vertex buffer; an empty vertex array
+  is bound because OpenGL Core requires one), and every pixel reads its pixel
+  of the scene with `texelFetch`. It multiplies by the exposure (stops of the
+  Renderer window: 2 to their power), fits the result into 0..1 with the
+  **ACES** filmic curve (Narkowicz's approximation: an S-curve that lifts the
+  middle, deepens the darkest shadows and presses bright values together
+  without a hard edge; per channel, so colors get more saturated and shift a
+  little) or cuts it off (`ToneMapping::None`), then converts to sRGB.
+- **Cost** on the Intel GPU of the development laptop: about 1.3 ms per
+  frame (Present 0.55 ms, writing 8 bytes per pixel instead of 4 the rest).
+  `GL_R11F_G11F_B10F` (4 bytes, HDR without alpha) is the option to measure
+  if it matters.
 
 The executable exports `NvOptimusEnablement` and
 `AmdPowerXpressRequestHighPerformance`, so laptops with hybrid graphics run
@@ -846,6 +894,15 @@ Renderer::RenderAssets                     all graphics stores, owned by Applica
   the handles of the removed level invalid. An asset asked for with both
   lifetimes keeps the longer one. Texture and mesh stores take the lifetime
   in every `Load`/`Add`; shader programs are always global.
+- **Hot reload of shaders** (Debug builds, which read the shaders of the
+  repository): twice a second `ShaderStore::ReloadChangedPrograms` asks
+  `Core::FileWatcher` which `.vert` or `.frag` changed and compiles those
+  programs again under the same handles, so whatever holds a handle draws
+  with the new program at once. A file counts as changed only when its new
+  write time is the same at two checks in a row: an editor may write it in
+  several steps, and a half-written file would not compile. A program that
+  does not compile keeps the old one (the compiler log goes to the console);
+  a magenta fallback becomes the real program when its files are fixed.
 - **Assets window** of the debug overlay (Assets in the menu bar): every loaded
   texture with its size, video memory (all mipmap levels) and lifetime, every
   mesh and shader program, fallbacks marked in magenta.
@@ -854,8 +911,8 @@ Renderer::RenderAssets                     all graphics stores, owned by Applica
 
 - Materials (normal and metalness maps, with lighting in 0.5); music is streamed, not loaded
   whole (0.8); sound occlusion by walls and reverb zones (later).
-- Hot reload of shaders and textures (0.5), packed archives with a virtual
-  file system (near 1.0).
+- Hot reload of textures and maps (the same `FileWatcher`), packed archives
+  with a virtual file system (near 1.0).
 
 ## 10. ECS
 
@@ -908,7 +965,7 @@ is `Abomination::Core::Clock`. These modules are split already:
 
 | Module | Root | Topic folders |
 |--------|------|---------------|
-| `Core` | `BuildConfiguration`, `Version` | `Time/` (clock, frame timer, fixed timestep, FPS limit, statistics), `Logging/`, `Profiling/` (starting the profiler, zone macros), `Files/` (files, images), `Math/` (units, planes, polygons, bounding boxes and rays, random numbers, springs), `Assets/` (handles, cache, lifetimes), `Scene/` (`Name`, `Transform`, interpolation) |
+| `Core` | `BuildConfiguration`, `Version` | `Time/` (clock, frame timer, fixed timestep, FPS limit, statistics), `Logging/`, `Profiling/` (starting the profiler, zone macros), `Files/` (files, file watcher, images), `Math/` (units, planes, polygons, bounding boxes and rays, random numbers, springs), `Assets/` (handles, cache, lifetimes), `Scene/` (`Name`, `Transform`, interpolation) |
 | `Renderer` | `RenderSystem`, `RenderSettings`, `MeshRenderer`, `ModelRenderer`, `ModelPose`, `SkinningBuffer`, `DrawOffset`, `ImGuiRendererBackend`, `RmlUiRendererBackend` | `OpenGL/` (wrappers of OpenGL objects, loader, debug output, shader interface, GPU profiling), `Assets/` (meshes, models, glTF loading, part splits and the stores), `Animation/` (joint poses, sampling and blending clips), `Camera/` (`CameraLens`, `View`), `Debug/` (debug lines), `Sprites/` (sprite batch and renderer) |
 | `Gameplay` | `GameplayState`, `Spin` | `Player/` (player, controller, its system, landing dip, damage reaction, death), `Camera/` (free-fly camera, mouse look, the view), `Weapons/` (weapon, its system, the weapon in the hands, its motion and hands, pump action, recoil, crosshair, shells), `Effects/` (effects, particles, tumbling, gibs), `Characters/` (health, armor, collisions between characters), `Animation/` (the animator), `Enemies/` (monsters, the mind of the dog, ground fit, bodies, debug lines) |
 | `UI` | `DebugOverlay`, `ImGuiLibrary`, `UIScale`, `Widgets`, `GameUI`, `HUD`, `DeathScreen`, `StyleValues` | `Windows/` (one file per debug window) |
@@ -1269,6 +1326,9 @@ Abomination.exe ──zones──► socket 127.0.0.1:8086 ──► tracy-profi
   map with nobody at the controls (input is ignored), an invulnerable player
   (`GameplayState::isPlayerInvulnerable`, also a checkbox of the Player
   window) whom the dogs attack, closed after 1200 ticks (20 s of game time).
+  Halfway it saves the frame as `Benchmark.png` next to the executable
+  (`Renderer::ReadFramePixels`, `Core::SaveImageFile`), so the graphics
+  branches can compare how the game looks before and after.
   The simulation runs in fixed ticks and the random numbers of the dogs are
   seeded by their entities, so every run plays the same: two runs log the
   same decisions of the dogs in the same order.

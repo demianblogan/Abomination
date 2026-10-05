@@ -2,6 +2,7 @@
 
 #include "Core/Assets/AssetCache.h"
 #include "Core/Assets/AssetHandle.h"
+#include "Core/Files/FileWatcher.h"
 #include "Renderer/OpenGL/GLShaderProgram.h"
 
 #include <cstddef>
@@ -48,6 +49,13 @@ namespace Abomination::Renderer
         // The name the program was loaded with, or nullptr for an invalid handle. For the entity inspector.
         [[nodiscard]] const std::string* GetName(ShaderHandle handle) const;
 
+        // Hot reload: compiles again every program whose .vert or .frag changed on disk since it was loaded (see
+        // Core::FileWatcher) and puts it in place of the old one under the same handle, so whatever holds the handle draws
+        // with the new program at once. A program that does not compile keeps the old one, and the compiler log goes to the
+        // log; a program that was the magenta fallback becomes the real one when its files are fixed. Returns how many
+        // programs were replaced. Called a few times a second, by Debug builds (they read the shaders of the repository).
+        int ReloadChangedPrograms();
+
         [[nodiscard]] std::size_t GetCount() const noexcept;
 
     private:
@@ -61,6 +69,9 @@ namespace Abomination::Renderer
 
         // Returned by Get() for invalid handles.
         GLShaderProgram m_fallbackProgram;
+
+        // The .vert and .frag of every loaded program, under the name of the program.
+        Core::FileWatcher m_fileWatcher;
     };
 
     template <typename Visitor>

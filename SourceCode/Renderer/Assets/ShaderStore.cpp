@@ -59,6 +59,27 @@ namespace Abomination::Renderer
         {
             return GLShaderProgram::Create(FallbackVertexShaderSource, FallbackFragmentShaderSource, "Fallback");
         }
+
+        // The two files of a program.
+        struct ShaderFilePaths
+        {
+            std::filesystem::path vertexShader;
+            std::filesystem::path fragmentShader;
+        };
+
+        // "Shaders/TexturedShaded" -> ".../Assets/Shaders/TexturedShaded.vert" and ".../Assets/Shaders/TexturedShaded.frag".
+        // += appends text to the last part of a path (unlike /, which adds a new part). make_preferred() turns the forward
+        // slashes of the name into the backslashes of Windows, so paths in log messages do not mix both.
+        ShaderFilePaths GetShaderFilePaths(const std::filesystem::path& assetsDirectory, const std::string& name)
+        {
+            std::filesystem::path vertexShaderPath = assetsDirectory / name;
+            vertexShaderPath.make_preferred();
+            std::filesystem::path fragmentShaderPath = vertexShaderPath;
+            vertexShaderPath += ".vert";
+            fragmentShaderPath += ".frag";
+
+            return ShaderFilePaths{.vertexShader = vertexShaderPath, .fragmentShader = fragmentShaderPath};
+        }
     }
 
     std::expected<ShaderStore, std::string> ShaderStore::Create(std::filesystem::path assetsDirectory)
@@ -80,17 +101,13 @@ namespace Abomination::Renderer
         if (const std::optional<ShaderHandle> loadedHandle = m_cache.Find(name); loadedHandle.has_value())
             return *loadedHandle;
 
-        // "Shaders/TexturedShaded" -> ".../Assets/Shaders/TexturedShaded.vert" and ".../Assets/Shaders/TexturedShaded.frag".
-        // += appends text to the last part of a path (unlike /, which adds a new part). make_preferred() turns the forward
-        // slashes of the name into the backslashes of Windows, so paths in log messages do not mix both.
-        std::filesystem::path vertexShaderPath = m_assetsDirectory / name;
-        vertexShaderPath.make_preferred();
-        std::filesystem::path fragmentShaderPath = vertexShaderPath;
-        vertexShaderPath += ".vert";
-        fragmentShaderPath += ".frag";
+        // The files are watched from now on, also when they are broken: fixing them replaces the fallback (see
+        // ReloadChangedPrograms).
+        const ShaderFilePaths paths = GetShaderFilePaths(m_assetsDirectory, name);
+        m_fileWatcher.Watch(name, {paths.vertexShader, paths.fragmentShader});
 
         std::expected<GLShaderProgram, std::string> program =
-            GLShaderProgram::CreateFromFiles(vertexShaderPath, fragmentShaderPath);
+            GLShaderProgram::CreateFromFiles(paths.vertexShader, paths.fragmentShader);
 
         if (program.has_value())
         {
@@ -111,6 +128,32 @@ namespace Abomination::Renderer
         m_fallbackNames.insert(name);
 
         return m_cache.Add(name, std::move(*fallbackProgram));
+    }
+
+    int ShaderStore::ReloadChangedPrograms()
+    {
+        int reloadedCount = 0;
+        for (const std::string& name : m_fileWatcher.CollectChangedKeys())
+        {
+            const ShaderFilePaths paths = GetShaderFilePaths(m_assetsDirectory, name);
+            std::expected<GLShaderProgram, std::string> program =
+                GLShaderProgram::CreateFromFiles(paths.vertexShader, paths.fragmentShader);
+            if (!program.has_value())
+            {
+                // A typo in the middle of editing must not turn the world magenta: the old program keeps drawing.
+                Core::Log::Write(LogCategory::Renderer, LogLevel::Error, "Shader program {} not reloaded, the old one stays: {}",
+                                 name, program.error());
+                continue;
+            }
+
+            // Adding a loaded name replaces its program and keeps its handle (see Core::AssetCache::Add).
+            m_cache.Add(name, std::move(*program));
+            m_fallbackNames.erase(name);
+            Core::Log::Write(LogCategory::Renderer, LogLevel::Info, "Shader program reloaded: {}", name);
+            ++reloadedCount;
+        }
+
+        return reloadedCount;
     }
 
     const GLShaderProgram& ShaderStore::Get(ShaderHandle handle) const

@@ -43,6 +43,7 @@ namespace Abomination::Renderer
         void SetUniform(std::uint32_t location, const glm::vec2& value) const;
         void SetUniform(std::uint32_t location, float value) const;
         void SetUniform(std::uint32_t location, bool value) const;
+        void SetUniform(std::uint32_t location, int value) const;
 
     private:
         explicit GLShaderProgram(std::uint32_t programID) noexcept;

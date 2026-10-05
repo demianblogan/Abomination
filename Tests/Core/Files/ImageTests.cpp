@@ -2,8 +2,7 @@
 
 #include <gtest/gtest.h>
 
-// The tests write small PNG files with stb_image_write; its implementation is compiled here, only in the tests.
-#define STB_IMAGE_WRITE_IMPLEMENTATION
+// The tests write small PNG files with stb_image_write; its implementation is in Core/Files/Image.cpp.
 #include <stb_image_write.h>
 
 #include <array>
@@ -54,6 +53,21 @@ namespace Abomination::Core
         // The second stored row is the top one (red).
         EXPECT_EQ(image->pixels[4], 255);
         EXPECT_EQ(image->pixels[6], 0);
+    }
+
+    TEST_F(ImageTest, SavedImageLoadsWithTheSamePixels)
+    {
+        // 1x2, bottom row first like every Image: the bottom pixel green, the top one half-transparent red.
+        const Image original{.width = 1, .height = 2, .pixels = {0, 255, 0, 255, 255, 0, 0, 128}};
+
+        const std::expected<void, std::string> saved = SaveImageFile(m_filePath, original);
+        const std::expected<Image, std::string> loaded = LoadImageFile(m_filePath);
+
+        ASSERT_TRUE(saved.has_value());
+        ASSERT_TRUE(loaded.has_value());
+        EXPECT_EQ(loaded->width, 1);
+        EXPECT_EQ(loaded->height, 2);
+        EXPECT_EQ(loaded->pixels, original.pixels);
     }
 
     TEST_F(ImageTest, ReturnsErrorForMissingFile)

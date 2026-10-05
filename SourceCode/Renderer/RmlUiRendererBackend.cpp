@@ -24,7 +24,7 @@ namespace Abomination::Renderer
         GLTexture CreateWhiteTexture()
         {
             const Core::Image white{.width = 1, .height = 1, .pixels = {255, 255, 255, 255}};
-            return GLTexture::CreateFromImage(white);
+            return GLTexture::CreateFromImage(white, TextureFiltering::Pixelated, TextureEncoding::Raw);
         }
 
         // The texture of a handle RmlUi gives back: the address of the GLTexture (see LoadTexture), or 0 for none.
@@ -165,7 +165,7 @@ namespace Abomination::Renderer
         }
 
         textureDimensions = {pixels.width, pixels.height};
-        return ToHandle(GLTexture::CreateFromImage(pixels, TextureFiltering::Smooth));
+        return ToHandle(GLTexture::CreateFromImage(pixels, TextureFiltering::Smooth, TextureEncoding::Raw));
     }
 
     Rml::TextureHandle RmlUiRendererBackend::GenerateTexture(Rml::Span<const Rml::byte> source,
@@ -176,7 +176,7 @@ namespace Abomination::Renderer
         Core::Image image{.width = sourceDimensions.x, .height = sourceDimensions.y};
         image.pixels.assign(reinterpret_cast<const std::uint8_t*>(source.data()),
                             reinterpret_cast<const std::uint8_t*>(source.data()) + source.size());
-        return ToHandle(GLTexture::CreateFromImage(image, TextureFiltering::Smooth));
+        return ToHandle(GLTexture::CreateFromImage(image, TextureFiltering::Smooth, TextureEncoding::Raw));
     }
 
     void RmlUiRendererBackend::ReleaseTexture(Rml::TextureHandle texture)

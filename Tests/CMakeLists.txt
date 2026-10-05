@@ -11,6 +11,7 @@ set(TEST_SOURCES
     Core/VersionTests.cpp
     Core/Assets/AssetCacheTests.cpp
     Core/Files/FileSystemTests.cpp
+    Core/Files/FileWatcherTests.cpp
     Core/Files/ImageTests.cpp
     Core/Logging/LogHistoryTests.cpp
     Core/Logging/LogTests.cpp
@@ -67,6 +68,7 @@ set(TEST_SOURCES
     Renderer/Assets/MeshPrimitivesTests.cpp
     Renderer/Assets/ModelPartSplitTests.cpp
     Renderer/Camera/ViewTests.cpp
+    Renderer/ColorSpaceTests.cpp
     Renderer/Debug/DebugLinesTests.cpp
     Renderer/OpenGL/GLTextureTests.cpp
 

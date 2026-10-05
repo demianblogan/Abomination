@@ -8,8 +8,15 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
+// The same for stb_image_write, which writes PNG files (SaveImageFile). The tests use it too, from here.
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include <stb_image_write.h>
+
+#include <algorithm>
+#include <cassert>
 #include <cstddef>
 #include <format>
+#include <fstream>
 #include <memory>
 
 namespace Abomination::Core
@@ -63,5 +70,45 @@ namespace Abomination::Core
             .height = height,
             .pixels = std::vector<std::uint8_t>(decodedPixels.get(), decodedPixels.get() + byteCount),
         };
+    }
+
+    std::expected<void, std::string> SaveImageFile(const std::filesystem::path& path, const Image& image)
+    {
+        // Writing past the end of the pixels would read memory that is not the image.
+        assert(image.width > 0 && image.height > 0);
+        assert(image.pixels.size() == static_cast<std::size_t>(image.width) * static_cast<std::size_t>(image.height) *
+                                          ImageChannelCount);
+
+        // The file starts with the top row, the image with the bottom one: the rows are copied in the other order. (stb has
+        // a switch for this, but it is global and would flip every other write too.)
+        const std::size_t rowSize = static_cast<std::size_t>(image.width) * ImageChannelCount;
+        std::vector<std::uint8_t> topRowFirst(image.pixels.size());
+        for (std::size_t row = 0; row < static_cast<std::size_t>(image.height); ++row)
+        {
+            const std::size_t sourceRow = static_cast<std::size_t>(image.height) - 1 - row;
+            std::copy_n(image.pixels.begin() + static_cast<std::ptrdiff_t>(sourceRow * rowSize), rowSize,
+                        topRowFirst.begin() + static_cast<std::ptrdiff_t>(row * rowSize));
+        }
+
+        // stb_image_write encodes into memory through a callback; the file is written here, so a path with any letters
+        // works (stb would open it with the code page of the system).
+        std::vector<char> encoded;
+        const auto append = [](void* context, void* data, int size)
+        {
+            auto* bytes = static_cast<std::vector<char>*>(context);
+            bytes->insert(bytes->end(), static_cast<char*>(data), static_cast<char*>(data) + size);
+        };
+        const int strideInBytes = image.width * ImageChannelCount;
+        const bool isEncoded = stbi_write_png_to_func(append, &encoded, image.width, image.height, ImageChannelCount,
+                                                      topRowFirst.data(), strideInBytes) != 0;
+        if (!isEncoded)
+            return std::unexpected(std::format("Failed to encode the image \"{}\"", ToUTF8String(path)));
+
+        std::ofstream file(path, std::ios::binary);
+        file.write(encoded.data(), static_cast<std::streamsize>(encoded.size()));
+        if (!file.good())
+            return std::unexpected(std::format("Failed to write the image \"{}\"", ToUTF8String(path)));
+
+        return {};
     }
 }

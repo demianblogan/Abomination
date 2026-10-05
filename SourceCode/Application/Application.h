@@ -17,6 +17,7 @@
 #include "Renderer/Debug/DebugLines.h"
 #include "Renderer/RenderSettings.h"
 #include "Renderer/RenderSystem.h"
+#include "Renderer/SceneFramebuffer.h"
 #include "Renderer/SkinningBuffer.h"
 #include "Renderer/Sprites/SpriteBatch.h"
 #include "Renderer/Sprites/SpriteRenderer.h"
@@ -82,6 +83,10 @@ namespace Abomination
         // models, the shells and gibs), so it is as smooth as the view. deltaTime: the length of the frame (seconds).
         void UpdateVisuals(float deltaTime);
 
+        // Hot reload of shaders (Debug builds): every ShaderCheckInterval seconds, the programs whose files changed are
+        // compiled again (see Renderer::ShaderStore::ReloadChangedPrograms). deltaTime: the length of the frame (seconds).
+        void ReloadChangedShaders(float deltaTime);
+
         // Reads the start map again and replaces the loaded level with it: the old entities and Level assets are removed,
         // the new ones created. The camera stays where it is. If the map cannot be read, the old level stays.
         void ReloadLevel();
@@ -98,6 +103,9 @@ namespace Abomination
         void DrawEffects(const Renderer::View& view);
         void AddDebugLines(const Core::Transform& cameraTransform, float interpolationFactor);
         void DrawWeaponViewModel(float aspectRatio, const Renderer::View& view, float interpolationFactor);
+
+        // Saves the frame drawn so far (before the buffers are swapped) as BenchmarkScreenshotFileName next to the executable.
+        void SaveBenchmarkScreenshot();
 
         // Members are destroyed in reverse order of declaration: the overlay and the assets first (they use OpenGL),
         // then the window, then SDL, which the window needs.
@@ -128,6 +136,9 @@ namespace Abomination
         // The joint matrices of the skinned mesh being drawn (characters bent by their skeletons).
         Renderer::SkinningBuffer m_skinningBuffer;
 
+        // The HDR framebuffer the 3D scene is drawn into before it goes onto the screen.
+        Renderer::SceneFramebuffer m_sceneFramebuffer;
+
         // The folder with the game files, for loading maps after startup.
         std::filesystem::path m_assetsDirectory;
 
@@ -152,6 +163,9 @@ namespace Abomination
 
         // The player, the free-fly camera, who of them is controlled and how they move (see Gameplay::GameplayState).
         Gameplay::GameplayState m_gameplay;
+
+        // Time since the last look for changed shader files (see ReloadChangedShaders).
+        float m_secondsSinceShaderCheck = 0.0f;
 
         // The mouse is in relative mode (see Update).
         bool m_isMouseCaptured = false;
@@ -184,5 +198,8 @@ namespace Abomination
 
         // In a benchmark (--benchmark), the ticks left until the game closes itself; empty in a normal game.
         std::optional<int> m_benchmarkTicksLeft;
+
+        // Set halfway through the benchmark: the next frame is saved (see SaveBenchmarkScreenshot).
+        bool m_isBenchmarkScreenshotDue = false;
     };
 }

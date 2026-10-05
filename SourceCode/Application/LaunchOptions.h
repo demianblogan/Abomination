@@ -11,7 +11,8 @@ namespace Abomination
     struct LaunchOptions
     {
         // --benchmark: a repeatable scene for the profiler (see Tools/Profiling/Capture.ps1): the start map, nobody at the
-        // controls, an invulnerable player the dogs attack, and the game closes itself after BenchmarkDuration.
+        // controls, an invulnerable player the dogs attack, a screenshot halfway, and the game closes itself after
+        // BenchmarkDuration.
         bool isBenchmark = false;
 
         // Arguments the game does not know, kept so that main() can write them to the log.
@@ -20,6 +21,9 @@ namespace Abomination
 
     // How long a benchmark runs, in seconds of game time.
     constexpr int BenchmarkDuration = 20;
+
+    // The frame the benchmark saves halfway, next to the executable (Tools/Profiling/Capture.ps1 keeps it with the capture).
+    constexpr std::string_view BenchmarkScreenshotFileName = "Benchmark.png";
 
     // arguments: the command line without the name of the executable (argv[1] ... argv[argc - 1]).
     [[nodiscard]] LaunchOptions ParseLaunchOptions(std::span<const std::string_view> arguments);

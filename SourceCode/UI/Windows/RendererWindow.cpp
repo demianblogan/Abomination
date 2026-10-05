@@ -3,6 +3,7 @@
 #include "Renderer/RenderSettings.h"
 #include "Renderer/RenderSystem.h"
 #include "UI/UIScale.h"
+#include "UI/Widgets.h"
 #include "World/LevelMesh.h"
 
 #include <imgui.h>
@@ -32,6 +33,18 @@ namespace Abomination::UI
             ImGui::Checkbox("World axes", &settings.areWorldAxesVisible);
             ImGui::SetItemTooltip("Arrows along X (red), Y (green, up) and Z (blue) from the origin of the world,\n"
                                   "1 m long, drawn over everything.");
+
+            // How the HDR scene is fitted into what the screen shows (see Renderer::ToneMapping and Present.frag).
+            ImGui::SeparatorText("Tone mapping");
+            if (ImGui::RadioButton("None", settings.toneMapping == Renderer::ToneMapping::None))
+                settings.toneMapping = Renderer::ToneMapping::None;
+            ImGui::SetItemTooltip("Everything brighter than 1 is cut off: a flame looks like a white wall.");
+            ImGui::SameLine();
+            if (ImGui::RadioButton("ACES", settings.toneMapping == Renderer::ToneMapping::ACES))
+                settings.toneMapping = Renderer::ToneMapping::ACES;
+            ImGui::SetItemTooltip("The filmic curve: dark stays dark, bright is pressed together and never cut off.");
+            DrawSlider("Exposure", settings.exposureStops, -4.0f, 4.0f, "%.1f stops",
+                       "Brightness before tone mapping, like a camera: +1 doubles it, -1 halves it.");
 
             ImGui::SeparatorText("Last frame");
             ImGui::Text("Draw calls: %d", statistics.drawCallCount);

@@ -1,6 +1,8 @@
 #include "Application/Application.h"
 
 #include "Core/BuildConfiguration.h"
+#include "Core/Files/FileSystem.h"
+#include "Core/Files/Image.h"
 #include "Core/Logging/Log.h"
 #include "Core/Profiling/ProfileZone.h"
 #include "Core/Scene/Transform.h"
@@ -21,7 +23,9 @@
 #include "Gameplay/Weapons/WeaponViewModel.h"
 #include "Platform/SystemServices.h"
 #include "Renderer/Camera/View.h"
+#include "Renderer/ColorSpace.h"
 #include "Renderer/OpenGL/DebugOutput.h"
+#include "Renderer/OpenGL/GLDebugGroup.h"
 #include "Renderer/OpenGL/GPUProfiling.h"
 #include "Renderer/OpenGL/OpenGLLoader.h"
 #include "Renderer/OpenGL/RenderCommands.h"
@@ -54,6 +58,9 @@ namespace Abomination
 
         // The width of debug lines in pixels at 100% display scale.
         constexpr float DebugLineWidth = 2.5f;
+
+        // How often a Debug build looks for changed shader files (seconds); a saved shader is used 0.5-1 s later.
+        constexpr float ShaderCheckInterval = 0.5f;
     }
 
     std::expected<Application, std::string> Application::Create(const std::filesystem::path& assetsDirectory,
@@ -189,6 +196,10 @@ namespace Abomination
             // What only moves the picture moves every frame, after the ticks of this frame, so it is as smooth as the view.
             UpdateVisuals(frameTimer.GetDeltaTime());
 
+            // A Debug build reads the shaders of the repository: a shader saved in the editor is used at once.
+            if constexpr (Core::IsDebugBuild)
+                ReloadChangedShaders(frameTimer.GetDeltaTime());
+
             frameStatistics.AddFrame(frameTimer.GetDeltaTime(), tickCount);
 
             // 4. Drawing and showing the frame.
@@ -308,6 +319,10 @@ namespace Abomination
         // The benchmark ends after the same number of ticks in every run, however fast the frames are.
         if (m_benchmarkTicksLeft.has_value() && --*m_benchmarkTicksLeft <= 0)
             m_window.RequestClose();
+
+        // Halfway, when the dogs are at the player, the frame is saved, to compare how the game looks between versions.
+        if (m_benchmarkTicksLeft.has_value() && *m_benchmarkTicksLeft == BenchmarkDuration * SimulationTicksPerSecond / 2)
+            m_isBenchmarkScreenshotDue = true;
     }
 
     void Application::UpdateVisuals(float deltaTime)
@@ -327,6 +342,19 @@ namespace Abomination
         Gameplay::UpdateShells(m_gameplay, m_registry, eyes, m_level.GetShotBrushes(), m_audio, deltaTime);
         Gameplay::UpdateGibs(m_gameplay, m_registry, m_level.GetShotBrushes(), deltaTime);
         Gameplay::UpdateDamageReaction(m_gameplay, m_registry, m_audio, deltaTime);
+    }
+
+    void Application::ReloadChangedShaders(float deltaTime)
+    {
+        PROFILE_ZONE();
+
+        // Reading the write times of a dozen files is cheap, but not worth doing every frame.
+        m_secondsSinceShaderCheck += deltaTime;
+        if (m_secondsSinceShaderCheck < ShaderCheckInterval)
+            return;
+        m_secondsSinceShaderCheck = 0.0f;
+
+        m_renderAssets.shaders.ReloadChangedPrograms();
     }
 
     void Application::ReloadLevel()
@@ -359,9 +387,6 @@ namespace Abomination
         const int widthInPixels = m_window.GetWidthInPixels();
         const int heightInPixels = m_window.GetHeightInPixels();
 
-        Renderer::SetViewport(widthInPixels, heightInPixels);
-        Renderer::ClearFrame(BackgroundColor);
-
         // Nothing drawn, nothing counted: a minimized window shows zeros in the Renderer window.
         m_renderStatistics = {};
 
@@ -380,51 +405,84 @@ namespace Abomination
             // The ears are where the eyes are: 3D sounds are heard from the place the scene is seen from.
             m_audio.SetListener(cameraTransform.position, cameraTransform.rotation * Core::LocalForward);
 
+            // The scene is drawn into the HDR framebuffer in linear values, and the background with it: the color above is
+            // given in sRGB, the way it was picked (see Renderer::SceneFramebuffer).
+            m_sceneFramebuffer.Begin(widthInPixels, heightInPixels, Renderer::ConvertSRGBToLinear(BackgroundColor));
+
             // In the order things cover each other: the solid world, the see-through effects in it, the debug lines, the
-            // weapon in the hands, and the game interface over everything.
-            m_renderStatistics = Renderer::DrawMeshes(m_registry, view, interpolationFactor, m_renderAssets,
-                                                      m_systemShaders, m_renderSettings, m_skinningBuffer);
-            DrawEffects(view);
+            // weapon in the hands; then the scene goes onto the screen, and the game interface is drawn over everything.
+            // Every pass is a named group of OpenGL commands, so a frame captured by RenderDoc reads as these passes.
+            {
+                Renderer::GLDebugGroup group("World");
+                m_renderStatistics = Renderer::DrawMeshes(m_registry, view, interpolationFactor, m_renderAssets,
+                                                          m_systemShaders, m_renderSettings, m_skinningBuffer);
+            }
+            {
+                Renderer::GLDebugGroup group("Effects");
+                DrawEffects(view);
+            }
 
             AddDebugLines(cameraTransform, interpolationFactor);
             const glm::vec2 viewportSize(static_cast<float>(widthInPixels), static_cast<float>(heightInPixels));
 
-            // The line width is given at 100% display scale, like the debug overlay: on a 4K monitor at 200% it doubles.
-            m_debugLineRenderer.Draw(m_debugLines, view, m_renderAssets.shaders.Get(m_systemShaders.debugLines), viewportSize,
-                                     DebugLineWidth * m_window.GetDisplayScale());
+            {
+                Renderer::GLDebugGroup group("Debug lines");
 
-            DrawWeaponViewModel(aspectRatio, view, interpolationFactor);
+                // The line width is given at 100% display scale, like the debug overlay: on a 4K monitor at 200% it doubles.
+                m_debugLineRenderer.Draw(m_debugLines, view, m_renderAssets.shaders.Get(m_systemShaders.debugLines),
+                                         viewportSize, DebugLineWidth * m_window.GetDisplayScale());
+            }
+            {
+                Renderer::GLDebugGroup group("Weapon");
+                DrawWeaponViewModel(aspectRatio, view, interpolationFactor);
+            }
+            {
+                Renderer::GLDebugGroup group("Present");
+                m_sceneFramebuffer.Present(m_renderAssets.shaders.Get(m_systemShaders.present), m_renderSettings);
+            }
 
             // The game interface over everything (the HUD); it gets the mouse only while the cursor is free (the debug overlay
             // is open).
             m_gameUI.UpdateHUD(m_gameplay, m_registry, viewportSize, deltaTime);
             m_gameUI.Update(viewportSize, !m_isMouseCaptured);
-            m_renderStatistics.drawCallCount +=
-                m_gameUI.Render(viewportSize, m_renderAssets.shaders.Get(m_systemShaders.gameUI));
+            {
+                Renderer::GLDebugGroup group("Game interface");
+                m_renderStatistics.drawCallCount +=
+                    m_gameUI.Render(viewportSize, m_renderAssets.shaders.Get(m_systemShaders.gameUI));
+            }
         }
 
         // The lines of this frame are drawn (or, in a minimized window, dropped); the next frame adds its own.
         m_debugLines.Clear();
 
         // The overlay is drawn last, on top of the game.
-        m_debugOverlay.Draw({
-            .frameStatistics = frameStatistics,
-            .fixedTimestep = m_fixedTimestep,
-            .window = m_window,
-            .frameLimiter = m_frameLimiter,
-            .renderAssets = m_renderAssets,
-            .registry = m_registry,
-            .renderSettings = m_renderSettings,
-            .renderStatistics = m_renderStatistics,
-            .levelStatistics = m_level.GetStatistics(),
-            .isLevelReloadRequested = m_isLevelReloadRequested,
-            .collisionSettings = m_collisionSettings,
-            .cameraCast = m_cameraCast,
-            .collisionBrushCount = m_level.GetCollisionBrushes().size(),
-            .logHistory = *m_logHistory,
-            .audio = m_audio,
-            .gameplay = m_gameplay,
-        });
+        {
+            Renderer::GLDebugGroup group("Debug overlay");
+            m_debugOverlay.Draw({
+                .frameStatistics = frameStatistics,
+                .fixedTimestep = m_fixedTimestep,
+                .window = m_window,
+                .frameLimiter = m_frameLimiter,
+                .renderAssets = m_renderAssets,
+                .registry = m_registry,
+                .renderSettings = m_renderSettings,
+                .renderStatistics = m_renderStatistics,
+                .levelStatistics = m_level.GetStatistics(),
+                .isLevelReloadRequested = m_isLevelReloadRequested,
+                .collisionSettings = m_collisionSettings,
+                .cameraCast = m_cameraCast,
+                .collisionBrushCount = m_level.GetCollisionBrushes().size(),
+                .logHistory = *m_logHistory,
+                .audio = m_audio,
+                .gameplay = m_gameplay,
+            });
+        }
+
+        if (m_isBenchmarkScreenshotDue)
+        {
+            m_isBenchmarkScreenshotDue = false;
+            SaveBenchmarkScreenshot();
+        }
 
         // With V-Sync the driver may wait here for the monitor: the wait gets its own zone, so it is not taken for a slow
         // Render.
@@ -435,6 +493,20 @@ namespace Abomination
 
         // The GPU times of the zones of earlier frames that are ready by now.
         Renderer::CollectGPUProfiling();
+    }
+
+    void Application::SaveBenchmarkScreenshot()
+    {
+        // A minimized window has no pixels to read.
+        if (m_window.GetWidthInPixels() <= 0 || m_window.GetHeightInPixels() <= 0)
+            return;
+
+        const std::filesystem::path path = Platform::GetExecutableDirectory() / BenchmarkScreenshotFileName;
+        const Core::Image frame = Renderer::ReadFramePixels(m_window.GetWidthInPixels(), m_window.GetHeightInPixels());
+        if (const std::expected<void, std::string> saved = Core::SaveImageFile(path, frame); !saved.has_value())
+            Core::Log::Write(LogCategory::Core, LogLevel::Error, "Benchmark screenshot not saved: {}", saved.error());
+        else
+            Core::Log::Write(LogCategory::Core, LogLevel::Info, "Benchmark screenshot saved: {}", Core::ToUTF8String(path));
     }
 
     void Application::DrawEffects(const Renderer::View& view)

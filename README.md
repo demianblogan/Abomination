@@ -17,7 +17,7 @@ built from scratch with modern C++ and OpenGL 4.6.**
 [![CI](https://img.shields.io/github/actions/workflow/status/demianblogan/Abomination/CI.yml?branch=main&label=CI&logo=githubactions&logoColor=white)](https://github.com/demianblogan/Abomination/actions/workflows/CI.yml)
 [![Release](https://img.shields.io/github/v/release/demianblogan/Abomination?color=1f6feb)](https://github.com/demianblogan/Abomination/releases/latest)
 [![Status](https://img.shields.io/badge/status-early_development-orange)](Documentation/ROADMAP.md)
-[![Milestone](https://img.shields.io/badge/milestone-0.4_It_Moves-1f6feb)](Documentation/ROADMAP.md)
+[![Milestone](https://img.shields.io/badge/milestone-0.5_Lights-1f6feb)](Documentation/ROADMAP.md)
 [![License](https://img.shields.io/badge/license-PolyForm_Noncommercial_1.0-1f6feb)](LICENSE.md)
 
 [About](#-about) •
@@ -46,8 +46,8 @@ written from the ground up, and every system — from the OpenGL renderer to
 the enemy AI — is built to be read and learned from.
 
 > [!NOTE]
-> The game is in early development. **Version 0.3** is out: run around a test level with a shotgun and
-> shoot target dummies — follow the [roadmap](Documentation/ROADMAP.md) to see what is being built next.
+> The game is in early development. **Version 0.4** is out: fight a pack of dogs in a ruined chapel with a shotgun
+> — follow the [roadmap](Documentation/ROADMAP.md) to see what is being built next.
 
 ## 🎯 Features
 
@@ -80,6 +80,17 @@ the enemy AI — is built to be read and learned from.
 ## 📸 Screenshots
 
 Every picture has the same size; click one to open it in full resolution.
+
+### 0.4 — It Moves
+
+<table>
+<tr>
+<td align="center" valign="top" width="25%"><a href="Documentation/Screenshots/v0.4.0/HUD.png"><img src="Documentation/Screenshots/v0.4.0/HUD.png" alt="A pack of dogs attacking the player, blood, the shotgun in the hands and the HUD" width="176" height="99"></a><br><sub>A pack of dogs and the HUD</sub></td>
+<td align="center" valign="top" width="25%"><a href="Documentation/Screenshots/v0.4.0/FirstEnemyDog.png"><img src="Documentation/Screenshots/v0.4.0/FirstEnemyDog.png" alt="The first enemy: a rotting dog with a skeleton and animations" width="176" height="99"></a><br><sub>The first enemy: an animated dog</sub></td>
+<td align="center" valign="top" width="25%"><a href="Documentation/Screenshots/v0.4.0/ChapelAlphaLevel.png"><img src="Documentation/Screenshots/v0.4.0/ChapelAlphaLevel.png" alt="The chapel: the new level with pillars, a stained glass window and an altar" width="176" height="99"></a><br><sub>The chapel, the new level</sub></td>
+<td align="center" valign="top" width="25%"><a href="Documentation/Screenshots/v0.4.0/GameOverMenu.png"><img src="Documentation/Screenshots/v0.4.0/GameOverMenu.png" alt="The GAME OVER screen after the death of the player" width="176" height="99"></a><br><sub>Death and GAME OVER</sub></td>
+</tr>
+</table>
 
 ### 0.3 — Boomstick
 
@@ -120,6 +131,10 @@ Every picture has the same size; click one to open it in full resolution.
 | Architecture    | ECS with EnTT                                                              |
 | Math            | glm                                                                        |
 | Logging         | spdlog                                                                     |
+| Audio           | miniaudio                                                                  |
+| Models          | glTF 2.0 via cgltf · skeletal animation                                    |
+| AI              | Recast & Detour navigation mesh                                            |
+| Game interface  | RmlUi                                                                      |
 | Debug tools     | Dear ImGui                                                                 |
 | Levels          | TrenchBroom + own level compiler                                           |
 | Build           | CMake · vcpkg · GitHub Actions                                             |
@@ -149,8 +164,8 @@ Full instructions, including the command line: **[BUILDING.md](Documentation/BUI
 
 ## 🎮 Controls
 
-The current build (version 0.3) lets you run and jump around a test level made in TrenchBroom, with
-Quake-style movement, and shoot target dummies with a shotgun.
+The current build (version 0.4) puts you in a ruined chapel made in TrenchBroom, with Quake-style
+movement and a shotgun, against dogs that hunt you down; when you die, any key starts again.
 
 | Input | Action |
 |:-----:|--------|
@@ -171,8 +186,8 @@ Quake-style movement, and shoot target dummies with a shotgun.
 | 0.1     | Foundation             | ✅     |
 | 0.2     | First Steps            | ✅     |
 | 0.3     | Boomstick              | ✅     |
-| 0.4     | It Moves               | 🔨     |
-| 0.5     | Lights                 | ⏳     |
+| 0.4     | It Moves               | ✅     |
+| 0.5     | Lights                 | 🔨     |
 | 0.6     | Game Loop              | ⏳     |
 | 0.7     | Arsenal & Bestiary     | ⏳     |
 | 0.8     | Menus & Saves          | ⏳     |

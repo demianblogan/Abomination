@@ -24,8 +24,8 @@ we now* and *what comes next*.
 | 0.1     | Foundation             | ✅     | Free-fly (noclip) camera                              | Window, OpenGL 4.6 context, debug output, textured cube, ImGui overlay |
 | 0.2     | First Steps            | ✅     | Quake-style movement, collision with the level        | EnTT, resource manager, TrenchBroom map loading, brush texturing |
 | 0.3     | Boomstick              | ✅     | First hitscan weapon, damage, sound                   | View model with sway/bob/recoil, muzzle flash, particles, decals, glTF loading |
-| 0.4     | It Moves               | 🔨     | First enemy: AI, navmesh, health, death, HUD          | Skeletal animation, game interface (RmlUi)               |
-| 0.5     | Lights                 | ⏳     | Glowing projectiles, dynamic light in combat          | Lightmap baking, shadows, HDR, bloom, gamma              |
+| 0.4     | It Moves               | ✅     | First enemy: AI, navmesh, health, death, HUD          | Skeletal animation, game interface (RmlUi)               |
+| 0.5     | Lights                 | 🔨     | Glowing projectiles, dynamic light in combat          | Lightmap baking, shadows, HDR, bloom, gamma              |
 | 0.6     | Game Loop              | ⏳     | Pickups, armor, doors, buttons, plates, level exit, stats screen, level transitions — first complete level | Moving brushes, data-driven configs |
 | 0.7     | Arsenal & Bestiary     | ⏳     | All weapons, projectiles, explosions, weapon switching (keys, wheel, mouse wheel), gamepad, new enemy types (incl. flying), first boss | Weapon effects, new models |
 | 0.8     | Menus & Saves          | ⏳     | Autosave, manual save, quicksave, load menu           | Animated main menu, pause menu, all options, key rebinding, 5 languages, logo screen, language selection |
@@ -106,7 +106,7 @@ Every asset is listed in `ASSETS.md` before it is committed.
 level, the pellets spread, the targets take damage and are destroyed, every
 shot is heard and leaves a flash, particles and marks on the walls.
 
-## 0.4 — It Moves 🔨
+## 0.4 — It Moves ✅
 
 **Goal:** the first enemy: a melee monster that notices the player, runs to
 them and strikes; it takes damage, feels pain and dies. The player has health
@@ -128,8 +128,8 @@ monsters of Quake; if time runs out, the navmesh moves to 0.5.
 | 6 | `feat/enemy`                    | ✅     | The dog, the first enemy: a map entity `monster_dog` placed in TrenchBroom; a character body moved by the player's movement code (sliding along walls, steps, gravity), health, hit by pellets; states idle (looking around, sniffing), patrol (wandering), alert (sight: a trace to the player within range and field of view; hearing: shots), chase (galloping straight at the player), attack (a leaping bite that hurts the player), pain; each with its clip and cross-fades; its sounds (bark, bite, landing, yelp, death); clip brushes for smooth stairs, walking along slopes, the model fitted to the ground; an Enemy window with the ranges and the lines of sight; the target dummies of 0.3 removed; Trace messages of what the dog decides (a Debug build writes from Trace on, the console hides Trace until it is checked) |
 | 7 | `feat/death`                    | ✅     | The dog dies with its Death clip and its body stays: characters walk through it, shots hit it; at most N bodies (16 by default), the oldest sinks into the floor; below -40 health (a close shot, or shots at the body) it bursts into gibs that bounce and disappear, with blood and a sound (gib models and the sound approved first); the player dies: the weapon goes down, the HUD fades, the player falls on their back and the eyes close; GAME OVER (rusty iron letters) with its sound and PRESS ANY KEY TO RESTART; any key or mouse button restarts the level |
 | 8 | `feat/navmesh`                  | ✅     | Recast & Detour 1.6.0 (vcpkg): a navmesh built from the brushes (clip ramps included) when a level loads, for the size of the dog; the dog chases the player along a path around walls (straight when the way is clear), repathing five times a second; patrol points only on the navmesh; Show navmesh and the path of every dog in the Enemies window |
-| 9 | `feat/level-dressing`           | ✅     | The nave of the flooded chapel (E1, from a concept by ChatGPT): seamless textures generated with ChatGPT (walls, floors, trims; a door and a window as cutouts), Chapel.map written by Tools/MapGenerator from a plan in units, with four octagonal pillars, a raised altar, a balcony, doors and windows in niches and a closed arch down to the crypt; the game starts there; the dog 20% bigger, with no bites through floors |
-| 10 | `refactor/review-0.4`          | ⏳     | A review of the project, a list of what changed since the last walkthrough, screenshots; release v0.4.0 |
+| 9 | `feat/level-dressing`           | ✅     | The nave of the flooded chapel (E1, from a concept by ChatGPT): seamless textures generated with ChatGPT (walls, floors, trims; a door and a window as cutouts), Chapel.map (first generated from a plan in units, then edited only in TrenchBroom), with four octagonal pillars, a raised altar, a balcony, doors and windows in niches and a closed arch down to the crypt; the game starts there; the dog 20% bigger, with no bites through floors |
+| 10 | `refactor/review-0.4`          | ✅     | A review of the project: the level is no longer copied for every moving character (a collision world of spans), posing and skinning allocate nothing per frame, only base color images of models decoded, the dog updated in named steps, one flight for shells and gibs, shared interface style values; architecture docs for navigation, enemies, animation and death; screenshots; release v0.4.0 |
 
 **The HUD of the whole game** (the parts that come later are drawn when their
 feature arrives):

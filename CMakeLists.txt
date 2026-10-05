@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.31)
 
 project(Abomination
-    VERSION 0.3.0
+    VERSION 0.4.0
     DESCRIPTION "A retro first-person shooter inspired by Quake (1996)"
     LANGUAGES C CXX  # C: the generated GLAD loader is written in C
 )

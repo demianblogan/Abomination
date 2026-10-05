@@ -3,6 +3,7 @@
 #include "Core/Logging/Log.h"
 #include "Gameplay/GameplayState.h"
 #include "Gameplay/Player/PlayerDeath.h"
+#include "UI/StyleValues.h"
 
 #include <RmlUi/Core/Context.h>
 #include <RmlUi/Core/Element.h>
@@ -37,13 +38,6 @@ namespace Abomination::UI
         // How high an eyelid is, in percent of the screen (DeathScreen.rcss): fully open it is just above (or below)
         // the screen, closed it covers this much of it from its edge.
         constexpr float EyelidHeight = 60.0f;
-
-        // SetProperty takes the value as in a style sheet ("0.5", "-30%", "scale(1.1)").
-        void SetOpacity(Rml::Element* element, float opacity)
-        {
-            if (element != nullptr)
-                element->SetProperty("opacity", std::format("{:.3f}", opacity));
-        }
     }
 
     DeathScreen DeathScreen::Load(Rml::Context& context, const std::string& documentPath)
@@ -74,13 +68,7 @@ namespace Abomination::UI
             return;
 
         const Gameplay::PlayerDeath& death = gameplay.playerDeath;
-        if (death.isDead != m_document->IsVisible())
-        {
-            if (death.isDead)
-                m_document->Show();
-            else
-                m_document->Hide();
-        }
+        SetShown(*m_document, death.isDead);
         if (!death.isDead)
             return;
 

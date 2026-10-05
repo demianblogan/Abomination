@@ -12,6 +12,7 @@
 #include "Gameplay/Weapons/Crosshair.h"
 #include "Gameplay/Weapons/Weapon.h"
 #include "Renderer/Camera/CameraLens.h"
+#include "UI/StyleValues.h"
 
 #include <RmlUi/Core/Context.h>
 #include <RmlUi/Core/DataModelHandle.h>
@@ -71,34 +72,6 @@ namespace Abomination::UI
         // The angles of the four lines of a hit marker on the screen: up-right, up-left, down-left, down-right (+Y is
         // down on the screen, so up-right is -45 degrees).
         constexpr std::array<float, 4> MarkerAngles = {-45.0f, -135.0f, 135.0f, 45.0f};
-
-        // A color as RCSS writes it: #rrggbbaa.
-        std::string ToRCSSColor(const glm::vec4& color)
-        {
-            const auto channel = [](float value)
-            {
-                return static_cast<int>(std::lround(glm::clamp(value, 0.0f, 1.0f) * 255.0f));
-            };
-            return std::format("#{:02x}{:02x}{:02x}{:02x}", channel(color.r), channel(color.g), channel(color.b),
-                               channel(color.a));
-        }
-
-        std::string ToPixels(float pixels)
-        {
-            return std::format("{:.2f}px", pixels);
-        }
-
-        std::string ToOpacity(float opacity)
-        {
-            return std::format("{:.3f}", glm::clamp(opacity, 0.0f, 1.0f));
-        }
-
-        // Sets an element visible or not; a hidden element is not drawn and does not take the mouse.
-        void SetVisible(Rml::Element* element, bool isVisible)
-        {
-            if (element != nullptr)
-                element->SetProperty("visibility", isVisible ? "visible" : "hidden");
-        }
     }
 
     std::unique_ptr<HUD> HUD::Load(Rml::Context& context, const std::string& documentPath)
@@ -149,17 +122,11 @@ namespace Abomination::UI
             return;
 
         // Only the living player has a HUD: the free-fly camera shows the world without it, and at death it fades out
-        // (see PlayerDeath). SetProperty takes the value as in a style sheet.
+        // (see PlayerDeath).
         const float opacity = Gameplay::CalculateHUDOpacity(gameplay.playerDeath);
         const bool isVisible = gameplay.controlMode == Gameplay::ControlMode::Player && opacity > 0.0f;
-        if (isVisible != m_document->IsVisible())
-        {
-            if (isVisible)
-                m_document->Show();
-            else
-                m_document->Hide();
-        }
-        m_document->SetProperty("opacity", std::to_string(opacity));
+        SetShown(*m_document, isVisible);
+        SetOpacity(m_document, opacity);
 
         // The counts are followed even while the HUD is hidden, so a blow taken in the free-fly camera does not flash
         // when the HUD comes back.
@@ -269,10 +236,8 @@ namespace Abomination::UI
         // The vignettes fade out evenly.
         m_damageVignetteStrength = std::max(0.0f, m_damageVignetteStrength - VignetteFadeRate * deltaTime);
         m_healVignetteStrength = std::max(0.0f, m_healVignetteStrength - HealVignetteFadeRate * deltaTime);
-        if (m_damageVignette != nullptr)
-            m_damageVignette->SetProperty("opacity", ToOpacity(m_damageVignetteStrength));
-        if (m_healVignette != nullptr)
-            m_healVignette->SetProperty("opacity", ToOpacity(m_healVignetteStrength));
+        SetOpacity(m_damageVignette, m_damageVignetteStrength);
+        SetOpacity(m_healVignette, m_healVignetteStrength);
 
         // The shake: back and forth sideways, dying down evenly.
         const float pixelsPerDp = viewportSize.y / ReferenceHeight;
@@ -300,7 +265,7 @@ namespace Abomination::UI
         {
             const bool isBlinking = m_secondsSinceEmptyClick < BlinkPeriod * BlinkCount;
             const bool isDim = isBlinking && std::fmod(m_secondsSinceEmptyClick, BlinkPeriod) < BlinkPeriod * 0.5f;
-            m_ammoCounter->SetProperty("opacity", ToOpacity(isDim ? BlinkOpacity : 1.0f));
+            SetOpacity(m_ammoCounter, isDim ? BlinkOpacity : 1.0f);
         }
 
         UpdateDamageArcs(registry.get<Gameplay::LookAngles>(gameplay.player).yaw, viewportSize.y * DamageArcRadius,
@@ -331,7 +296,7 @@ namespace Abomination::UI
             // angle around the middle (a CSS transform list applies from right to left).
             const float angle = glm::degrees(std::atan2(glm::dot(arc.direction, right), glm::dot(arc.direction, forward)));
             arc.element->SetProperty("transform", std::format("rotate({:.1f}deg) translateY({:.2f}px)", angle, -radius));
-            arc.element->SetProperty("opacity", ToOpacity(1.0f - arc.age / DamageArcDuration));
+            SetOpacity(arc.element, 1.0f - arc.age / DamageArcDuration);
         }
     }
 

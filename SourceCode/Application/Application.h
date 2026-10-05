@@ -73,6 +73,10 @@ namespace Abomination
         void Update();
         void FixedUpdate(float tickDuration);
 
+        // Once per frame after the ticks: what only moves the picture (the view, the weapon in the hands, the animated
+        // models, the shells and gibs), so it is as smooth as the view. deltaTime: the length of the frame (seconds).
+        void UpdateVisuals(float deltaTime);
+
         // Reads the start map again and replaces the loaded level with it: the old entities and Level assets are removed,
         // the new ones created. The camera stays where it is. If the map cannot be read, the old level stays.
         void ReloadLevel();

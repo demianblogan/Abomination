@@ -164,21 +164,8 @@ namespace Abomination
             for (int tick = 0; tick < tickCount; ++tick)
                 FixedUpdate(m_fixedTimestep.GetTickDuration());
 
-            // What only moves the picture (the weapon in the hands, the view, the particles) moves every frame, after the
-            // ticks of this frame, so it is as smooth as the view.
-            Gameplay::UpdatePlayerDeath(m_gameplay, m_registry, m_audio, frameTimer.GetDeltaTime());
-            Gameplay::UpdateViewEffects(m_gameplay, m_registry, m_audio, frameTimer.GetDeltaTime());
-
-            // Animated models move every frame too: their poses are only for the eyes.
-            Gameplay::UpdateAnimators(m_registry, m_renderAssets.models, frameTimer.GetDeltaTime());
-
-            // The shells fly out of the weapon as it is seen: from the eyes between the last two ticks.
-            const Core::Transform eyes =
-                Gameplay::CalculateViewTransform(m_gameplay, m_registry, m_fixedTimestep.GetInterpolationFactor());
-            Gameplay::UpdateShells(m_gameplay, m_registry, eyes, m_level.GetShotBrushes(), m_audio,
-                                   frameTimer.GetDeltaTime());
-            Gameplay::UpdateGibs(m_gameplay, m_registry, m_level.GetShotBrushes(), frameTimer.GetDeltaTime());
-            Gameplay::UpdateDamageReaction(m_gameplay, m_registry, m_audio, frameTimer.GetDeltaTime());
+            // What only moves the picture moves every frame, after the ticks of this frame, so it is as smooth as the view.
+            UpdateVisuals(frameTimer.GetDeltaTime());
 
             frameStatistics.AddFrame(frameTimer.GetDeltaTime(), tickCount);
 
@@ -285,6 +272,23 @@ namespace Abomination
                                       m_collisionSettings.doesCameraCollide, tickDuration);
         Gameplay::UpdateMonsters(m_gameplay, m_registry, brushes, shotBrushes, m_level.GetNavMesh(), m_audio, tickDuration);
         Gameplay::UpdateSpinningEntities(m_registry, tickDuration);
+    }
+
+    void Application::UpdateVisuals(float deltaTime)
+    {
+        // The dying player's view, the weapon in the hands, the shake and kick of the view.
+        Gameplay::UpdatePlayerDeath(m_gameplay, m_registry, m_audio, deltaTime);
+        Gameplay::UpdateViewEffects(m_gameplay, m_registry, m_audio, deltaTime);
+
+        // Animated models: their poses are only for the eyes.
+        Gameplay::UpdateAnimators(m_registry, m_renderAssets.models, deltaTime);
+
+        // The shells fly out of the weapon as it is seen: from the eyes between the last two ticks.
+        const Core::Transform eyes =
+            Gameplay::CalculateViewTransform(m_gameplay, m_registry, m_fixedTimestep.GetInterpolationFactor());
+        Gameplay::UpdateShells(m_gameplay, m_registry, eyes, m_level.GetShotBrushes(), m_audio, deltaTime);
+        Gameplay::UpdateGibs(m_gameplay, m_registry, m_level.GetShotBrushes(), deltaTime);
+        Gameplay::UpdateDamageReaction(m_gameplay, m_registry, m_audio, deltaTime);
     }
 
     void Application::ReloadLevel()
@@ -446,25 +450,21 @@ namespace Abomination
         for (const std::string& partName : weaponViewModel->pump.partNames)
             partOffsets.push_back({.partName = partName, .offset = {0.0f, 0.0f, weaponViewModel->pump.travel}});
 
-        const Renderer::RenderStatistics statistics = Renderer::DrawWeaponViewModel(
+        m_renderStatistics += Renderer::DrawWeaponViewModel(
             weaponViewModel->model, eyesInWorld * Gameplay::CalculateWeaponViewModelMatrix(*weaponViewModel),
             weaponViewModel->verticalFOV, aspectRatio, m_renderAssets, weaponViewModel->shaderProgram, m_systemShaders,
             m_renderSettings, m_skinningBuffer, partOffsets, nullptr, isSeenByPlayer, worldView);
-        m_renderStatistics.drawCallCount += statistics.drawCallCount;
-        m_renderStatistics.triangleCount += statistics.triangleCount;
 
         // The hands, posed for the weapon as it is now and drawn with it (its depth kept, so they hold it, not cover it).
         if (weaponViewModel->hands.isVisible)
         {
             const Renderer::Model& handsModel = m_renderAssets.models.Get(weaponViewModel->hands.model);
             Gameplay::CalculateWeaponHandsPose(*weaponViewModel, handsModel);
-            const Renderer::RenderStatistics handsStatistics = Renderer::DrawWeaponViewModel(
+            m_renderStatistics += Renderer::DrawWeaponViewModel(
                 weaponViewModel->hands.model,
                 eyesInWorld * Gameplay::CalculateWeaponHandsMatrix(*weaponViewModel, handsModel),
                 weaponViewModel->verticalFOV, aspectRatio, m_renderAssets, weaponViewModel->shaderProgram, m_systemShaders,
                 m_renderSettings, m_skinningBuffer, {}, &weaponViewModel->hands.pose, false, worldView);
-            m_renderStatistics.drawCallCount += handsStatistics.drawCallCount;
-            m_renderStatistics.triangleCount += handsStatistics.triangleCount;
         }
 
         if (!isSeenByPlayer || weaponViewModel->flashTimeLeft <= 0.0f)

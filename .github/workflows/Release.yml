@@ -25,8 +25,9 @@ jobs:
         with:
           configuration: release
 
+      # Without the Tracy profiler: the game of a player neither measures itself nor listens on a socket.
       - name: Configure
-        run: cmake --preset windows-msvc
+        run: cmake --preset windows-msvc -DABOMINATION_PROFILING=OFF
 
       - name: Build
         run: cmake --build --preset release

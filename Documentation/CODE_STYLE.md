@@ -78,7 +78,11 @@ found during review.
 - Getters use `Get`, setters use `Set`: member `m_width` → `GetWidth()`,
   `SetWidth(int)`; `SetVSyncEnabled(bool)`.
 - Macros are avoided. A naming rule for them will be added if one is ever
-  needed.
+  needed. The exception are the zones of the Tracy profiler (`ZoneScoped`,
+  `ZoneScopedN("Swap buffers")`, `FrameMark`): only a macro can disappear
+  completely from a build without profiling. `ZoneScoped` is the first line
+  of a function body, followed by a blank line; a part of a function gets a
+  block `{ ZoneScopedN("…"); … }` with a name in plain words.
 - No Hungarian notation (`iCount`, `pData`, `strName`).
 - The root namespace is `Abomination`. Every module has a nested namespace
   matching its folder: `SourceCode/Renderer/` → `Abomination::Renderer`.

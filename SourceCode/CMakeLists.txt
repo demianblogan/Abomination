@@ -324,6 +324,7 @@ target_link_libraries(AbominationCore
         RmlUi::RmlUi          # Only the RmlUi backends (Platform, Renderer) and the game interface (UI) include RmlUi
         SDL3::SDL3            # Only Platform/*.cpp include SDL, no header does
         spdlog::spdlog        # Only Log.cpp includes spdlog, Log.h does not
+        Tracy                 # Only .cpp files include Tracy (zones of the profiler), no header does
 )
 abomination_set_compiler_options(AbominationCore)
 

@@ -30,6 +30,7 @@
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
 #include <glm/vec4.hpp>
+#include <tracy/Tracy.hpp>
 
 #include <chrono>
 #include <span>
@@ -175,7 +176,13 @@ namespace Abomination
 
             // 5. With an FPS limit, the frame waits here until it has lasted 1 / limit seconds. The next frame then
             //    starts right on time, and its measured delta time includes this wait.
-            Platform::SleepPrecisely(m_frameLimiter.GetWaitTime(frameStartTime, Core::Clock::now()));
+            {
+                ZoneScopedN("Wait for the FPS limit");
+                Platform::SleepPrecisely(m_frameLimiter.GetWaitTime(frameStartTime, Core::Clock::now()));
+            }
+
+            // The end of a frame for the Tracy profiler: it cuts its timeline into frames here.
+            FrameMark;
         }
 
         // How long the game really ran, for the log file: when a log ends in a bug, it shows whether it came right after the
@@ -189,6 +196,8 @@ namespace Abomination
 
     void Application::Update()
     {
+        ZoneScoped;
+
         if (m_isLevelReloadRequested)
         {
             m_isLevelReloadRequested = false;
@@ -259,6 +268,8 @@ namespace Abomination
 
     void Application::FixedUpdate(float tickDuration)
     {
+        ZoneScoped;
+
         // First of all: remember where every interpolated entity is before this tick moves anything.
         Core::StorePreviousTransforms(m_registry);
 
@@ -277,6 +288,8 @@ namespace Abomination
 
     void Application::UpdateVisuals(float deltaTime)
     {
+        ZoneScoped;
+
         // The dying player's view, the weapon in the hands, the shake and kick of the view.
         Gameplay::UpdatePlayerDeath(m_gameplay, m_registry, m_audio, deltaTime);
         Gameplay::UpdateViewEffects(m_gameplay, m_registry, m_audio, deltaTime);
@@ -317,6 +330,8 @@ namespace Abomination
 
     void Application::Render(const Core::FrameStatistics& frameStatistics, float deltaTime)
     {
+        ZoneScoped;
+
         const int widthInPixels = m_window.GetWidthInPixels();
         const int heightInPixels = m_window.GetHeightInPixels();
 
@@ -387,7 +402,12 @@ namespace Abomination
             .gameplay = m_gameplay,
         });
 
-        m_window.SwapBuffers();
+        // With V-Sync the driver may wait here for the monitor: the wait gets its own zone, so it is not taken for a slow
+        // Render.
+        {
+            ZoneScopedN("Swap buffers");
+            m_window.SwapBuffers();
+        }
     }
 
     void Application::DrawEffects(const Renderer::View& view)

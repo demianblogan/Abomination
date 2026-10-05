@@ -23,9 +23,15 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Binaries)
 # --- Project-wide helpers ----------------------------------------------------
 include(CMake/CompilerOptions.cmake)
 
+# --- Options -----------------------------------------------------------------
+# Tracy zones in the code (see ThirdParty/Tracy). On for development builds; the Release workflow turns it off, so the
+# package a player gets neither measures nor listens on a socket.
+option(ABOMINATION_PROFILING "Build with the Tracy profiler client" ON)
+
 # --- Targets -----------------------------------------------------------------
 add_subdirectory(ThirdParty/EnTT)
 add_subdirectory(ThirdParty/GLAD)
+add_subdirectory(ThirdParty/Tracy)
 add_subdirectory(SourceCode)
 
 # --- Tests -------------------------------------------------------------------

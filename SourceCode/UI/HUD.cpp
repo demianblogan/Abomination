@@ -251,13 +251,13 @@ namespace Abomination::UI
                 shake = std::sin(m_secondsSinceShake * ShakeFrequency * 2.0f * std::numbers::pi_v<float>) * ShakeDistance *
                         pixelsPerDp * fade;
             }
-            m_leftCounters->SetProperty("transform", std::format("translateX({:.2f}px)", shake));
+            SetProperty(m_leftCounters, "transform", std::format("translateX({:.2f}px)", shake));
         }
 
         // The pulse of the health (its icon and number) with the heart: big at the beat, shrinking back.
         m_heartPulse = std::max(0.0f, m_heartPulse - HeartPulseFadeRate * deltaTime);
         if (m_healthCounter != nullptr)
-            m_healthCounter->SetProperty("transform", std::format("scale({:.3f})", 1.0f + HeartPulseScale * m_heartPulse));
+            SetProperty(m_healthCounter, "transform", std::format("scale({:.3f})", 1.0f + HeartPulseScale * m_heartPulse));
 
         // The blinking of the ammunition: nearly invisible in the first half of every blink period.
         m_secondsSinceEmptyClick += deltaTime;
@@ -287,7 +287,7 @@ namespace Abomination::UI
 
             if (arc.age >= DamageArcDuration)
             {
-                arc.element->SetProperty("opacity", "0");
+                SetProperty(arc.element, "opacity", "0");
                 continue;
             }
 
@@ -295,7 +295,7 @@ namespace Abomination::UI
             // their right, down is behind them. The arc is pushed up from the middle by the radius, then turned by that
             // angle around the middle (a CSS transform list applies from right to left).
             const float angle = glm::degrees(std::atan2(glm::dot(arc.direction, right), glm::dot(arc.direction, forward)));
-            arc.element->SetProperty("transform", std::format("rotate({:.1f}deg) translateY({:.2f}px)", angle, -radius));
+            SetProperty(arc.element, "transform", std::format("rotate({:.1f}deg) translateY({:.2f}px)", angle, -radius));
             SetOpacity(arc.element, 1.0f - arc.age / DamageArcDuration);
         }
     }
@@ -336,24 +336,24 @@ namespace Abomination::UI
         {
             const float thickness = settings.circleThickness * pixelsPerDp;
             const float outerRadius = circleRadius + thickness * 0.5f;
-            m_crosshairCircle->SetProperty("width", ToPixels(2.0f * circleRadius - thickness));
-            m_crosshairCircle->SetProperty("height", ToPixels(2.0f * circleRadius - thickness));
-            m_crosshairCircle->SetProperty("left", ToPixels(-outerRadius));
-            m_crosshairCircle->SetProperty("top", ToPixels(-outerRadius));
-            m_crosshairCircle->SetProperty("border-width", ToPixels(thickness));
-            m_crosshairCircle->SetProperty("border-color", color);
-            m_crosshairCircle->SetProperty("border-radius", ToPixels(outerRadius));
+            SetProperty(m_crosshairCircle, "width", ToPixels(2.0f * circleRadius - thickness));
+            SetProperty(m_crosshairCircle, "height", ToPixels(2.0f * circleRadius - thickness));
+            SetProperty(m_crosshairCircle, "left", ToPixels(-outerRadius));
+            SetProperty(m_crosshairCircle, "top", ToPixels(-outerRadius));
+            SetProperty(m_crosshairCircle, "border-width", ToPixels(thickness));
+            SetProperty(m_crosshairCircle, "border-color", color);
+            SetProperty(m_crosshairCircle, "border-radius", ToPixels(outerRadius));
         }
 
         if (m_crosshairDot != nullptr)
         {
             const float dotRadius = settings.dotRadius * pixelsPerDp;
-            m_crosshairDot->SetProperty("width", ToPixels(2.0f * dotRadius));
-            m_crosshairDot->SetProperty("height", ToPixels(2.0f * dotRadius));
-            m_crosshairDot->SetProperty("left", ToPixels(-dotRadius));
-            m_crosshairDot->SetProperty("top", ToPixels(-dotRadius));
-            m_crosshairDot->SetProperty("border-radius", ToPixels(dotRadius));
-            m_crosshairDot->SetProperty("background-color", color);
+            SetProperty(m_crosshairDot, "width", ToPixels(2.0f * dotRadius));
+            SetProperty(m_crosshairDot, "height", ToPixels(2.0f * dotRadius));
+            SetProperty(m_crosshairDot, "left", ToPixels(-dotRadius));
+            SetProperty(m_crosshairDot, "top", ToPixels(-dotRadius));
+            SetProperty(m_crosshairDot, "border-radius", ToPixels(dotRadius));
+            SetProperty(m_crosshairDot, "background-color", color);
         }
 
         // A kill marker covers a hit marker of the same shot.
@@ -393,11 +393,11 @@ namespace Abomination::UI
                 continue;
 
             SetVisible(marker, true);
-            marker->SetProperty("width", ToPixels(settings->lineLength * pixelsPerDp));
-            marker->SetProperty("height", ToPixels(thickness));
-            marker->SetProperty("margin-top", ToPixels(-thickness * 0.5f));
-            marker->SetProperty("background-color", ToRCSSColor(color));
-            marker->SetProperty("transform", std::format("rotate({:.1f}deg) translateX({:.2f}px)", MarkerAngles[index],
+            SetProperty(marker, "width", ToPixels(settings->lineLength * pixelsPerDp));
+            SetProperty(marker, "height", ToPixels(thickness));
+            SetProperty(marker, "margin-top", ToPixels(-thickness * 0.5f));
+            SetProperty(marker, "background-color", ToRCSSColor(color));
+            SetProperty(marker, "transform", std::format("rotate({:.1f}deg) translateX({:.2f}px)", MarkerAngles[index],
                                                          innerDistance));
         }
     }

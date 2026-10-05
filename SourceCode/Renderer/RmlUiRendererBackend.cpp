@@ -3,6 +3,7 @@
 #include "Core/Files/FileSystem.h"
 #include "Core/Files/Image.h"
 #include "Core/Logging/Log.h"
+#include "Renderer/OpenGL/GPUProfileZone.h"
 #include "Renderer/OpenGL/ShaderInterface.h"
 
 #include <glad/gl.h>
@@ -90,6 +91,7 @@ namespace Abomination::Renderer
             .vertexBuffer = GLBuffer(std::as_bytes(std::span(vertices.data(), vertices.size()))),
             .indexBuffer = GLBuffer(std::as_bytes(std::span(indices.data(), indices.size()))),
             .vertexArray = GLVertexArray(),
+            .vertexCount = vertices.size(),
             .indexCount = indices.size(),
         };
 
@@ -111,6 +113,9 @@ namespace Abomination::Renderer
         if (geometry == nullptr)
             return;
 
+        // One GPU zone per piece of the interface; the Statistics window of the profiler adds them up.
+        PROFILE_GPU_ZONE("Game interface");
+
         const GLTexture* texture = GetTexture(textureHandle);
 
         m_program->SetUniform(GameUITranslationUniform, glm::vec2(translation.x, translation.y));
@@ -118,7 +123,9 @@ namespace Abomination::Renderer
         geometry->vertexArray.Bind();
 
         // The indices are ints that are never negative, so they can be read as unsigned ones.
-        glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(geometry->indexCount), GL_UNSIGNED_INT, nullptr);
+        // The range of the indices is given, so the driver does not read them all on the CPU to find it (see Mesh::Draw).
+        glDrawRangeElements(GL_TRIANGLES, 0, static_cast<GLuint>(geometry->vertexCount - 1),
+                            static_cast<GLsizei>(geometry->indexCount), GL_UNSIGNED_INT, nullptr);
         ++m_drawCallCount;
     }
 

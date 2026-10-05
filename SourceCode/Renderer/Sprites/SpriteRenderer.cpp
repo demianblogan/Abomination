@@ -1,5 +1,7 @@
 #include "Renderer/Sprites/SpriteRenderer.h"
 
+#include "Core/Profiling/ProfileZone.h"
+#include "Renderer/OpenGL/GPUProfileZone.h"
 #include "Renderer/OpenGL/ShaderInterface.h"
 
 #include <glad/gl.h>
@@ -46,6 +48,9 @@ namespace Abomination::Renderer
     int SpriteRenderer::Draw(const SpriteBatch& batch, const glm::mat4& viewMatrix, const glm::mat4& projectionMatrix,
                              const TextureStore& textures, const GLShaderProgram& program)
     {
+        PROFILE_ZONE();
+        PROFILE_GPU_ZONE("Sprites");
+
         const std::span<const Sprite> sprites = batch.GetSprites();
         if (sprites.empty())
             return 0;

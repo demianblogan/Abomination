@@ -36,8 +36,8 @@ Abomination/
 ├── Documentation/      Project documentation
 ├── SourceCode/         Game source code, one folder per module
 ├── Tests/              GoogleTest unit tests, mirrors SourceCode/
-├── Tools/              Helper tools: TrenchBroom game configuration, texture generator, Blender scripts (level compiler later)
-├── ThirdParty/         Third-party code not available in vcpkg (GLAD)
+├── Tools/              Helper tools: TrenchBroom game configuration, texture generator, Blender scripts, profiling script (level compiler later)
+├── ThirdParty/         Third-party code not available in vcpkg or newer than there (GLAD, EnTT, Tracy)
 ├── CMakeLists.txt
 ├── CMakePresets.json
 └── vcpkg.json
@@ -75,6 +75,11 @@ the in-game console and in `Abomination.log`.
     `include/entt/entt.hpp` from the release tag (vcpkg has only 3.16);
     an `INTERFACE` target, linked `PUBLIC` because game headers hold EnTT
     types.
+  - `ThirdParty/Tracy` — the client of the Tracy profiler 0.14.1, the
+    `public/` folder of the release tag (vcpkg has 0.13.1), built from one
+    file, `TracyClient.cpp`. The CMake option `ABOMINATION_PROFILING` (on by
+    default, off in the Release workflow) defines `TRACY_ENABLE`; without it
+    the zones are empty and nothing of Tracy is compiled in. See section 17.
 - `CMake/CompilerOptions.cmake` applies `/W4 /WX /permissive- /utf-8 …` to
   every target of ours; third-party headers produce no warnings.
 - `CMake/Packaging.cmake` holds the install rules: `cmake --install` collects
@@ -121,7 +126,7 @@ A module may depend only on modules **below** it in this diagram.
 
 | Module        | Responsibility                                                  | Status  |
 |---------------|-----------------------------------------------------------------|---------|
-| `Core`        | Time (clock, frame timer, fixed timestep, FPS limit), frame statistics, logging, files, image decoding, asset handles, cache and lifetime groups, bounding boxes, `Transform` and the world and local directions, `Name`, transform interpolation, planes and convex polygon clipping, map units and meters (`Units.h`) | 0.1 |
+| `Core`        | Time (clock, frame timer, fixed timestep, FPS limit), frame statistics, logging, profiling (starting Tracy, the zone macros), files, image decoding, asset handles, cache and lifetime groups, bounding boxes, `Transform` and the world and local directions, `Name`, transform interpolation, planes and convex polygon clipping, map units and meters (`Units.h`) | 0.1 |
 | `Input`       | Keyboard and mouse state, actions and bindings (see section 7)  | 0.1     |
 | `Platform`    | SDL3 window (size from the monitor, screen modes), OpenGL context creation, OS events → `Input`, the SDL3 parts of Dear ImGui and RmlUi | 0.1     |
 | `Renderer`    | Everything OpenGL. Exposes a high-level API (see section 6)     | 0.1     |
@@ -133,7 +138,7 @@ A module may depend only on modules **below** it in this diagram.
 | `Gameplay`    | Game rules: the player (entity, controller, view), free-fly camera, mouse look, spin (0.1–0.2); the shotgun in the hands, shooting, damage, recoil, effects, crosshair, target dummies (0.3); skeletal animation, the dog, bodies and gibs, the death of the player (0.4) | 0.1 |
 | `UI`          | Dear ImGui debug overlay: menu bar, performance, assets, entity inspector, renderer, collision, movement, in-game console (0.1–0.2); audio, view model, weapon, effects windows (0.3); the game interface on RmlUi (`GameUI`, 0.4): the HUD with the crosshair (`HUD`), the death screen, later the menus | 0.1 |
 | `Save`        | Serialization of the game state                                 | Planned |
-| `Application` | Startup, shutdown, main loop, switching between game states     | 0.1     |
+| `Application` | Startup, shutdown, main loop, switching between game states, the command line (`LaunchOptions`) | 0.1     |
 
 **Rules**
 
@@ -187,7 +192,11 @@ A module may depend only on modules **below** it in this diagram.
   at low health the number pulses with every beat of the heart; an empty click
   blinks the ammunition twice. The numbers reach the document through a data
   model (`{{health}}`); everything that moves is moved by code every frame
-  (the renderer backend applies CSS transforms). Shown while the player is
+  (the renderer backend applies CSS transforms). Properties are set only
+  through `UI::SetProperty` (`UI/StyleValues`), which sets one only when its
+  parsed value changes: RmlUi takes every `Element::SetProperty` as a change,
+  even to the same value, and builds the geometry of the element anew (new
+  OpenGL buffers) — the HUD did that ten times a frame. Shown while the player is
   controlled and alive; at death it fades out.
 - **The death screen** (`UI::DeathScreen`, `Assets/UI/DeathScreen.rml`): the
   black vignette and the eyelids closing over the view of the dying player,
@@ -196,7 +205,8 @@ A module may depend only on modules **below** it in this diagram.
   `Gameplay::PlayerDeath` (see section 8). `UI/StyleValues` turns numbers
   into RCSS values (opacity, pixels, colors) for the HUD and the death
   screen alike.
-- **The debug overlay** has a main menu bar (F1): the *Display* menu (screen
+- **The debug overlay** is hidden at the start in every build, so the game
+  starts playing at once; it has a main menu bar (F1): the *Display* menu (screen
   mode, V-Sync, FPS limit, UI scale), then one item per debug window that
   opens and closes it with one click and stays highlighted while it is open,
   grouped by part of the engine: *Performance*, *Console* | *Entities*,
@@ -255,32 +265,37 @@ A module may depend only on modules **below** it in this diagram.
 1. Logging starts: the log file is written next to the executable, and the
    last 2000 messages are kept in memory (`Core::LogHistory`, owned by
    `main()`) for the in-game console.
-2. `Platform::SDLLibrary` initializes SDL.
-3. `Platform::Window` creates the window and the OpenGL 4.6 Core context
+2. The command line is read (`ParseLaunchOptions`, `Application/LaunchOptions.h`):
+   `--benchmark` runs the repeatable scene of the profiler (section 17);
+   unknown arguments are written to the log.
+3. `Core::StartProfiler` starts the Tracy client (development builds only); it
+   is stopped after the application is destroyed (section 17).
+4. `Platform::SDLLibrary` initializes SDL.
+5. `Platform::Window` creates the window and the OpenGL 4.6 Core context
    (a debug context in Debug builds). The window is created hidden at its
    windowed size (from the primary monitor), switched to its screen mode
    (borderless by default) and only then shown, so it does not flash as a
    small window first; `SDL_SyncWindow` waits until the mode is applied, so
    the first size in pixels is the final one.
-4. `Renderer::LoadOpenGLFunctions` loads the OpenGL functions through GLAD and
+6. `Renderer::LoadOpenGLFunctions` loads the OpenGL functions through GLAD and
    checks that 4.6 is available.
-5. In Debug builds `Renderer::EnableDebugOutput` routes driver messages to the
+7. In Debug builds `Renderer::EnableDebugOutput` routes driver messages to the
    log.
-6. `Renderer::RenderAssets` is created: the texture store (with its
+8. `Renderer::RenderAssets` is created: the texture store (with its
    checkerboard fallback), the shader store (with its compiled fallback
    program) and the mesh store (with its fallback cube).
-7. `World::LoadMapFile` reads and parses the start map (`Maps/Chapel.map`).
+9. `World::LoadMapFile` reads and parses the start map (`Maps/Chapel.map`).
    A missing or broken map is a fatal startup error.
-8. `UI::DebugOverlay` creates the ImGui context and both backends, loads its
-   font from `Assets/` and its window settings (`DebugOverlay.ini`) from the
-   folder of the executable.
-9. The `Application` constructor loads the system shaders of the renderer
-   (`Renderer::LoadSystemShaders`) and creates the entities: the level
-   (`World::Level::Create`) and the camera at the player start of the map
-   (`Gameplay::SpawnFreeFlyCamera`). It happens there and not in `Create()`,
-   because the registry is a member of `Application`; the asset handles in
-   the components stay valid when `Application` is moved, because they are
-   numbers, not pointers.
+10. `UI::DebugOverlay` creates the ImGui context and both backends, loads its
+    font from `Assets/` and its window settings (`DebugOverlay.ini`) from the
+    folder of the executable.
+11. The `Application` constructor loads the system shaders of the renderer
+    (`Renderer::LoadSystemShaders`) and creates the entities: the level
+    (`World::Level::Create`) and the camera at the player start of the map
+    (`Gameplay::SpawnFreeFlyCamera`). It happens there and not in `Create()`,
+    because the registry is a member of `Application`; the asset handles in
+    the components stay valid when `Application` is moved, because they are
+    numbers, not pointers.
 
 Objects that own resources are created by a static `Create()` /
 `Initialize()` returning `std::expected<Object, std::string>`, because a
@@ -400,7 +415,11 @@ Inside the renderer:
   array) that draws itself; `MeshData` is the same geometry in ordinary memory
   (`MeshPrimitives` builds a cube, `World` builds the level). Vertex layout:
   position at location 0, texture coordinates at location 1, normal at
-  location 2, for every mesh shader.
+  location 2, for every mesh shader. A mesh is drawn with
+  `glDrawRangeElements`, which tells the driver that every index is below
+  the vertex count (checked by an assertion when the mesh is created): with
+  plain `glDrawElements` the Intel driver read the whole index buffer on the
+  CPU at every draw, 0.3 ms for a dog (section 17).
 - Shaders (`Assets/Shaders/`): `TexturedShaded` (the level and models: the
   texture, lighter or darker by the direction the surface faces — half-Lambert
   shading with a fixed made-up light direction, not real lighting, so walls
@@ -889,8 +908,8 @@ is `Abomination::Core::Clock`. These modules are split already:
 
 | Module | Root | Topic folders |
 |--------|------|---------------|
-| `Core` | `BuildConfiguration`, `Version` | `Time/` (clock, frame timer, fixed timestep, FPS limit, statistics), `Logging/`, `Files/` (files, images), `Math/` (units, planes, polygons, bounding boxes and rays, random numbers, springs), `Assets/` (handles, cache, lifetimes), `Scene/` (`Name`, `Transform`, interpolation) |
-| `Renderer` | `RenderSystem`, `RenderSettings`, `MeshRenderer`, `ModelRenderer`, `ModelPose`, `SkinningBuffer`, `DrawOffset`, `ImGuiRendererBackend`, `RmlUiRendererBackend` | `OpenGL/` (wrappers of OpenGL objects, loader, debug output, shader interface), `Assets/` (meshes, models, glTF loading, part splits and the stores), `Animation/` (joint poses, sampling and blending clips), `Camera/` (`CameraLens`, `View`), `Debug/` (debug lines), `Sprites/` (sprite batch and renderer) |
+| `Core` | `BuildConfiguration`, `Version` | `Time/` (clock, frame timer, fixed timestep, FPS limit, statistics), `Logging/`, `Profiling/` (starting the profiler, zone macros), `Files/` (files, images), `Math/` (units, planes, polygons, bounding boxes and rays, random numbers, springs), `Assets/` (handles, cache, lifetimes), `Scene/` (`Name`, `Transform`, interpolation) |
+| `Renderer` | `RenderSystem`, `RenderSettings`, `MeshRenderer`, `ModelRenderer`, `ModelPose`, `SkinningBuffer`, `DrawOffset`, `ImGuiRendererBackend`, `RmlUiRendererBackend` | `OpenGL/` (wrappers of OpenGL objects, loader, debug output, shader interface, GPU profiling), `Assets/` (meshes, models, glTF loading, part splits and the stores), `Animation/` (joint poses, sampling and blending clips), `Camera/` (`CameraLens`, `View`), `Debug/` (debug lines), `Sprites/` (sprite batch and renderer) |
 | `Gameplay` | `GameplayState`, `Spin` | `Player/` (player, controller, its system, landing dip, damage reaction, death), `Camera/` (free-fly camera, mouse look, the view), `Weapons/` (weapon, its system, the weapon in the hands, its motion and hands, pump action, recoil, crosshair, shells), `Effects/` (effects, particles, tumbling, gibs), `Characters/` (health, armor, collisions between characters), `Animation/` (the animator), `Enemies/` (monsters, the mind of the dog, ground fit, bodies, debug lines) |
 | `UI` | `DebugOverlay`, `ImGuiLibrary`, `UIScale`, `Widgets`, `GameUI`, `HUD`, `DeathScreen`, `StyleValues` | `Windows/` (one file per debug window) |
 
@@ -1212,3 +1231,64 @@ from any thread, so it is guarded by a `std::mutex`.
 3. **Hand data over instead of sharing it.** A worker loads a texture and
    passes it to the main thread, which owns it from then on. That is safer
    than shared data behind locks.
+
+## 17. Profiling
+
+Rule 1 of section 16 — *measure first* — has a tool: the frame profiler
+[Tracy](https://github.com/wolfpld/tracy) (0.14.1, `ThirdParty/Tracy`). The
+game is its *client*: it marks **zones** of code and sends their times over a
+socket to the *profiler*, a separate program that shows them on a timeline or
+turns a capture into tables. How to run it: BUILDING.md, section 6.
+
+```
+Abomination.exe ──zones──► socket 127.0.0.1:8086 ──► tracy-profiler.exe (timeline)
+  --benchmark                                    └─► tracy-capture.exe → .tracy → tracy-csvexport.exe → .csv
+                                                      (Tools/Profiling/Capture.ps1 → summary)
+```
+
+- **Zones** (`Core/Profiling/ProfileZone.h`): `PROFILE_ZONE()` as the first
+  line of a function measures the function, `PROFILE_ZONE_NAMED("Swap
+  buffers")` a block; `PROFILE_FRAME_MARK()` ends a frame of the main loop.
+  Macros, because only a macro disappears completely from a build without
+  profiling (CODE_STYLE.md, section 3). Zones are in the main loop, in every
+  step of a dog, in the movement and the box traces, the navmesh queries, the
+  animation and the drawing.
+- **GPU zones** (`Renderer/OpenGL/GPUProfileZone.h`, `PROFILE_GPU_ZONE`): the
+  GPU draws later than the CPU asks it to, so a GPU zone writes OpenGL
+  timestamp queries at its start and end, and `Renderer::CollectGPUProfiling`
+  reads the finished ones after every swap. On the Intel GPU of the
+  development laptop these times look too small: trust the CPU side first.
+- **Started by the game only** (`Core::StartProfiler` in `main()`, Tracy's
+  manual lifetime): a started client runs threads, listens on a socket (on
+  this computer only) and calibrates its timer for 200 ms. The tests link
+  the same code and never start it, so for them a zone is one check of an
+  atomic flag; before that change every test process paid those 200 ms. Data
+  is collected only while a profiler is connected (`TRACY_ON_DEMAND`). The
+  Release workflow builds without it (`ABOMINATION_PROFILING=OFF`).
+- **The benchmark** (`--benchmark`, `Application/LaunchOptions.h`): the start
+  map with nobody at the controls (input is ignored), an invulnerable player
+  (`GameplayState::isPlayerInvulnerable`, also a checkbox of the Player
+  window) whom the dogs attack, closed after 1200 ticks (20 s of game time).
+  The simulation runs in fixed ticks and the random numbers of the dogs are
+  seeded by their entities, so every run plays the same: two runs log the
+  same decisions of the dogs in the same order.
+- **The script** (`Tools/Profiling/Capture.ps1`) builds, runs the benchmark
+  under `tracy-capture`, exports the zones with `tracy-csvexport` and prints
+  the cost of every CPU zone (with and without the zones inside it) and every
+  GPU zone per frame; the frame time is measured between the starts of
+  `Render`. The files go to `Build/Profiles/`.
+
+**What the first measurements taught** (branch `perf/monster-cost`, Intel UHD
+Graphics, Release unless said otherwise):
+
+| Finding | Cause | Fix | Result |
+|---------|-------|-----|--------|
+| 8 dogs cost 3 ms in Debug, 0.06 ms in Release | A Debug build has no optimizations and checks every access to a container | Optimize by Release numbers | The goal of the branch moved from the dogs to the frame |
+| Drawing 8 dogs cost 2.4 ms of CPU and 0.13 ms of GPU | `glDrawElements` made the driver read every index on the CPU to find their range | `glDrawRangeElements` gives the range | `DrawMeshes` 2.8 → 0.5 ms |
+| The HUD cost 1.3 ms | RmlUi rebuilt the geometry of every element the HUD set a property of, every frame, even to the same value | `UI::SetProperty` sets only changed values | `GameUI::Render` 1.3 → 0.7 ms |
+| Characters gathered their boxes with ~300 allocations per tick | A new vector of boxes and of planes every tick | Memory reused (`GameplayState::characterBoxMemory`) | No allocations after the first ticks |
+
+Together: 190 → about 410 FPS in the benchmark. The method that found the
+two big ones: a guess is tested by a cheap experiment (switch one thing off,
+capture again) before any code is rewritten — the first guess, a stall on the
+skinning buffer, was wrong and would have cost a rewrite for nothing.

@@ -71,6 +71,8 @@ namespace Abomination::UI
         if (ImGui::Button("Revive"))
             health.current = health.maximum;
         ImGui::SetItemTooltip("Full health without the sigh: also brings a dead player back.");
+        ImGui::Checkbox("Invulnerable", &gameplay.isPlayerInvulnerable);
+        ImGui::SetItemTooltip("Blows hit with every reaction, but take no health or armor.");
 
         ImGui::SeparatorText("Ammunition");
         for (std::size_t index = 0; index < ammo.counts.size(); ++index)

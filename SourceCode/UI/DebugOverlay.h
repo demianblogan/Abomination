@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Core/BuildConfiguration.h"
 #include "Platform/ImGuiPlatformBackend.h"
 #include "Renderer/ImGuiRendererBackend.h"
 #include "UI/ImGuiLibrary.h"
@@ -121,8 +120,8 @@ namespace Abomination::UI
         // Asked from the driver once: it does not change while the game runs.
         std::string m_GPUName;
 
-        // Visible from the start in Debug builds, where the numbers are needed most; F1 toggles it in any build.
-        bool m_isVisible = Core::IsDebugBuild;
+        // Hidden at the start in every build, so the game starts playing at once; F1 shows it.
+        bool m_isVisible = false;
 
         // Which debug windows are open. Changed by the View menu and by the close button of each window.
         bool m_isPerformanceWindowOpen = false;

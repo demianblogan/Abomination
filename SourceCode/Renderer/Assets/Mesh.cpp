@@ -4,6 +4,7 @@
 
 #include <glad/gl.h>
 
+#include <algorithm>
 #include <cassert>
 #include <span>
 #include <utility>
@@ -22,6 +23,9 @@ namespace Abomination::Renderer
         // At least one triangle, and only whole triangles: every 3 indices are one. MeshStore replaces empty data with the
         // fallback cube before it gets here.
         assert(!data.vertices.empty() && data.indices.size() >= 3 && data.indices.size() % 3 == 0);
+
+        // Draw() promises the driver that every index names one of the vertices (see glDrawRangeElements there).
+        assert(std::ranges::all_of(data.indices, [&](std::uint32_t index) { return index < data.vertices.size(); }));
 
         // Upload the vertices and the indices to the GPU once; from now on they live in video memory.
         GLBuffer vertexBuffer(std::as_bytes(std::span(data.vertices)));
@@ -62,10 +66,16 @@ namespace Abomination::Renderer
 
     void Mesh::Draw() const
     {
-        // glDrawElements takes m_indexCount indices from the index buffer of the bound vertex array and draws a triangle
-        // for every 3 of them. nullptr is the offset into the index buffer: start at the first index.
+        // glDrawRangeElements takes m_indexCount indices from the index buffer of the bound vertex array and draws a
+        // triangle for every 3 of them. nullptr is the offset into the index buffer: start at the first index.
+        //
+        // It is glDrawElements plus a promise: every index is between 0 and m_vertexCount - 1. Without that promise the
+        // Intel driver reads the whole index buffer on the CPU at every draw to find the smallest and largest index:
+        // measured in the benchmark (Tools/Profiling), a dog of 3850 triangles cost 0.3 ms of CPU per draw, and the frame
+        // went from 5.3 ms (190 FPS) to 2.5 ms (400 FPS) with the range given.
         m_vertexArray.Bind();
-        glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(m_indexCount), GL_UNSIGNED_INT, nullptr);
+        glDrawRangeElements(GL_TRIANGLES, 0, static_cast<GLuint>(m_vertexCount - 1), static_cast<GLsizei>(m_indexCount),
+                            GL_UNSIGNED_INT, nullptr);
     }
 
     std::size_t Mesh::GetVertexCount() const noexcept

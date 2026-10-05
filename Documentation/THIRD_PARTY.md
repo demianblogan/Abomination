@@ -36,6 +36,7 @@ Used for building or testing; not part of the shipped game.
 | Tool / library | Version | License      | Purpose                         | Website                                   |
 |----------------|---------|--------------|---------------------------------|-------------------------------------------|
 | GoogleTest     | 1.18.0  | BSD-3-Clause | Unit tests (`AbominationTests`) | https://github.com/google/googletest      |
+| Tracy          | 0.14.1  | BSD-3-Clause | Frame profiler: the client in `ThirdParty/Tracy` (vcpkg has only 0.13.1) measures zones of code in development builds (`ABOMINATION_PROFILING`, off in the released package); the profiler program of the same version shows them | https://github.com/wolfpld/tracy |
 | vcpkg          | —       | MIT          | C++ package manager             | https://github.com/microsoft/vcpkg        |
 | CMake          | —       | BSD-3-Clause | Build system generator          | https://cmake.org                         |
 | TrenchBroom    | —       | GPL-3.0      | Level editor; the game only reads the `.map` files it saves (see [LEVEL_EDITING.md](LEVEL_EDITING.md)) | https://trenchbroom.github.io |

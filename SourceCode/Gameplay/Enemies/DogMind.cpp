@@ -1,5 +1,7 @@
 #include "Gameplay/Enemies/DogMind.h"
 
+#include "Core/Profiling/ProfileZone.h"
+
 #include <glm/geometric.hpp>
 
 #include <algorithm>
@@ -116,6 +118,8 @@ namespace Abomination::Gameplay
     DogDecision UpdateDogMind(DogMind& mind, const DogPerception& perception, const DogSettings& settings, float deltaTime,
                               Core::Random& random)
     {
+        PROFILE_ZONE();
+
         mind.stateTime += deltaTime;
         mind.timeSinceLeap += deltaTime;
 

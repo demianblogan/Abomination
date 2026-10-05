@@ -1,13 +1,17 @@
 #include "Application/Application.h"
+#include "Application/LaunchOptions.h"
 #include "Core/BuildConfiguration.h"
 #include "Core/Logging/Log.h"
 #include "Core/Logging/LogHistory.h"
+#include "Core/Profiling/Profiler.h"
 #include "Core/Version.h"
 #include "Platform/SystemServices.h"
 
 #include <expected>
 #include <filesystem>
 #include <string>
+#include <string_view>
+#include <vector>
 
 // On laptops with hybrid graphics (an integrated and a discrete GPU) the NVIDIA / AMD driver decides which GPU runs
 // a process, using its database of known games. A game that is not in the database may silently run on the weak
@@ -28,7 +32,7 @@ namespace
 
     // Creates and runs the application. It is a separate function so that the application (the window, SDL)
     // is destroyed when the function returns, while logging still works and can record the shutdown.
-    int RunApplication(LogHistory& logHistory)
+    int RunApplication(LogHistory& logHistory, const LaunchOptions& options)
     {
         // CMake copies the Assets folder of the repository next to the executable on every build: the game finds its
         // files there, the same way it will after installation. A Debug build reads the Assets folder of the
@@ -40,7 +44,7 @@ namespace
             assetsDirectory = ABOMINATION_SOURCE_ASSETS_DIRECTORY;
 #endif
 
-        std::expected<Application, std::string> application = Application::Create(assetsDirectory, logHistory);
+        std::expected<Application, std::string> application = Application::Create(assetsDirectory, logHistory, options);
         if (!application.has_value())
         {
             Log::Write(LogCategory::Core, LogLevel::Critical, "{}", application.error());
@@ -53,7 +57,7 @@ namespace
     }
 }
 
-int main()
+int main(int argc, char* argv[])
 {
     // The last messages, kept for the in-game console. It lives until the end of main(), after Log::Shutdown().
     LogHistory logHistory;
@@ -68,7 +72,16 @@ int main()
 
     Log::Write(LogCategory::Core, LogLevel::Info, "Abomination {}", GetGameVersionString());
 
-    const int exitCode = RunApplication(logHistory);
+    // argv[0] is the executable itself.
+    const std::vector<std::string_view> arguments(argv + 1, argv + argc);
+    const LaunchOptions options = ParseLaunchOptions(arguments);
+    for (const std::string& argument : options.unknownArguments)
+        Log::Write(LogCategory::Core, LogLevel::Warning, "Unknown command line argument {} ignored", argument);
+
+    // The profiler runs while the application lives: its zones measure the start, the main loop and the shutdown.
+    StartProfiler();
+    const int exitCode = RunApplication(logHistory, options);
+    StopProfiler();
 
     Log::Shutdown();
 

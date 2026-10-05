@@ -1,11 +1,13 @@
 #include "Renderer/RenderSystem.h"
 
+#include "Core/Profiling/ProfileZone.h"
 #include "Core/Scene/Transform.h"
 #include "Core/Scene/TransformInterpolation.h"
 #include "Renderer/DrawOffset.h"
 #include "Renderer/MeshRenderer.h"
 #include "Renderer/ModelPose.h"
 #include "Renderer/ModelRenderer.h"
+#include "Renderer/OpenGL/GPUProfileZone.h"
 #include "Renderer/OpenGL/RenderCommands.h"
 #include "Renderer/OpenGL/ShaderInterface.h"
 
@@ -164,6 +166,9 @@ namespace Abomination::Renderer
                                 const RenderAssets& assets, const SystemShaders& systemShaders,
                                 const RenderSettings& settings, SkinningBuffer& skinning)
     {
+        PROFILE_ZONE();
+        PROFILE_GPU_ZONE("World and models");
+
         RenderStatistics statistics;
         BeginMeshPass(settings);
 
@@ -200,21 +205,31 @@ namespace Abomination::Renderer
         // system only reads them). each() calls the function for every such entity; because the function asks for the
         // entity as its first parameter, EnTT passes it too. Here it is needed to look for components that are not part
         // of the EnTT view (the previous transform, the draw offset).
-        const auto meshEntities = registry.view<const Core::Transform, const MeshRenderer>();
-        meshEntities.each([&](entt::entity entity, const Core::Transform&, const MeshRenderer& meshRenderer)
         {
-            const glm::mat4 modelMatrix = Core::CalculateModelMatrix(calculateDrawnTransform(entity));
-            DrawMesh(pass, meshRenderer.shaderProgram, meshRenderer.texture, meshRenderer.mesh, modelMatrix);
-        });
+            PROFILE_ZONE_NAMED("Level and meshes");
+            PROFILE_GPU_ZONE("Level and meshes");
+
+            const auto meshEntities = registry.view<const Core::Transform, const MeshRenderer>();
+            meshEntities.each([&](entt::entity entity, const Core::Transform&, const MeshRenderer& meshRenderer)
+            {
+                const glm::mat4 modelMatrix = Core::CalculateModelMatrix(calculateDrawnTransform(entity));
+                DrawMesh(pass, meshRenderer.shaderProgram, meshRenderer.texture, meshRenderer.mesh, modelMatrix);
+            });
+        }
 
         // A model is drawn part by part (see DrawModel), in the pose its animation gives it, if it has one.
-        const auto modelEntities = registry.view<const Core::Transform, const ModelRenderer>();
-        modelEntities.each([&](entt::entity entity, const Core::Transform&, const ModelRenderer& modelRenderer)
         {
-            const glm::mat4 entityMatrix = Core::CalculateModelMatrix(calculateDrawnTransform(entity));
-            DrawModel(pass, assets.models.Get(modelRenderer.model), modelRenderer.shaderProgram, entityMatrix,
-                      registry.try_get<ModelPose>(entity));
-        });
+            PROFILE_ZONE_NAMED("Models");
+            PROFILE_GPU_ZONE("Models");
+
+            const auto modelEntities = registry.view<const Core::Transform, const ModelRenderer>();
+            modelEntities.each([&](entt::entity entity, const Core::Transform&, const ModelRenderer& modelRenderer)
+            {
+                const glm::mat4 entityMatrix = Core::CalculateModelMatrix(calculateDrawnTransform(entity));
+                DrawModel(pass, assets.models.Get(modelRenderer.model), modelRenderer.shaderProgram, entityMatrix,
+                          registry.try_get<ModelPose>(entity));
+            });
+        }
 
         EndMeshPass();
 
@@ -227,6 +242,9 @@ namespace Abomination::Renderer
                                          SkinningBuffer& skinning, std::span<const ModelPartOffset> partOffsets,
                                          const ModelPose* pose, bool clearsDepth, const View* worldView)
     {
+        PROFILE_ZONE();
+        PROFILE_GPU_ZONE("Weapon in the hands");
+
         RenderStatistics statistics;
 
         // What the world drew into the depth buffer is forgotten: the weapon is drawn over everything, so it never goes

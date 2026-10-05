@@ -61,6 +61,7 @@ namespace Abomination::Renderer
             GLBuffer vertexBuffer;
             GLBuffer indexBuffer;
             GLVertexArray vertexArray;
+            std::size_t vertexCount = 0;
             std::size_t indexCount = 0;
         };
 

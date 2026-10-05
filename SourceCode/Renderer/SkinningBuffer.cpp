@@ -1,5 +1,6 @@
 #include "Renderer/SkinningBuffer.h"
 
+#include "Core/Profiling/ProfileZone.h"
 #include "Renderer/Animation/SkeletonPose.h"
 #include "Renderer/OpenGL/ShaderInterface.h"
 
@@ -15,6 +16,8 @@ namespace Abomination::Renderer
 
     void SkinningBuffer::UploadPose(const SkeletonData& skeleton, std::span<const glm::mat4> jointMatrices)
     {
+        PROFILE_ZONE();
+
         CalculateSkinningMatrices(skeleton, jointMatrices, m_skinningMatrices);
         const std::size_t count = std::min(m_skinningMatrices.size(), MaximumJointCount);
         m_buffer.Update(std::as_bytes(std::span<const glm::mat4>(m_skinningMatrices).first(count)));

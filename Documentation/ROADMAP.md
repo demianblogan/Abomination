@@ -25,7 +25,7 @@ we now* and *what comes next*.
 | 0.2     | First Steps            | ✅     | Quake-style movement, collision with the level        | EnTT, resource manager, TrenchBroom map loading, brush texturing |
 | 0.3     | Boomstick              | ✅     | First hitscan weapon, damage, sound                   | View model with sway/bob/recoil, muzzle flash, particles, decals, glTF loading |
 | 0.4     | It Moves               | ✅     | First enemy: AI, navmesh, health, death, HUD          | Skeletal animation, game interface (RmlUi)               |
-| 0.5     | Lights                 | 🔨     | Glowing projectiles, dynamic light in combat          | Lightmap baking, shadows, HDR, bloom, gamma              |
+| 0.5     | Lights                 | 🔨     | Light in combat (muzzle flash, fire), fall damage, a bigger chapel | Linear HDR, PBR materials, dynamic lights, sky and fog, lightmap baking, shadows, reflections and water, post-processing |
 | 0.6     | Game Loop              | ⏳     | Pickups, armor, doors, buttons, plates, level exit, stats screen, level transitions — first complete level | Moving brushes, data-driven configs |
 | 0.7     | Arsenal & Bestiary     | ⏳     | All weapons, projectiles, explosions, weapon switching (keys, wheel, mouse wheel), gamepad, new enemy types (incl. flying), first boss | Weapon effects, new models |
 | 0.8     | Menus & Saves          | ⏳     | Autosave, manual save, quicksave, load menu           | Animated main menu, pause menu, all options, key rebinding, 5 languages, logo screen, language selection |
@@ -144,6 +144,49 @@ feature arrives):
 **Done when:** a monster in the test level notices the player, runs to them
 around walls and strikes; the shotgun hurts it and kills it; the HUD shows
 the health of the player, who dies and restarts the level when it runs out.
+
+## 0.5 — Lights 🔨
+
+**Goal:** the look of the game changes completely: real light instead of the
+made-up direction shading of 0.2. The biggest milestone so far; no hurry.
+
+Decisions:
+- **Hybrid lighting:** static light is baked into lightmaps by our own baker
+  (a CPU ray tracer with a tree of triangles, BVH); dynamic lights are added
+  on top while drawing.
+- **Forward rendering**, not deferred: transparent water, blood and particles
+  are lit the same way as walls. Forward+ (lights sorted into clusters) only if
+  the number of lights grows.
+- **PBR materials** (metallic-roughness): the glTF models already carry those
+  maps.
+- **Only what OpenGL supports.** DLSS, FSR 2/3/4, XeSS and hardware ray
+  tracing need Vulkan or Direct3D 12. Anti-aliasing is TAA (main), FXAA
+  (cheap) and FSR 1 with a render scale. A Vulkan backend is only an idea for
+  after 1.0.
+- Every effect can be switched off in the Renderer window until the options
+  menu (0.8). Motion blur (camera only) and chromatic aberration (on damage)
+  are options.
+- The level grows with the graphics branches (the street, the crypt, the
+  pool); every generated asset is approved before it is used.
+
+| # | Branch                          | Status | Content                                                                 |
+|---|---------------------------------|--------|-------------------------------------------------------------------------|
+| 1 | `perf/monster-cost`             | ✅     | Tracy 0.14.1 (started by the game only, zones in the main loop, the dogs, movement, traces, animation and drawing, GPU zones); `--benchmark` (a repeatable fight with an invulnerable player) and `Tools/Profiling/Capture.ps1` (a capture turned into the cost of every zone per frame); the dogs turned out cheap in Release (their cost was a Debug cost), the frame did not: draws with the index range given (`glDrawRangeElements`: the Intel driver read every index on the CPU), HUD properties set only when they change (RmlUi rebuilt the geometry), the boxes of the characters gathered without allocating; 190 → about 410 FPS in the Release benchmark; V-Sync off and the debug overlay hidden by default |
+| 2 | `feat/linear-hdr`               | ⏳     | Named passes of the frame for RenderDoc (`glPushDebugGroup`) and a first frame studied in it; shader hot reload; sRGB textures and framebuffer (lighting in linear space); an HDR float framebuffer, tone mapping (ACES), exposure |
+| 3 | `feat/materials`                | ⏳     | A PBR material per texture and model: normal maps (tangents for brushes and glTF), roughness and metalness, emissive; parallax occlusion mapping for bricks |
+| 4 | `feat/dynamic-lights`           | ⏳     | A `light` entity in TrenchBroom (point and spot); flickering fire; the muzzle flash lights the walls; the lights of a frame in a buffer |
+| 5 | `feat/sky-and-fog`              | ⏳     | A cubemap sky behind sky brushes and the sun from it; distance and height fog; the street outside the chapel |
+| 6 | `feat/lightmaps`                | ⏳     | Our own baker: a lightmap UV atlas of the faces, direct light with soft shadows, bounced light, baked ambient occlusion, a cache file; a grid of light probes that lights the dogs and the weapon. The biggest branch |
+| 7 | `feat/shadows`                  | ⏳     | Shadow maps: cascades for the sun, cube maps for a few near lights, soft edges (PCF/PCSS); SSAO; volumetric light rays through the stained glass; the crypt |
+| 8 | `feat/reflections`              | ⏳     | Baked reflection probes; screen-space reflections (puddles, blood, wet floors); water: planar reflection, refraction, Fresnel, waves from normal maps, a tint by depth, distortion under water; the pool |
+| 9 | `feat/post-processing`          | ⏳     | Motion vectors, TAA, FXAA, FSR 1 with a render scale; bloom; a color grade per episode (3D LUT); vignette, film grain, chromatic aberration, camera motion blur |
+| 10 | `feat/level-expansion`         | ⏳     | Props from generated models (crates, chains, broken benches, the chapel from outside), more detail and water; fall damage |
+| 11 | `refactor/review-0.5`          | ⏳     | A review of the project as in 0.4; a study plan of the whole project; docs, screenshots, release v0.5.0 |
+
+**Done when:** the chapel, the street, the crypt and the pool are lit by baked
+light with soft shadows and bounced light; fire flickers and the shots light
+the walls; water reflects and refracts; the picture is HDR with tone mapping,
+bloom and anti-aliasing; eight dogs cost far less than today.
 
 ## Later milestones
 

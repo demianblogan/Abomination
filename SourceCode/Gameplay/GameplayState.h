@@ -10,6 +10,7 @@
 #include "Gameplay/Player/PlayerDeath.h"
 #include "Gameplay/Weapons/Shells.h"
 #include "Physics/CharacterMovement.h"
+#include "World/CollisionBrush.h"
 
 #include <entt/entt.hpp>
 
@@ -120,6 +121,15 @@ namespace Abomination::Gameplay
         bool areMonstersFrozen = false;
         bool areDogSensesVisible = false;
         bool isNavMeshVisible = false;
+
+        // Debug (the Player window, and the benchmark): blows still hit the player with every reaction, but take no
+        // health or armor, so the player never dies.
+        bool isPlayerInvulnerable = false;
+
+        // Memory the boxes of the other characters are made in every tick, while a character moves (see
+        // GatherCharacterBoxes): kept here so it is reused instead of allocated again. Holds nothing that matters between
+        // ticks.
+        std::vector<World::CollisionBrush> characterBoxMemory;
 
         // The visual effects of shots (see Effects.h).
         Effects effects;

@@ -1,5 +1,7 @@
 #include "World/CollisionTrace.h"
 
+#include "Core/Profiling/ProfileZone.h"
+
 #include <glm/common.hpp>
 #include <glm/geometric.hpp>
 #include <glm/vector_relational.hpp>
@@ -141,6 +143,8 @@ namespace Abomination::World
     TraceResult TraceBox(const CollisionWorld& world, const glm::dvec3& start, const glm::dvec3& end,
                          const glm::dvec3& halfExtents)
     {
+        PROFILE_ZONE();
+
         // A negative half size would move the planes into the brush instead of out of it. 0 is fine: a point, a ray.
         assert(glm::all(glm::greaterThanEqual(halfExtents, glm::dvec3(0.0))));
 

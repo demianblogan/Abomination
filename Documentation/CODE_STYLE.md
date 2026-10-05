@@ -77,8 +77,17 @@ found during review.
     Unity because the term is well known in game engines.
 - Getters use `Get`, setters use `Set`: member `m_width` → `GetWidth()`,
   `SetWidth(int)`; `SetVSyncEnabled(bool)`.
-- Macros are avoided. A naming rule for them will be added if one is ever
-  needed.
+- Macros are avoided. The exception are the zones of the profiler
+  (`Core/Profiling/ProfileZone.h`): only a macro can disappear completely from
+  a build without profiling. Our macros are written in `UPPER_SNAKE_CASE` with
+  parentheses, like a function call: `PROFILE_ZONE();`,
+  `PROFILE_ZONE_NAMED("Swap buffers");`, `PROFILE_FRAME_MARK();`.
+  `PROFILE_ZONE()` is the first line of a function body, followed by a blank
+  line; a part of a function gets a block `{ PROFILE_ZONE_NAMED("…"); … }`
+  with a name in plain words. Tracy's own zone macros (`ZoneScoped`) are not
+  used for CPU zones: ours do nothing until the game starts the profiler.
+  GPU zones are `PROFILE_GPU_ZONE("Sprites");`
+  (`Renderer/OpenGL/GPUProfileZone.h`), in the drawing code only.
 - No Hungarian notation (`iCount`, `pData`, `strName`).
 - The root namespace is `Abomination`. Every module has a nested namespace
   matching its folder: `SourceCode/Renderer/` → `Abomination::Renderer`.

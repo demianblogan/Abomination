@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Application/LaunchOptions.h"
 #include "Audio/AudioEngine.h"
 #include "Core/Scene/Transform.h"
 #include "Core/Time/FixedTimestep.h"
@@ -28,6 +29,7 @@
 
 #include <expected>
 #include <filesystem>
+#include <optional>
 #include <string>
 
 namespace Abomination::Core
@@ -52,8 +54,10 @@ namespace Abomination
         // assetsDirectory: the folder with the game files (fonts, shaders, textures), normally next to the executable.
         // logHistory: the last messages of the log (see Core::LogHistory), shown by the in-game console; it must outlive
         // the application.
+        // options: what the command line asks for (the benchmark).
         [[nodiscard]] static std::expected<Application, std::string> Create(const std::filesystem::path& assetsDirectory,
-                                                                            Core::LogHistory& logHistory);
+                                                                            Core::LogHistory& logHistory,
+                                                                            const LaunchOptions& options);
 
         // Runs the main loop until the window is closed. Returns the exit code of the process.
         [[nodiscard]] int Run();
@@ -62,7 +66,8 @@ namespace Abomination
         // map: the parsed start map, whose entities the constructor creates. assetsDirectory is kept for loading maps later.
         Application(Platform::SDLLibrary SDLLibrary, Platform::Window window, Audio::AudioEngine audio,
                     Renderer::RenderAssets renderAssets, const World::MapData& map, UI::DebugOverlay debugOverlay,
-                    UI::GameUI gameUI, std::filesystem::path assetsDirectory, Core::LogHistory& logHistory);
+                    UI::GameUI gameUI, std::filesystem::path assetsDirectory, Core::LogHistory& logHistory,
+                    const LaunchOptions& options);
 
         // The two kinds of updates of the main loop, named like in Unity:
         //   Update()      - once per frame: what must react immediately and does not depend on time
@@ -176,5 +181,8 @@ namespace Abomination
 
         // Splits the time of every frame into simulation ticks of 1 / SimulationTicksPerSecond seconds.
         Core::FixedTimestep m_fixedTimestep{SimulationTicksPerSecond};
+
+        // In a benchmark (--benchmark), the ticks left until the game closes itself; empty in a normal game.
+        std::optional<int> m_benchmarkTicksLeft;
     };
 }

@@ -91,6 +91,7 @@ namespace Abomination::Renderer
             .vertexBuffer = GLBuffer(std::as_bytes(std::span(vertices.data(), vertices.size()))),
             .indexBuffer = GLBuffer(std::as_bytes(std::span(indices.data(), indices.size()))),
             .vertexArray = GLVertexArray(),
+            .vertexCount = vertices.size(),
             .indexCount = indices.size(),
         };
 
@@ -122,7 +123,9 @@ namespace Abomination::Renderer
         geometry->vertexArray.Bind();
 
         // The indices are ints that are never negative, so they can be read as unsigned ones.
-        glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(geometry->indexCount), GL_UNSIGNED_INT, nullptr);
+        // The range of the indices is given, so the driver does not read them all on the CPU to find it (see Mesh::Draw).
+        glDrawRangeElements(GL_TRIANGLES, 0, static_cast<GLuint>(geometry->vertexCount - 1),
+                            static_cast<GLsizei>(geometry->indexCount), GL_UNSIGNED_INT, nullptr);
         ++m_drawCallCount;
     }
 

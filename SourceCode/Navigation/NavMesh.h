@@ -14,8 +14,8 @@ class dtNavMesh;
 class dtNavMeshQuery;
 
 // The navigation mesh of a level: its floor cut into convex polygons, built by Recast from the triangles of the level,
-// and the paths Detour finds on it (see Build/Lectures/NavMesh.html for how it works). Everything is in game meters and
-// axes (Y up), like Recast itself.
+// and the paths Detour finds on it (see ARCHITECTURE.md, section 13). Everything is in game meters and axes (Y up), like
+// Recast itself.
 namespace Abomination::Navigation
 {
     // The size of who walks on the navmesh (the agent) and how fine the navmesh is. Built for the dog.

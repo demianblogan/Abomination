@@ -31,7 +31,9 @@ namespace Abomination::Platform
         ScreenMode screenMode = ScreenMode::Borderless;
 
         // V-Sync: SwapBuffers() waits for the monitor refresh. No tearing, and the frame rate never exceeds the refresh rate.
-        bool isVSyncEnabled = true;
+        // Off by default during development: the frame rate and the profiler then show how long a frame really takes, not
+        // the wait for the monitor. Turned on in Display > V-Sync; the options menu (0.8) gets its own default.
+        bool isVSyncEnabled = false;
     };
 
     // An operating system window with an OpenGL 4.6 Core context attached to it.

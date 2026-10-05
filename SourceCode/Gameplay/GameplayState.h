@@ -15,6 +15,7 @@
 
 #include <array>
 #include <cstdint>
+#include <string>
 #include <vector>
 
 namespace Abomination::Audio
@@ -139,4 +140,9 @@ namespace Abomination::Gameplay
     // controlled first.
     [[nodiscard]] GameplayState CreateGameplayState(entt::registry& registry, const World::PlayerStart& playerStart,
                                                     Audio::AudioEngine& audio, Renderer::RenderAssets& renderAssets);
+
+    // Loads a sound event of the game for the whole game (see AudioEngine::LoadSoundEvent) and sets how many copies of it
+    // may play at once. The volumes are tuned in the Audio window of the debug overlay.
+    [[nodiscard]] Audio::SoundEventHandle LoadGameSound(Audio::AudioEngine& audio, const std::string& path,
+                                                        int variantCount, Audio::SoundGroup group, int maxVoices);
 }

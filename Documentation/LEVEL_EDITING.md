@@ -89,9 +89,10 @@ Quake). F2 switches to the free-fly camera to look at the map from anywhere.
 - *Renderer* in the menu bar in the debug overlay (<kbd>F1</kbd>) switches to
   *Wireframe* to show how faces are split into triangles, and shows how many
   brushes, faces and triangles the level has.
-- **Without restarting the game:** save the map, build only the
-  `CopyAssets` target (`cmake --build --preset debug --target CopyAssets`,
-  it works while the game runs) and press *Reload* in the Renderer window.
+- **Without restarting the game:** save the map and press *Reload* in the
+  Renderer window (a Debug build reads the map straight from `Assets/`; for a
+  Release build, build the `CopyAssets` target first, it works while the game
+  runs).
 - **Sizes:** the player is 56 units tall (eyes at about 46). A usual crate is
   32 units (1 m) with the crate texture at scale 0.5; a 64-unit crate is a
   large container, taller than the player.

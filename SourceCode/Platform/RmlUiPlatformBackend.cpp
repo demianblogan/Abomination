@@ -32,23 +32,40 @@ namespace Abomination::Platform
 
             switch (key)
             {
-                case SDLK_SPACE: return KI_SPACE;
-                case SDLK_BACKSPACE: return KI_BACK;
-                case SDLK_TAB: return KI_TAB;
-                case SDLK_RETURN: return KI_RETURN;
-                case SDLK_KP_ENTER: return KI_NUMPADENTER;
-                case SDLK_ESCAPE: return KI_ESCAPE;
-                case SDLK_PAGEUP: return KI_PRIOR;
-                case SDLK_PAGEDOWN: return KI_NEXT;
-                case SDLK_END: return KI_END;
-                case SDLK_HOME: return KI_HOME;
-                case SDLK_LEFT: return KI_LEFT;
-                case SDLK_UP: return KI_UP;
-                case SDLK_RIGHT: return KI_RIGHT;
-                case SDLK_DOWN: return KI_DOWN;
-                case SDLK_INSERT: return KI_INSERT;
-                case SDLK_DELETE: return KI_DELETE;
-                default: return KI_UNKNOWN;
+                case SDLK_SPACE:
+                    return KI_SPACE;
+                case SDLK_BACKSPACE:
+                    return KI_BACK;
+                case SDLK_TAB:
+                    return KI_TAB;
+                case SDLK_RETURN:
+                    return KI_RETURN;
+                case SDLK_KP_ENTER:
+                    return KI_NUMPADENTER;
+                case SDLK_ESCAPE:
+                    return KI_ESCAPE;
+                case SDLK_PAGEUP:
+                    return KI_PRIOR;
+                case SDLK_PAGEDOWN:
+                    return KI_NEXT;
+                case SDLK_END:
+                    return KI_END;
+                case SDLK_HOME:
+                    return KI_HOME;
+                case SDLK_LEFT:
+                    return KI_LEFT;
+                case SDLK_UP:
+                    return KI_UP;
+                case SDLK_RIGHT:
+                    return KI_RIGHT;
+                case SDLK_DOWN:
+                    return KI_DOWN;
+                case SDLK_INSERT:
+                    return KI_INSERT;
+                case SDLK_DELETE:
+                    return KI_DELETE;
+                default:
+                    return KI_UNKNOWN;
             }
         }
 
@@ -73,10 +90,14 @@ namespace Abomination::Platform
         {
             switch (button)
             {
-                case SDL_BUTTON_LEFT: return 0;
-                case SDL_BUTTON_RIGHT: return 1;
-                case SDL_BUTTON_MIDDLE: return 2;
-                default: return button - 1;
+                case SDL_BUTTON_LEFT:
+                    return 0;
+                case SDL_BUTTON_RIGHT:
+                    return 1;
+                case SDL_BUTTON_MIDDLE:
+                    return 2;
+                default:
+                    return button - 1;
             }
         }
     }
@@ -85,9 +106,10 @@ namespace Abomination::Platform
         : m_window(window)
     {
         const auto createCursor = [this](CursorShape shape, SDL_SystemCursor systemCursor)
-        {
-            m_cursors[static_cast<std::size_t>(shape)] = SDL_CreateSystemCursor(systemCursor);
-        };
+            {
+                m_cursors[static_cast<std::size_t>(shape)] = SDL_CreateSystemCursor(systemCursor);
+            };
+
         createCursor(CursorShape::Arrow, SDL_SYSTEM_CURSOR_DEFAULT);
         createCursor(CursorShape::Pointer, SDL_SYSTEM_CURSOR_POINTER);
         createCursor(CursorShape::Text, SDL_SYSTEM_CURSOR_TEXT);
@@ -126,6 +148,7 @@ namespace Abomination::Platform
         // SDL gives the mouse position in window coordinates, which on a screen with a display scale are not pixels (at 200%
         // one coordinate is 2 pixels); the interface is laid out in pixels.
         const float pixelDensity = SDL_GetWindowPixelDensity(m_window);
+
         switch (event.type)
         {
             case SDL_EVENT_MOUSE_MOTION:
@@ -156,21 +179,31 @@ namespace Abomination::Platform
 
     double RmlUiPlatformBackend::GetElapsedTime()
     {
-        // Seconds since SDL started; animations and the blinking caret of a text field are timed by it.
-        return static_cast<double>(SDL_GetTicksNS()) / 1'000'000'000.0;
+        // Seconds since SDL started (nanoseconds divided by the nanoseconds in a second); animations and the blinking
+        // caret of a text field are timed by it.
+        return static_cast<double>(SDL_GetTicksNS()) / static_cast<double>(SDL_NS_PER_SECOND);
     }
 
     bool RmlUiPlatformBackend::LogMessage(Rml::Log::Type type, const Rml::String& message)
     {
         LogLevel level = LogLevel::Debug;
+
         switch (type)
         {
             case Rml::Log::LT_ALWAYS:
-            case Rml::Log::LT_INFO: level = LogLevel::Info; break;
+            case Rml::Log::LT_INFO:
+                level = LogLevel::Info;
+                break;
             case Rml::Log::LT_ERROR:
-            case Rml::Log::LT_ASSERT: level = LogLevel::Error; break;
-            case Rml::Log::LT_WARNING: level = LogLevel::Warning; break;
-            default: level = LogLevel::Debug; break;
+            case Rml::Log::LT_ASSERT:
+                level = LogLevel::Error;
+                break;
+            case Rml::Log::LT_WARNING:
+                level = LogLevel::Warning;
+                break;
+            default:
+                level = LogLevel::Debug;
+                break;
         }
 
         Core::Log::Write(LogCategory::UI, level, "RmlUi: {}", message);

@@ -6,6 +6,7 @@
 #include <glm/vec3.hpp>
 
 #include <span>
+#include <vector>
 
 namespace Abomination::World
 {
@@ -32,15 +33,34 @@ namespace Abomination::World
         // The whole way lies inside a brush: the box is stuck (fraction is 0).
         bool isStuck = false;
     };
+    // What a box moving through the level collides with: the brushes of the level, and for a character the boxes of the
+    // other characters (see Gameplay::GatherCharacterBoxes). Two lists, so the level is traced where it lies instead of
+    // being copied together with the boxes for every character every tick. A list of brushes alone (a span or a vector)
+    // turns into a world by itself, for the traces that only the level stops (shots, shells, sight).
+    struct CollisionWorld
+    {
+        std::span<const CollisionBrush> level;
+        std::span<const CollisionBrush> characters;
 
-    // Moves a box from start to end (both are positions of its center) through the brushes and tells where it stops.
-    // halfExtents is half the size of the box along each axis (for the player 0.5, 0.875 and 0.5 m). Game meters.
+        CollisionWorld(std::span<const CollisionBrush> levelBrushes, std::span<const CollisionBrush> characterBoxes = {})
+            : level(levelBrushes)
+            , characters(characterBoxes)
+        {}
+
+        CollisionWorld(const std::vector<CollisionBrush>& levelBrushes)
+            : level(levelBrushes)
+        {}
+    };
+
+    // Moves a box from start to end (both are positions of its center) through the brushes of the world and tells where
+    // it stops. halfExtents is half the size of the box along each axis (for the player 0.5, 0.875 and 0.5 m). Game
+    // meters.
     //
     // The box is turned into a point: every plane of a brush is moved out by as much as the box reaches along its
     // normal, and the center of the box is traced against the enlarged brush. For every plane the line from start to end
     // crosses, the crossing is an entry (from the front of the plane to its back) or an exit. The line is inside the
     // brush between the latest entry and the earliest exit, so the box hits the brush where it enters it, if the latest
-    // entry comes before the earliest exit. Of all brushes, the earliest hit counts.
-    [[nodiscard]] TraceResult TraceBox(std::span<const CollisionBrush> brushes, const glm::dvec3& start,
-                                       const glm::dvec3& end, const glm::dvec3& halfExtents);
+    // entry comes before the earliest exit. Of all brushes (of both lists), the earliest hit counts.
+    [[nodiscard]] TraceResult TraceBox(const CollisionWorld& world, const glm::dvec3& start, const glm::dvec3& end,
+                                       const glm::dvec3& halfExtents);
 }

@@ -369,12 +369,26 @@ namespace Abomination::Renderer
 
         ModelData model;
 
-        // The images first, so the parts can refer to them by index. A broken image is left empty; the part then gets
-        // the fallback texture.
-        for (const cgltf_image& image : std::span(data->images, data->images_count))
+        // The images first, so the parts can refer to them by index. Only base color images are decoded: the game draws
+        // nothing else, and a model often holds normal and roughness maps as large as its colors. Every other image is
+        // left empty in its place (the indices stay those of the file); so is a broken one, whose part then gets the
+        // fallback texture.
+        std::vector<bool> isBaseColor(data->images_count, false);
+        for (const cgltf_material& material : std::span(data->materials, data->materials_count))
         {
-            const std::string name = std::format("{}#image{}", pathText, model.images.size());
-            std::expected<Core::Image, std::string> decoded = ReadImage(image, path, name);
+            const cgltf_texture* texture = material.pbr_metallic_roughness.base_color_texture.texture;
+            if (material.has_pbr_metallic_roughness && texture != nullptr && texture->image != nullptr)
+                isBaseColor[static_cast<std::size_t>(texture->image - data->images)] = true;
+        }
+        for (std::size_t index = 0; index < data->images_count; ++index)
+        {
+            if (!isBaseColor[index])
+            {
+                model.images.emplace_back();
+                continue;
+            }
+            const std::string name = std::format("{}#image{}", pathText, index);
+            std::expected<Core::Image, std::string> decoded = ReadImage(data->images[index], path, name);
             model.images.push_back(decoded.has_value() ? std::move(*decoded) : Core::Image{});
         }
 

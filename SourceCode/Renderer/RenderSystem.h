@@ -18,6 +18,14 @@ namespace Abomination::Renderer
         // thousands of small draws are slower than a few large ones, even with the same number of triangles.
         int drawCallCount = 0;
         int triangleCount = 0;
+
+        // Adds the numbers of another drawing (the weapon, the hands) to these.
+        RenderStatistics& operator+=(const RenderStatistics& other) noexcept
+        {
+            drawCallCount += other.drawCallCount;
+            triangleCount += other.triangleCount;
+            return *this;
+        }
     };
 
     // Shaders the render system draws with on its own, whatever shader an entity has chosen.

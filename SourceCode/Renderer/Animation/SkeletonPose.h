@@ -23,6 +23,9 @@ namespace Abomination::Renderer
     // The pose of the skeleton when no animation moves it: every joint where the model file puts it.
     [[nodiscard]] std::vector<JointPose> CreateRestPose(const SkeletonData& skeleton);
 
+    // The same into pose, which keeps its memory: no allocation once it is large enough (posing every frame).
+    void ResetToRestPose(const SkeletonData& skeleton, std::vector<JointPose>& pose);
+
     // The transform of every joint in the coordinates of the model (from the model to the joint), from the pose of every
     // joint relative to its parent. The joints are combined from the roots down: a joint's matrix is its parent's matrix
     // times its own transform; a root joint's parent is the root transform of the skeleton. pose has one entry per joint.

@@ -17,7 +17,7 @@ namespace Abomination::Gameplay
     namespace
     {
         // The segment, or nullptr if the animator has no such segment or its clip is missing from the model.
-        const AnimationSegment* FindSegment(const Animator& animator, const Renderer::Model& model, std::size_t index)
+        const AnimationSegment* FindPlayableSegment(const Animator& animator, const Renderer::Model& model, std::size_t index)
         {
             if (index >= animator.segments.size() || animator.segments[index].clip >= model.animations.size())
                 return nullptr;
@@ -29,7 +29,7 @@ namespace Abomination::Gameplay
         void AdvancePlayback(AnimationPlayback& playback, const Animator& animator, const Renderer::Model& model,
                              float deltaTime)
         {
-            const AnimationSegment* segment = FindSegment(animator, model, playback.segment);
+            const AnimationSegment* segment = FindPlayableSegment(animator, model, playback.segment);
             if (segment == nullptr)
                 return;
 
@@ -47,8 +47,8 @@ namespace Abomination::Gameplay
         void SamplePlayback(const AnimationPlayback& playback, const Animator& animator, const Renderer::Model& model,
                             std::vector<Renderer::JointPose>& pose)
         {
-            pose = Renderer::CreateRestPose(*model.skeleton);
-            if (const AnimationSegment* segment = FindSegment(animator, model, playback.segment); segment != nullptr)
+            Renderer::ResetToRestPose(*model.skeleton, pose);
+            if (const AnimationSegment* segment = FindPlayableSegment(animator, model, playback.segment); segment != nullptr)
                 Renderer::SampleAnimationClip(model.animations[segment->clip], segment->start + playback.time, pose);
         }
     }
@@ -82,6 +82,20 @@ namespace Abomination::Gameplay
         animator.blendDuration = std::max(blendDuration, 0.0f);
     }
 
+    std::optional<std::size_t> FindSegment(const Animator& animator, std::string_view name)
+    {
+        const auto segment = std::ranges::find(animator.segments, name, &AnimationSegment::name);
+        if (segment == animator.segments.end())
+            return std::nullopt;
+        return static_cast<std::size_t>(segment - animator.segments.begin());
+    }
+
+    void PlayAnimation(Animator& animator, std::string_view name, float blendDuration)
+    {
+        if (const std::optional<std::size_t> segment = FindSegment(animator, name); segment.has_value())
+            PlayAnimation(animator, *segment, blendDuration);
+    }
+
     void AdvanceAnimator(Animator& animator, const Renderer::Model& model, float deltaTime)
     {
         const float scaledTime = deltaTime * animator.speed;
@@ -95,7 +109,8 @@ namespace Abomination::Gameplay
             animator.previous.reset();
     }
 
-    void CalculateAnimatorPose(const Animator& animator, const Renderer::Model& model, std::vector<Renderer::JointPose>& pose)
+    void CalculateAnimatorPose(const Animator& animator, const Renderer::Model& model, std::vector<Renderer::JointPose>& pose,
+                               std::vector<Renderer::JointPose>& fadingPose)
     {
         if (!model.skeleton.has_value())
         {
@@ -109,11 +124,10 @@ namespace Abomination::Gameplay
 
         // The new segment's share grows from 0 to 1 over the cross-fade, smoothly (3t^2 - 2t^3): it starts and finishes
         // gently instead of switching at a constant rate.
-        std::vector<Renderer::JointPose> previousPose;
-        SamplePlayback(*animator.previous, animator, model, previousPose);
+        SamplePlayback(*animator.previous, animator, model, fadingPose);
         const float t = std::clamp(animator.blendTime / animator.blendDuration, 0.0f, 1.0f);
         const float weight = t * t * (3.0f - 2.0f * t);
-        Renderer::BlendPoses(previousPose, pose, weight, pose);
+        Renderer::BlendPoses(fadingPose, pose, weight, pose);
     }
 
     std::vector<AnimationSegment> FindModelSegments([[maybe_unused]] const std::string& path, const Renderer::Model& model)
@@ -136,9 +150,7 @@ namespace Abomination::Gameplay
             });
 
             // A model stands idle until something else is asked of it; without an "Idle" segment it plays the first one.
-            const auto idle = std::ranges::find(animator.segments, "Idle", &AnimationSegment::name);
-            if (idle != animator.segments.end())
-                animator.current.segment = static_cast<std::size_t>(idle - animator.segments.begin());
+            animator.current.segment = FindSegment(animator, "Idle").value_or(0);
         }
     }
 
@@ -197,7 +209,9 @@ namespace Abomination::Gameplay
 
     void UpdateAnimators(entt::registry& registry, const Renderer::ModelStore& models, float deltaTime)
     {
+        // Kept from one animator to the next: posing allocates nothing once they are as large as the largest skeleton.
         std::vector<Renderer::JointPose> pose;
+        std::vector<Renderer::JointPose> fadingPose;
         for (const auto [entity, animator] : registry.view<Animator>().each())
         {
             const Renderer::Model& model = models.Get(animator.model);
@@ -205,7 +219,7 @@ namespace Abomination::Gameplay
                 continue;
 
             AdvanceAnimator(animator, model, deltaTime);
-            CalculateAnimatorPose(animator, model, pose);
+            CalculateAnimatorPose(animator, model, pose, fadingPose);
 
             Renderer::ModelPose& modelPose = registry.get_or_emplace<Renderer::ModelPose>(entity);
             Renderer::CalculateJointMatrices(*model.skeleton, pose, modelPose.jointMatrices);

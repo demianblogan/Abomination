@@ -24,9 +24,6 @@ namespace Abomination::Gameplay
         // The shell is round enough with 8 sides: it is small and seen for a moment.
         constexpr int ShellSideCount = 8;
 
-        // A surface whose normal points up at least this much (cosine of 45 degrees) is a floor: a shell can lie on it.
-        constexpr float FloorNormalY = 0.7f;
-
         // A random direction with every component from -1 to 1 (not of length 1: only to shake a direction a little).
         glm::vec3 RandomShake(Core::Random& random)
         {
@@ -104,9 +101,7 @@ namespace Abomination::Gameplay
         shells.shaderProgram = renderAssets.shaders.Load("Shaders/TexturedShaded");
 
         // Shells falling one after another may ring together; more than 4 at once is only noise.
-        shells.dropSound = audio.LoadSoundEvent("Sounds/Weapons/Shotgun/ShellDrop", 3, Audio::SoundGroup::Effects,
-                                                Core::AssetLifetime::Global);
-        audio.GetSoundEvent(shells.dropSound)->maxVoices = 4;
+        shells.dropSound = LoadGameSound(audio, "Sounds/Weapons/Shotgun/ShellDrop", 3, Audio::SoundGroup::Effects, 4);
         return shells;
     }
 
@@ -147,11 +142,11 @@ namespace Abomination::Gameplay
 
         const float speedScale = 1.0f + random.GetFloat(-settings.speedVariation, settings.speedVariation);
         const glm::vec3 throwVelocity = right * settings.sideSpeed + up * settings.upSpeed + back * settings.backSpeed;
-        shell.velocity = throwVelocity * speedScale + RandomShake(random) * 0.2f + playerVelocity;
+        shell.motion.velocity = throwVelocity * speedScale + RandomShake(random) * 0.2f + playerVelocity;
 
         // End over end: around the up of the weapon, shaken a little so no two shells turn the same way.
-        shell.spinAxis = glm::normalize(up + RandomShake(random) * 0.3f);
-        shell.spinSpeed = settings.spinSpeed * random.GetFloat(0.7f, 1.3f);
+        shell.motion.spinAxis = glm::normalize(up + RandomShake(random) * 0.3f);
+        shell.motion.spinSpeed = settings.spinSpeed * random.GetFloat(0.7f, 1.3f);
         shell.age = 0.0f;
         shell.nextTrailTime = 0.0f;
         shell.isResting = false;
@@ -196,49 +191,30 @@ namespace Abomination::Gameplay
                 shell.nextTrailTime += std::max(settings.trailInterval, 0.005f);
             }
 
-            // It falls, moves as far as the level lets it in this frame, and spins.
-            shell.velocity.y -= state.physicsSettings.gravity * deltaTime;
-            const glm::vec3 start = transform.position;
-            const World::TraceResult trace = World::TraceBox(brushes, glm::dvec3(start),
-                                                             glm::dvec3(start + shell.velocity * deltaTime),
-                                                             glm::dvec3(ShellRadius));
-            transform.position = glm::vec3(trace.endPosition);
-            const glm::quat spin = glm::angleAxis(shell.spinSpeed * deltaTime, shell.spinAxis);
-            transform.rotation = glm::normalize(spin * transform.rotation);
-
-            // Stuck in a brush (thrown into a moving door, later): it stays where it is.
-            if (trace.isStuck)
+            // It falls, tumbles and bounces (see Tumble).
+            const BounceSettings bounce{.bounce = settings.bounce, .slide = settings.slide, .spinKept = 0.5f,
+                                        .restSpeed = settings.restSpeed};
+            const TumbleStep step = Tumble(shell.motion, transform, brushes, state.physicsSettings.gravity, ShellRadius,
+                                           bounce, deltaTime);
+            if (!step.hasHit)
             {
-                shell.isResting = true;
+                shell.isResting = step.hasStopped; // stuck in a brush (thrown into a moving door, later)
                 continue;
             }
 
-            if (trace.fraction >= 1.0)
-                continue;
-
-            // A bounce. The velocity is split into its part into the surface (along the normal) and its part along the
-            // surface: the first is turned back and weakened (bounce), the second is slowed by rubbing (slide).
-            const glm::vec3 normal(trace.hitNormal);
-            const float speedIntoSurface = -glm::dot(shell.velocity, normal);
-            const glm::vec3 alongNormal = normal * glm::dot(shell.velocity, normal);
-            const glm::vec3 alongSurface = shell.velocity - alongNormal;
-            shell.velocity = alongSurface * settings.slide - alongNormal * settings.bounce;
-            shell.spinSpeed *= 0.5f;
-
             // The clink: louder the harder it hits; the soft touches of a shell settling down are not heard. The ringing of
             // the bounce before is faded out quickly, so the bounces of one shell do not pile up.
-            if (speedIntoSurface > settings.soundSpeed)
+            if (step.speedIntoSurface > settings.soundSpeed)
             {
-                const float volume = std::clamp(speedIntoSurface / settings.fullVolumeSpeed, 0.15f, 1.0f);
+                const float volume = std::clamp(step.speedIntoSurface / settings.fullVolumeSpeed, 0.15f, 1.0f);
                 audio.FadeOut(shell.voice, 0.05f);
                 shell.voice = audio.Play(shells.dropSound, transform.position, false, volume);
             }
 
             // Slow enough on a floor: it lies down, and its sound dies away with it.
-            if (normal.y >= FloorNormalY && glm::length(shell.velocity) < settings.restSpeed)
+            if (step.hasStopped)
             {
                 shell.isResting = true;
-                shell.velocity = glm::vec3(0.0f);
                 transform.rotation = CalculateLyingRotation(transform.rotation, shells.random);
                 audio.FadeOut(shell.voice, settings.soundFadeOut);
             }

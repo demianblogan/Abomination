@@ -122,24 +122,31 @@ namespace Abomination::World
         }
     }
 
-    TraceResult TraceBox(std::span<const CollisionBrush> brushes, const glm::dvec3& start, const glm::dvec3& end,
+    namespace
+    {
+        // Clips the way against every brush of the list into result (the earliest hit so far stays). Stops once stuck.
+        void ClipToBrushes(std::span<const CollisionBrush> brushes, const glm::dvec3& start, const glm::dvec3& end,
+                           const glm::dvec3& halfExtents, TraceResult& result)
+        {
+            for (const CollisionBrush& brush : brushes)
+            {
+                if (result.isStuck)
+                    return;
+                if (DoesWayTouchBrushBounds(brush, start, end, halfExtents))
+                    ClipToBrush(brush, start, end, halfExtents, result);
+            }
+        }
+    }
+
+    TraceResult TraceBox(const CollisionWorld& world, const glm::dvec3& start, const glm::dvec3& end,
                          const glm::dvec3& halfExtents)
     {
         // A negative half size would move the planes into the brush instead of out of it. 0 is fine: a point, a ray.
         assert(glm::all(glm::greaterThanEqual(halfExtents, glm::dvec3(0.0))));
 
         TraceResult result;
-
-        for (const CollisionBrush& brush : brushes)
-        {
-            if (!DoesWayTouchBrushBounds(brush, start, end, halfExtents))
-                continue;
-
-            ClipToBrush(brush, start, end, halfExtents, result);
-            if (result.isStuck)
-                break;
-        }
-
+        ClipToBrushes(world.level, start, end, halfExtents, result);
+        ClipToBrushes(world.characters, start, end, halfExtents, result);
         result.endPosition = start + (end - start) * result.fraction;
 
         return result;

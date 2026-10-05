@@ -98,10 +98,16 @@ set(LIBRARY_SOURCES
     Gameplay/Effects/Gibs.cpp
     Gameplay/Effects/Particles.h
     Gameplay/Effects/Particles.cpp
+    Gameplay/Effects/Tumbling.h
+    Gameplay/Effects/Tumbling.cpp
+    Gameplay/Enemies/Corpses.h
+    Gameplay/Enemies/Corpses.cpp
     Gameplay/Enemies/DogMind.h
     Gameplay/Enemies/DogMind.cpp
     Gameplay/Enemies/GroundFit.h
     Gameplay/Enemies/GroundFit.cpp
+    Gameplay/Enemies/MonsterDebug.h
+    Gameplay/Enemies/MonsterDebug.cpp
     Gameplay/Enemies/Monsters.h
     Gameplay/Enemies/Monsters.cpp
     Gameplay/Player/DamageReaction.h
@@ -229,9 +235,9 @@ set(LIBRARY_SOURCES
     Renderer/OpenGL/RenderCommands.cpp
     Renderer/OpenGL/ShaderInterface.h
 
-    UI/DebugOverlay.h
     UI/DeathScreen.h
     UI/DeathScreen.cpp
+    UI/DebugOverlay.h
     UI/DebugOverlay.cpp
     UI/GameUI.h
     UI/GameUI.cpp
@@ -239,6 +245,8 @@ set(LIBRARY_SOURCES
     UI/HUD.cpp
     UI/ImGuiLibrary.h
     UI/ImGuiLibrary.cpp
+    UI/StyleValues.h
+    UI/StyleValues.cpp
     UI/UIScale.h
     UI/UIScale.cpp
     UI/Widgets.h
@@ -313,7 +321,7 @@ target_link_libraries(AbominationCore
         imgui::imgui          # Only .cpp files include ImGui, no header does
         RecastNavigation::Recast  # Only Navigation/*.cpp include Recast (it builds the navmesh) and Detour (it
         RecastNavigation::Detour  # finds paths on it); no header does
-        RmlUi::RmlUi          # Only the RmlUi backends (Platform, Renderer) and UI/GameUI.cpp include RmlUi
+        RmlUi::RmlUi          # Only the RmlUi backends (Platform, Renderer) and the game interface (UI) include RmlUi
         SDL3::SDL3            # Only Platform/*.cpp include SDL, no header does
         spdlog::spdlog        # Only Log.cpp includes spdlog, Log.h does not
 )

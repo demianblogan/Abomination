@@ -10,10 +10,18 @@ namespace Abomination::Renderer
     std::vector<JointPose> CreateRestPose(const SkeletonData& skeleton)
     {
         std::vector<JointPose> pose;
-        pose.reserve(skeleton.joints.size());
-        for (const SkeletonJoint& joint : skeleton.joints)
-            pose.push_back({.translation = joint.translation, .rotation = joint.rotation, .scale = joint.scale});
+        ResetToRestPose(skeleton, pose);
         return pose;
+    }
+
+    void ResetToRestPose(const SkeletonData& skeleton, std::vector<JointPose>& pose)
+    {
+        pose.resize(skeleton.joints.size());
+        for (std::size_t index = 0; index < skeleton.joints.size(); ++index)
+        {
+            const SkeletonJoint& joint = skeleton.joints[index];
+            pose[index] = {.translation = joint.translation, .rotation = joint.rotation, .scale = joint.scale};
+        }
     }
 
     void CalculateJointMatrices(const SkeletonData& skeleton, std::span<const JointPose> pose,

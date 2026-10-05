@@ -4,7 +4,7 @@
 
 namespace Abomination::Physics
 {
-    // Component: a character that walks through the level as a box: the player now, enemies later. The position of the
+    // Component: a character that walks through the level as a box: the player and the monsters. The position of the
     // box is the position of the entity's Core::Transform (the center of the box); the box never turns, like in Quake,
     // so it slides along walls the same way whichever way the character looks.
     struct CharacterBody

@@ -38,7 +38,8 @@ namespace Abomination::Gameplay
         float CalculateJointX(const Animator& animator, const Renderer::Model& model)
         {
             std::vector<Renderer::JointPose> pose;
-            CalculateAnimatorPose(animator, model, pose);
+            std::vector<Renderer::JointPose> fadingPose;
+            CalculateAnimatorPose(animator, model, pose, fadingPose);
             return pose[0].translation.x;
         }
     }

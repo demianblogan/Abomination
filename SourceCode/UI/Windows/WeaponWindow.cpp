@@ -65,7 +65,7 @@ namespace Abomination::UI
 
             DrawSlider("Range", settings.range, 5.0f, 200.0f, "%.0f m", "Pellets fly this far and hit nothing beyond it.");
             DrawSlider("Damage per pellet", settings.damagePerPellet, 0.0f, 50.0f, "%.1f",
-                       "Health one pellet takes. A target dummy has 100.");
+                       "Health one pellet takes. A dog has 90.");
             DrawSlider("Knockback per pellet", settings.knockbackPerPellet, 0.0f, 5.0f, "%.2f m/s",
                        "How hard one pellet pushes what it hits away from the shooter.");
 

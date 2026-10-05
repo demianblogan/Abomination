@@ -79,7 +79,7 @@ namespace Abomination::World
 
     TEST(CollisionTrace, EmptyWorldLetsBoxMoveAllTheWay)
     {
-        const TraceResult result = TraceBox({}, {0.0, 0.0, 0.0}, {3.0, 1.0, -2.0}, HalfExtents);
+        const TraceResult result = TraceBox(std::vector<CollisionBrush>{}, {0.0, 0.0, 0.0}, {3.0, 1.0, -2.0}, HalfExtents);
 
         EXPECT_EQ(result.fraction, 1.0);
         ExpectNear(result.endPosition, {3.0, 1.0, -2.0});
@@ -216,7 +216,7 @@ namespace Abomination::World
 
         CollisionBrush withoutBevels = ramp;
         withoutBevels.planes.resize(5); // only the 5 faces, the bevels come after them
-        const TraceResult spike = TraceBox(std::span(&withoutBevels, 1), start, end, HalfExtents);
+        const TraceResult spike = TraceBox(std::span<const CollisionBrush>(&withoutBevels, 1), start, end, HalfExtents);
         EXPECT_LT(spike.fraction, 1.0);
     }
 

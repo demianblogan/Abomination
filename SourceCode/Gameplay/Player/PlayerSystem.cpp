@@ -85,12 +85,12 @@ namespace Abomination::Gameplay
                 ? state.playerController.CreateMoveCommand(registry.get<LookAngles>(state.player), actions)
                 : Physics::MoveCommand{};
 
-        // The player stops at the walls and at the other characters (the target dummies, later enemies).
+        // The player stops at the walls and at the other characters (the dogs).
         Physics::CharacterBody& body = registry.get<Physics::CharacterBody>(state.player);
-        const std::vector<World::CollisionBrush> obstacles = GatherCollisionBrushes(registry, brushes, state.player);
+        const std::vector<World::CollisionBrush> characters = GatherCharacterBoxes(registry, state.player);
         Core::Transform& transform = registry.get<Core::Transform>(state.player);
-        Physics::UpdateCharacter(body, transform, obstacles, state.physicsSettings, state.movementSettings, command,
-                                 tickDuration);
+        Physics::UpdateCharacter(body, transform, World::CollisionWorld(brushes, characters), state.physicsSettings,
+                                 state.movementSettings, command, tickDuration);
         SlideOffCharacters(state, registry, brushes, body, transform);
         UpdateStepSmoothing(registry.get<StepSmoothing>(state.player), body.steppedUpHeight, tickDuration);
     }

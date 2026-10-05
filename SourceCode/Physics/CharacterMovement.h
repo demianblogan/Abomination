@@ -3,12 +3,11 @@
 #include "Core/Math/Units.h"
 #include "Core/Scene/Transform.h"
 #include "Physics/CharacterBody.h"
-#include "World/CollisionBrush.h"
+#include "World/CollisionTrace.h"
 
 #include <glm/vec3.hpp>
 
 #include <optional>
-#include <span>
 
 namespace Abomination::Physics
 {
@@ -53,7 +52,7 @@ namespace Abomination::Physics
         float maxAirWishSpeed = Core::MapUnitsToMeters(30.0f);
     };
 
-    // What a character wants to do in one tick: from the keys (the player) or from an AI (enemies later). The movement
+    // What a character wants to do in one tick: from the keys (the player) or from the mind of a monster (DogMind). The movement
     // code decides what really happens.
     struct MoveCommand
     {
@@ -85,7 +84,7 @@ namespace Abomination::Physics
     // the velocity is clipped to the surface (ClipVelocity) and the box continues with the rest of the time, up to 4 hits
     // per call. Hitting two surfaces at once (a corner of two walls) leaves only the movement along the line where they
     // meet. The same algorithm as PM_FlyMove of Quake. position and velocity are updated.
-    void SlideMove(std::span<const World::CollisionBrush> brushes, glm::dvec3& position, glm::vec3& velocity,
+    void SlideMove(const World::CollisionWorld& world, glm::dvec3& position, glm::vec3& velocity,
                    const glm::dvec3& halfExtents, float deltaTime);
 
     // Like SlideMove, but also walks up steps: the move is tried twice, as it is and lifted by stepHeight (then put down
@@ -93,7 +92,7 @@ namespace Abomination::Physics
     // gets over it. The same approach as PM_StepSlideMove of Quake 2. For characters on the ground, or in the air while
     // not moving up (landing on stairs).
     // Returns how high the box walked up (0 if the plain move won).
-    float StepSlideMove(std::span<const World::CollisionBrush> brushes, glm::dvec3& position, glm::vec3& velocity,
+    float StepSlideMove(const World::CollisionWorld& world, glm::dvec3& position, glm::vec3& velocity,
                        const glm::dvec3& halfExtents, float stepHeight, float deltaTime);
 
     // Slows down the horizontal velocity of a character on the ground (see MovementSettings::friction).
@@ -112,30 +111,30 @@ namespace Abomination::Physics
                        float acceleration, float deltaTime);
 
     // Whether a box at position overlaps a brush.
-    [[nodiscard]] bool IsInSolid(std::span<const World::CollisionBrush> brushes, const glm::dvec3& position,
+    [[nodiscard]] bool IsInSolid(const World::CollisionWorld& world, const glm::dvec3& position,
                                  const glm::dvec3& halfExtents);
 
     // Tries to move a box that overlaps a brush out of it by a tiny distance: up to 1 unit (3 cm) along any of the 26
     // directions to the sides, edges and corners of a cube, the shortest distances first. Returns true and updates position
     // if a free place was found. A safety net for mistakes of the movement code, like PM_NudgePosition of Quake 2: without
     // it a box that got a hair into a wall would stay stuck there forever, because every trace starting inside a brush fails.
-    [[nodiscard]] bool PushOutOfSolid(std::span<const World::CollisionBrush> brushes, glm::dvec3& position,
+    [[nodiscard]] bool PushOutOfSolid(const World::CollisionWorld& world, glm::dvec3& position,
                                       const glm::dvec3& halfExtents);
 
     // Whether a box at position stands on the ground: something walkable (see MinimumGroundNormalY) is directly below it,
     // within GroundCheckDistance.
-    [[nodiscard]] bool IsOnGround(std::span<const World::CollisionBrush> brushes, const glm::dvec3& position,
+    [[nodiscard]] bool IsOnGround(const World::CollisionWorld& world, const glm::dvec3& position,
                                   const glm::dvec3& halfExtents);
 
     // The same, giving the normal of that ground; none if there is none.
-    [[nodiscard]] std::optional<glm::vec3> FindGroundNormal(std::span<const World::CollisionBrush> brushes,
+    [[nodiscard]] std::optional<glm::vec3> FindGroundNormal(const World::CollisionWorld& world,
                                                             const glm::dvec3& position, const glm::dvec3& halfExtents);
 
     // One tick of a character: a jump starts if it is wished and the character stands on the ground; on the ground,
     // friction slows it down and the command speeds it up; in the air, gravity pulls it down and the command bends the
     // way a little (AirAccelerate). Then it moves through the level (stepping up stairs on the ground, sliding along
     // walls) and checks whether it stands on the ground. transform.position is the center of its box.
-    void UpdateCharacter(CharacterBody& body, Core::Transform& transform, std::span<const World::CollisionBrush> brushes,
+    void UpdateCharacter(CharacterBody& body, Core::Transform& transform, const World::CollisionWorld& world,
                          const PhysicsSettings& physicsSettings, const MovementSettings& movementSettings,
                          const MoveCommand& command, float deltaTime);
 }

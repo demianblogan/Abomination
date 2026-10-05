@@ -1,6 +1,8 @@
 #include "Application/Application.h"
 
 #include "Core/BuildConfiguration.h"
+#include "Core/Files/FileSystem.h"
+#include "Core/Files/Image.h"
 #include "Core/Logging/Log.h"
 #include "Core/Profiling/ProfileZone.h"
 #include "Core/Scene/Transform.h"
@@ -316,6 +318,10 @@ namespace Abomination
         // The benchmark ends after the same number of ticks in every run, however fast the frames are.
         if (m_benchmarkTicksLeft.has_value() && --*m_benchmarkTicksLeft <= 0)
             m_window.RequestClose();
+
+        // Halfway, when the dogs are at the player, the frame is saved, to compare how the game looks between versions.
+        if (m_benchmarkTicksLeft.has_value() && *m_benchmarkTicksLeft == BenchmarkDuration * SimulationTicksPerSecond / 2)
+            m_isBenchmarkScreenshotDue = true;
     }
 
     void Application::UpdateVisuals(float deltaTime)
@@ -466,6 +472,12 @@ namespace Abomination
             });
         }
 
+        if (m_isBenchmarkScreenshotDue)
+        {
+            m_isBenchmarkScreenshotDue = false;
+            SaveBenchmarkScreenshot();
+        }
+
         // With V-Sync the driver may wait here for the monitor: the wait gets its own zone, so it is not taken for a slow
         // Render.
         {
@@ -475,6 +487,20 @@ namespace Abomination
 
         // The GPU times of the zones of earlier frames that are ready by now.
         Renderer::CollectGPUProfiling();
+    }
+
+    void Application::SaveBenchmarkScreenshot()
+    {
+        // A minimized window has no pixels to read.
+        if (m_window.GetWidthInPixels() <= 0 || m_window.GetHeightInPixels() <= 0)
+            return;
+
+        const std::filesystem::path path = Platform::GetExecutableDirectory() / BenchmarkScreenshotFileName;
+        const Core::Image frame = Renderer::ReadFramePixels(m_window.GetWidthInPixels(), m_window.GetHeightInPixels());
+        if (const std::expected<void, std::string> saved = Core::SaveImageFile(path, frame); !saved.has_value())
+            Core::Log::Write(LogCategory::Core, LogLevel::Error, "Benchmark screenshot not saved: {}", saved.error());
+        else
+            Core::Log::Write(LogCategory::Core, LogLevel::Info, "Benchmark screenshot saved: {}", Core::ToUTF8String(path));
     }
 
     void Application::DrawEffects(const Renderer::View& view)

@@ -103,6 +103,9 @@ namespace Abomination
         void AddDebugLines(const Core::Transform& cameraTransform, float interpolationFactor);
         void DrawWeaponViewModel(float aspectRatio, const Renderer::View& view, float interpolationFactor);
 
+        // Saves the frame drawn so far (before the buffers are swapped) as BenchmarkScreenshotFileName next to the executable.
+        void SaveBenchmarkScreenshot();
+
         // Members are destroyed in reverse order of declaration: the overlay and the assets first (they use OpenGL),
         // then the window, then SDL, which the window needs.
         Platform::SDLLibrary m_SDLLibrary;
@@ -191,5 +194,8 @@ namespace Abomination
 
         // In a benchmark (--benchmark), the ticks left until the game closes itself; empty in a normal game.
         std::optional<int> m_benchmarkTicksLeft;
+
+        // Set halfway through the benchmark: the next frame is saved (see SaveBenchmarkScreenshot).
+        bool m_isBenchmarkScreenshotDue = false;
     };
 }

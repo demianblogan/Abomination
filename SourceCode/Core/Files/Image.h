@@ -32,4 +32,7 @@ namespace Abomination::Core
     // Decodes an image that is already in memory, for example a texture stored inside a model file. name only goes into
     // the error message ("Models/Shotgun.glb#image0").
     [[nodiscard]] std::expected<Image, std::string> DecodeImage(std::span<const std::byte> bytes, std::string_view name);
+
+    // Writes the image as a PNG file (the screenshot of the benchmark). Returns an error message if it cannot be written.
+    [[nodiscard]] std::expected<void, std::string> SaveImageFile(const std::filesystem::path& path, const Image& image);
 }

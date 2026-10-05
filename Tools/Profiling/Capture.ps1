@@ -3,12 +3,13 @@
 #
 # 1. Builds the game (Visual Studio's own CMake, the presets of the repository), unless -NoBuild.
 # 2. Starts tracy-capture, which waits for the game and writes everything it sends into a .tracy file.
-# 3. Runs the game with --benchmark: the start map, nobody at the controls, an invulnerable player the dogs attack; the game
-#    closes itself after 20 s of game time (see Application/LaunchOptions.h), and the capture ends with it.
+# 3. Runs the game with --benchmark: the start map, nobody at the controls, an invulnerable player the dogs attack, a
+#    screenshot halfway; the game closes itself after 20 s of game time (see Application/LaunchOptions.h), and the capture
+#    ends with it.
 # 4. tracy-csvexport turns the capture into tables; the summary shows the frame rate and the cost of every zone per frame.
 #
 # Everything goes to Build/Profiles/<date>-<time>-<configuration>-<label>.*: the .tracy file opens in the Tracy profiler,
-# the .csv files keep every number, the -summary.txt file is what the console shows.
+# the .csv files keep every number, the -summary.txt file is what the console shows, the .png file is the screenshot.
 # The Tracy tools must have the version of ThirdParty/Tracy (0.14.1). Only one program can be connected to the game: close
 # the Tracy profiler window before a capture.
 
@@ -87,6 +88,10 @@ if (-not $capture.WaitForExit(60000))
     throw "tracy-capture did not finish; was the Tracy profiler window connected to the game?"
 }
 if (-not (Test-Path $tracePath)) { throw "No capture was written: tracy-capture could not connect to the game." }
+
+# The frame the benchmark saved halfway (see Application/LaunchOptions.h), kept with the capture to compare how the game looks.
+$screenshot = Join-Path (Split-Path $game) "Benchmark.png"
+if (Test-Path $screenshot) { Copy-Item $screenshot (Join-Path $profilesDirectory "$baseName.png") }
 
 # --- 4. Tables and the summary -------------------------------------------------------------------------------------------
 $zonesPath = Join-Path $profilesDirectory "$baseName-zones.csv"

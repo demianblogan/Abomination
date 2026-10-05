@@ -1,8 +1,11 @@
 #include "Renderer/Assets/MeshPrimitives.h"
 
+#include "Renderer/Assets/MeshTangents.h"
+
 #include <glm/vec3.hpp>
 
 #include <array>
+#include <cassert>
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
@@ -71,6 +74,10 @@ namespace Abomination::Renderer
             data.indices.insert(data.indices.end(), {first, first + 1, first + 2, first + 2, first + 3, first});
         }
 
+        // The axes of the texture for normal maps (see GenerateTangents). A mesh made here always has triangles.
+        [[maybe_unused]] const bool areTangentsGenerated = GenerateTangents(data);
+        assert(areTangentsGenerated);
+
         return data;
     }
 
@@ -134,6 +141,10 @@ namespace Abomination::Renderer
         };
         addEnd(-halfLength, 0.02f, glm::vec3(0.0f, -1.0f, 0.0f));
         addEnd(halfLength, 0.98f, glm::vec3(0.0f, 1.0f, 0.0f));
+
+        // The axes of the texture for normal maps (see GenerateTangents). A mesh made here always has triangles.
+        [[maybe_unused]] const bool areTangentsGenerated = GenerateTangents(data);
+        assert(areTangentsGenerated);
 
         return data;
     }

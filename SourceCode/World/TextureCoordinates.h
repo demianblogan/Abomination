@@ -4,6 +4,7 @@
 
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
+#include <glm/vec4.hpp>
 
 namespace Abomination::World
 {
@@ -19,4 +20,10 @@ namespace Abomination::World
     //
     // point is in map units and axes, like the face. textureSize is the size of the texture in texels.
     [[nodiscard]] glm::vec2 CalculateTextureCoordinates(const MapFace& face, const glm::dvec3& point, glm::ivec2 textureSize);
+
+    // The tangent of a face for normal maps, in game axes (see Renderer::MeshVertex::tangent): the direction in which the U
+    // texture coordinate of CalculateTextureCoordinates grows, laid on the face, and in w the sign that makes
+    // cross(normal, tangent) the direction in which V grows. It comes straight from the texture axes of the face, so it is
+    // exact, and the same for every vertex of the face. normal is the normal of the face in game axes (length 1).
+    [[nodiscard]] glm::vec4 CalculateTangent(const MapFace& face, const glm::vec3& normal);
 }

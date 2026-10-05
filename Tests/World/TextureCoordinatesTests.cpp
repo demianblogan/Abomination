@@ -2,6 +2,7 @@
 
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
+#include <glm/vec4.hpp>
 #include <gtest/gtest.h>
 
 namespace Abomination::World
@@ -89,5 +90,43 @@ namespace Abomination::World
         face.textureScaleU = 0.0;
 
         ExpectNear(CalculateTextureCoordinates(face, {32.0, 0.0, 0.0}, TextureSize), {0.5f, 0.0f});
+    }
+
+    TEST(TextureCoordinates, TangentOfWallPointsAlongUAndUp)
+    {
+        // The wall faces -Y of the map: +Z in the game. U grows along +X; V (OpenGL) grows up, along +Y of the game.
+        const glm::vec4 tangent = CalculateTangent(CreateWallFace(), {0.0f, 0.0f, 1.0f});
+
+        EXPECT_NEAR(tangent.x, 1.0f, Tolerance);
+        EXPECT_NEAR(tangent.y, 0.0f, Tolerance);
+        EXPECT_NEAR(tangent.z, 0.0f, Tolerance);
+
+        // The bitangent cross(normal, tangent) * w = (0, 1, 0): up the wall, where V grows.
+        EXPECT_FLOAT_EQ(tangent.w, 1.0f);
+    }
+
+    TEST(TextureCoordinates, MirroredTextureTurnsTangentAndSign)
+    {
+        // A negative scale turns the texture around along U: U grows towards -X, and V still grows up, so the axes of the
+        // texture are mirrored and w becomes -1.
+        MapFace face = CreateWallFace();
+        face.textureScaleU = -1.0;
+
+        const glm::vec4 tangent = CalculateTangent(face, {0.0f, 0.0f, 1.0f});
+
+        EXPECT_NEAR(tangent.x, -1.0f, Tolerance);
+        EXPECT_FLOAT_EQ(tangent.w, -1.0f);
+    }
+
+    TEST(TextureCoordinates, TangentIsLaidOnTheFace)
+    {
+        // A U axis that leaves the face (a texture projected from another side): the tangent is still along the wall.
+        MapFace face = CreateWallFace();
+        face.textureUAxis = {1.0, -0.5, 0.0};
+
+        const glm::vec4 tangent = CalculateTangent(face, {0.0f, 0.0f, 1.0f});
+
+        EXPECT_NEAR(tangent.x, 1.0f, Tolerance);
+        EXPECT_NEAR(tangent.z, 0.0f, Tolerance);
     }
 }

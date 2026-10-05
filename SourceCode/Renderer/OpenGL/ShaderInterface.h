@@ -20,6 +20,9 @@ namespace Abomination::Renderer
     inline constexpr std::uint32_t MeshJointsAttribute = 3;
     inline constexpr std::uint32_t MeshWeightsAttribute = 4;
 
+    // The tangent of a vertex (vec4, see MeshVertex::tangent), for normal maps. Every mesh has it.
+    inline constexpr std::uint32_t MeshTangentAttribute = 5;
+
     // The uniform that tells TexturedShaded and Wireframe whether the mesh is skinned: layout(location = 3) uniform bool.
     inline constexpr std::uint32_t IsSkinnedUniform = 3;
 

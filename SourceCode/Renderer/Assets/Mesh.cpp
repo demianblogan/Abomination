@@ -37,6 +37,7 @@ namespace Abomination::Renderer
         vertexArray.SetFloatAttribute(MeshPositionAttribute, VertexBufferBinding, 3, offsetof(MeshVertex, position));
         vertexArray.SetFloatAttribute(MeshTexCoordAttribute, VertexBufferBinding, 2, offsetof(MeshVertex, texCoord));
         vertexArray.SetFloatAttribute(MeshNormalAttribute, VertexBufferBinding, 3, offsetof(MeshVertex, normal));
+        vertexArray.SetFloatAttribute(MeshTangentAttribute, VertexBufferBinding, 4, offsetof(MeshVertex, tangent));
         vertexArray.SetIndexBuffer(indexBuffer);
 
         // A skinned mesh: the joints and weights of every vertex in a second buffer, so a rigid mesh does not carry them.

@@ -1,6 +1,7 @@
 #include "Renderer/Assets/GLTFLoader.h"
 
 #include "Core/Files/FileSystem.h"
+#include "Renderer/Assets/MeshTangents.h"
 
 // cgltf is a "single-header" C library, like stb_image: its implementation is compiled only where CGLTF_IMPLEMENTATION
 // is defined, in exactly one .cpp file of the program. This is that file.
@@ -154,6 +155,12 @@ namespace Abomination::Renderer
             if (isMirrored)
                 for (std::size_t triangle = 0; triangle + 2 < mesh.indices.size(); triangle += 3)
                     std::swap(mesh.indices[triangle + 1], mesh.indices[triangle + 2]);
+
+            // The axes of the texture at every vertex, for the normal map. Always calculated, also when the file has them
+            // (TANGENT): those are for the texture coordinates of glTF, whose V runs the other way. Without texture
+            // coordinates or normals there is nothing to calculate from, and no normal map could be read either.
+            if (normals != nullptr && texCoords != nullptr && !GenerateTangents(mesh))
+                return std::unexpected("the tangents of a primitive could not be calculated");
 
             return mesh;
         }

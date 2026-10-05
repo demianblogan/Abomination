@@ -23,6 +23,13 @@ namespace Abomination::UI
     // An opacity, clamped to 0..1: "0.500".
     [[nodiscard]] std::string ToOpacity(float opacity);
 
+    // Sets a property of an element, but only when its value changes (nothing for a missing element). RmlUi takes every
+    // Element::SetProperty as a change, even to the same value: it lays the element out again and builds its geometry
+    // anew (new OpenGL buffers, the old ones deleted). The HUD sets its properties every frame, so this cut the cost
+    // of drawing it (see Tools/Profiling). The value is compared after RmlUi has parsed it, so "1.50px" and "1.5px" are
+    // the same.
+    void SetProperty(Rml::Element* element, const std::string& name, const std::string& value);
+
     // Sets the opacity of an element (nothing for a missing one).
     void SetOpacity(Rml::Element* element, float opacity);
 

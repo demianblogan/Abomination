@@ -1,5 +1,6 @@
 find_package(GTest CONFIG REQUIRED)
 find_package(Stb REQUIRED)  # ImageTests writes test PNG files with stb_image_write
+find_package(RmlUi CONFIG REQUIRED)  # StyleValuesTests runs RmlUi with a renderer that only counts
 
 # --- Unit tests: one executable for all tests, mirrors SourceCode/ ------------
 set(TEST_SOURCES
@@ -71,6 +72,7 @@ set(TEST_SOURCES
     ThirdParty/EnTTTests.cpp
 
     UI/GameFontsTests.cpp
+    UI/StyleValuesTests.cpp
 
     World/BrushGeometryTests.cpp
     World/CollisionBrushTests.cpp
@@ -91,6 +93,7 @@ target_link_libraries(AbominationTests PRIVATE
     AbominationCore
     GTest::gtest
     GTest::gtest_main   # Provides main() that runs all tests
+    RmlUi::RmlUi        # StyleValuesTests creates an RmlUi context of its own
 )
 target_include_directories(AbominationTests SYSTEM PRIVATE ${Stb_INCLUDE_DIR})
 # The font tests read the fonts of the game from the source tree.

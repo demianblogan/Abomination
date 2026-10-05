@@ -78,15 +78,15 @@ namespace Abomination::UI
         const float closed = Gameplay::CalculateEyesClosed(death);
         const std::string eyelidPosition = std::format("{:.2f}%", -EyelidHeight * (1.0f - closed));
         if (m_upperEyelid != nullptr)
-            m_upperEyelid->SetProperty("top", eyelidPosition);
+            SetProperty(m_upperEyelid, "top", eyelidPosition);
         if (m_lowerEyelid != nullptr)
-            m_lowerEyelid->SetProperty("bottom", eyelidPosition);
+            SetProperty(m_lowerEyelid, "bottom", eyelidPosition);
         SetOpacity(m_black, std::clamp((closed - 0.9f) * 10.0f, 0.0f, 1.0f));
 
         // GAME OVER on the black, then the hint.
         const bool isShown = Gameplay::IsGameOverShown(death);
         if (m_message != nullptr)
-            m_message->SetProperty("display", isShown ? "block" : "none");
+            SetProperty(m_message, "display", isShown ? "block" : "none");
         if (!isShown)
             return;
 
@@ -98,7 +98,7 @@ namespace Abomination::UI
         {
             SetOpacity(m_title, appear);
             const float scale = TitleStartScale + (1.0f - TitleStartScale) * settle;
-            m_title->SetProperty("transform", std::format("scale({:.4f})", scale));
+            SetProperty(m_title, "transform", std::format("scale({:.4f})", scale));
         }
 
         // The glow: up with the title, then slowly breathing (a cosine wave, starting at its brightest).

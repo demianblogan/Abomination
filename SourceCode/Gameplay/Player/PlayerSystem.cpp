@@ -90,7 +90,8 @@ namespace Abomination::Gameplay
 
         // The player stops at the walls and at the other characters (the dogs).
         Physics::CharacterBody& body = registry.get<Physics::CharacterBody>(state.player);
-        const std::vector<World::CollisionBrush> characters = GatherCharacterBoxes(registry, state.player);
+        const std::span<const World::CollisionBrush> characters =
+            GatherCharacterBoxes(registry, state.player, state.characterBoxMemory);
         Core::Transform& transform = registry.get<Core::Transform>(state.player);
         Physics::UpdateCharacter(body, transform, World::CollisionWorld(brushes, characters), state.physicsSettings,
                                  state.movementSettings, command, tickDuration);

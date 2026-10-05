@@ -386,7 +386,8 @@ namespace Abomination::Gameplay
                 body.velocity = glm::vec3(run.x, body.velocity.y, run.z);
 
             const glm::vec3 positionBefore = transform.position;
-            const std::vector<World::CollisionBrush> characters = GatherCharacterBoxes(registry, entity);
+            const std::span<const World::CollisionBrush> characters =
+                GatherCharacterBoxes(registry, entity, state.characterBoxMemory);
             const bool wasOnGround = body.isOnGround;
             Physics::UpdateCharacter(body, transform, World::CollisionWorld(brushes, characters), state.physicsSettings,
                                      movement, command, tickDuration);

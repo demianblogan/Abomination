@@ -46,4 +46,8 @@ namespace Abomination::World
     // character moves, so the same traces stop it at walls and at other characters. A box needs no bevel planes: its
     // faces are the sides of its bounding box already.
     [[nodiscard]] CollisionBrush CreateBoxCollisionBrush(const glm::dvec3& center, const glm::dvec3& halfExtents);
+
+    // The same box, made out of an existing brush: its planes reuse the memory they had, so a brush shaped every tick
+    // allocates nothing after the first time (see Gameplay::GatherCharacterBoxes).
+    void ShapeBoxCollisionBrush(CollisionBrush& brush, const glm::dvec3& center, const glm::dvec3& halfExtents);
 }

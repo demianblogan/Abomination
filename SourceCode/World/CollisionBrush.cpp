@@ -96,12 +96,20 @@ namespace Abomination::World
     CollisionBrush CreateBoxCollisionBrush(const glm::dvec3& center, const glm::dvec3& halfExtents)
     {
         CollisionBrush brush;
-        brush.bounds = Core::BoundingBox{.minimum = center - halfExtents, .maximum = center + halfExtents};
-
-        // The six sides of the box are exactly the bevel planes of any brush with these bounds.
-        for (const glm::dvec3& direction : AxisDirections)
-            brush.planes.push_back(CreateBoxSidePlane(brush.bounds, direction));
+        ShapeBoxCollisionBrush(brush, center, halfExtents);
 
         return brush;
+    }
+
+    void ShapeBoxCollisionBrush(CollisionBrush& brush, const glm::dvec3& center, const glm::dvec3& halfExtents)
+    {
+        brush.bounds = Core::BoundingBox{.minimum = center - halfExtents, .maximum = center + halfExtents};
+
+        // clear() keeps the memory of the vector: a brush shaped again holds its six planes where the old ones were.
+        // The six sides of the box are exactly the bevel planes of any brush with these bounds.
+        brush.planes.clear();
+        brush.planes.reserve(AxisDirections.size());
+        for (const glm::dvec3& direction : AxisDirections)
+            brush.planes.push_back(CreateBoxSidePlane(brush.bounds, direction));
     }
 }

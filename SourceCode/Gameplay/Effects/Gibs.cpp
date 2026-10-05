@@ -6,7 +6,6 @@
 #include "Gameplay/GameplayState.h"
 #include "Renderer/Assets/RenderAssets.h"
 #include "Renderer/ModelRenderer.h"
-#include "World/CollisionTrace.h"
 
 #include <glm/geometric.hpp>
 #include <glm/gtc/quaternion.hpp>
@@ -22,9 +21,6 @@ namespace Abomination::Gameplay
 {
     namespace
     {
-        // A surface is a floor a chunk can lie on when its normal points up at least this much (about 45 degrees).
-        constexpr float FloorNormalY = 0.7f;
-
         // The chunks collide as small boxes: 3 cm from the middle to each side, smaller than the meat they show, so they
         // settle into the floor a little instead of floating on their corners.
         constexpr double GibHalfSize = 0.03;
@@ -122,11 +118,11 @@ namespace Abomination::Gameplay
             transform.rotation = glm::angleAxis(random.GetFloat(0.0f, 2.0f * std::numbers::pi_v<float>),
                                                 RandomDirection(random));
 
-            gib.velocity = RandomDirection(random) * settings.speed * random.GetFloat(0.5f, 1.0f) +
+            gib.motion.velocity = RandomDirection(random) * settings.speed * random.GetFloat(0.5f, 1.0f) +
                            glm::vec3(0.0f, settings.upSpeed * random.GetFloat(0.6f, 1.0f), 0.0f) +
                            shot * settings.shotSpeed;
-            gib.spinAxis = RandomDirection(random);
-            gib.spinSpeed = settings.spinSpeed * random.GetFloat(0.5f, 1.0f);
+            gib.motion.spinAxis = RandomDirection(random);
+            gib.motion.spinSpeed = settings.spinSpeed * random.GetFloat(0.5f, 1.0f);
         }
 
         SinkOldestGroups(gibs);
@@ -153,37 +149,12 @@ namespace Abomination::Gameplay
             if (gib.isResting)
                 continue;
 
-            // It falls, moves as far as the level lets it in this frame, and tumbles.
-            gib.velocity.y -= state.physicsSettings.gravity * deltaTime;
-            const glm::vec3 start = transform.position;
-            const World::TraceResult trace = World::TraceBox(brushes, glm::dvec3(start),
-                                                             glm::dvec3(start + gib.velocity * deltaTime),
-                                                             glm::dvec3(GibHalfSize));
-            transform.position = glm::vec3(trace.endPosition);
-            const glm::quat spin = glm::angleAxis(gib.spinSpeed * deltaTime, gib.spinAxis);
-            transform.rotation = glm::normalize(spin * transform.rotation);
-
-            if (trace.isStuck)
-            {
-                gib.isResting = true;
-                continue;
-            }
-            if (trace.fraction >= 1.0)
-                continue;
-
-            // A bounce, as for the shells: the part of the velocity into the surface turned back and weakened, the part
-            // along it slowed by rubbing. Meat hardly bounces.
-            const glm::vec3 normal(trace.hitNormal);
-            const glm::vec3 alongNormal = normal * glm::dot(gib.velocity, normal);
-            const glm::vec3 alongSurface = gib.velocity - alongNormal;
-            gib.velocity = alongSurface * settings.slide - alongNormal * settings.bounce;
-            gib.spinSpeed *= 0.4f;
-
-            if (normal.y >= FloorNormalY && glm::length(gib.velocity) < settings.restSpeed)
-            {
-                gib.isResting = true;
-                gib.velocity = glm::vec3(0.0f);
-            }
+            // It falls, tumbles and bounces (see Tumble); meat hardly bounces.
+            const BounceSettings bounce{.bounce = settings.bounce, .slide = settings.slide, .spinKept = 0.4f,
+                                        .restSpeed = settings.restSpeed};
+            gib.isResting = Tumble(gib.motion, transform, brushes, state.physicsSettings.gravity, GibHalfSize, bounce,
+                                   deltaTime)
+                                .hasStopped;
         }
 
         // The chunks under the floor are gone.

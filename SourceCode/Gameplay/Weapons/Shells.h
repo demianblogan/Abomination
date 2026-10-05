@@ -4,6 +4,7 @@
 #include "Audio/SoundEvent.h"
 #include "Core/Math/Random.h"
 #include "Core/Scene/Transform.h"
+#include "Gameplay/Effects/Tumbling.h"
 #include "Renderer/Assets/MeshStore.h"
 #include "Renderer/Assets/ShaderStore.h"
 #include "Renderer/Assets/TextureStore.h"
@@ -81,11 +82,9 @@ namespace Abomination::Gameplay
     struct Shell
     {
         entt::entity entity = entt::null;
-        glm::vec3 velocity{0.0f};
 
-        // The axis it spins around and how fast (radians per second).
-        glm::vec3 spinAxis{1.0f, 0.0f, 0.0f};
-        float spinSpeed = 0.0f;
+        // How it flies and spins (see Tumbling.h).
+        Tumbler motion;
 
         // Seconds since it was thrown, and when it trails the next puff of smoke.
         float age = 0.0f;

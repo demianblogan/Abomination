@@ -34,6 +34,7 @@ set(TEST_SOURCES
     Gameplay/Enemies/GroundFitTests.cpp
     Gameplay/Effects/EffectsTests.cpp
     Gameplay/Effects/ParticlesTests.cpp
+    Gameplay/Effects/TumblingTests.cpp
     Gameplay/Player/DamageReactionTests.cpp
     Gameplay/Player/LandingDipTests.cpp
     Gameplay/Player/PlayerDeathTests.cpp

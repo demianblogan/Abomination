@@ -98,6 +98,8 @@ set(LIBRARY_SOURCES
     Gameplay/Effects/Gibs.cpp
     Gameplay/Effects/Particles.h
     Gameplay/Effects/Particles.cpp
+    Gameplay/Effects/Tumbling.h
+    Gameplay/Effects/Tumbling.cpp
     Gameplay/Enemies/Corpses.h
     Gameplay/Enemies/Corpses.cpp
     Gameplay/Enemies/DogMind.h

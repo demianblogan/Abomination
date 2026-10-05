@@ -3,6 +3,7 @@
 #include "Audio/AudioEngine.h"
 #include "Audio/SoundEvent.h"
 #include "Core/Math/Random.h"
+#include "Gameplay/Effects/Tumbling.h"
 #include "Renderer/Assets/ModelStore.h"
 #include "Renderer/Assets/ShaderStore.h"
 #include "World/CollisionBrush.h"
@@ -57,9 +58,9 @@ namespace Abomination::Gameplay
     struct Gib
     {
         entt::entity entity = entt::null;
-        glm::vec3 velocity{0.0f};
-        glm::vec3 spinAxis{1.0f, 0.0f, 0.0f};
-        float spinSpeed = 0.0f;
+
+        // How it flies and spins (see Tumbling.h).
+        Tumbler motion;
 
         // The burst it came from (the smaller, the older); it lies still; it sinks into the floor, and how deep it is.
         std::uint64_t group = 0;

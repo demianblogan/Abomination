@@ -228,6 +228,8 @@ set(LIBRARY_SOURCES
     Renderer/OpenGL/DebugOutput.cpp
     Renderer/OpenGL/GLBuffer.h
     Renderer/OpenGL/GLBuffer.cpp
+    Renderer/OpenGL/GLDebugGroup.h
+    Renderer/OpenGL/GLDebugGroup.cpp
     Renderer/OpenGL/GLShaderProgram.h
     Renderer/OpenGL/GLShaderProgram.cpp
     Renderer/OpenGL/GLTexture.h

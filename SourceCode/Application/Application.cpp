@@ -22,6 +22,7 @@
 #include "Platform/SystemServices.h"
 #include "Renderer/Camera/View.h"
 #include "Renderer/OpenGL/DebugOutput.h"
+#include "Renderer/OpenGL/GLDebugGroup.h"
 #include "Renderer/OpenGL/GPUProfiling.h"
 #include "Renderer/OpenGL/OpenGLLoader.h"
 #include "Renderer/OpenGL/RenderCommands.h"
@@ -382,49 +383,68 @@ namespace Abomination
 
             // In the order things cover each other: the solid world, the see-through effects in it, the debug lines, the
             // weapon in the hands, and the game interface over everything.
-            m_renderStatistics = Renderer::DrawMeshes(m_registry, view, interpolationFactor, m_renderAssets,
-                                                      m_systemShaders, m_renderSettings, m_skinningBuffer);
-            DrawEffects(view);
+            // Every pass is a named group of OpenGL commands, so a frame captured by RenderDoc reads as these passes.
+            {
+                Renderer::GLDebugGroup group("World");
+                m_renderStatistics = Renderer::DrawMeshes(m_registry, view, interpolationFactor, m_renderAssets,
+                                                          m_systemShaders, m_renderSettings, m_skinningBuffer);
+            }
+            {
+                Renderer::GLDebugGroup group("Effects");
+                DrawEffects(view);
+            }
 
             AddDebugLines(cameraTransform, interpolationFactor);
             const glm::vec2 viewportSize(static_cast<float>(widthInPixels), static_cast<float>(heightInPixels));
 
-            // The line width is given at 100% display scale, like the debug overlay: on a 4K monitor at 200% it doubles.
-            m_debugLineRenderer.Draw(m_debugLines, view, m_renderAssets.shaders.Get(m_systemShaders.debugLines), viewportSize,
-                                     DebugLineWidth * m_window.GetDisplayScale());
+            {
+                Renderer::GLDebugGroup group("Debug lines");
 
-            DrawWeaponViewModel(aspectRatio, view, interpolationFactor);
+                // The line width is given at 100% display scale, like the debug overlay: on a 4K monitor at 200% it doubles.
+                m_debugLineRenderer.Draw(m_debugLines, view, m_renderAssets.shaders.Get(m_systemShaders.debugLines),
+                                         viewportSize, DebugLineWidth * m_window.GetDisplayScale());
+            }
+            {
+                Renderer::GLDebugGroup group("Weapon");
+                DrawWeaponViewModel(aspectRatio, view, interpolationFactor);
+            }
 
             // The game interface over everything (the HUD); it gets the mouse only while the cursor is free (the debug overlay
             // is open).
             m_gameUI.UpdateHUD(m_gameplay, m_registry, viewportSize, deltaTime);
             m_gameUI.Update(viewportSize, !m_isMouseCaptured);
-            m_renderStatistics.drawCallCount +=
-                m_gameUI.Render(viewportSize, m_renderAssets.shaders.Get(m_systemShaders.gameUI));
+            {
+                Renderer::GLDebugGroup group("Game interface");
+                m_renderStatistics.drawCallCount +=
+                    m_gameUI.Render(viewportSize, m_renderAssets.shaders.Get(m_systemShaders.gameUI));
+            }
         }
 
         // The lines of this frame are drawn (or, in a minimized window, dropped); the next frame adds its own.
         m_debugLines.Clear();
 
         // The overlay is drawn last, on top of the game.
-        m_debugOverlay.Draw({
-            .frameStatistics = frameStatistics,
-            .fixedTimestep = m_fixedTimestep,
-            .window = m_window,
-            .frameLimiter = m_frameLimiter,
-            .renderAssets = m_renderAssets,
-            .registry = m_registry,
-            .renderSettings = m_renderSettings,
-            .renderStatistics = m_renderStatistics,
-            .levelStatistics = m_level.GetStatistics(),
-            .isLevelReloadRequested = m_isLevelReloadRequested,
-            .collisionSettings = m_collisionSettings,
-            .cameraCast = m_cameraCast,
-            .collisionBrushCount = m_level.GetCollisionBrushes().size(),
-            .logHistory = *m_logHistory,
-            .audio = m_audio,
-            .gameplay = m_gameplay,
-        });
+        {
+            Renderer::GLDebugGroup group("Debug overlay");
+            m_debugOverlay.Draw({
+                .frameStatistics = frameStatistics,
+                .fixedTimestep = m_fixedTimestep,
+                .window = m_window,
+                .frameLimiter = m_frameLimiter,
+                .renderAssets = m_renderAssets,
+                .registry = m_registry,
+                .renderSettings = m_renderSettings,
+                .renderStatistics = m_renderStatistics,
+                .levelStatistics = m_level.GetStatistics(),
+                .isLevelReloadRequested = m_isLevelReloadRequested,
+                .collisionSettings = m_collisionSettings,
+                .cameraCast = m_cameraCast,
+                .collisionBrushCount = m_level.GetCollisionBrushes().size(),
+                .logHistory = *m_logHistory,
+                .audio = m_audio,
+                .gameplay = m_gameplay,
+            });
+        }
 
         // With V-Sync the driver may wait here for the monitor: the wait gets its own zone, so it is not taken for a slow
         // Render.

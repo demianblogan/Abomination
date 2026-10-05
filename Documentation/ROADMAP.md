@@ -179,6 +179,12 @@ far:
   from the balcony of the chapel hurts nothing): above a safe fall speed the
   landing takes health, with its own sound and a stronger landing dip, like
   Quake (a long fall hurts, a jump down a flight of stairs does not).
+  Profile the cost of a monster: in a Debug build on a laptop, 8 dogs in the
+  chapel give about 80 FPS, 130 with all of them dead. Measure first (each
+  dog traces against every brush several times a tick: movement, ground
+  probes, ledge checks, sight; plus pathfinding and skinning), then cut the
+  biggest part — likely a tree of brushes or grid for traces, fewer probes,
+  less frequent sight checks.
 - **0.6** — pickups spin and bob in place, like in Quake (the `Spin`
   component made for the old demo crates is kept for them).
   Sound mixer in the Audio window of the debug overlay: a volume slider and a

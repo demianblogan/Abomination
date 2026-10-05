@@ -9,16 +9,16 @@
 **A retro first-person shooter inspired by Quake (1996),<br>
 built from scratch with modern C++ and OpenGL 4.6.**
 
-[![C++23](https://img.shields.io/badge/C%2B%2B-23-00599C?style=for-the-badge&logo=cplusplus&logoColor=white)](https://en.cppreference.com/w/cpp/23)
-[![OpenGL 4.6](https://img.shields.io/badge/OpenGL-4.6_Core-5586A4?style=for-the-badge&logo=opengl&logoColor=white)](https://www.khronos.org/opengl/)
-[![SDL3](https://img.shields.io/badge/SDL-3-1D4E89?style=for-the-badge)](https://www.libsdl.org/)
-![Windows](https://img.shields.io/badge/Windows-0078D6?style=for-the-badge&logo=windows&logoColor=white)
+[![C++23](https://img.shields.io/badge/C%2B%2B-23-00599C?logo=cplusplus&logoColor=white)](https://en.cppreference.com/w/cpp/23)
+[![OpenGL 4.6](https://img.shields.io/badge/OpenGL-4.6_Core-5586A4?logo=opengl&logoColor=white)](https://www.khronos.org/opengl/)
+[![SDL3](https://img.shields.io/badge/SDL-3-1D4E89)](https://www.libsdl.org/)
+![Windows x64](https://img.shields.io/badge/platform-Windows%20x64-0078D6)
 <br>
-[![CI](https://img.shields.io/github/actions/workflow/status/demianblogan/Abomination/CI.yml?branch=main&style=flat-square&label=CI&logo=githubactions&logoColor=white)](https://github.com/demianblogan/Abomination/actions/workflows/CI.yml)
-[![Release](https://img.shields.io/github/v/release/demianblogan/Abomination?style=flat-square&label=release&color=brightgreen)](https://github.com/demianblogan/Abomination/releases/latest)
-[![Status](https://img.shields.io/badge/status-early_development-orange?style=flat-square)](Documentation/ROADMAP.md)
-[![Milestone](https://img.shields.io/badge/milestone-0.4_It_Moves-blue?style=flat-square)](Documentation/ROADMAP.md)
-[![License](https://img.shields.io/badge/license-PolyForm_Noncommercial_1.0-lightgrey?style=flat-square)](LICENSE.md)
+[![CI](https://img.shields.io/github/actions/workflow/status/demianblogan/Abomination/CI.yml?branch=main&label=CI&logo=githubactions&logoColor=white)](https://github.com/demianblogan/Abomination/actions/workflows/CI.yml)
+[![Release](https://img.shields.io/github/v/release/demianblogan/Abomination?color=1f6feb)](https://github.com/demianblogan/Abomination/releases/latest)
+[![Status](https://img.shields.io/badge/status-early_development-orange)](Documentation/ROADMAP.md)
+[![Milestone](https://img.shields.io/badge/milestone-0.4_It_Moves-1f6feb)](Documentation/ROADMAP.md)
+[![License](https://img.shields.io/badge/license-PolyForm_Noncommercial_1.0-1f6feb)](LICENSE.md)
 
 [About](#-about) •
 [Features](#-features) •

@@ -438,7 +438,7 @@ namespace Abomination
             }
             {
                 Renderer::GLDebugGroup group("Present");
-                m_sceneFramebuffer.Present(m_renderAssets.shaders.Get(m_systemShaders.present));
+                m_sceneFramebuffer.Present(m_renderAssets.shaders.Get(m_systemShaders.present), m_renderSettings);
             }
 
             // The game interface over everything (the HUD); it gets the mouse only while the cursor is free (the debug overlay

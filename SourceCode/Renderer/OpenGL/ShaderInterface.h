@@ -78,4 +78,8 @@ namespace Abomination::Renderer
     // The texture unit of the HDR picture of the scene: layout(binding = 0) uniform sampler2D uniSceneColor. No vertex
     // inputs: the corners of the triangle over the screen come from gl_VertexID.
     inline constexpr std::uint32_t SceneColorTextureUnit = 0;
+
+    // Uniforms: the exposure as a multiplier (float) and the tone mapping (int, the value of Renderer::ToneMapping).
+    inline constexpr std::uint32_t PresentExposureUniform = 0;
+    inline constexpr std::uint32_t PresentToneMappingUniform = 1;
 }

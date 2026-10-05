@@ -2,6 +2,7 @@
 
 #include "Renderer/OpenGL/GLFramebuffer.h"
 #include "Renderer/OpenGL/GLVertexArray.h"
+#include "Renderer/RenderSettings.h"
 
 #include <glm/vec4.hpp>
 
@@ -27,9 +28,10 @@ namespace Abomination::Renderer
         // window changes (both greater than 0). clearColor: the background, in linear values; the depth is cleared too.
         void Begin(int widthInPixels, int heightInPixels, const glm::vec4& clearColor);
 
-        // Writes the scene onto the screen through program (Present) and leaves the screen bound for what is drawn
-        // over the scene. Only after Begin() in the same frame.
-        void Present(const GLShaderProgram& program) const;
+        // Writes the scene onto the screen through program (Present): multiplied by the exposure, fitted into 0..1 by the
+        // tone mapping of settings, converted into sRGB. Leaves the screen bound for what is drawn over the scene. Only
+        // after Begin() in the same frame.
+        void Present(const GLShaderProgram& program, const RenderSettings& settings) const;
 
     private:
         std::optional<GLFramebuffer> m_framebuffer;

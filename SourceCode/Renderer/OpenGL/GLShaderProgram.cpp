@@ -193,4 +193,9 @@ namespace Abomination::Renderer
         // GLSL has no function for bools: a bool uniform is set as an integer, 0 or 1.
         glProgramUniform1i(m_programID, static_cast<GLint>(location), value ? 1 : 0);
     }
+
+    void GLShaderProgram::SetUniform(std::uint32_t location, int value) const
+    {
+        glProgramUniform1i(m_programID, static_cast<GLint>(location), value);
+    }
 }

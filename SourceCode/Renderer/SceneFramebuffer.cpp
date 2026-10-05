@@ -9,6 +9,7 @@
 #include <glad/gl.h>
 
 #include <cassert>
+#include <cmath>
 
 namespace Abomination::Renderer
 {
@@ -26,7 +27,7 @@ namespace Abomination::Renderer
         ClearFrame(clearColor);
     }
 
-    void SceneFramebuffer::Present(const GLShaderProgram& program) const
+    void SceneFramebuffer::Present(const GLShaderProgram& program, const RenderSettings& settings) const
     {
         PROFILE_ZONE();
         PROFILE_GPU_ZONE("Present");
@@ -42,6 +43,11 @@ namespace Abomination::Renderer
         glDisable(GL_BLEND);
 
         program.Use();
+
+        // Stops become a multiplier: +1 stop = x2, -1 stop = x0.5 (2 to the power of the stops).
+        program.SetUniform(PresentExposureUniform, std::exp2(settings.exposureStops));
+        program.SetUniform(PresentToneMappingUniform, static_cast<int>(settings.toneMapping));
+
         m_framebuffer->BindColorTexture(SceneColorTextureUnit);
         m_emptyVertexArray.Bind();
         glDrawArrays(GL_TRIANGLES, 0, 3);

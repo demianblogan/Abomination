@@ -55,6 +55,9 @@ namespace Abomination
 
         // The width of debug lines in pixels at 100% display scale.
         constexpr float DebugLineWidth = 2.5f;
+
+        // How often a Debug build looks for changed shader files (seconds); a saved shader is used 0.5-1 s later.
+        constexpr float ShaderCheckInterval = 0.5f;
     }
 
     std::expected<Application, std::string> Application::Create(const std::filesystem::path& assetsDirectory,
@@ -189,6 +192,10 @@ namespace Abomination
 
             // What only moves the picture moves every frame, after the ticks of this frame, so it is as smooth as the view.
             UpdateVisuals(frameTimer.GetDeltaTime());
+
+            // A Debug build reads the shaders of the repository: a shader saved in the editor is used at once.
+            if constexpr (Core::IsDebugBuild)
+                ReloadChangedShaders(frameTimer.GetDeltaTime());
 
             frameStatistics.AddFrame(frameTimer.GetDeltaTime(), tickCount);
 
@@ -328,6 +335,19 @@ namespace Abomination
         Gameplay::UpdateShells(m_gameplay, m_registry, eyes, m_level.GetShotBrushes(), m_audio, deltaTime);
         Gameplay::UpdateGibs(m_gameplay, m_registry, m_level.GetShotBrushes(), deltaTime);
         Gameplay::UpdateDamageReaction(m_gameplay, m_registry, m_audio, deltaTime);
+    }
+
+    void Application::ReloadChangedShaders(float deltaTime)
+    {
+        PROFILE_ZONE();
+
+        // Reading the write times of a dozen files is cheap, but not worth doing every frame.
+        m_secondsSinceShaderCheck += deltaTime;
+        if (m_secondsSinceShaderCheck < ShaderCheckInterval)
+            return;
+        m_secondsSinceShaderCheck = 0.0f;
+
+        m_renderAssets.shaders.ReloadChangedPrograms();
     }
 
     void Application::ReloadLevel()

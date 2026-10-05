@@ -11,6 +11,7 @@ set(TEST_SOURCES
     Core/VersionTests.cpp
     Core/Assets/AssetCacheTests.cpp
     Core/Files/FileSystemTests.cpp
+    Core/Files/FileWatcherTests.cpp
     Core/Files/ImageTests.cpp
     Core/Logging/LogHistoryTests.cpp
     Core/Logging/LogTests.cpp

@@ -43,6 +43,8 @@ set(LIBRARY_SOURCES
     Core/Assets/AssetLifetime.h
     Core/Files/FileSystem.h
     Core/Files/FileSystem.cpp
+    Core/Files/FileWatcher.h
+    Core/Files/FileWatcher.cpp
     Core/Files/Image.h
     Core/Files/Image.cpp
     Core/Logging/Log.h

@@ -21,8 +21,12 @@ namespace Abomination::Renderer
             GLint logLength = 0;
             glGetShaderiv(shaderID, GL_INFO_LOG_LENGTH, &logLength);
 
+            // The length counts the zero at the end of the text; the length written does not, so the string is cut to it.
+            // Otherwise the zero would end up in the log file.
             std::string log(static_cast<std::size_t>(logLength), '\0');
-            glGetShaderInfoLog(shaderID, logLength, nullptr, log.data());
+            GLsizei writtenLength = 0;
+            glGetShaderInfoLog(shaderID, logLength, &writtenLength, log.data());
+            log.resize(static_cast<std::size_t>(writtenLength));
 
             return log;
         }
@@ -32,8 +36,11 @@ namespace Abomination::Renderer
             GLint logLength = 0;
             glGetProgramiv(programID, GL_INFO_LOG_LENGTH, &logLength);
 
+            // Cut to the length written, without the zero at the end (see GetShaderInfoLog).
             std::string log(static_cast<std::size_t>(logLength), '\0');
-            glGetProgramInfoLog(programID, logLength, nullptr, log.data());
+            GLsizei writtenLength = 0;
+            glGetProgramInfoLog(programID, logLength, &writtenLength, log.data());
+            log.resize(static_cast<std::size_t>(writtenLength));
 
             return log;
         }

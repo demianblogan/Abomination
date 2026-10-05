@@ -82,6 +82,10 @@ namespace Abomination
         // models, the shells and gibs), so it is as smooth as the view. deltaTime: the length of the frame (seconds).
         void UpdateVisuals(float deltaTime);
 
+        // Hot reload of shaders (Debug builds): every ShaderCheckInterval seconds, the programs whose files changed are
+        // compiled again (see Renderer::ShaderStore::ReloadChangedPrograms). deltaTime: the length of the frame (seconds).
+        void ReloadChangedShaders(float deltaTime);
+
         // Reads the start map again and replaces the loaded level with it: the old entities and Level assets are removed,
         // the new ones created. The camera stays where it is. If the map cannot be read, the old level stays.
         void ReloadLevel();
@@ -152,6 +156,9 @@ namespace Abomination
 
         // The player, the free-fly camera, who of them is controlled and how they move (see Gameplay::GameplayState).
         Gameplay::GameplayState m_gameplay;
+
+        // Time since the last look for changed shader files (see ReloadChangedShaders).
+        float m_secondsSinceShaderCheck = 0.0f;
 
         // The mouse is in relative mode (see Update).
         bool m_isMouseCaptured = false;

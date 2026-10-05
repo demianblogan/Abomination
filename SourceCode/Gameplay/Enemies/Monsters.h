@@ -7,7 +7,6 @@
 #include <entt/entt.hpp>
 #include <glm/vec3.hpp>
 
-#include <cstdint>
 #include <span>
 #include <vector>
 
@@ -85,25 +84,6 @@ namespace Abomination::Gameplay
         Core::Random random;
     };
 
-    // Component of a dead monster: its body lies where it died, in the last pose of its death clip. Characters walk
-    // through it, shots still hit it. Only the newest bodies are kept (GameplayState::maximumCorpses): an older one
-    // sinks into the floor and is gone.
-    struct Corpse
-    {
-        // The order of the deaths: the smallest number is the oldest body.
-        std::uint64_t order = 0;
-
-        // How far it has sunk into the floor (meters), once it sinks.
-        bool isSinking = false;
-        float sunkDepth = 0.0f;
-
-        // How far its box was lowered when it lay down (see LowerCorpse): its model is drawn that much higher.
-        float raise = 0.0f;
-    };
-
-    // How fast an old body sinks into the floor: through its whole height in about a second.
-    inline constexpr float CorpseSinkSpeed = 0.8f;
-
     // Creates a monster at every start the game knows (monster_dog); other class names are logged and skipped.
     [[nodiscard]] std::vector<entt::entity> SpawnMonsters(entt::registry& registry, Renderer::RenderAssets& assets,
                                                           std::span<const World::MonsterStart> starts);
@@ -112,12 +92,11 @@ namespace Abomination::Gameplay
     void DestroyMonsters(entt::registry& registry, std::span<const entt::entity> monsters);
 
     // Once per tick: first the dogs with no health left (killed by a shot) die: they yelp, play their death clip and
-    // become bodies (see Corpse); the bodies fall, slide when shot, and the oldest sink when there are too many. Then
-    // every dog perceives the player (sight, the sound of shots, being hurt), decides what to do (see UpdateDogMind) and
-    // does it: moves through the level like a character (sliding along walls, up steps, falling), turns, plays the clip
-    // of its state and bites; it barks, bites, lands and yelps with the sounds of state.dogSounds. state.dogSettings
-    // tunes all dogs.
-    // brushes are what the dogs walk on and against (clip included), sightBrushes what hides the player (no clip),
+    // become bodies, or burst into gibs (see Corpses.h); then the bodies are updated. Then every dog perceives the
+    // player (sight, the sound of shots, being hurt), finds its way, decides what to do (see UpdateDogMind) and does it:
+    // moves through the level like a character (sliding along walls, up steps, falling), turns, plays the clip of its
+    // state and bites; it barks, bites, lands and yelps with the sounds of state.dogSounds. state.dogSettings tunes all
+    // dogs. brushes are what the dogs walk on and against (clip included), sightBrushes what hides the player (no clip),
     // navMesh where they find their way around walls (none: straight at the player).
     void UpdateMonsters(GameplayState& state, entt::registry& registry, std::span<const World::CollisionBrush> brushes,
                         std::span<const World::CollisionBrush> sightBrushes, const Navigation::NavMesh* navMesh,

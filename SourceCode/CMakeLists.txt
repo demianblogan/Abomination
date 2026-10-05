@@ -98,6 +98,8 @@ set(LIBRARY_SOURCES
     Gameplay/Effects/Gibs.cpp
     Gameplay/Effects/Particles.h
     Gameplay/Effects/Particles.cpp
+    Gameplay/Enemies/Corpses.h
+    Gameplay/Enemies/Corpses.cpp
     Gameplay/Enemies/DogMind.h
     Gameplay/Enemies/DogMind.cpp
     Gameplay/Enemies/GroundFit.h

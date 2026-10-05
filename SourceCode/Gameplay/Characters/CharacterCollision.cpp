@@ -1,7 +1,7 @@
 #include "Gameplay/Characters/CharacterCollision.h"
 
 #include "Core/Scene/Transform.h"
-#include "Gameplay/Enemies/Monsters.h"
+#include "Gameplay/Enemies/Corpses.h"
 #include "Physics/CharacterBody.h"
 
 namespace Abomination::Gameplay

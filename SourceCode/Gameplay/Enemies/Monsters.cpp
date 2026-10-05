@@ -7,6 +7,7 @@
 #include "Gameplay/Animation/Animator.h"
 #include "Gameplay/Characters/CharacterCollision.h"
 #include "Gameplay/Characters/Health.h"
+#include "Gameplay/Enemies/Corpses.h"
 #include "Gameplay/Enemies/GroundFit.h"
 #include "Gameplay/GameplayState.h"
 #include "Gameplay/Player/DamageReaction.h"
@@ -196,255 +197,166 @@ namespace Abomination::Gameplay
                 dog.path.erase(dog.path.begin());
             return dog.path[1];
         }
-        // A dead dog lies flat: its box is lowered to half its height, the bottom where it was, so shots above the body
-        // pass over it. Tells how far the middle of the box went down: the model is drawn that much higher, where it was.
-        float LowerCorpse(entt::registry& registry, entt::entity entity)
+
+        // What the player is, for every dog this tick: where, whether they live, their eyes, and their weapon (shots).
+        struct PlayerView
         {
-            Physics::CharacterBody& body = registry.get<Physics::CharacterBody>(entity);
-            const auto lowered = static_cast<float>(body.halfExtents.y * 0.5);
-            body.halfExtents.y *= 0.5;
-            registry.get<Core::Transform>(entity).position.y -= lowered;
-            registry.get<Core::PreviousTransform>(entity).value.position.y -= lowered;
-            return lowered;
-        }
-
-        // A body (alive a moment ago, or already lying) that took enough damage beyond death bursts into gibs, flying
-        // away from shotFrom (the eyes of the player, who shot it), and is gone. Tells whether it burst.
-        bool BurstIfTornApart(GameplayState& state, entt::registry& registry, Audio::AudioEngine& audio, entt::entity entity,
-                              const glm::vec3& shotFrom)
-        {
-            const Health* health = registry.try_get<Health>(entity);
-            if (health == nullptr || health->overkill < state.gibs.settings.burstDamage)
-                return false;
-
-            const glm::vec3 center = registry.get<Core::Transform>(entity).position;
-            const glm::vec3 halfExtents(registry.get<Physics::CharacterBody>(entity).halfExtents);
-            BurstIntoGibs(state, registry, audio, center, halfExtents, center - shotFrom);
-            registry.destroy(entity);
-            return true;
-        }
-
-        // The bodies of the dead: they fall and slide (a shot pushes them) through the level, but not against
-        // characters; when there are more than state.maximumCorpses, the oldest sink into the floor and are gone.
-        void UpdateCorpses(GameplayState& state, entt::registry& registry, std::span<const World::CollisionBrush> brushes,
-                           Audio::AudioEngine& audio, const glm::vec3& shotFrom, float tickDuration)
-        {
-            // Bodies shot to pieces burst.
-            std::vector<entt::entity> corpseEntities;
-            for (const auto [entity, corpse] : registry.view<const Corpse>().each())
-                corpseEntities.push_back(entity);
-            for (const entt::entity entity : corpseEntities)
-                static_cast<void>(BurstIfTornApart(state, registry, audio, entity, shotFrom));
-
-            // Too many bodies: the oldest ones that do not sink yet start to. A sinking body takes no more shots.
-            std::vector<std::pair<std::uint64_t, entt::entity>> lying;
-            for (const auto [entity, corpse] : registry.view<const Corpse>().each())
-                if (!corpse.isSinking)
-                    lying.emplace_back(corpse.order, entity);
-            const auto excess = static_cast<std::ptrdiff_t>(lying.size()) - std::max(state.maximumCorpses, 0);
-            if (excess > 0)
-            {
-                std::ranges::sort(lying);
-                for (std::ptrdiff_t index = 0; index < excess; ++index)
-                {
-                    const entt::entity entity = lying[static_cast<std::size_t>(index)].second;
-                    registry.get<Corpse>(entity).isSinking = true;
-                    registry.remove<Health>(entity);
-                }
-            }
-
-            // A body lies still: no wish to move, and friction stops a slide.
-            Physics::MovementSettings movement = state.movementSettings;
-            movement.maxSpeed = 0.0f;
-
-            std::vector<entt::entity> gone;
-            const auto corpses = registry.view<Corpse, Core::Transform, Physics::CharacterBody, GroundFit>();
-            for (const auto [entity, corpse, transform, body, fit] : corpses.each())
-            {
-                Physics::UpdateCharacter(body, transform, brushes, state.physicsSettings, movement, {}, tickDuration);
-
-                // Drawn where it lay down (the fit to the ground of its last moment alive), lower as it sinks; gone once
-                // its whole body is under the floor.
-                const float depthBefore = corpse.sunkDepth;
-                if (corpse.isSinking)
-                    corpse.sunkDepth += CorpseSinkSpeed * tickDuration;
-                registry.replace<Renderer::DrawOffset>(entity, Renderer::DrawOffset{
-                    .offset = glm::vec3(0.0f, fit.offset + corpse.raise - corpse.sunkDepth, 0.0f),
-                    .previousOffset = glm::vec3(0.0f, fit.offset + corpse.raise - depthBefore, 0.0f),
-                    .pitch = fit.pitch,
-                    .previousPitch = fit.pitch,
-                });
-                if (corpse.sunkDepth > 2.0f * (static_cast<float>(body.halfExtents.y) + corpse.raise))
-                    gone.push_back(entity);
-            }
-            registry.destroy(gone.begin(), gone.end());
-        }
-    }
-
-    std::vector<entt::entity> SpawnMonsters(entt::registry& registry, Renderer::RenderAssets& assets,
-                                            std::span<const World::MonsterStart> starts)
-    {
-        std::vector<entt::entity> monsters;
-        for (const World::MonsterStart& start : starts)
-        {
-            if (start.className == "monster_dog")
-                monsters.push_back(SpawnDog(registry, assets, start));
-            else
-                Core::Log::Write(LogCategory::World, LogLevel::Warning, "Unknown monster {} skipped", start.className);
-        }
-        return monsters;
-    }
-
-    void DestroyMonsters(entt::registry& registry, std::span<const entt::entity> monsters)
-    {
-        for (const entt::entity entity : monsters)
-            if (registry.valid(entity))
-                registry.destroy(entity);
-    }
-
-    void UpdateMonsters(GameplayState& state, entt::registry& registry, std::span<const World::CollisionBrush> brushes,
-                        std::span<const World::CollisionBrush> sightBrushes, const Navigation::NavMesh* navMesh,
-                        Audio::AudioEngine& audio, float tickDuration)
-    {
-        // What every dog can perceive of the player: where they are, whether they live, and the shots of their weapon.
-        const Core::Transform* player = registry.try_get<Core::Transform>(state.player);
-        if (player == nullptr)
-            return;
-        const Health* playerHealth = registry.try_get<Health>(state.player);
-        const Weapon* weapon = registry.try_get<Weapon>(state.player);
-        const glm::vec3 playerEyes = player->position + glm::vec3(0.0f, PlayerEyeHeight, 0.0f);
+            const Core::Transform& transform;
+            bool isAlive = true;
+            glm::vec3 eyes{0.0f};
+            glm::vec3 feet{0.0f};
+            const Weapon* weapon = nullptr;
+        };
 
         // The dogs killed since the last tick (a shot took all their health) die. A blow that left enough over tears
         // the dog apart at once (gibs); otherwise a yelp where it was, its death clip, and it is a dog no more but a
-        // body (see Corpse).
-        std::vector<entt::entity> killed;
-        for (const auto [entity, dog, health] : registry.view<const Dog, const Health>().each())
-            if (health.current <= 0.0f)
-                killed.push_back(entity);
-        for (const entt::entity entity : killed)
+        // body (see Corpses.h).
+        void KillDogs(GameplayState& state, entt::registry& registry, Audio::AudioEngine& audio, const glm::vec3& shotFrom)
         {
-            if (BurstIfTornApart(state, registry, audio, entity, playerEyes))
-                continue;
+            std::vector<entt::entity> killed;
+            for (const auto [entity, dog, health] : registry.view<const Dog, const Health>().each())
+                if (health.current <= 0.0f)
+                    killed.push_back(entity);
 
-            audio.Play(state.dogSounds.death, registry.get<Core::Transform>(entity).position);
-            registry.remove<Dog>(entity);
-            registry.emplace<Corpse>(entity, Corpse{.order = state.nextCorpseOrder++, .raise = LowerCorpse(registry, entity)});
+            for (const entt::entity entity : killed)
+            {
+                if (BurstIfTornApart(state, registry, audio, entity, shotFrom))
+                    continue;
 
-            Animator& animator = registry.get<Animator>(entity);
-            animator.speed = 1.0f;
-            PlayAnimation(animator, "Death", 0.1f);
+                audio.Play(state.dogSounds.death, registry.get<Core::Transform>(entity).position);
+                registry.remove<Dog>(entity);
+                LayDownCorpse(state, registry, entity);
+
+                Animator& animator = registry.get<Animator>(entity);
+                animator.speed = 1.0f;
+                PlayAnimation(animator, "Death", 0.1f);
+            }
         }
-        UpdateCorpses(state, registry, brushes, audio, playerEyes, tickDuration);
 
-        for (const auto [entity, dog, transform, body] : registry.view<Dog, Core::Transform, Physics::CharacterBody>().each())
+        // What the dog perceives of the player this tick: where they are and whether they live, a line of sight from its
+        // eyes to theirs (through the level only: other characters do not hide the player), the shots of their weapon
+        // since the last tick, its own health lost, and whether it was blocked.
+        DogPerception PerceivePlayer(Dog& dog, const Core::Transform& transform, float health, const PlayerView& player,
+                                     std::span<const World::CollisionBrush> sightBrushes, float gravity)
         {
-            const float health = registry.get<Health>(entity).current;
             DogPerception perception{
                 .position = transform.position,
                 .forward = transform.rotation * Core::LocalForward,
                 .home = dog.home,
-                .playerPosition = player->position,
-                .isPlayerAlive = playerHealth == nullptr || playerHealth->current > 0.0f,
+                .playerPosition = player.transform.position,
+                .isPlayerAlive = player.isAlive,
                 .wasHurt = health < dog.lastHealth,
                 .isBlocked = dog.isBlocked,
-                .gravity = state.physicsSettings.gravity,
+                .gravity = gravity,
             };
             dog.lastHealth = health;
 
-            // Sight: a thin trace from its eyes (a little above the middle of its body) to the player's, through the
-            // level only (other characters do not hide the player).
+            // Its eyes are a little above the middle of its body.
             const glm::vec3 dogEyes = transform.position + glm::vec3(0.0f, static_cast<float>(DogHalfExtents.y) * 0.6f, 0.0f);
-            const World::TraceResult sight = World::TraceBox(sightBrushes, glm::dvec3(dogEyes), glm::dvec3(playerEyes),
-                                                             glm::dvec3(0.01));
+            const World::TraceResult sight =
+                World::TraceBox(sightBrushes, glm::dvec3(dogEyes), glm::dvec3(player.eyes), glm::dvec3(0.01));
             perception.hasLineOfSight = sight.fraction >= 1.0 && !sight.startsInSolid;
 
-            if (weapon != nullptr && dog.lastShotCount < 0)
-                dog.lastShotCount = weapon->shotCount;
-            if (weapon != nullptr && weapon->shotCount != dog.lastShotCount)
+            if (player.weapon != nullptr && dog.lastShotCount < 0)
+                dog.lastShotCount = player.weapon->shotCount;
+            if (player.weapon != nullptr && player.weapon->shotCount != dog.lastShotCount)
             {
                 perception.hasShotBeenFired = true;
-                perception.shotPosition = weapon->lastShotStart;
-                dog.lastShotCount = weapon->shotCount;
+                perception.shotPosition = player.weapon->lastShotStart;
+                dog.lastShotCount = player.weapon->shotCount;
             }
+            return perception;
+        }
 
-            // Its way around walls: towards the player in a chase, towards its target on a patrol (feet to feet: the
-            // navmesh lies on the floor).
-            const glm::vec3 dogFeet = transform.position - glm::vec3(0.0f, static_cast<float>(DogHalfExtents.y), 0.0f);
+        // Its way around walls (feet to feet: the navmesh lies on the floor): towards the player in a chase, towards its
+        // target on a patrol; whether it stands where it can get no closer; how much higher the player stands.
+        void FindDogWay(Dog& dog, const glm::vec3& dogFeet, const PlayerView& player, const Navigation::NavMesh* navMesh,
+                        float tickDuration, DogPerception& perception)
+        {
             std::optional<glm::vec3> goalFeet;
             if (dog.mind.state == DogState::Chase)
-                goalFeet = player->position - glm::vec3(0.0f, static_cast<float>(World::PlayerHalfExtents.y), 0.0f);
+                goalFeet = player.feet;
             else if (dog.mind.state == DogState::Patrol)
                 goalFeet = dog.mind.patrolTarget - glm::vec3(0.0f, static_cast<float>(DogHalfExtents.y), 0.0f);
             perception.wayPoint = FindWayPoint(dog, dogFeet, goalFeet, navMesh, tickDuration);
+
             // At the end of a path that cannot reach the player: it can get no closer, and waits there.
             glm::vec2 toPathEnd(0.0f);
             if (!dog.path.empty())
                 toPathEnd = glm::vec2(dog.path.back().x - dogFeet.x, dog.path.back().z - dogFeet.z);
             perception.cannotGetCloser = dog.isPathShort && glm::length(toPathEnd) < WaitDistance;
-            perception.playerFeetAbove = player->position.y - static_cast<float>(World::PlayerHalfExtents.y) - dogFeet.y;
+            perception.playerFeetAbove = player.feet.y - dogFeet.y;
+        }
 
-            const DogState stateBefore = dog.mind.state;
-            // A frozen dog (the Enemies window) stands where it is and decides nothing.
-            const DogDecision decision = state.areMonstersFrozen
-                                             ? DogDecision{}
-                                             : UpdateDogMind(dog.mind, perception, state.dogSettings, tickDuration, dog.random);
+        // After the mind changed its state: a new chase or patrol finds its way at once, and a new patrol goes to a point
+        // of the navmesh around where the dog appeared, one it can walk to (instead of anywhere around it, perhaps inside
+        // a wall). The change is written to the log at Trace level (seen in the console with Trace checked).
+        void OnDogStateChanged(Dog& dog, entt::entity entity, DogState stateBefore, const DogPerception& perception,
+                               const DogSettings& settings, const Navigation::NavMesh* navMesh)
+        {
+            dog.path.clear();
+            dog.repathTimer = 0.0f;
 
-            // A new patrol goes to a point of the navmesh around where the dog appeared, one it can walk to, instead of
-            // anywhere around it (perhaps inside a wall). A new chase or patrol finds its way at once.
-            if (dog.mind.state != stateBefore)
-            {
-                dog.path.clear();
-                dog.repathTimer = 0.0f;
-            }
-            if (dog.mind.state == DogState::Patrol && stateBefore != DogState::Patrol && navMesh != nullptr)
+            if (dog.mind.state == DogState::Patrol && navMesh != nullptr)
             {
                 const glm::vec3 homeFeet = dog.home - glm::vec3(0.0f, static_cast<float>(DogHalfExtents.y), 0.0f);
                 const std::optional<glm::vec3> target = navMesh->FindRandomPointAround(
-                    homeFeet, state.dogSettings.patrolRadius, [&dog] { return dog.random.GetFloat(0.0f, 1.0f); });
+                    homeFeet, settings.patrolRadius, [&dog] { return dog.random.GetFloat(0.0f, 1.0f); });
                 if (target.has_value())
                     dog.mind.patrolTarget = *target + glm::vec3(0.0f, static_cast<float>(DogHalfExtents.y), 0.0f);
             }
 
-            // What it decides, for the log at Trace level (seen in the console with Trace checked).
-            if (dog.mind.state != stateBefore)
-            {
-                Core::Log::Write(LogCategory::Gameplay, LogLevel::Trace, "Dog {}: {} -> {} (player {:.1f} m away{}{})",
-                                 static_cast<std::uint32_t>(entity), DogStateNames[static_cast<std::size_t>(stateBefore)],
-                                 DogStateNames[static_cast<std::size_t>(dog.mind.state)],
-                                 glm::length(perception.playerPosition - perception.position),
-                                 perception.hasLineOfSight ? ", seen" : "", perception.hasShotBeenFired ? ", shot heard" : "");
-            }
+            Core::Log::Write(LogCategory::Gameplay, LogLevel::Trace, "Dog {}: {} -> {} (player {:.1f} m away{}{})",
+                             static_cast<std::uint32_t>(entity), DogStateNames[static_cast<std::size_t>(stateBefore)],
+                             DogStateNames[static_cast<std::size_t>(dog.mind.state)],
+                             glm::length(perception.playerPosition - perception.position),
+                             perception.hasLineOfSight ? ", seen" : "", perception.hasShotBeenFired ? ", shot heard" : "");
+        }
 
-            // It barks when it notices the player, then again and again after short random pauses while it chases
-            // them, like a real dog. It yelps when hit (and still alive: the dead were taken above).
-            const DogSettings& dogSettings = state.dogSettings;
-            const bool barksNow = dog.mind.state == DogState::Alert && stateBefore != DogState::Alert;
+        // It barks when it notices the player, then again and again after short random pauses while it chases them,
+        // like a real dog. It yelps when hit (and still alive: the dead were taken before).
+        void VoiceDog(GameplayState& state, Dog& dog, DogState stateBefore, const DogPerception& perception,
+                      const glm::vec3& position, Audio::AudioEngine& audio, float tickDuration)
+        {
+            const DogSettings& settings = state.dogSettings;
+            const bool noticesNow = dog.mind.state == DogState::Alert && stateBefore != DogState::Alert;
             dog.barkTimer -= tickDuration;
-            if (barksNow || (dog.mind.state == DogState::Chase && dog.barkTimer <= 0.0f))
+            if (noticesNow || (dog.mind.state == DogState::Chase && dog.barkTimer <= 0.0f))
             {
-                audio.Play(state.dogSounds.bark, transform.position);
-                dog.barkTimer = dog.random.GetFloat(dogSettings.barkIntervalMinimum, dogSettings.barkIntervalMaximum);
+                audio.Play(state.dogSounds.bark, position);
+                dog.barkTimer = dog.random.GetFloat(settings.barkIntervalMinimum, settings.barkIntervalMaximum);
             }
             if (perception.wasHurt)
-                audio.Play(state.dogSounds.hurt, transform.position);
+                audio.Play(state.dogSounds.hurt, position);
+        }
 
-            // It turns to where it goes or looks, no faster than its turn speed.
-            if (glm::dot(decision.faceDirection, decision.faceDirection) > 1e-6f)
-            {
-                const glm::quat wanted = glm::quatLookAt(decision.faceDirection, Core::WorldUp);
-                const float angle = glm::angle(wanted * glm::inverse(transform.rotation));
-                const float step = decision.turnSpeed * tickDuration;
-                transform.rotation = angle <= step ? wanted : glm::slerp(transform.rotation, wanted, step / angle);
-            }
+        // It turns to where it goes or looks, no faster than its turn speed.
+        void TurnDog(Core::Transform& transform, const DogDecision& decision, float tickDuration)
+        {
+            if (glm::dot(decision.faceDirection, decision.faceDirection) <= 1e-6f)
+                return;
 
-            // The leap is a push on the body. Walking and running go forward, where it faces now: a dog never moves
-            // sideways, it turns and runs where it looks. A push up takes the body off the ground, like a jump: on the
-            // ground the movement would lay the push flat along the floor.
+            const glm::quat wanted = glm::quatLookAt(decision.faceDirection, Core::WorldUp);
+            const float angle = glm::angle(wanted * glm::inverse(transform.rotation));
+            const float step = decision.turnSpeed * tickDuration;
+            transform.rotation = angle <= step ? wanted : glm::slerp(transform.rotation, wanted, step / angle);
+        }
+
+        // Moves the dog through the level as decided: a leap is a push on the body; walking and running go forward,
+        // where it faces now (a dog never moves sideways, it turns and runs where it looks). Then it notices whether it
+        // landed, whether it is blocked, and on a patrol it steps back from the edge of a drop.
+        void MoveDog(GameplayState& state, entt::registry& registry, entt::entity entity, Dog& dog, Core::Transform& transform,
+                     Physics::CharacterBody& body, const DogDecision& decision, std::span<const World::CollisionBrush> brushes,
+                     Audio::AudioEngine& audio, float tickDuration)
+        {
+            // A push up takes the body off the ground, like a jump: on the ground the movement would lay the push flat
+            // along the floor.
             if (body.isOnGround && glm::dot(decision.impulse, decision.impulse) > 0.0f)
             {
                 body.velocity += decision.impulse;
                 body.isOnGround = decision.impulse.y <= 0.0f;
             }
+
             Physics::MovementSettings movement = state.movementSettings;
             movement.maxSpeed = decision.speed;
             // Below stopSpeed (3.1 m/s) friction takes at least friction × stopSpeed = 12.5 m/s every second, while a
@@ -455,6 +367,7 @@ namespace Abomination::Gameplay
                 movement.stopSpeed = glm::min(movement.stopSpeed, decision.speed);
             glm::vec3 forward = transform.rotation * Core::LocalForward;
             forward.y = 0.0f;
+            const glm::vec3 run = decision.speed > 0.0f ? glm::normalize(forward) * decision.speed : glm::vec3(0.0f);
             const Physics::MoveCommand command{
                 .wishDirection = decision.speed > 0.0f ? glm::normalize(forward) : glm::vec3(0.0f),
             };
@@ -464,10 +377,8 @@ namespace Abomination::Gameplay
             // died away slowly after every turn, and a chasing dog drifted like on ice. The movement code below still
             // collides, steps and slopes it; friction and acceleration change it only by a hair now.
             if (body.isOnGround)
-            {
-                const glm::vec3 run = decision.speed > 0.0f ? glm::normalize(forward) * decision.speed : glm::vec3(0.0f);
                 body.velocity = glm::vec3(run.x, body.velocity.y, run.z);
-            }
+
             const glm::vec3 positionBefore = transform.position;
             const std::vector<World::CollisionBrush> characters = GatherCharacterBoxes(registry, entity);
             const bool wasOnGround = body.isOnGround;
@@ -502,9 +413,106 @@ namespace Abomination::Gameplay
                 dog.blockedTime = BlockedTime;
                 dog.isBlocked = true;
             }
+        }
 
-            // The clip of what it does, cross-fading from the one before, at the speed of the state. A frozen dog leaves
-            // its animation alone, so any clip can be picked, paused and scrubbed in the Animation window.
+        // The model on the ground under its paws: the heights in front of and behind its middle, along where it faces,
+        // looked for within two steps up and down. Two, not one: on a slope the box rests on one of its bottom edges and
+        // hangs over the rest of it, so the ground under the far paws is up to 0.9 m below the box on a 45 degree clip
+        // ramp; within one step it was not found, counted as level with the box, and the dog tilted the wrong way (nose
+        // down going up). A paw over nothing counts as standing at the bottom of the box. In the air, or with the fit off,
+        // the model goes back to the box, untilted. Up a stair the box jumps up at once; the model glides after it.
+        void FitDogToGround(const DogSettings& settings, float stepHeight, entt::registry& registry, entt::entity entity,
+                            const Core::Transform& transform, const Physics::CharacterBody& body,
+                            std::span<const World::CollisionBrush> brushes, float tickDuration)
+        {
+            const float bottom = transform.position.y - static_cast<float>(DogHalfExtents.y);
+            glm::vec3 forward = transform.rotation * Core::LocalForward;
+            forward.y = 0.0f;
+            GroundFitTarget target{.offset = 0.0f, .pitch = 0.0f};
+            if (settings.fitsToGround && body.isOnGround && glm::dot(forward, forward) > 1e-6f)
+            {
+                const glm::vec3 pawOffset = glm::normalize(forward) * settings.pawDistance;
+                const glm::vec3 front = transform.position + pawOffset;
+                const glm::vec3 back = transform.position - pawOffset;
+                const float frontGround = FindGround(brushes, front.x, front.z, bottom, 2.0f * stepHeight).value_or(bottom);
+                const float backGround = FindGround(brushes, back.x, back.z, bottom, 2.0f * stepHeight).value_or(bottom);
+                target = CalculateGroundFitTarget(frontGround, backGround, bottom, settings.pawDistance,
+                                                  settings.maximumTilt, stepHeight);
+            }
+
+            GroundFit& fit = registry.get<GroundFit>(entity);
+            UpdateGroundFit(fit, target, body.steppedUpHeight, settings.heightFollowSpeed, settings.tiltFollowSpeed,
+                            MaximumStepLag, tickDuration);
+            registry.replace<Renderer::DrawOffset>(entity, Renderer::DrawOffset{
+                .offset = glm::vec3(0.0f, fit.offset, 0.0f),
+                .previousOffset = glm::vec3(0.0f, fit.previousOffset, 0.0f),
+                .pitch = fit.pitch,
+                .previousPitch = fit.previousPitch,
+            });
+        }
+    }
+
+    std::vector<entt::entity> SpawnMonsters(entt::registry& registry, Renderer::RenderAssets& assets,
+                                            std::span<const World::MonsterStart> starts)
+    {
+        std::vector<entt::entity> monsters;
+        for (const World::MonsterStart& start : starts)
+        {
+            if (start.className == "monster_dog")
+                monsters.push_back(SpawnDog(registry, assets, start));
+            else
+                Core::Log::Write(LogCategory::World, LogLevel::Warning, "Unknown monster {} skipped", start.className);
+        }
+        return monsters;
+    }
+
+    void DestroyMonsters(entt::registry& registry, std::span<const entt::entity> monsters)
+    {
+        for (const entt::entity entity : monsters)
+            if (registry.valid(entity))
+                registry.destroy(entity);
+    }
+
+    void UpdateMonsters(GameplayState& state, entt::registry& registry, std::span<const World::CollisionBrush> brushes,
+                        std::span<const World::CollisionBrush> sightBrushes, const Navigation::NavMesh* navMesh,
+                        Audio::AudioEngine& audio, float tickDuration)
+    {
+        const Core::Transform* playerTransform = registry.try_get<Core::Transform>(state.player);
+        if (playerTransform == nullptr)
+            return;
+        const Health* playerHealth = registry.try_get<Health>(state.player);
+        const PlayerView player{
+            .transform = *playerTransform,
+            .isAlive = playerHealth == nullptr || playerHealth->current > 0.0f,
+            .eyes = playerTransform->position + glm::vec3(0.0f, PlayerEyeHeight, 0.0f),
+            .feet = playerTransform->position - glm::vec3(0.0f, static_cast<float>(World::PlayerHalfExtents.y), 0.0f),
+            .weapon = registry.try_get<Weapon>(state.player),
+        };
+
+        KillDogs(state, registry, audio, player.eyes);
+        UpdateCorpses(state, registry, brushes, audio, player.eyes, tickDuration);
+
+        for (const auto [entity, dog, transform, body] : registry.view<Dog, Core::Transform, Physics::CharacterBody>().each())
+        {
+            DogPerception perception = PerceivePlayer(dog, transform, registry.get<Health>(entity).current, player,
+                                                      sightBrushes, state.physicsSettings.gravity);
+            const glm::vec3 dogFeet = transform.position - glm::vec3(0.0f, static_cast<float>(DogHalfExtents.y), 0.0f);
+            FindDogWay(dog, dogFeet, player, navMesh, tickDuration, perception);
+
+            // A frozen dog (the Enemies window) stands where it is, decides nothing and leaves its animation alone, so
+            // any clip can be picked, paused and scrubbed in the Animation window.
+            const DogState stateBefore = dog.mind.state;
+            const DogDecision decision = state.areMonstersFrozen
+                                             ? DogDecision{}
+                                             : UpdateDogMind(dog.mind, perception, state.dogSettings, tickDuration, dog.random);
+            if (dog.mind.state != stateBefore)
+                OnDogStateChanged(dog, entity, stateBefore, perception, state.dogSettings, navMesh);
+
+            VoiceDog(state, dog, stateBefore, perception, transform.position, audio, tickDuration);
+            TurnDog(transform, decision, tickDuration);
+            MoveDog(state, registry, entity, dog, transform, body, decision, brushes, audio, tickDuration);
+
+            // The clip of what it does, cross-fading from the one before, at the speed of the state.
             if (!state.areMonstersFrozen)
             {
                 Animator& animator = registry.get<Animator>(entity);
@@ -520,36 +528,8 @@ namespace Abomination::Gameplay
                                           .sourcePosition = transform.position});
             }
 
-            // The model on the ground under its paws: the heights in front of and behind its middle, along where it
-            // faces, looked for within two steps up and down. Two, not one: on a slope the box rests on one of its bottom
-            // edges and hangs over the rest of it, so the ground under the far paws is up to 0.9 m below the box on a
-            // 45 degree clip ramp; within one step it was not found, counted as level with the box, and the dog tilted
-            // the wrong way (nose down going up). A paw over nothing counts as standing at the bottom of the box. In the
-            // air, or with the fit off, the model goes back to the box, untilted.
-            const DogSettings& settings = state.dogSettings;
-            const float bottom = transform.position.y - static_cast<float>(DogHalfExtents.y);
-            GroundFitTarget target{.offset = 0.0f, .pitch = 0.0f};
-            if (settings.fitsToGround && body.isOnGround && glm::dot(forward, forward) > 1e-6f)
-            {
-                const glm::vec3 pawOffset = glm::normalize(forward) * settings.pawDistance;
-                const glm::vec3 front = transform.position + pawOffset;
-                const glm::vec3 back = transform.position - pawOffset;
-                const float frontGround = FindGround(brushes, front.x, front.z, bottom, 2.0f * stepHeight).value_or(bottom);
-                const float backGround = FindGround(brushes, back.x, back.z, bottom, 2.0f * stepHeight).value_or(bottom);
-                target = CalculateGroundFitTarget(frontGround, backGround, bottom, settings.pawDistance,
-                                                  settings.maximumTilt, stepHeight);
-            }
-
-            // Up a stair the box jumps up at once; the model glides after it.
-            GroundFit& fit = registry.get<GroundFit>(entity);
-            UpdateGroundFit(fit, target, body.steppedUpHeight, settings.heightFollowSpeed, settings.tiltFollowSpeed,
-                            MaximumStepLag, tickDuration);
-            registry.replace<Renderer::DrawOffset>(entity, Renderer::DrawOffset{
-                .offset = glm::vec3(0.0f, fit.offset, 0.0f),
-                .previousOffset = glm::vec3(0.0f, fit.previousOffset, 0.0f),
-                .pitch = fit.pitch,
-                .previousPitch = fit.previousPitch,
-            });
+            FitDogToGround(state.dogSettings, state.movementSettings.stepHeight, registry, entity, transform, body, brushes,
+                           tickDuration);
         }
     }
 

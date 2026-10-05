@@ -43,7 +43,7 @@ namespace Abomination::Physics
         return velocity - normal * intoSurface;
     }
 
-    void SlideMove(std::span<const World::CollisionBrush> brushes, glm::dvec3& position, glm::vec3& velocity,
+    void SlideMove(const World::CollisionWorld& world, glm::dvec3& position, glm::vec3& velocity,
                    const glm::dvec3& halfExtents, float deltaTime)
     {
         // The velocity the move started with: if clipping ever turns the box against it, it is stuck in a corner.
@@ -64,7 +64,7 @@ namespace Abomination::Physics
                 break;
 
             const glm::dvec3 end = position + glm::dvec3(velocity) * static_cast<double>(timeLeft);
-            const World::TraceResult trace = World::TraceBox(brushes, position, end, halfExtents);
+            const World::TraceResult trace = World::TraceBox(world, position, end, halfExtents);
 
             // Inside a brush with no way out: do not move at all (the next steps of movement may still get it out).
             if (trace.isStuck)
@@ -154,7 +154,7 @@ namespace Abomination::Physics
         }
     }
 
-    float StepSlideMove(std::span<const World::CollisionBrush> brushes, glm::dvec3& position, glm::vec3& velocity,
+    float StepSlideMove(const World::CollisionWorld& world, glm::dvec3& position, glm::vec3& velocity,
                         const glm::dvec3& halfExtents, float stepHeight, float deltaTime)
     {
         const glm::dvec3 startPosition = position;
@@ -164,15 +164,15 @@ namespace Abomination::Physics
         // 1. The plain move, as if there were no steps.
         glm::dvec3 plainPosition = startPosition;
         glm::vec3 plainVelocity = startVelocity;
-        SlideMove(brushes, plainPosition, plainVelocity, halfExtents, deltaTime);
+        SlideMove(world, plainPosition, plainVelocity, halfExtents, deltaTime);
 
         // 2. The same move lifted by the step height: up (as far as the ceiling allows), across, and down again.
-        const World::TraceResult up = World::TraceBox(brushes, startPosition, startPosition + stepUp, halfExtents);
+        const World::TraceResult up = World::TraceBox(world, startPosition, startPosition + stepUp, halfExtents);
         glm::dvec3 steppedPosition = up.endPosition;
         glm::vec3 steppedVelocity = startVelocity;
-        SlideMove(brushes, steppedPosition, steppedVelocity, halfExtents, deltaTime);
+        SlideMove(world, steppedPosition, steppedVelocity, halfExtents, deltaTime);
 
-        const World::TraceResult down = World::TraceBox(brushes, steppedPosition, steppedPosition - stepUp, halfExtents);
+        const World::TraceResult down = World::TraceBox(world, steppedPosition, steppedPosition - stepUp, halfExtents);
         steppedPosition = down.endPosition;
 
         // Coming down on something too steep to stand on is not a step: keep the plain move.
@@ -237,17 +237,17 @@ namespace Abomination::Physics
         velocity += wishDirection * addedSpeed;
     }
 
-    bool IsOnGround(std::span<const World::CollisionBrush> brushes, const glm::dvec3& position,
+    bool IsOnGround(const World::CollisionWorld& world, const glm::dvec3& position,
                     const glm::dvec3& halfExtents)
     {
-        return FindGroundNormal(brushes, position, halfExtents).has_value();
+        return FindGroundNormal(world, position, halfExtents).has_value();
     }
 
-    std::optional<glm::vec3> FindGroundNormal(std::span<const World::CollisionBrush> brushes, const glm::dvec3& position,
+    std::optional<glm::vec3> FindGroundNormal(const World::CollisionWorld& world, const glm::dvec3& position,
                                               const glm::dvec3& halfExtents)
     {
         const glm::dvec3 below = position - glm::dvec3(0.0, GroundCheckDistance, 0.0);
-        const World::TraceResult trace = World::TraceBox(brushes, position, below, halfExtents);
+        const World::TraceResult trace = World::TraceBox(world, position, below, halfExtents);
         if (trace.fraction >= 1.0 || trace.hitNormal.y < MinimumGroundNormalY)
             return std::nullopt;
 
@@ -269,14 +269,14 @@ namespace Abomination::Physics
         velocity += wishDirection * addedSpeed;
     }
 
-    bool IsInSolid(std::span<const World::CollisionBrush> brushes, const glm::dvec3& position,
+    bool IsInSolid(const World::CollisionWorld& world, const glm::dvec3& position,
                    const glm::dvec3& halfExtents)
     {
         // A trace that does not move at all tells whether the box is inside a brush where it stands.
-        return World::TraceBox(brushes, position, position, halfExtents).startsInSolid;
+        return World::TraceBox(world, position, position, halfExtents).startsInSolid;
     }
 
-    bool PushOutOfSolid(std::span<const World::CollisionBrush> brushes, glm::dvec3& position,
+    bool PushOutOfSolid(const World::CollisionWorld& world, glm::dvec3& position,
                         const glm::dvec3& halfExtents)
     {
         // Distances from an eighth of a unit (4 mm) to a whole unit (3 cm), the smallest first, so the box moves as little
@@ -293,7 +293,7 @@ namespace Abomination::Physics
                             continue;
 
                         const glm::dvec3 candidate = position + glm::dvec3(x, y, z) * distance;
-                        if (!IsInSolid(brushes, candidate, halfExtents))
+                        if (!IsInSolid(world, candidate, halfExtents))
                         {
                             position = candidate;
                             return true;
@@ -303,7 +303,7 @@ namespace Abomination::Physics
         return false;
     }
 
-    void UpdateCharacter(CharacterBody& body, Core::Transform& transform, std::span<const World::CollisionBrush> brushes,
+    void UpdateCharacter(CharacterBody& body, Core::Transform& transform, const World::CollisionWorld& world,
                          const PhysicsSettings& physicsSettings, const MovementSettings& movementSettings,
                          const MoveCommand& command, float deltaTime)
     {
@@ -314,14 +314,17 @@ namespace Abomination::Physics
         //     next time it happens there is data to reproduce it and turn it into a test;
         //   - the box is pushed out by a few millimeters if possible, so the player is not stuck forever meanwhile.
         glm::dvec3 startPosition(transform.position);
-        const bool isInSolid = IsInSolid(brushes, startPosition, body.halfExtents);
+        const bool isInSolid = IsInSolid(world, startPosition, body.halfExtents);
         if (isInSolid && !body.isInSolid)
         {
-            // Which brushes the box overlaps, by trying them one at a time.
+            // Which brushes of the level (by index) and which characters the box overlaps, by trying them one at a time.
             std::string brushIndices;
-            for (std::size_t index = 0; index < brushes.size(); ++index)
-                if (IsInSolid(brushes.subspan(index, 1), startPosition, body.halfExtents))
+            for (std::size_t index = 0; index < world.level.size(); ++index)
+                if (IsInSolid(world.level.subspan(index, 1), startPosition, body.halfExtents))
                     brushIndices += std::format("{} ", index);
+            for (std::size_t index = 0; index < world.characters.size(); ++index)
+                if (IsInSolid(world.characters.subspan(index, 1), startPosition, body.halfExtents))
+                    brushIndices += std::format("character{} ", index);
 
             Core::Log::Write(Core::LogCategory::Physics, Core::LogLevel::Warning,
                              "Character inside brush(es) {}at ({:.4f}, {:.4f}, {:.4f}), velocity ({:.3f}, {:.3f}, {:.3f}), "
@@ -331,7 +334,7 @@ namespace Abomination::Physics
         }
         body.isInSolid = isInSolid;
 
-        if (isInSolid && PushOutOfSolid(brushes, startPosition, body.halfExtents))
+        if (isInSolid && PushOutOfSolid(world, startPosition, body.halfExtents))
         {
             Core::Log::Write(Core::LogCategory::Physics, Core::LogLevel::Info,
                              "Character pushed out of the brush to ({:.4f}, {:.4f}, {:.4f})", startPosition.x,
@@ -400,21 +403,21 @@ namespace Abomination::Physics
         body.steppedUpHeight = 0.0f;
         const bool canStepUp = body.isOnGround || body.velocity.y <= 0.0f;
         if (canStepUp)
-            body.steppedUpHeight = StepSlideMove(brushes, position, body.velocity, body.halfExtents,
+            body.steppedUpHeight = StepSlideMove(world, position, body.velocity, body.halfExtents,
                                                  movementSettings.stepHeight, deltaTime);
         else
-            SlideMove(brushes, position, body.velocity, body.halfExtents, deltaTime);
+            SlideMove(world, position, body.velocity, body.halfExtents, deltaTime);
 
         // Still on the ground: walking down stairs or over the top of a slope, the box stays on it instead of flying a
         // little and landing (the landing sound, the dip of the view, a dog bouncing down a ramp). If there is walkable
         // ground within a step below a box that stood on the ground and did not jump, the box is put down on it. (A jump or
         // a push off the ground, like the leap of a dog, takes the box off the ground before the move.)
         const bool wasOnGround = body.isOnGround;
-        std::optional<glm::vec3> groundNormal = FindGroundNormal(brushes, position, body.halfExtents);
+        std::optional<glm::vec3> groundNormal = FindGroundNormal(world, position, body.halfExtents);
         if (!groundNormal.has_value() && wasOnGround && !command.wantsToJump)
         {
             const glm::dvec3 stepDown(0.0, movementSettings.stepHeight, 0.0);
-            const World::TraceResult down = World::TraceBox(brushes, position, position - stepDown, body.halfExtents);
+            const World::TraceResult down = World::TraceBox(world, position, position - stepDown, body.halfExtents);
             if (down.fraction < 1.0 && !down.startsInSolid && down.hitNormal.y >= MinimumGroundNormalY)
             {
                 position = down.endPosition;

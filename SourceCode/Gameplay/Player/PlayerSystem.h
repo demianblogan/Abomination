@@ -64,7 +64,7 @@ namespace Abomination::Gameplay
     void AddPlayerDebugBox(const GameplayState& state, const entt::registry& registry, float interpolationFactor,
                            Renderer::DebugLines& debugLines);
 
-    // Draws the box of every character other than the player (the target dummies, later enemies): the box they collide
+    // Draws the box of every character other than the player (the dogs): the box they collide
     // with and pellets hit. Shown together with the brush bounds (Draw collider bounds in the Collisions window).
     void AddCharacterDebugBoxes(const GameplayState& state, const entt::registry& registry, float interpolationFactor,
                                 Renderer::DebugLines& debugLines);

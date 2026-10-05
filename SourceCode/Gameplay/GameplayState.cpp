@@ -27,17 +27,6 @@ namespace Abomination::Gameplay
         constexpr std::string_view ShotgunPath = "Models/Weapons/Shotgun.glb";
         constexpr std::string_view ShotgunBoltPartName = "Bolt";
 
-        // Loads a sound event for the whole game (see AudioEngine::LoadSoundEvent) and sets how many copies of it may play at
-        // once. The volumes are tuned in the Audio window of the debug overlay.
-        Audio::SoundEventHandle LoadEvent(Audio::AudioEngine& audio, const std::string& path, int variantCount,
-                                          Audio::SoundGroup group, int maxVoices)
-        {
-            const Audio::SoundEventHandle event =
-                audio.LoadSoundEvent(path, variantCount, group, Core::AssetLifetime::Global);
-            audio.GetSoundEvent(event)->maxVoices = maxVoices;
-            return event;
-        }
-
         // The window of the shotgun that spent shells fly out of: on the right side of its body (the receiver), above the
         // loading gate. The model has no part for the window itself, so it is found from these two.
         glm::vec3 FindShellWindow(const Renderer::Model& model)
@@ -54,6 +43,92 @@ namespace Abomination::Gameplay
                 return glm::vec3(0.0f);
 
             return {body->center.x + body->size.x * 0.5f, body->center.y, loader->center.z};
+        }
+
+        // The sounds of the player.
+        PlayerSounds LoadPlayerSounds(Audio::AudioEngine& audio)
+        {
+            // The feet: one landing at a time, a new one cuts the old one off. The voice of the player (a jump is a short
+            // effort sound, the feet only push off): one cry at a time. The blows and the heart are heard in the body.
+            PlayerSounds sounds;
+            sounds.land = LoadGameSound(audio, "Sounds/Player/Land", 3, Audio::SoundGroup::Effects, 1);
+            sounds.jump = LoadGameSound(audio, "Sounds/Player/Voice/Jump", 3, Audio::SoundGroup::Voice, 1);
+            sounds.hurt = LoadGameSound(audio, "Sounds/Player/Voice/Hurt", 3, Audio::SoundGroup::Voice, 1);
+            sounds.death = LoadGameSound(audio, "Sounds/Player/Voice/Death", 3, Audio::SoundGroup::Voice, 1);
+            sounds.relief = LoadGameSound(audio, "Sounds/Player/Voice/Relief", 3, Audio::SoundGroup::Voice, 1);
+            const Audio::SoundEventHandle meleeHit =
+                LoadGameSound(audio, "Sounds/Player/HitMelee", 1, Audio::SoundGroup::Effects, 2);
+            sounds.hits[static_cast<std::size_t>(DamageKind::Melee)] = meleeHit;
+            sounds.heartbeat = LoadGameSound(audio, "Sounds/Player/Heartbeat", 1, Audio::SoundGroup::Effects, 2);
+
+            // The blow of a melee hit is quieter: the attacker brings its own sound (the bite of a dog), which the blow
+            // and the cry of the player drowned at full volume.
+            audio.GetSoundEvent(meleeHit)->volume = 0.5f;
+
+            // A heart always beats at the same pitch: a changing one does not sound like a heart.
+            audio.GetSoundEvent(sounds.heartbeat)->pitchVariation = 0.0f;
+
+            // GAME OVER: a piece of music, always at its own pitch.
+            sounds.gameOver = LoadGameSound(audio, "Sounds/UI/GameOver", 1, Audio::SoundGroup::Music, 1);
+            audio.GetSoundEvent(sounds.gameOver)->pitchVariation = 0.0f;
+            return sounds;
+        }
+
+        // The sounds of the dogs: every one at most twice at once (two dogs barking together are enough of a pack).
+        DogSounds LoadDogSounds(Audio::AudioEngine& audio)
+        {
+            DogSounds sounds;
+            sounds.bark = LoadGameSound(audio, "Sounds/Enemies/Dog/Bark", 1, Audio::SoundGroup::Effects, 2);
+            sounds.bite = LoadGameSound(audio, "Sounds/Enemies/Dog/Bite", 1, Audio::SoundGroup::Effects, 2);
+            sounds.land = LoadGameSound(audio, "Sounds/Enemies/Dog/Land", 1, Audio::SoundGroup::Effects, 2);
+            sounds.hurt = LoadGameSound(audio, "Sounds/Enemies/Dog/Hurt", 1, Audio::SoundGroup::Effects, 2);
+            sounds.death = LoadGameSound(audio, "Sounds/Enemies/Dog/Death", 1, Audio::SoundGroup::Effects, 2);
+            return sounds;
+        }
+
+        // The shotgun in the hands of the player, for the whole game (the pickups and weapon switching of later versions
+        // will change which model it is), and what it shoots and how it sounds.
+        void GiveShotgun(entt::registry& registry, entt::entity player, Audio::AudioEngine& audio,
+                         Renderer::RenderAssets& renderAssets)
+        {
+            const Renderer::ModelHandle shotgun =
+                renderAssets.LoadModel(std::string(ShotgunPath), Core::AssetLifetime::Global);
+            const Renderer::Model& shotgunModel = renderAssets.models.Get(shotgun);
+            registry.emplace<WeaponViewModel>(player, WeaponViewModel{
+                .model = shotgun,
+                .shaderProgram = renderAssets.shaders.Load("Shaders/TexturedShaded"),
+
+                // The model points along -Z, so its front is the end of the barrel.
+                .muzzle = shotgunModel.front,
+                .shellWindow = FindShellWindow(shotgunModel),
+
+                // The pump, the slide behind it and the bolt in the window (taken out of the body, see
+                // PrepareGameplayModels) move together when the pump is worked; the weapon is turned to the chest around a
+                // point along its length.
+                .pump = {
+                    .partNames = {"Pump_low_Shotgun_0", "Slide_low_Shotgun_0", std::string(ShotgunBoltPartName)},
+                    .modelLength = shotgunModel.size.z,
+                },
+
+                // The hands hold it, as they were posed on it in Blender (see WeaponHands).
+                .hands = {
+                    .model = renderAssets.LoadModel("Models/Weapons/Hands.glb", Core::AssetLifetime::Global),
+                },
+            });
+
+            // One recording of the shot, its pitch changed by up to 5% every shot.
+            Weapon& weapon = registry.emplace<Weapon>(player);
+            weapon.fireSound = LoadGameSound(audio, "Sounds/Weapons/Shotgun/Fire", 1, Audio::SoundGroup::Effects, 2);
+
+            // The click of the trigger when the shells run out.
+            weapon.emptySound = LoadGameSound(audio, "Sounds/Weapons/Shotgun/DryFire", 1, Audio::SoundGroup::Effects, 1);
+
+            // The pump after a shot: one recording of both clacks, back and forward (see PumpSoundBackClackTime).
+            weapon.pumpSound = LoadGameSound(audio, "Sounds/Weapons/Shotgun/Pump", 1, Audio::SoundGroup::Effects, 1);
+
+            // The confirmation that a shot hurt or killed something (temporary sounds from Kenney's Impact Sounds).
+            weapon.hitSound = LoadGameSound(audio, "Sounds/Weapons/Hit", 3, Audio::SoundGroup::Effects, 2);
+            weapon.killSound = LoadGameSound(audio, "Sounds/Weapons/Kill", 3, Audio::SoundGroup::Effects, 2);
         }
     }
 
@@ -84,62 +159,8 @@ namespace Abomination::Gameplay
         const glm::vec3 eyePosition = playerStart.boxCenter + glm::vec3(0.0f, PlayerEyeHeight, 0.0f);
         state.freeFlyCamera = SpawnFreeFlyCamera(registry, eyePosition, playerStart.yaw);
 
-        // The feet: one landing at a time, a new one cuts the old one off. The voice of the player (a jump is a short
-        // effort sound, the feet only push off): one cry at a time. The blows and the heart are heard in the body.
-        PlayerSounds& sounds = state.playerSounds;
-        sounds.land = LoadEvent(audio, "Sounds/Player/Land", 3, Audio::SoundGroup::Effects, 1);
-        sounds.jump = LoadEvent(audio, "Sounds/Player/Voice/Jump", 3, Audio::SoundGroup::Voice, 1);
-        sounds.hurt = LoadEvent(audio, "Sounds/Player/Voice/Hurt", 3, Audio::SoundGroup::Voice, 1);
-        sounds.death = LoadEvent(audio, "Sounds/Player/Voice/Death", 3, Audio::SoundGroup::Voice, 1);
-        sounds.relief = LoadEvent(audio, "Sounds/Player/Voice/Relief", 3, Audio::SoundGroup::Voice, 1);
-        sounds.hits[static_cast<std::size_t>(DamageKind::Melee)] =
-            LoadEvent(audio, "Sounds/Player/HitMelee", 1, Audio::SoundGroup::Effects, 2);
-        sounds.heartbeat = LoadEvent(audio, "Sounds/Player/Heartbeat", 1, Audio::SoundGroup::Effects, 2);
-
-        // The blow of a melee hit is quieter: the attacker brings its own sound (the bite of a dog), which the blow
-        // and the cry of the player drowned at full volume.
-        audio.GetSoundEvent(sounds.hits[static_cast<std::size_t>(DamageKind::Melee)])->volume = 0.5f;
-
-        // The dogs: every sound of a dog at most twice at once (two dogs barking together are enough of a pack).
-        DogSounds& dogSounds = state.dogSounds;
-        dogSounds.bark = LoadEvent(audio, "Sounds/Enemies/Dog/Bark", 1, Audio::SoundGroup::Effects, 2);
-        dogSounds.bite = LoadEvent(audio, "Sounds/Enemies/Dog/Bite", 1, Audio::SoundGroup::Effects, 2);
-        dogSounds.land = LoadEvent(audio, "Sounds/Enemies/Dog/Land", 1, Audio::SoundGroup::Effects, 2);
-        dogSounds.hurt = LoadEvent(audio, "Sounds/Enemies/Dog/Hurt", 1, Audio::SoundGroup::Effects, 2);
-        dogSounds.death = LoadEvent(audio, "Sounds/Enemies/Dog/Death", 1, Audio::SoundGroup::Effects, 2);
-
-        // A heart always beats at the same pitch: a changing one does not sound like a heart.
-        audio.GetSoundEvent(sounds.heartbeat)->pitchVariation = 0.0f;
-
-        // GAME OVER: a piece of music, always at its own pitch.
-        sounds.gameOver = LoadEvent(audio, "Sounds/UI/GameOver", 1, Audio::SoundGroup::Music, 1);
-        audio.GetSoundEvent(sounds.gameOver)->pitchVariation = 0.0f;
-
-
-        // The shotgun in the hands, for the whole game (the pickups and weapon switching of later versions will change
-        // which model it is).
-        const Renderer::ModelHandle shotgun = renderAssets.LoadModel(std::string(ShotgunPath), Core::AssetLifetime::Global);
-        registry.emplace<WeaponViewModel>(state.player, WeaponViewModel{
-            .model = shotgun,
-            .shaderProgram = renderAssets.shaders.Load("Shaders/TexturedShaded"),
-
-            // The model points along -Z, so its front is the end of the barrel.
-            .muzzle = renderAssets.models.Get(shotgun).front,
-            .shellWindow = FindShellWindow(renderAssets.models.Get(shotgun)),
-
-            // The pump, the slide behind it and the bolt in the window (taken out of the body, see PrepareGameplayModels)
-            // move together when the pump is worked; the weapon is turned to the chest around a point along its length.
-            .pump = {
-                .partNames = {"Pump_low_Shotgun_0", "Slide_low_Shotgun_0", std::string(ShotgunBoltPartName)},
-                .modelLength = renderAssets.models.Get(shotgun).size.z,
-            },
-
-            // The hands hold it, as they were posed on it in Blender (see WeaponHands).
-            .hands = {
-                .model = renderAssets.LoadModel("Models/Weapons/Hands.glb", Core::AssetLifetime::Global),
-            },
-        });
-
+        state.playerSounds = LoadPlayerSounds(audio);
+        state.dogSounds = LoadDogSounds(audio);
         state.effects.textures = LoadEffectTextures(renderAssets.textures);
         state.shells = LoadShells(renderAssets, audio);
         state.gibs = LoadGibs(renderAssets, audio);
@@ -153,21 +174,16 @@ namespace Abomination::Gameplay
         registry.emplace<Armor>(state.player);
         Ammo& ammo = registry.emplace<Ammo>(state.player);
         AddAmmo(ammo, AmmoType::Shells, StartingShells);
-
-        // The shotgun itself: what it shoots and how it sounds. One recording, its pitch changed by up to 5% every shot.
-        Weapon& weapon = registry.emplace<Weapon>(state.player);
-        weapon.fireSound = LoadEvent(audio, "Sounds/Weapons/Shotgun/Fire", 1, Audio::SoundGroup::Effects, 2);
-
-        // The click of the trigger when the shells run out.
-        weapon.emptySound = LoadEvent(audio, "Sounds/Weapons/Shotgun/DryFire", 1, Audio::SoundGroup::Effects, 1);
-
-        // The pump after a shot: one recording of both clacks, back and forward (see PumpSoundBackClackTime).
-        weapon.pumpSound = LoadEvent(audio, "Sounds/Weapons/Shotgun/Pump", 1, Audio::SoundGroup::Effects, 1);
-
-        // The confirmation that a shot hurt or killed something (temporary sounds from Kenney's Impact Sounds).
-        weapon.hitSound = LoadEvent(audio, "Sounds/Weapons/Hit", 3, Audio::SoundGroup::Effects, 2);
-        weapon.killSound = LoadEvent(audio, "Sounds/Weapons/Kill", 3, Audio::SoundGroup::Effects, 2);
+        GiveShotgun(registry, state.player, audio, renderAssets);
 
         return state;
+    }
+
+    Audio::SoundEventHandle LoadGameSound(Audio::AudioEngine& audio, const std::string& path, int variantCount,
+                                          Audio::SoundGroup group, int maxVoices)
+    {
+        const Audio::SoundEventHandle event = audio.LoadSoundEvent(path, variantCount, group, Core::AssetLifetime::Global);
+        audio.GetSoundEvent(event)->maxVoices = maxVoices;
+        return event;
     }
 }

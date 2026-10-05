@@ -101,9 +101,7 @@ namespace Abomination::Gameplay
         shells.shaderProgram = renderAssets.shaders.Load("Shaders/TexturedShaded");
 
         // Shells falling one after another may ring together; more than 4 at once is only noise.
-        shells.dropSound = audio.LoadSoundEvent("Sounds/Weapons/Shotgun/ShellDrop", 3, Audio::SoundGroup::Effects,
-                                                Core::AssetLifetime::Global);
-        audio.GetSoundEvent(shells.dropSound)->maxVoices = 4;
+        shells.dropSound = LoadGameSound(audio, "Sounds/Weapons/Shotgun/ShellDrop", 3, Audio::SoundGroup::Effects, 4);
         return shells;
     }
 

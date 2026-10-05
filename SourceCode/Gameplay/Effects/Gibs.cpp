@@ -84,9 +84,7 @@ namespace Abomination::Gameplay
         gibs.shaderProgram = renderAssets.shaders.Load("Shaders/TexturedShaded");
 
         // Two bodies bursting together are enough noise.
-        gibs.burstSound = audio.LoadSoundEvent("Sounds/Enemies/Gib", 1, Audio::SoundGroup::Effects,
-                                               Core::AssetLifetime::Global);
-        audio.GetSoundEvent(gibs.burstSound)->maxVoices = 2;
+        gibs.burstSound = LoadGameSound(audio, "Sounds/Enemies/Gib", 1, Audio::SoundGroup::Effects, 2);
         return gibs;
     }
 

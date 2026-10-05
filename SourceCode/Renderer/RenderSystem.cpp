@@ -2,7 +2,6 @@
 
 #include "Core/Scene/Transform.h"
 #include "Core/Scene/TransformInterpolation.h"
-#include "Renderer/Animation/SkeletonPose.h"
 #include "Renderer/DrawOffset.h"
 #include "Renderer/MeshRenderer.h"
 #include "Renderer/ModelPose.h"
@@ -16,6 +15,7 @@
 #include <glm/geometric.hpp>
 #include <glm/gtc/quaternion.hpp>
 
+#include <algorithm>
 #include <span>
 #include <vector>
 
@@ -67,12 +67,12 @@ namespace Abomination::Renderer
             SkinningBuffer& skinning;
         };
 
-        // Draws one mesh with its texture, placed by modelMatrix and seen through the matrices of the pass. A skinned mesh is
-        // bent by skinningMatrices first (one per joint of its skeleton; drawn unbent without them).
+        // Draws one mesh with its texture, placed by modelMatrix and seen through the matrices of the pass. A skinned mesh
+        // drawn isSkinned is bent by the pose its model uploaded into the skinning buffer (drawn unbent otherwise).
         // In wireframe mode every mesh is drawn with the wireframe shader instead of its own; the texture is still
         // bound, but that shader does not read it.
         void DrawMesh(const MeshPass& pass, ShaderHandle shader, TextureHandle textureHandle, MeshHandle meshHandle,
-                      const glm::mat4& modelMatrix, std::span<const glm::mat4> skinningMatrices = {})
+                      const glm::mat4& modelMatrix, bool isSkinned = false)
         {
             // The handles are turned into objects at the moment of use (see AssetCache::Get).
             const GLShaderProgram& shaderProgram =
@@ -88,10 +88,7 @@ namespace Abomination::Renderer
             shaderProgram.SetUniform(ProjectionUniform, pass.projectionMatrix);
 
             // The uniform stays set in the program until it is set again, so it is set for every mesh, skinned or not.
-            const bool isSkinned = mesh.IsSkinned() && !skinningMatrices.empty();
-            shaderProgram.SetUniform(IsSkinnedUniform, isSkinned);
-            if (isSkinned)
-                pass.skinning.Upload(skinningMatrices);
+            shaderProgram.SetUniform(IsSkinnedUniform, isSkinned && mesh.IsSkinned());
 
             texture.Bind(AlbedoTextureUnit);
             mesh.Draw();
@@ -115,9 +112,10 @@ namespace Abomination::Renderer
             if (pose != nullptr && pose->jointMatrices.size() == model.restJointMatrices.size())
                 jointMatrices = pose->jointMatrices;
 
-            std::vector<glm::mat4> skinningMatrices;
-            if (model.skeleton.has_value())
-                CalculateSkinningMatrices(*model.skeleton, jointMatrices, skinningMatrices);
+            // The pose goes to the video card once for the whole model, before its parts are drawn.
+            const bool hasSkinnedParts = std::ranges::any_of(model.parts, &ModelPart::isSkinned);
+            if (model.skeleton.has_value() && hasSkinnedParts)
+                pass.skinning.UploadPose(*model.skeleton, jointMatrices);
 
             for (const ModelPart& part : model.parts)
             {
@@ -142,7 +140,7 @@ namespace Abomination::Renderer
                         partMatrix = glm::translate(glm::mat4(1.0f), partOffset.offset) * partMatrix;
 
                 DrawMesh(pass, shader, part.texture, part.mesh, placement * partMatrix,
-                         part.isSkinned ? std::span<const glm::mat4>(skinningMatrices) : std::span<const glm::mat4>());
+                         part.isSkinned && model.skeleton.has_value());
             }
         }
     }

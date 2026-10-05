@@ -124,16 +124,13 @@ namespace Abomination::Gameplay
             // It stands idle until its mind tells it otherwise.
             Animator& animator = registry.emplace<Animator>(entity, Animator{
                 .model = model,
-                .segments = CreateClipSegments(assets.models.Get(model)),
+                .segments = FindModelSegments(DogModelPath, assets.models.Get(model)),
             });
-            const auto idle = std::ranges::find(animator.segments, "Idle", &AnimationSegment::name);
-            if (idle != animator.segments.end())
-                animator.current.segment = static_cast<std::size_t>(idle - animator.segments.begin());
+            animator.current.segment = FindSegment(animator, "Idle").value_or(0);
 
             // It dies once: its death clip stops on the last pose, the body lying on the floor.
-            const auto death = std::ranges::find(animator.segments, "Death", &AnimationSegment::name);
-            if (death != animator.segments.end())
-                death->isLooping = false;
+            if (const std::optional<std::size_t> death = FindSegment(animator, "Death"); death.has_value())
+                animator.segments[*death].isLooping = false;
 
             return entity;
         }
@@ -335,9 +332,7 @@ namespace Abomination::Gameplay
 
             Animator& animator = registry.get<Animator>(entity);
             animator.speed = 1.0f;
-            const auto death = std::ranges::find(animator.segments, "Death", &AnimationSegment::name);
-            if (death != animator.segments.end())
-                PlayAnimation(animator, static_cast<std::size_t>(death - animator.segments.begin()), 0.1f);
+            PlayAnimation(animator, "Death", 0.1f);
         }
         UpdateCorpses(state, registry, brushes, audio, playerEyes, tickDuration);
 
@@ -474,9 +469,10 @@ namespace Abomination::Gameplay
                 body.velocity = glm::vec3(run.x, body.velocity.y, run.z);
             }
             const glm::vec3 positionBefore = transform.position;
-            const std::vector<World::CollisionBrush> obstacles = GatherCollisionBrushes(registry, brushes, entity);
+            const std::vector<World::CollisionBrush> characters = GatherCharacterBoxes(registry, entity);
             const bool wasOnGround = body.isOnGround;
-            Physics::UpdateCharacter(body, transform, obstacles, state.physicsSettings, movement, command, tickDuration);
+            Physics::UpdateCharacter(body, transform, World::CollisionWorld(brushes, characters), state.physicsSettings,
+                                     movement, command, tickDuration);
 
             // The paws hit the ground at the end of a leap.
             if (!wasOnGround && body.isOnGround && dog.mind.state == DogState::Leap && dog.mind.hasLeapt)
@@ -513,9 +509,7 @@ namespace Abomination::Gameplay
             {
                 Animator& animator = registry.get<Animator>(entity);
                 animator.speed = decision.animationSpeed;
-                const auto segment = std::ranges::find(animator.segments, decision.animation, &AnimationSegment::name);
-                if (segment != animator.segments.end())
-                    PlayAnimation(animator, static_cast<std::size_t>(segment - animator.segments.begin()), 0.2f);
+                PlayAnimation(animator, decision.animation, 0.2f);
             }
 
             if (decision.bites)

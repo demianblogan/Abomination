@@ -1,5 +1,6 @@
 #include "Gameplay/Enemies/Corpses.h"
 
+#include "Core/Profiling/ProfileZone.h"
 #include "Core/Scene/Transform.h"
 #include "Core/Scene/TransformInterpolation.h"
 #include "Gameplay/Characters/Health.h"
@@ -48,6 +49,8 @@ namespace Abomination::Gameplay
     void UpdateCorpses(GameplayState& state, entt::registry& registry, std::span<const World::CollisionBrush> brushes,
                        Audio::AudioEngine& audio, const glm::vec3& shotFrom, float tickDuration)
     {
+        PROFILE_ZONE();
+
         // Bodies shot to pieces burst (collected first: a burst destroys its entity).
         std::vector<entt::entity> corpseEntities;
         for (const auto [entity, corpse] : registry.view<const Corpse>().each())

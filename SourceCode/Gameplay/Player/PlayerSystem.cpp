@@ -1,6 +1,7 @@
 #include "Gameplay/Player/PlayerSystem.h"
 
 #include "Audio/AudioEngine.h"
+#include "Core/Profiling/ProfileZone.h"
 #include "Core/Scene/Transform.h"
 #include "Core/Scene/TransformInterpolation.h"
 #include "Gameplay/Characters/CharacterCollision.h"
@@ -80,6 +81,8 @@ namespace Abomination::Gameplay
     void UpdatePlayer(GameplayState& state, entt::registry& registry, const Input::ActionStates& actions,
                       std::span<const World::CollisionBrush> brushes, float tickDuration)
     {
+        PROFILE_ZONE();
+
         const Physics::MoveCommand command =
             state.controlMode == ControlMode::Player && !IsPlayerDead(state)
                 ? state.playerController.CreateMoveCommand(registry.get<LookAngles>(state.player), actions)

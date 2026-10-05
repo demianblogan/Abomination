@@ -1,6 +1,7 @@
 #include "Gameplay/Enemies/Monsters.h"
 
 #include "Core/Logging/Log.h"
+#include "Core/Profiling/ProfileZone.h"
 #include "Core/Scene/Name.h"
 #include "Core/Scene/Transform.h"
 #include "Core/Scene/TransformInterpolation.h"
@@ -74,6 +75,8 @@ namespace Abomination::Gameplay
         // start inside it.
         int CountCornersOverDrop(std::span<const World::CollisionBrush> brushes, const glm::vec3& position, float stepHeight)
         {
+            PROFILE_ZONE();
+
             const float bottom = position.y - static_cast<float>(DogHalfExtents.y);
             const float halfX = static_cast<float>(DogHalfExtents.x) - 0.02f;
             const float halfZ = static_cast<float>(DogHalfExtents.z) - 0.02f;
@@ -208,6 +211,8 @@ namespace Abomination::Gameplay
         // body (see Corpses.h).
         void KillDogs(GameplayState& state, entt::registry& registry, Audio::AudioEngine& audio, const glm::vec3& shotFrom)
         {
+            PROFILE_ZONE();
+
             std::vector<entt::entity> killed;
             for (const auto [entity, dog, health] : registry.view<const Dog, const Health>().each())
                 if (health.current <= 0.0f)
@@ -234,6 +239,8 @@ namespace Abomination::Gameplay
         DogPerception PerceivePlayer(Dog& dog, const Core::Transform& transform, float health, const PlayerView& player,
                                      std::span<const World::CollisionBrush> sightBrushes, float gravity)
         {
+            PROFILE_ZONE();
+
             DogPerception perception{
                 .position = transform.position,
                 .forward = transform.rotation * Core::LocalForward,
@@ -268,6 +275,8 @@ namespace Abomination::Gameplay
         void FindDogWay(Dog& dog, const glm::vec3& dogFeet, const PlayerView& player, const Navigation::NavMesh* navMesh,
                         float tickDuration, DogPerception& perception)
         {
+            PROFILE_ZONE();
+
             std::optional<glm::vec3> goalFeet;
             if (dog.mind.state == DogState::Chase)
                 goalFeet = player.feet;
@@ -344,6 +353,8 @@ namespace Abomination::Gameplay
                      Physics::CharacterBody& body, const DogDecision& decision, std::span<const World::CollisionBrush> brushes,
                      Audio::AudioEngine& audio, float tickDuration)
         {
+            PROFILE_ZONE();
+
             // A push up takes the body off the ground, like a jump: on the ground the movement would lay the push flat
             // along the floor.
             if (body.isOnGround && glm::dot(decision.impulse, decision.impulse) > 0.0f)
@@ -420,6 +431,8 @@ namespace Abomination::Gameplay
                             const Core::Transform& transform, const Physics::CharacterBody& body,
                             std::span<const World::CollisionBrush> brushes, float tickDuration)
         {
+            PROFILE_ZONE();
+
             const float bottom = transform.position.y - static_cast<float>(DogHalfExtents.y);
             glm::vec3 forward = transform.rotation * Core::LocalForward;
             forward.y = 0.0f;
@@ -472,6 +485,8 @@ namespace Abomination::Gameplay
                         std::span<const World::CollisionBrush> sightBrushes, const Navigation::NavMesh* navMesh,
                         Audio::AudioEngine& audio, float tickDuration)
     {
+        PROFILE_ZONE();
+
         const Core::Transform* playerTransform = registry.try_get<Core::Transform>(state.player);
         if (playerTransform == nullptr)
             return;

@@ -58,6 +58,9 @@ set(LIBRARY_SOURCES
     Core/Math/Spring.h
     Core/Math/Spring.cpp
     Core/Math/Units.h
+    Core/Profiling/Profiler.h
+    Core/Profiling/Profiler.cpp
+    Core/Profiling/ProfileZone.h
     Core/Scene/Name.h
     Core/Scene/Transform.h
     Core/Scene/Transform.cpp
@@ -229,6 +232,9 @@ set(LIBRARY_SOURCES
     Renderer/OpenGL/GLTexture.cpp
     Renderer/OpenGL/GLVertexArray.h
     Renderer/OpenGL/GLVertexArray.cpp
+    Renderer/OpenGL/GPUProfileZone.h
+    Renderer/OpenGL/GPUProfiling.h
+    Renderer/OpenGL/GPUProfiling.cpp
     Renderer/OpenGL/OpenGLLoader.h
     Renderer/OpenGL/OpenGLLoader.cpp
     Renderer/OpenGL/RenderCommands.h
@@ -324,7 +330,8 @@ target_link_libraries(AbominationCore
         RmlUi::RmlUi          # Only the RmlUi backends (Platform, Renderer) and the game interface (UI) include RmlUi
         SDL3::SDL3            # Only Platform/*.cpp include SDL, no header does
         spdlog::spdlog        # Only Log.cpp includes spdlog, Log.h does not
-        Tracy                 # Only .cpp files include Tracy (zones of the profiler), no header does
+        Tracy                 # Only .cpp files include Tracy, through Core/Profiling/ProfileZone.h (itself included
+                              # only by .cpp files) or Renderer/OpenGL/GPUProfileZone.h
 )
 abomination_set_compiler_options(AbominationCore)
 

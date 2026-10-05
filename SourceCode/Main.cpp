@@ -2,6 +2,7 @@
 #include "Core/BuildConfiguration.h"
 #include "Core/Logging/Log.h"
 #include "Core/Logging/LogHistory.h"
+#include "Core/Profiling/Profiler.h"
 #include "Core/Version.h"
 #include "Platform/SystemServices.h"
 
@@ -68,7 +69,10 @@ int main()
 
     Log::Write(LogCategory::Core, LogLevel::Info, "Abomination {}", GetGameVersionString());
 
+    // The profiler runs while the application lives: its zones measure the start, the main loop and the shutdown.
+    StartProfiler();
     const int exitCode = RunApplication(logHistory);
+    StopProfiler();
 
     Log::Shutdown();
 

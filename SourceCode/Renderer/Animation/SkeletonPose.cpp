@@ -1,5 +1,7 @@
 #include "Renderer/Animation/SkeletonPose.h"
 
+#include "Core/Profiling/ProfileZone.h"
+
 #include <glm/ext/matrix_transform.hpp>
 
 #include <cassert>
@@ -27,6 +29,8 @@ namespace Abomination::Renderer
     void CalculateJointMatrices(const SkeletonData& skeleton, std::span<const JointPose> pose,
                                 std::vector<glm::mat4>& jointMatrices)
     {
+        PROFILE_ZONE();
+
         assert(pose.size() == skeleton.joints.size());
         jointMatrices.resize(skeleton.joints.size());
         for (std::size_t index = 0; index < skeleton.joints.size(); ++index)

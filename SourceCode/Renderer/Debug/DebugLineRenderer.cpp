@@ -1,5 +1,7 @@
 #include "Renderer/Debug/DebugLineRenderer.h"
 
+#include "Core/Profiling/ProfileZone.h"
+#include "Renderer/OpenGL/GPUProfileZone.h"
 #include "Renderer/OpenGL/ShaderInterface.h"
 
 #include <glad/gl.h>
@@ -42,6 +44,9 @@ namespace Abomination::Renderer
     void DebugLineRenderer::Draw(const DebugLines& lines, const View& view, const GLShaderProgram& program,
                                  glm::vec2 viewportSize, float lineWidth)
     {
+        PROFILE_ZONE();
+        PROFILE_GPU_ZONE("Debug lines");
+
         // The strips hidden behind walls first, then the always visible ones, all in one buffer; each pass draws its own
         // range.
         m_stripVertices.clear();

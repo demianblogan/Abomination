@@ -2,6 +2,7 @@
 
 #include "Core/BuildConfiguration.h"
 #include "Core/Logging/Log.h"
+#include "Core/Profiling/ProfileZone.h"
 #include "Core/Scene/Transform.h"
 #include "Core/Scene/TransformInterpolation.h"
 #include "Core/Time/FrameStatistics.h"
@@ -21,6 +22,7 @@
 #include "Platform/SystemServices.h"
 #include "Renderer/Camera/View.h"
 #include "Renderer/OpenGL/DebugOutput.h"
+#include "Renderer/OpenGL/GPUProfiling.h"
 #include "Renderer/OpenGL/OpenGLLoader.h"
 #include "Renderer/OpenGL/RenderCommands.h"
 #include "Renderer/RenderSystem.h"
@@ -30,7 +32,6 @@
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
 #include <glm/vec4.hpp>
-#include <tracy/Tracy.hpp>
 
 #include <chrono>
 #include <span>
@@ -73,6 +74,8 @@ namespace Abomination
 
         if constexpr (Core::IsDebugBuild)
             Renderer::EnableDebugOutput();
+
+        Renderer::StartGPUProfiling();
 
         std::expected<Renderer::ShaderStore, std::string> shaders = Renderer::ShaderStore::Create(assetsDirectory);
         if (!shaders.has_value())
@@ -177,12 +180,12 @@ namespace Abomination
             // 5. With an FPS limit, the frame waits here until it has lasted 1 / limit seconds. The next frame then
             //    starts right on time, and its measured delta time includes this wait.
             {
-                ZoneScopedN("Wait for the FPS limit");
+                PROFILE_ZONE_NAMED("Wait for the FPS limit");
                 Platform::SleepPrecisely(m_frameLimiter.GetWaitTime(frameStartTime, Core::Clock::now()));
             }
 
             // The end of a frame for the Tracy profiler: it cuts its timeline into frames here.
-            FrameMark;
+            PROFILE_FRAME_MARK();
         }
 
         // How long the game really ran, for the log file: when a log ends in a bug, it shows whether it came right after the
@@ -196,7 +199,7 @@ namespace Abomination
 
     void Application::Update()
     {
-        ZoneScoped;
+        PROFILE_ZONE();
 
         if (m_isLevelReloadRequested)
         {
@@ -268,7 +271,7 @@ namespace Abomination
 
     void Application::FixedUpdate(float tickDuration)
     {
-        ZoneScoped;
+        PROFILE_ZONE();
 
         // First of all: remember where every interpolated entity is before this tick moves anything.
         Core::StorePreviousTransforms(m_registry);
@@ -288,7 +291,7 @@ namespace Abomination
 
     void Application::UpdateVisuals(float deltaTime)
     {
-        ZoneScoped;
+        PROFILE_ZONE();
 
         // The dying player's view, the weapon in the hands, the shake and kick of the view.
         Gameplay::UpdatePlayerDeath(m_gameplay, m_registry, m_audio, deltaTime);
@@ -330,7 +333,7 @@ namespace Abomination
 
     void Application::Render(const Core::FrameStatistics& frameStatistics, float deltaTime)
     {
-        ZoneScoped;
+        PROFILE_ZONE();
 
         const int widthInPixels = m_window.GetWidthInPixels();
         const int heightInPixels = m_window.GetHeightInPixels();
@@ -405,13 +408,18 @@ namespace Abomination
         // With V-Sync the driver may wait here for the monitor: the wait gets its own zone, so it is not taken for a slow
         // Render.
         {
-            ZoneScopedN("Swap buffers");
+            PROFILE_ZONE_NAMED("Swap buffers");
             m_window.SwapBuffers();
         }
+
+        // The GPU times of the zones of earlier frames that are ready by now.
+        Renderer::CollectGPUProfiling();
     }
 
     void Application::DrawEffects(const Renderer::View& view)
     {
+        PROFILE_ZONE();
+
         // The see-through things after the solid world: the marks on the walls and the particles.
         m_sprites.Clear();
         Gameplay::AddDecalSprites(m_gameplay.effects, m_sprites);
@@ -423,6 +431,8 @@ namespace Abomination
 
     void Application::AddDebugLines(const Core::Transform& cameraTransform, float interpolationFactor)
     {
+        PROFILE_ZONE();
+
         m_cameraCast =
             World::UpdateCollisionDebug(m_level.GetCollisionBrushes(), m_collisionSettings, cameraTransform, m_debugLines);
 
@@ -446,6 +456,8 @@ namespace Abomination
 
     void Application::DrawWeaponViewModel(float aspectRatio, const Renderer::View& view, float interpolationFactor)
     {
+        PROFILE_ZONE();
+
         auto* weaponViewModel = m_registry.try_get<Gameplay::WeaponViewModel>(m_gameplay.player);
         // Dead, the player lowers the weapon out of sight (see PlayerDeath), then it is not drawn at all.
         const float lowering = Gameplay::CalculateWeaponLowering(m_gameplay.playerDeath);

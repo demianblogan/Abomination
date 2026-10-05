@@ -3,6 +3,7 @@
 #include "Core/Files/FileSystem.h"
 #include "Core/Files/Image.h"
 #include "Core/Logging/Log.h"
+#include "Renderer/OpenGL/GPUProfileZone.h"
 #include "Renderer/OpenGL/ShaderInterface.h"
 
 #include <glad/gl.h>
@@ -110,6 +111,9 @@ namespace Abomination::Renderer
         const auto* geometry = reinterpret_cast<const Geometry*>(geometryHandle);
         if (geometry == nullptr)
             return;
+
+        // One GPU zone per piece of the interface; the Statistics window of the profiler adds them up.
+        PROFILE_GPU_ZONE("Game interface");
 
         const GLTexture* texture = GetTexture(textureHandle);
 

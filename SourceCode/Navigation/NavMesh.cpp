@@ -1,5 +1,7 @@
 #include "Navigation/NavMesh.h"
 
+#include "Core/Profiling/ProfileZone.h"
+
 #include <DetourNavMesh.h>
 #include <DetourNavMeshBuilder.h>
 #include <DetourNavMeshQuery.h>
@@ -196,6 +198,8 @@ namespace Abomination::Navigation
 
     std::vector<glm::vec3> NavMesh::FindPath(const glm::vec3& start, const glm::vec3& end) const
     {
+        PROFILE_ZONE();
+
         const dtQueryFilter filter = CreateFilter();
         dtPolyRef startRef = 0;
         dtPolyRef endRef = 0;
@@ -228,6 +232,8 @@ namespace Abomination::Navigation
 
     bool NavMesh::IsStraightWayClear(const glm::vec3& start, const glm::vec3& end) const
     {
+        PROFILE_ZONE();
+
         const dtQueryFilter filter = CreateFilter();
         dtPolyRef startRef = 0;
         glm::vec3 startOnMesh(0.0f);
@@ -249,6 +255,8 @@ namespace Abomination::Navigation
     std::optional<glm::vec3> NavMesh::FindRandomPointAround(const glm::vec3& center, float radius,
                                                             const std::function<float()>& random) const
     {
+        PROFILE_ZONE();
+
         const dtQueryFilter filter = CreateFilter();
         dtPolyRef centerRef = 0;
         glm::vec3 centerOnMesh(0.0f);

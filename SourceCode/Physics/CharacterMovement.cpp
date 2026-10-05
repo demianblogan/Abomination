@@ -1,6 +1,7 @@
 #include "Physics/CharacterMovement.h"
 
 #include "Core/Logging/Log.h"
+#include "Core/Profiling/ProfileZone.h"
 #include "World/CollisionTrace.h"
 
 #include <glm/common.hpp>
@@ -307,6 +308,8 @@ namespace Abomination::Physics
                          const PhysicsSettings& physicsSettings, const MovementSettings& movementSettings,
                          const MoveCommand& command, float deltaTime)
     {
+        PROFILE_ZONE();
+
         // Added after the player got stuck at a wall of the test map once (2026-09-27): the box was not visibly in the
         // wall, but could not move in any direction, and walking into the same place again did not repeat it. A box that
         // starts a tick inside a brush makes every trace fail, so it cannot move until it is out. Two things happen then:

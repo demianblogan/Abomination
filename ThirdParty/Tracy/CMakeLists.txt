@@ -21,6 +21,8 @@ if(ABOMINATION_PROFILING)
         TRACY_ENABLE
         TRACY_ON_DEMAND       # Collect data only while the profiler is connected; otherwise a zone costs a few nanoseconds
         TRACY_ONLY_LOCALHOST  # Listen on this computer only: nothing is open to the network, and no firewall question
+        TRACY_DELAYED_INIT    # Started by the game (Core::StartProfiler), not by every process that links the code:
+        TRACY_MANUAL_LIFETIME # the tests never start it, so they run without its threads and its 200 ms start
     )
 endif()
 

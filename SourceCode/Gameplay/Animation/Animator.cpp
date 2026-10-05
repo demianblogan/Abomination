@@ -1,5 +1,6 @@
 #include "Gameplay/Animation/Animator.h"
 
+#include "Core/Profiling/ProfileZone.h"
 #include "Core/Scene/Transform.h"
 #include "Core/Scene/TransformInterpolation.h"
 #include "Renderer/Animation/AnimationSampling.h"
@@ -209,6 +210,8 @@ namespace Abomination::Gameplay
 
     void UpdateAnimators(entt::registry& registry, const Renderer::ModelStore& models, float deltaTime)
     {
+        PROFILE_ZONE();
+
         // Kept from one animator to the next: posing allocates nothing once they are as large as the largest skeleton.
         std::vector<Renderer::JointPose> pose;
         std::vector<Renderer::JointPose> fadingPose;

@@ -1,11 +1,13 @@
 #include "Renderer/RenderSystem.h"
 
+#include "Core/Profiling/ProfileZone.h"
 #include "Core/Scene/Transform.h"
 #include "Core/Scene/TransformInterpolation.h"
 #include "Renderer/DrawOffset.h"
 #include "Renderer/MeshRenderer.h"
 #include "Renderer/ModelPose.h"
 #include "Renderer/ModelRenderer.h"
+#include "Renderer/OpenGL/GPUProfileZone.h"
 #include "Renderer/OpenGL/RenderCommands.h"
 #include "Renderer/OpenGL/ShaderInterface.h"
 
@@ -164,6 +166,9 @@ namespace Abomination::Renderer
                                 const RenderAssets& assets, const SystemShaders& systemShaders,
                                 const RenderSettings& settings, SkinningBuffer& skinning)
     {
+        PROFILE_ZONE();
+        PROFILE_GPU_ZONE("World and models");
+
         RenderStatistics statistics;
         BeginMeshPass(settings);
 
@@ -227,6 +232,9 @@ namespace Abomination::Renderer
                                          SkinningBuffer& skinning, std::span<const ModelPartOffset> partOffsets,
                                          const ModelPose* pose, bool clearsDepth, const View* worldView)
     {
+        PROFILE_ZONE();
+        PROFILE_GPU_ZONE("Weapon in the hands");
+
         RenderStatistics statistics;
 
         // What the world drew into the depth buffer is forgotten: the weapon is drawn over everything, so it never goes

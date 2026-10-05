@@ -1,5 +1,6 @@
 #include "UI/DebugOverlay.h"
 
+#include "Core/Profiling/ProfileZone.h"
 #include "Core/Time/FrameLimiter.h"
 #include "Gameplay/GameplayState.h"
 #include "Gameplay/Player/LandingDip.h"
@@ -90,6 +91,8 @@ namespace Abomination::UI
 
     void DebugOverlay::Draw(const DebugOverlayContext& context)
     {
+        PROFILE_ZONE();
+
         // 0. The scale of the interface: the display scale of Windows (2.0 on a 4K monitor at 200%) times the UI scale chosen
         //    in the menu. The style is rebuilt only when the scale changes, and before the frame starts, because ImGui picks
         //    the font for the whole frame in NewFrame().

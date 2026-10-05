@@ -1,5 +1,7 @@
 #include "Renderer/Animation/AnimationSampling.h"
 
+#include "Core/Profiling/ProfileZone.h"
+
 #include <glm/common.hpp>
 #include <glm/gtc/quaternion.hpp>
 
@@ -66,6 +68,8 @@ namespace Abomination::Renderer
 
     void SampleAnimationClip(const AnimationClipData& clip, float time, std::span<JointPose> pose)
     {
+        PROFILE_ZONE();
+
         for (const AnimationChannelData& channel : clip.channels)
         {
             if (channel.joint >= pose.size() || channel.times.empty())

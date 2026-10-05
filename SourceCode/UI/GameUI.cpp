@@ -2,6 +2,7 @@
 
 #include "Core/Files/FileSystem.h"
 #include "Core/Logging/Log.h"
+#include "Core/Profiling/ProfileZone.h"
 #include "Platform/RmlUiPlatformBackend.h"
 #include "Platform/Window.h"
 #include "Renderer/RmlUiRendererBackend.h"
@@ -120,6 +121,8 @@ namespace Abomination::UI
 
     void GameUI::Update(glm::vec2 viewportSize, bool isInputEnabled)
     {
+        PROFILE_ZONE();
+
         const Rml::Vector2i size(static_cast<int>(viewportSize.x), static_cast<int>(viewportSize.y));
         if (m_context->GetDimensions() != size)
             m_context->SetDimensions(size);
@@ -134,12 +137,16 @@ namespace Abomination::UI
     void GameUI::UpdateHUD(const Gameplay::GameplayState& gameplay, const entt::registry& registry, glm::vec2 viewportSize,
                            float deltaTime)
     {
+        PROFILE_ZONE();
+
         m_hud->Update(gameplay, registry, viewportSize, deltaTime);
         m_deathScreen.Update(gameplay);
     }
 
     int GameUI::Render(glm::vec2 viewportSize, const Renderer::GLShaderProgram& program)
     {
+        PROFILE_ZONE();
+
         m_rendererBackend->BeginFrame(viewportSize, program);
         m_context->Render();
         m_rendererBackend->EndFrame();

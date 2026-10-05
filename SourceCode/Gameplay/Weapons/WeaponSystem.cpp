@@ -2,6 +2,7 @@
 
 #include "Audio/AudioEngine.h"
 #include "Core/Math/BoundingBox.h"
+#include "Core/Profiling/ProfileZone.h"
 #include "Core/Scene/Transform.h"
 #include "Gameplay/Camera/MouseLook.h"
 #include "Gameplay/Characters/Health.h"
@@ -194,6 +195,8 @@ namespace Abomination::Gameplay
     bool UpdateWeapon(GameplayState& state, entt::registry& registry, const Input::ActionStates& actions, bool canShoot,
                       std::span<const World::CollisionBrush> brushes, Audio::AudioEngine& audio, float tickDuration)
     {
+        PROFILE_ZONE();
+
         Weapon* weapon = registry.try_get<Weapon>(state.player);
         if (weapon == nullptr)
             return false;

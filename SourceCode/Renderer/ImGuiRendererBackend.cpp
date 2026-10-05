@@ -1,5 +1,7 @@
 #include "Renderer/ImGuiRendererBackend.h"
 
+#include "Renderer/OpenGL/GPUProfileZone.h"
+
 #include <imgui.h>
 #include <imgui_impl_opengl3.h>
 
@@ -49,6 +51,8 @@ namespace Abomination::Renderer
 
     void ImGuiRendererBackend::DrawFrame()
     {
+        PROFILE_GPU_ZONE("Debug overlay");
+
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
     }
 }

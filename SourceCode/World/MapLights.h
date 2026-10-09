@@ -10,7 +10,7 @@
 // named like the lights of Unity.
 //
 // Their properties, in the units of the map:
-//   intensity  the light at 1 m (3 lights a white wall fully, like the made-up sun)
+//   intensity  the light at 1 m (3 lights a white wall fully, like the made-up sun); 5 by default, 30 for a spot
 //   range      where the light is faded out, in units (320 = 10 m)
 //   _color     the color as TrenchBroom picks it, "R G B" from 0 to 255 (sRGB)
 // and of a spot only:

@@ -15,6 +15,10 @@ namespace Abomination::World
 {
     namespace
     {
+        // A spot is stronger by default than a point light: it lights a patch far from itself (across a room), where the
+        // light of 5 at 1 m is long gone (1/25 of it at 5 m); a point light usually stands by the wall it lights.
+        constexpr float DefaultSpotIntensity = 30.0f;
+
         // The number of a property, or fallback if the entity does not have it or it is not a number.
         double ReadNumberProperty(const MapEntity& entity, const std::string& key, double fallback)
         {
@@ -58,7 +62,9 @@ namespace Abomination::World
             if (const std::optional<glm::dvec3> position = ParseVectorProperty(*origin); position.has_value())
                 result.transform.position = ConvertMapPosition(*position);
 
-        light.intensity = static_cast<float>(ReadNumberProperty(entity, "intensity", light.intensity));
+        const bool isSpot = *className == "spot_light";
+        const float defaultIntensity = isSpot ? DefaultSpotIntensity : light.intensity;
+        light.intensity = static_cast<float>(ReadNumberProperty(entity, "intensity", defaultIntensity));
         light.range = static_cast<float>(
             Core::MapUnitsToMeters(ReadNumberProperty(entity, "range", Core::MetersToMapUnits(double{light.range}))));
 
@@ -67,7 +73,7 @@ namespace Abomination::World
             if (const std::optional<glm::dvec3> color = ParseVectorProperty(*colorText); color.has_value())
                 light.color = Renderer::ConvertSRGBToLinear(glm::clamp(glm::vec3(*color / 255.0), 0.0f, 1.0f));
 
-        if (*className == "spot_light")
+        if (isSpot)
         {
             light.type = Renderer::LightType::Spot;
             result.transform.rotation = ReadSpotRotation(entity);

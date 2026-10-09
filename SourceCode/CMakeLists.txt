@@ -186,6 +186,8 @@ set(LIBRARY_SOURCES
     Renderer/ImGuiRendererBackend.cpp
     Renderer/DrawOffset.h
     Renderer/Light.h
+    Renderer/LightBuffer.h
+    Renderer/LightBuffer.cpp
     Renderer/Material.h
     Renderer/MeshRenderer.h
     Renderer/ModelPose.h

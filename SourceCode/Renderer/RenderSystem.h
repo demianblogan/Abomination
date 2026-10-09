@@ -37,9 +37,13 @@ namespace Abomination::Renderer
         glm::vec3 sunDirection{0.0f, 1.0f, 0.0f};
         glm::vec3 sunColor{0.0f};
         glm::vec3 ambientColor{0.0f};
+
+        // How many lights the light buffer holds this frame (see LightBuffer::Upload).
+        int lightCount = 0;
     };
 
-    // The light of a frame seen through view: the made-up sun of settings turned into the coordinates of the camera.
+    // The light of a frame seen through view: the made-up sun of settings turned into the coordinates of the camera. The
+    // lights of the level are uploaded separately (see LightBuffer), and their number set into lightCount.
     [[nodiscard]] SceneLighting CalculateSceneLighting(const View& view, const RenderSettings& settings);
 
     // Shaders the render system draws with on its own, whatever shader an entity has chosen.

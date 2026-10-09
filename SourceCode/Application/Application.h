@@ -15,6 +15,7 @@
 #include "Renderer/Camera/View.h"
 #include "Renderer/Debug/DebugLineRenderer.h"
 #include "Renderer/Debug/DebugLines.h"
+#include "Renderer/LightBuffer.h"
 #include "Renderer/RenderSettings.h"
 #include "Renderer/RenderSystem.h"
 #include "Renderer/SceneFramebuffer.h"
@@ -102,7 +103,8 @@ namespace Abomination
         //                         when the free-fly camera looks at the player).
         void DrawEffects(const Renderer::View& view);
         void AddDebugLines(const Core::Transform& cameraTransform, float interpolationFactor);
-        void DrawWeaponViewModel(float aspectRatio, const Renderer::View& view, float interpolationFactor);
+        void DrawWeaponViewModel(float aspectRatio, const Renderer::View& view, float interpolationFactor,
+                                 const Renderer::SceneLighting& lighting);
 
         // Saves the frame drawn so far (before the buffers are swapped) as BenchmarkScreenshotFileName next to the executable.
         void SaveBenchmarkScreenshot();
@@ -135,6 +137,9 @@ namespace Abomination
 
         // The joint matrices of the skinned mesh being drawn (characters bent by their skeletons).
         Renderer::SkinningBuffer m_skinningBuffer;
+
+        // The lights of the level seen by the camera of the frame, read by the Lit shader.
+        Renderer::LightBuffer m_lightBuffer;
 
         // The HDR framebuffer the 3D scene is drawn into before it goes onto the screen.
         Renderer::SceneFramebuffer m_sceneFramebuffer;

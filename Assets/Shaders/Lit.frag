@@ -5,8 +5,9 @@
 // glTF. Everything is in the coordinates of the camera (see Lit.vert) and in linear values; the result goes into the HDR
 // framebuffer, and Present fits it onto the screen.
 //
-// The light is one made-up "sun" and a weak light from everywhere (see Renderer::SceneLighting) until the level has
-// lights of its own.
+// The light: the lights of the level (see Renderer::LightBuffer), a made-up "sun" and a weak light from everywhere (see
+// Renderer::SceneLighting). Every light is added by the same function (LightSurface), so a torch lights a surface in the
+// same way as the sun, only weaker with the distance.
 
 layout(location = 0) in vec2 TexCoord;
 layout(location = 1) in vec3 ViewPosition;
@@ -41,6 +42,22 @@ layout(location = 12) uniform float uniParallaxDepth;
 layout(location = 13) uniform bool uniIsSpecularAntiAliasingEnabled;
 layout(location = 14) uniform int uniParallaxStepCount;
 
+// The lights of the level, in the coordinates of the camera, as Renderer::ShaderLight packs them: a vec3 is aligned like
+// a vec4 in a storage buffer, so every vec4 carries one more number in its w.
+struct Light
+{
+    vec4 positionAndRange;        // xyz where it is, w where its light ends (meters)
+    vec4 colorAndType;            // rgb color times intensity (the light at 1 m), w 0 point or 1 spot
+    vec4 directionAndOuterCosine; // xyz where a spot shines, w the cosine of its outer cone angle
+    vec4 innerCosine;             // x the cosine of its inner cone angle
+};
+
+layout(std430, binding = 1) readonly buffer Lights
+{
+    Light uniLights[];
+};
+layout(location = 15) uniform int uniLightCount;
+
 layout(location = 0) out vec4 FragColor;
 
 const float Pi = 3.14159265;
@@ -61,6 +78,12 @@ const int ShadingViewNormals = 2;
 const int ShadingViewRoughness = 3;
 const int ShadingViewMetalness = 4;
 const int ShadingViewHeight = 5;
+
+const float LightTypeSpot = 1.0;
+
+// The light of a lamp grows as 1 / distance^2 towards it, without bound; closer than 10 cm it is not allowed to grow
+// any more, so a surface touching the lamp does not turn infinitely bright.
+const float MinimumLightDistanceSquared = 0.01;
 
 // The most steps parallax occlusion mapping may take, whatever the Renderer window asks (a loop must have a bound).
 const int MaximumParallaxSteps = 64;
@@ -183,6 +206,72 @@ vec3 Reflect(float viewDotHalf, vec3 reflectance)
     return reflectance + (1.0 - reflectance) * pow(1.0 - viewDotHalf, 5.0);
 }
 
+// What a surface is, for the lights (see LightSurface): where it faces, where the eye is, its color and how it reflects.
+struct Surface
+{
+    vec3 normal;
+    vec3 towardsView;
+    vec3 baseColor;
+    vec3 reflectance; // F0, the reflection straight on
+    float roughness;
+    float metalness;
+};
+
+// The light one light sends from the surface into the eye: towardsLight is the direction to the light (length 1),
+// light what arrives at the surface (its color and strength there).
+vec3 LightSurface(Surface surface, vec3 towardsLight, vec3 light)
+{
+    // The halfway vector lies between the directions to the eye and to the light.
+    vec3 halfway = normalize(surface.towardsView + towardsLight);
+
+    float normalDotLight = max(dot(surface.normal, towardsLight), 0.0);
+    float normalDotView = max(dot(surface.normal, surface.towardsView), 1e-4);
+    float normalDotHalf = max(dot(surface.normal, halfway), 0.0);
+    float viewDotHalf = max(dot(surface.towardsView, halfway), 0.0);
+
+    vec3 fresnel = Reflect(viewDotHalf, surface.reflectance);
+
+    // The highlight: the light reflected by the microfacets towards the eye (Cook-Torrance).
+    float alpha = surface.roughness * surface.roughness;
+    vec3 specular = DistributeMicrofacets(normalDotHalf, alpha) *
+                    ShadowMicrofacets(normalDotView, normalDotLight, surface.roughness) * fresnel /
+                    (4.0 * normalDotView * max(normalDotLight, 1e-4));
+
+    // The scattered light: what is not reflected goes into the surface and comes out evenly in all directions, colored by
+    // it (Lambert: its color / pi). A metal has none.
+    vec3 diffuse = (1.0 - fresnel) * (1.0 - surface.metalness) * surface.baseColor / Pi;
+
+    // The light lights the surface as much as the surface faces it (normalDotLight).
+    return (diffuse + specular) * light * normalDotLight;
+}
+
+// The light of a lamp of the level at the surface at position: weaker with the square of the distance (the same light
+// spread over a sphere that grows with it), faded out smoothly towards its range, and for a spot also towards the edge
+// of its cone. Returns the direction to the lamp in towardsLight.
+vec3 ReachLight(Light lamp, vec3 position, out vec3 towardsLight)
+{
+    vec3 toLamp = lamp.positionAndRange.xyz - position;
+    float distanceSquared = dot(toLamp, toLamp);
+    towardsLight = toLamp * inversesqrt(max(distanceSquared, 1e-8));
+
+    // A real light never quite ends; this window (as in Unreal Engine 4) brings it to 0 at the range, hardly changing it
+    // nearer: (1 - (d / range)^4)^2. Squared distances keep it free of square roots.
+    float range = lamp.positionAndRange.w;
+    float ratioSquared = distanceSquared / (range * range);
+    float window = clamp(1.0 - ratioSquared * ratioSquared, 0.0, 1.0);
+    float falloff = window * window / max(distanceSquared, MinimumLightDistanceSquared);
+
+    // A spot: full inside the inner cone, nothing outside the outer one, smooth between. The cosine of the angle between
+    // the axis of the spot and the direction from the spot to the surface is their dot product.
+    if (lamp.colorAndType.w == LightTypeSpot)
+    {
+        float cosine = dot(lamp.directionAndOuterCosine.xyz, -towardsLight);
+        falloff *= smoothstep(lamp.directionAndOuterCosine.w, lamp.innerCosine.x, cosine);
+    }
+
+    return lamp.colorAndType.rgb * falloff;
+}
+
 // A value 0..1 shown as gray on the screen as it is: Present turns linear values into sRGB, so data is turned the other
 // way first (the formula of Renderer::ConvertSRGBToLinear).
 vec3 ShowData(vec3 value)
@@ -253,30 +342,20 @@ void main()
         return;
     }
 
-    // The halfway vector lies between the directions to the eye and to the light.
-    vec3 towardsLight = uniSunDirection;
-    vec3 halfway = normalize(towardsView + towardsLight);
-
-    float normalDotLight = max(dot(normal, towardsLight), 0.0);
-    float normalDotView = max(dot(normal, towardsView), 1e-4);
-    float normalDotHalf = max(dot(normal, halfway), 0.0);
-    float viewDotHalf = max(dot(towardsView, halfway), 0.0);
-
     // A metal reflects its own color and scatters nothing; anything else reflects 4% and scatters the rest in its color.
     vec3 reflectance = mix(DielectricReflectance, baseColor.rgb, metalness);
-    vec3 fresnel = Reflect(viewDotHalf, reflectance);
+    Surface surface = Surface(normal, towardsView, baseColor.rgb, reflectance, roughness, metalness);
 
-    // The highlight: the light reflected by the microfacets towards the eye (Cook-Torrance).
-    float alpha = roughness * roughness;
-    vec3 specular = DistributeMicrofacets(normalDotHalf, alpha) * ShadowMicrofacets(normalDotView, normalDotLight, roughness) *
-                    fresnel / (4.0 * normalDotView * max(normalDotLight, 1e-4));
+    // The sun: the same light everywhere, from one direction.
+    vec3 color = LightSurface(surface, uniSunDirection, uniSunColor);
 
-    // The scattered light: what is not reflected goes into the surface and comes out evenly in all directions, colored by
-    // it (Lambert: its color / pi). A metal has none.
-    vec3 diffuse = (1.0 - fresnel) * (1.0 - metalness) * baseColor.rgb / Pi;
-
-    // The sun lights the surface as much as it faces it (normalDotLight).
-    vec3 color = (diffuse + specular) * uniSunColor * normalDotLight;
+    // The lamps of the level, every one for every pixel (forward rendering): a lamp out of range adds 0.
+    for (int index = 0; index < uniLightCount; ++index)
+    {
+        vec3 towardsLight;
+        vec3 light = ReachLight(uniLights[index], ViewPosition, towardsLight);
+        color += LightSurface(surface, towardsLight, light);
+    }
 
     // The light from everywhere, so the side away from the sun is not black: the scattered color, and for a metal the
     // color of its reflection (it would reflect its surroundings, which are about that bright).

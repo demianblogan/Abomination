@@ -55,6 +55,15 @@ namespace Abomination::World
         EXPECT_EQ(mapLight->light.color, glm::vec3(1.0f));
     }
 
+    TEST(MapLights, SpotIsStrongerByDefault)
+    {
+        // Abomination.fgd: intensity 30 for a spot_light.
+        const std::optional<MapLight> mapLight = ReadMapLight(MakeEntity({{"classname", "spot_light"}}));
+        ASSERT_TRUE(mapLight.has_value());
+
+        EXPECT_FLOAT_EQ(mapLight->light.intensity, 30.0f);
+    }
+
     TEST(MapLights, ColorPickedInTheEditorBecomesLinear)
     {
         const std::optional<MapLight> mapLight =

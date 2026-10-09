@@ -41,7 +41,7 @@
 // the way it shines; the rotate tool turns it and writes its angles.
 @PointClass size(-8 -8 -8, 8 8 8) color(255 180 80) model({ "path": "Models/Editor/SpotLight.glb", "scale": 32 }) = spot_light : "Spot light"
 [
-    intensity(float) : "The light at 1 m: 3 lights a white surface fully" : "5"
+    intensity(float) : "The light at 1 m: 3 lights a white surface fully" : "30"
     range(float) : "Where the light is faded out, in units (32 units are 1 m)" : "320"
     _color(color255) : "Color" : "255 255 255"
     angles(string) : "Where it shines: pitch yaw roll, in degrees (pitch 90 straight down, -90 straight up)" : "0 0 0"

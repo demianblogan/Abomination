@@ -71,6 +71,7 @@ set(TEST_SOURCES
     Renderer/Assets/ModelPartSplitTests.cpp
     Renderer/Camera/ViewTests.cpp
     Renderer/ColorSpaceTests.cpp
+    Renderer/LightBufferTests.cpp
     Renderer/Debug/DebugLinesTests.cpp
     Renderer/Debug/LightDebugLinesTests.cpp
     Renderer/OpenGL/GLTextureTests.cpp

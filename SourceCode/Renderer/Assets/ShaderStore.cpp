@@ -61,6 +61,7 @@ namespace Abomination::Renderer
             layout(location = 12) uniform float uniParallaxDepth;
             layout(location = 13) uniform bool uniIsSpecularAntiAliasingEnabled;
             layout(location = 14) uniform int uniParallaxStepCount;
+            layout(location = 15) uniform int uniLightCount;
 
             layout(location = 0) out vec4 FragColor;
 
@@ -68,7 +69,8 @@ namespace Abomination::Renderer
             {
                 float sum = uniBaseColorFactor.x + uniRoughnessFactor + uniMetalnessFactor + uniEmissiveFactor.x +
                             uniSunDirection.x + uniSunColor.x + uniAmbientColor.x + float(uniShadingView) +
-                            uniParallaxDepth + float(uniIsSpecularAntiAliasingEnabled) + float(uniParallaxStepCount);
+                            uniParallaxDepth + float(uniIsSpecularAntiAliasingEnabled) + float(uniParallaxStepCount) +
+                            float(uniLightCount);
                 FragColor = vec4(1.0, 0.0, 1.0, 1.0) + vec4(step(1e30, abs(sum)));
             }
         )";

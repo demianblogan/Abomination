@@ -413,11 +413,14 @@ namespace Abomination
             // In the order things cover each other: the solid world, the see-through effects in it, the debug lines, the
             // weapon in the hands; then the scene goes onto the screen, and the game interface is drawn over everything.
             // Every pass is a named group of OpenGL commands, so a frame captured by RenderDoc reads as these passes.
+            // The light of the frame, in the coordinates of the camera: the world and the weapon in the hands share it,
+            // whatever space the weapon is drawn in.
+            Renderer::SceneLighting lighting = Renderer::CalculateSceneLighting(view, m_renderSettings);
+            lighting.lightCount = m_lightBuffer.Upload(m_registry, view.viewMatrix, interpolationFactor);
             {
                 Renderer::GLDebugGroup group("World");
-                m_renderStatistics =
-                    Renderer::DrawMeshes(m_registry, view, interpolationFactor, m_renderAssets, m_systemShaders, m_renderSettings,
-                                         Renderer::CalculateSceneLighting(view, m_renderSettings), m_skinningBuffer);
+                m_renderStatistics = Renderer::DrawMeshes(m_registry, view, interpolationFactor, m_renderAssets,
+                                                          m_systemShaders, m_renderSettings, lighting, m_skinningBuffer);
             }
             {
                 Renderer::GLDebugGroup group("Effects");
@@ -436,7 +439,7 @@ namespace Abomination
             }
             {
                 Renderer::GLDebugGroup group("Weapon");
-                DrawWeaponViewModel(aspectRatio, view, interpolationFactor);
+                DrawWeaponViewModel(aspectRatio, view, interpolationFactor, lighting);
             }
             {
                 Renderer::GLDebugGroup group("Present");
@@ -552,7 +555,8 @@ namespace Abomination
         }
     }
 
-    void Application::DrawWeaponViewModel(float aspectRatio, const Renderer::View& view, float interpolationFactor)
+    void Application::DrawWeaponViewModel(float aspectRatio, const Renderer::View& view, float interpolationFactor,
+                                          const Renderer::SceneLighting& lighting)
     {
         PROFILE_ZONE();
 
@@ -575,9 +579,6 @@ namespace Abomination
                 Gameplay::CalculatePlayerEyeTransform(body, m_registry.get<Gameplay::LookAngles>(m_gameplay.player)));
         }
         const Renderer::View* worldView = isSeenByPlayer ? nullptr : &view;
-
-        // The same light as the world: computed from the view of the camera, whatever space the weapon is drawn in.
-        const Renderer::SceneLighting lighting = Renderer::CalculateSceneLighting(view, m_renderSettings);
 
         // The parts that move with the pump go back along the barrel: the model points along -Z, so back is +Z.
         std::vector<Renderer::ModelPartOffset> partOffsets;

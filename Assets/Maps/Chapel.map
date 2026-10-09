@@ -1144,3 +1144,28 @@
 "origin" "52 828 128"
 "angle" "270"
 }
+// entity 9
+{
+"classname" "point_light"
+"origin" "424 952 104"
+}
+// entity 10
+{
+"classname" "point_light"
+"origin" "344 952 104"
+}
+// entity 11
+{
+"classname" "point_light"
+"origin" "264 312 72"
+}
+// entity 12
+{
+"classname" "point_light"
+"origin" "504 312 72"
+}
+// entity 13
+{
+"classname" "spot_light"
+"origin" "264 632 72"
+}

@@ -24,6 +24,7 @@
 #include "Platform/SystemServices.h"
 #include "Renderer/Camera/View.h"
 #include "Renderer/ColorSpace.h"
+#include "Renderer/Debug/LightDebugLines.h"
 #include "Renderer/OpenGL/DebugOutput.h"
 #include "Renderer/OpenGL/GLDebugGroup.h"
 #include "Renderer/OpenGL/GPUProfiling.h"
@@ -537,6 +538,9 @@ namespace Abomination
         Gameplay::AddAnimatorDebugLines(m_registry, m_renderAssets.models, interpolationFactor, m_debugLines);
         Gameplay::AddMonsterDebugLines(m_gameplay, m_registry, interpolationFactor, m_debugLines);
         Gameplay::AddNavMeshDebugLines(m_gameplay, m_level.GetNavMesh(), m_debugLines);
+
+        if (m_renderSettings.areLightsVisible)
+            Renderer::AddLightDebugLines(m_registry, m_debugLines);
 
         if (m_renderSettings.areWorldAxesVisible)
         {

@@ -26,3 +26,25 @@
 [
     angle(integer) : "Direction the dog faces, in degrees around the vertical axis" : 0
 ]
+
+// A light shining into every direction: a torch, a candle, a brazier (named like the lights of Unity). The editor shows
+// it as a small crystal; the game shows it as a star with circles of its range when Lights is checked in the Renderer
+// window (see World/MapLights.h).
+@PointClass size(-8 -8 -8, 8 8 8) color(255 220 120) model({ "path": "Models/Editor/PointLight.glb", "scale": 32 }) = point_light : "Point light"
+[
+    intensity(float) : "The light at 1 m: 3 lights a white surface fully" : "5"
+    range(float) : "Where the light is faded out, in units (32 units are 1 m)" : "320"
+    _color(color255) : "Color" : "255 255 255"
+]
+
+// A light shining in a cone: a lantern with a shutter, a light through a window. The editor shows the cone opening
+// the way it shines; the rotate tool turns it and writes its angles.
+@PointClass size(-8 -8 -8, 8 8 8) color(255 180 80) model({ "path": "Models/Editor/SpotLight.glb", "scale": 32 }) = spot_light : "Spot light"
+[
+    intensity(float) : "The light at 1 m: 3 lights a white surface fully" : "5"
+    range(float) : "Where the light is faded out, in units (32 units are 1 m)" : "320"
+    _color(color255) : "Color" : "255 255 255"
+    angles(string) : "Where it shines: pitch yaw roll, in degrees (pitch 90 straight down, -90 straight up)" : "0 0 0"
+    cone(float) : "Angle from the axis to the edge of the light, in degrees" : "30"
+    inner_cone(float) : "Angle up to which the light is full, in degrees; it fades out from there to the edge" : "20"
+]

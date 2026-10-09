@@ -185,6 +185,7 @@ set(LIBRARY_SOURCES
     Renderer/ColorSpace.cpp
     Renderer/ImGuiRendererBackend.cpp
     Renderer/DrawOffset.h
+    Renderer/Light.h
     Renderer/Material.h
     Renderer/MeshRenderer.h
     Renderer/ModelPose.h
@@ -236,6 +237,8 @@ set(LIBRARY_SOURCES
     Renderer/Debug/DebugLineRenderer.cpp
     Renderer/Debug/DebugLines.h
     Renderer/Debug/DebugLines.cpp
+    Renderer/Debug/LightDebugLines.h
+    Renderer/Debug/LightDebugLines.cpp
     Renderer/OpenGL/DebugOutput.h
     Renderer/OpenGL/DebugOutput.cpp
     Renderer/OpenGL/GLBuffer.h
@@ -318,6 +321,8 @@ set(LIBRARY_SOURCES
     World/MapCoordinates.cpp
     World/MapData.h
     World/MapData.cpp
+    World/MapLights.h
+    World/MapLights.cpp
     World/MapParser.h
     World/MapParser.cpp
     World/MonsterStart.h

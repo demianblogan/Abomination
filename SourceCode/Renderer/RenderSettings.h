@@ -46,6 +46,9 @@ namespace Abomination::Renderer
         // Shows where the origin is and which way the axes point.
         bool areWorldAxesVisible = false;
 
+        // Show every light as debug lines: a star where it is and where its light ends (see AddLightDebugLines).
+        bool areLightsVisible = false;
+
         // The brightness of the scene before tone mapping, in stops like a camera: every +1 doubles it, every -1 halves
         // it, 0 leaves it as it is. A dark crypt will want more, a sunny street less.
         float exposureStops = 0.0f;

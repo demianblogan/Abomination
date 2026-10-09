@@ -4,9 +4,11 @@
 #include "Core/Scene/Name.h"
 #include "Core/Scene/Transform.h"
 #include "Renderer/Assets/MaterialFiles.h"
+#include "Renderer/Light.h"
 #include "Renderer/MeshRenderer.h"
 #include "Renderer/ModelRenderer.h"
 #include "World/MapCoordinates.h"
+#include "World/MapLights.h"
 #include "World/NavMeshGeometry.h"
 
 #include <glm/gtc/quaternion.hpp>
@@ -178,14 +180,26 @@ namespace Abomination::World
             level.m_entities.push_back(entity);
         }
 
-        // Models standing in the level. Like the textures and meshes, they belong to the Level lifetime group.
+        // Models standing in the level (like the textures and meshes, they belong to the Level lifetime group), lights,
+        // and the places of the monsters.
+        int lightCount = 0;
         for (const MapEntity& mapEntity : map.entities)
         {
             const std::string* className = FindProperty(mapEntity, "classname");
             if (className == nullptr)
                 continue;
 
-            if (*className == "misc_model")
+            if (const std::optional<MapLight> mapLight = ReadMapLight(mapEntity); mapLight.has_value())
+            {
+                const bool isSpot = mapLight->light.type == Renderer::LightType::Spot;
+                const entt::entity entity = registry.create();
+                registry.emplace<Core::Name>(entity, isSpot ? "Spot light" : "Light");
+                registry.emplace<Core::Transform>(entity, mapLight->transform);
+                registry.emplace<Renderer::Light>(entity, mapLight->light);
+                level.m_entities.push_back(entity);
+                ++lightCount;
+            }
+            else if (*className == "misc_model")
             {
                 const entt::entity entity = CreateModelEntity(registry, assets, mapEntity, shaderProgram);
                 if (entity != entt::null)
@@ -203,9 +217,10 @@ namespace Abomination::World
         }
 
         Core::Log::Write(LogCategory::World, LogLevel::Info,
-                         "Level {} loaded: {} brushes, {} faces, {} triangles, {} textures, {} collision brushes", mapPath,
-                         level.m_statistics.brushCount, level.m_statistics.faceCount,
-                         level.m_statistics.triangleCount, levelMesh.parts.size(), level.m_collisionBrushes.size());
+                         "Level {} loaded: {} brushes, {} faces, {} triangles, {} textures, {} collision brushes, {} lights",
+                         mapPath, level.m_statistics.brushCount, level.m_statistics.faceCount,
+                         level.m_statistics.triangleCount, levelMesh.parts.size(), level.m_collisionBrushes.size(),
+                         lightCount);
 
         return level;
     }

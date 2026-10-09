@@ -9,6 +9,8 @@
 #include "Physics/CharacterBody.h"
 #include "Renderer/Assets/RenderAssets.h"
 #include "Renderer/Camera/CameraLens.h"
+#include "Renderer/ColorSpace.h"
+#include "Renderer/Light.h"
 #include "Renderer/MeshRenderer.h"
 #include "Renderer/ModelRenderer.h"
 #include "UI/UIScale.h"
@@ -45,6 +47,8 @@ namespace Abomination::UI
         constexpr float SpinDragSpeed = 0.01f;       // axis components and radians per second
         constexpr float NearPlaneDragSpeed = 0.01f;  // meters
         constexpr float FarPlaneDragSpeed = 1.0f;    // meters
+        constexpr float LightIntensityDragSpeed = 0.05f;
+        constexpr float LightRangeDragSpeed = 0.05f; // meters
 
         // Limits of the editable values.
         constexpr float SmallestScale = 0.01f;       // a scale of 0 would squash the mesh to nothing
@@ -53,6 +57,10 @@ namespace Abomination::UI
         constexpr float LargestVerticalFOVDegrees = 120.0f;
         constexpr float SmallestPlaneGap = 0.01f;    // meters: the near plane stays above 0 and below the far plane
         constexpr float LargestFarPlane = 10000.0f;  // meters
+        constexpr float LargestLightIntensity = 1000.0f;
+        constexpr float SmallestLightRange = 0.1f;   // meters
+        constexpr float LargestLightRange = 100.0f;  // meters
+        constexpr float LargestConeDegrees = 89.0f;  // a cone of 90 degrees and more is no cone
 
         // Header colors of the component sections, one per module (see ComponentModule below). Muted colors keep the white
         // header text readable: steel for the basics, teal for drawing, violet for physics, amber for game rules.
@@ -254,6 +262,33 @@ namespace Abomination::UI
             }
         }
 
+        void DrawLight(Renderer::Light& light)
+        {
+            ImGui::Text("Type: %s", light.type == Renderer::LightType::Spot ? "spot" : "point");
+
+            // The light keeps linear values; the color picker shows and picks sRGB, like TrenchBroom and every image.
+            glm::vec3 color = Renderer::ConvertLinearToSRGB(light.color);
+            if (ImGui::ColorEdit3("Color", &color.x))
+                light.color = Renderer::ConvertSRGBToLinear(color);
+
+            ImGui::DragFloat("Intensity", &light.intensity, LightIntensityDragSpeed, 0.0f, LargestLightIntensity, "%.2f");
+            ImGui::SetItemTooltip("The light at 1 m; 3 lights a white surface fully, like the made-up sun.");
+            ImGui::DragFloat("Range", &light.range, LightRangeDragSpeed, SmallestLightRange, LargestLightRange, "%.2f m");
+            ImGui::SetItemTooltip("Where the light is faded out completely.");
+
+            if (light.type == Renderer::LightType::Spot)
+            {
+                // Shown in degrees, stored in radians; the inner angle stays inside the outer one.
+                float outerDegrees = glm::degrees(light.outerConeAngle);
+                float innerDegrees = glm::degrees(light.innerConeAngle);
+                if (ImGui::SliderFloat("Cone", &outerDegrees, 1.0f, LargestConeDegrees, "%.0f deg"))
+                    light.outerConeAngle = glm::radians(outerDegrees);
+                if (ImGui::SliderFloat("Inner cone", &innerDegrees, 0.0f, LargestConeDegrees, "%.0f deg"))
+                    light.innerConeAngle = glm::radians(innerDegrees);
+                light.innerConeAngle = std::min(light.innerConeAngle, light.outerConeAngle);
+            }
+        }
+
         void DrawSpin(Gameplay::Spin& spin)
         {
             ImGui::DragFloat3("Axis", &spin.axis.x, SpinDragSpeed);
@@ -360,6 +395,11 @@ namespace Abomination::UI
                 if (DrawComponentHeader("Model Renderer", ComponentModule::Renderer,
                                         "which model (its parts, meshes and textures) and program draw the entity."))
                     DrawModelRenderer(*modelRenderer, assets);
+
+            if (Renderer::Light* light = registry.try_get<Renderer::Light>(entity); light != nullptr)
+                if (DrawComponentHeader("Light", ComponentModule::Renderer,
+                                        "the light the entity gives: its color, strength and how far it reaches."))
+                    DrawLight(*light);
 
             if (Physics::CharacterBody* body = registry.try_get<Physics::CharacterBody>(entity); body != nullptr)
                 if (DrawComponentHeader("Character Body", ComponentModule::Physics,

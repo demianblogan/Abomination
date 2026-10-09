@@ -33,6 +33,9 @@ namespace Abomination::UI
             ImGui::Checkbox("World axes", &settings.areWorldAxesVisible);
             ImGui::SetItemTooltip("Arrows along X (red), Y (green, up) and Z (blue) from the origin of the world,\n"
                                   "1 m long, drawn over everything.");
+            ImGui::Checkbox("Lights", &settings.areLightsVisible);
+            ImGui::SetItemTooltip("Every light in its color: a star where it is (over everything) and where its light\n"
+                                  "ends: three circles of its range, or the cone of a spot light.");
 
             // What the Lit shader shows and the made-up light it lights with until the level has lights (see
             // Renderer::ShadingView and Renderer::SceneLighting).

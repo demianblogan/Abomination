@@ -72,6 +72,7 @@ set(TEST_SOURCES
     Renderer/Camera/ViewTests.cpp
     Renderer/ColorSpaceTests.cpp
     Renderer/Debug/DebugLinesTests.cpp
+    Renderer/Debug/LightDebugLinesTests.cpp
     Renderer/OpenGL/GLTextureTests.cpp
 
     ThirdParty/EnTTTests.cpp
@@ -85,6 +86,7 @@ set(TEST_SOURCES
     World/CollisionTraceTests.cpp
     World/LevelMeshTests.cpp
     World/MapFilesTests.cpp
+    World/MapLightsTests.cpp
     World/MapCoordinatesTests.cpp
     World/MapParserTests.cpp
     World/PlayerStartTests.cpp

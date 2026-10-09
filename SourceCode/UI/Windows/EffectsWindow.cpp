@@ -54,6 +54,12 @@ namespace Abomination::UI
         DrawIntSlider("Smoke count", settings.smokeCount, 0, 20);
         DrawSlider("Smoke lifetime", settings.smokeLifetime, 0.1f, 5.0f, "%.2f s");
         DrawSlider("Smoke half size", settings.smokeHalfSize, 0.01f, 1.0f, "%.3f m");
+        DrawSlider("Flash light", settings.flashLightIntensity, 0.0f, 200.0f, "%.1f",
+                   "The light of a shot at 1 m; 3 lights a white surface fully, like the made-up sun.");
+        DrawSlider("Flash light range", settings.flashLightRange, 0.5f, 30.0f, "%.1f m");
+        DrawSlider("Flash light duration", settings.flashLightDuration, 0.01f, 0.5f, "%.3f s",
+                   "How long the light of a shot takes to fade out.");
+        ImGui::ColorEdit3("Flash light color", &settings.flashLightColor.x);
 
         ImGui::SeparatorText("Marks on walls");
         DrawSlider("Mark half size", settings.markHalfSize, 0.005f, 0.2f, "%.3f m");

@@ -1,7 +1,9 @@
 #include "World/MapCoordinates.h"
 
 #include "Core/Math/Units.h"
+#include "Core/Scene/Transform.h"
 
+#include <glm/ext/scalar_constants.hpp>
 #include <glm/trigonometric.hpp>
 
 #include <charconv>
@@ -41,6 +43,23 @@ namespace Abomination::World
         // The direction of a map angle is (cos a, sin a, 0), which becomes (cos a, 0, -sin a) in the game. The camera
         // looks along (-sin yaw, 0, -cos yaw); both are equal when yaw = a - 90 degrees.
         return glm::radians(static_cast<float>(mapAngleDegrees - 90.0));
+    }
+
+    glm::quat CalculateMapModelRotation(double mapAngleDegrees)
+    {
+        return glm::angleAxis(ConvertMapAngleToYaw(mapAngleDegrees) + glm::pi<float>(), Core::WorldUp);
+    }
+
+    Core::Transform ReadMapModelTransform(const MapEntity& entity)
+    {
+        Core::Transform transform;
+        if (const std::string* origin = FindProperty(entity, "origin"); origin != nullptr)
+            if (const std::optional<glm::dvec3> position = ParseVectorProperty(*origin); position.has_value())
+                transform.position = ConvertMapPosition(*position);
+
+        transform.rotation = CalculateMapModelRotation(ReadNumberProperty(entity, "angle", 0.0));
+
+        return transform;
     }
 
     std::optional<glm::dvec3> ParseVectorProperty(std::string_view text)

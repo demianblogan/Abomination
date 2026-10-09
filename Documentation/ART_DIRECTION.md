@@ -20,7 +20,7 @@ is not at all.
 
 | Episode | Places | Mood | Palette |
 |---------|--------|------|---------|
-| **E1 · The Drowned Parish** | Swamp coast, flooded village, abbey, catacombs, bell tower | Rot, damp, fog, dim yellow-green light | `#2B2A1F` silt · `#4A4A2E` moss · `#6B6A3C` olive · `#5A4632` rotten wood · `#7D7458` wet stone · `#9FA35A` lichen |
+| **E1 · City of the Dead** | A fenced gothic town struck by the plague: ruined wooden houses and stone buildings, the church, its cellar and crypts (see [DESIGN.md](DESIGN.md)) | Rot, corpses, damp, fog, a green color grade of mold and plague | `#2B2A1F` silt · `#4A4A2E` moss · `#6B6A3C` olive · `#5A4632` rotten wood · `#7D7458` wet stone · `#9FA35A` lichen |
 | **E2 · The Iron Crypts** | Mines, foundries, prison, rail tunnels, a cathedral of pistons | Rust, soot, chains, the heat of furnaces, machines greased with blood | `#1E1A18` soot · `#3B2F2A` burnt earth · `#6E3B22` rust · `#9A4E24` light rust · `#5E5E5A` iron · `#D9792B` embers |
 | **E3 · The Ossuary** | A gothic cathedral city: bone ornaments, crypts, stained glass, ritual halls | Cold, grandeur, dead silence, tarnished gold | `#1C1A24` night · `#3A3448` shadow violet · `#5E5470` violet · `#A89F8A` old bone · `#D6CEB8` bone · `#8C7A3E` tarnished gold |
 | **E4 · The Flesh Abyss** | Another world: living walls, veins, obsidian, lava, floating islands, the lair of the final boss | Disgust, pulsing, red and black | `#120B0D` obsidian · `#3A1216` dried blood · `#6E1A22` flesh · `#A8323A` raw flesh · `#7A3A5E` bruise · `#E0662E` lava |

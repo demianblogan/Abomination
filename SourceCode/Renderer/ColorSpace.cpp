@@ -30,4 +30,9 @@ namespace Abomination::Renderer
     {
         return {ConvertSRGBToLinear(glm::vec3(color)), color.a};
     }
+
+    glm::vec3 ConvertLinearToSRGB(const glm::vec3& color)
+    {
+        return {ConvertLinearToSRGB(color.r), ConvertLinearToSRGB(color.g), ConvertLinearToSRGB(color.b)};
+    }
 }

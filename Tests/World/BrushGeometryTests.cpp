@@ -5,6 +5,7 @@
 #include <glm/vec3.hpp>
 #include <gtest/gtest.h>
 
+#include <array>
 #include <cmath>
 #include <cstddef>
 #include <string>
@@ -165,5 +166,32 @@ namespace Abomination::World
         ASSERT_EQ(polygons.size(), 7u);
         EXPECT_EQ(polygons[0].size(), 4u);
         EXPECT_TRUE(polygons[6].empty());
+    }
+
+    TEST(BrushGeometry, BoxBrushHasTheCornersOfItsBox)
+    {
+        // A box turned 90 degrees around the vertical: its x axis is map +Y, its y axis map -X.
+        const std::array<glm::dvec3, 3> axes = {glm::dvec3(0.0, 1.0, 0.0), glm::dvec3(-1.0, 0.0, 0.0),
+                                                glm::dvec3(0.0, 0.0, 1.0)};
+        const MapBrush brush = MakeBoxBrush({10.0, 20.0, 30.0}, axes, {4.0, 2.0, 8.0}, "Common/Clip");
+        ASSERT_EQ(brush.faces.size(), 6u);
+
+        // Every face is a rectangle; together their corners span the box: 2 across map X, 4 across map Y, 8 up.
+        glm::dvec3 minimum(1e9), maximum(-1e9);
+        for (const Core::ConvexPolygon& polygon : BuildBrushPolygons(brush))
+        {
+            ASSERT_EQ(polygon.size(), 4u);
+            for (const glm::dvec3& vertex : polygon)
+            {
+                minimum = glm::min(minimum, vertex);
+                maximum = glm::max(maximum, vertex);
+            }
+        }
+        EXPECT_NEAR(minimum.x, 8.0, Tolerance);
+        EXPECT_NEAR(maximum.x, 12.0, Tolerance);
+        EXPECT_NEAR(minimum.y, 16.0, Tolerance);
+        EXPECT_NEAR(maximum.y, 24.0, Tolerance);
+        EXPECT_NEAR(minimum.z, 22.0, Tolerance);
+        EXPECT_NEAR(maximum.z, 38.0, Tolerance);
     }
 }

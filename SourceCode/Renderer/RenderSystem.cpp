@@ -90,6 +90,7 @@ namespace Abomination::Renderer
             program.SetUniform(SunDirectionUniform, pass.lighting.sunDirection);
             program.SetUniform(SunColorUniform, pass.lighting.sunColor);
             program.SetUniform(AmbientColorUniform, pass.lighting.ambientColor);
+            program.SetUniform(LightCountUniform, pass.lighting.lightCount);
             program.SetUniform(ShadingViewUniform, static_cast<int>(pass.settings.shadingView));
 
             // Without a height map the depth is 0, and the shader skips parallax.

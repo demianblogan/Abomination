@@ -12,6 +12,13 @@ namespace Abomination::Renderer
         // The ACES filmic curve (as approximated by Krzysztof Narkowicz): dark values almost unchanged, bright ones
         // pressed together more and more, never cut off. Used by films and many games.
         ACES = 1,
+
+        // ACES as fitted by Stephen Hill: closer to the real one; bright colors keep their hue, a little darker overall.
+        HillACES = 2,
+
+        // AgX (the default of Blender 4): very bright colors go to white instead of staying saturated, like a photograph
+        // of a flame.
+        AgX = 3,
     };
 
     // What the Lit shader shows: the lit picture, or one property of the surfaces, to check a material. The numbers are the
@@ -45,6 +52,9 @@ namespace Abomination::Renderer
         // Draw the axes of the world at its origin as arrows over everything: X red, Y (up) green, Z blue, 1 meter long.
         // Shows where the origin is and which way the axes point.
         bool areWorldAxesVisible = false;
+
+        // Show every light as debug lines: a star where it is and where its light ends (see AddLightDebugLines).
+        bool areLightsVisible = false;
 
         // The brightness of the scene before tone mapping, in stops like a camera: every +1 doubles it, every -1 halves
         // it, 0 leaves it as it is. A dark crypt will want more, a sunny street less.

@@ -9,6 +9,7 @@
 #include "Gameplay/Effects/Effects.h"
 #include "Gameplay/Enemies/Monsters.h"
 #include "Gameplay/Player/Player.h"
+#include "Gameplay/Weapons/MuzzleLight.h"
 #include "Gameplay/Weapons/ViewRecoil.h"
 #include "Gameplay/Weapons/Weapon.h"
 #include "Gameplay/Weapons/WeaponViewModel.h"
@@ -175,6 +176,7 @@ namespace Abomination::Gameplay
             // The flash at the muzzle of the weapon in the hands, turned differently every shot.
             weaponViewModel->flashTimeLeft = state.effects.settings.flashDuration;
             weaponViewModel->flashRotation = state.effects.random.GetFloat(0.0f, 2.0f * std::numbers::pi_v<float>);
+            FlashMuzzleLight(state);
 
             // The smoke goes into the world, from where the muzzle is seen: the muzzle relative to the eyes, placed by the
             // eyes. (The weapon is drawn with its own field of view, so this is close to, not exactly, where the muzzle

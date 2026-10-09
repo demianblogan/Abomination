@@ -3,6 +3,8 @@
 #include "Core/Math/ConvexPolygon.h"
 #include "World/MapData.h"
 
+#include <array>
+#include <string>
 #include <vector>
 
 namespace Abomination::World
@@ -17,4 +19,10 @@ namespace Abomination::World
     // A face whose three points do not define a plane, or that is cut away completely (a plane that does not touch
     // the brush), gets an empty polygon. Coordinates stay in map units and axes.
     [[nodiscard]] std::vector<Core::ConvexPolygon> BuildBrushPolygons(const MapBrush& brush);
+
+    // A brush in the shape of a box made by code, not drawn in a map (the collider of a torch): its middle, its three axes
+    // (unit vectors at right angles, x cross y = z), half its size along each, all in map units and axes. Every face gets
+    // textureName.
+    [[nodiscard]] MapBrush MakeBoxBrush(const glm::dvec3& middle, const std::array<glm::dvec3, 3>& axes,
+                                        const glm::dvec3& halfSize, const std::string& textureName);
 }

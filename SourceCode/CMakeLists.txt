@@ -102,6 +102,8 @@ set(LIBRARY_SOURCES
     Gameplay/Characters/Health.h
     Gameplay/Effects/Effects.h
     Gameplay/Effects/Effects.cpp
+    Gameplay/Effects/Fires.h
+    Gameplay/Effects/Fires.cpp
     Gameplay/Effects/Gibs.h
     Gameplay/Effects/Gibs.cpp
     Gameplay/Effects/Particles.h
@@ -133,6 +135,8 @@ set(LIBRARY_SOURCES
     Gameplay/Weapons/Ammo.h
     Gameplay/Weapons/Crosshair.h
     Gameplay/Weapons/Crosshair.cpp
+    Gameplay/Weapons/MuzzleLight.h
+    Gameplay/Weapons/MuzzleLight.cpp
     Gameplay/Weapons/PumpAction.h
     Gameplay/Weapons/PumpAction.cpp
     Gameplay/Weapons/Shells.h
@@ -185,6 +189,10 @@ set(LIBRARY_SOURCES
     Renderer/ColorSpace.cpp
     Renderer/ImGuiRendererBackend.cpp
     Renderer/DrawOffset.h
+    Renderer/Fire.h
+    Renderer/Light.h
+    Renderer/LightBuffer.h
+    Renderer/LightBuffer.cpp
     Renderer/Material.h
     Renderer/MeshRenderer.h
     Renderer/ModelPose.h
@@ -236,6 +244,8 @@ set(LIBRARY_SOURCES
     Renderer/Debug/DebugLineRenderer.cpp
     Renderer/Debug/DebugLines.h
     Renderer/Debug/DebugLines.cpp
+    Renderer/Debug/LightDebugLines.h
+    Renderer/Debug/LightDebugLines.cpp
     Renderer/OpenGL/DebugOutput.h
     Renderer/OpenGL/DebugOutput.cpp
     Renderer/OpenGL/GLBuffer.h
@@ -314,10 +324,14 @@ set(LIBRARY_SOURCES
     World/Level.cpp
     World/LevelMesh.h
     World/LevelMesh.cpp
+    World/LightSources.h
+    World/LightSources.cpp
     World/MapCoordinates.h
     World/MapCoordinates.cpp
     World/MapData.h
     World/MapData.cpp
+    World/MapLights.h
+    World/MapLights.cpp
     World/MapParser.h
     World/MapParser.cpp
     World/MonsterStart.h

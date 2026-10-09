@@ -493,7 +493,8 @@ Inside the renderer:
 - **Renderer window** of the debug overlay (Renderer in the menu bar): Solid /
   Wireframe, world axes (arrows along X, Y, Z from the origin, over
   everything), shading (the view, the made-up sun and ambient, parallax,
-  specular anti-aliasing), tone mapping (None / ACES) and exposure, draw calls and
+  specular anti-aliasing), lights as debug lines, tone mapping (None, ACES,
+  ACES by Hill, AgX) and exposure, draw calls and
   triangles of the last frame, brushes, faces and
   triangles of the level, and *Reload*, which loads the map again (a Debug
   build reads it straight from `Assets/` of the repository, so a map saved
@@ -531,7 +532,11 @@ Debug overlay             ImGui, on the screen
   **ACES** filmic curve (Narkowicz's approximation: an S-curve that lifts the
   middle, deepens the darkest shadows and presses bright values together
   without a hard edge; per channel, so colors get more saturated and shift a
-  little) or cuts it off (`ToneMapping::None`), then converts to sRGB.
+  little) or cuts it off (`ToneMapping::None`), then converts to sRGB. Two
+  more curves are there to compare on bright light: ACES as fitted by
+  Stephen Hill (bright colors keep their hue, darker) and AgX of Blender 4
+  (very bright colors go to white, softer contrast). Compared in the chapel
+  with fire and shots, Narkowicz's ACES stays the default.
 - **Cost** on the Intel GPU of the development laptop: about 1.3 ms per
   frame (Present 0.55 ms, writing 8 bytes per pixel instead of 4 the rest).
   `GL_R11F_G11F_B10F` (4 bytes, HDR without alpha) is the option to measure
@@ -565,9 +570,10 @@ Material   baseColor × baseColorFactor        sRGB, crisp     what color the su
   Cook-Torrance — the GGX distribution of tiny facets, Smith-Schlick
   shadowing between them, Schlick Fresnel (every surface reflects more at a
   grazing angle; a dielectric reflects 4% straight on, a metal its own
-  color). The light now is a made-up sun (direction (0.4, 1, 0.6),
-  intensity 3) and an even ambient light, `SceneLighting` from
-  `CalculateSceneLighting`, until the lights of the next branches.
+  color). One function lights a surface with one light (`LightSurface`):
+  the made-up sun (direction (0.4, 1, 0.6), intensity 3, until the sky of
+  `feat/sky-and-fog`), then every lamp of the level, then an even ambient
+  light (`SceneLighting` from `CalculateSceneLighting`).
 - **Parallax occlusion mapping**: on a face seen from the side, the texture
   coordinates are moved along the view by a fixed number of steps into the
   height (16 by default, `ParallaxStepCount`) until the ray is below the
@@ -590,6 +596,34 @@ Material   baseColor × baseColorFactor        sRGB, crisp     what color the su
 - **Cost:** with parallax at 16 steps the level takes about 3.3 ms of the
   Intel GPU; the Release benchmark went from about 280 to 176 FPS, and the
   frame now waits for the GPU.
+
+**Dynamic lights** (`Renderer/Light.h`, `LightBuffer`):
+
+- A `Light` component makes an entity give light, placed by its
+  `Core::Transform`: a point light shines everywhere, a spot along its
+  forward (−Z) in a cone (`innerConeAngle` full, fading out to
+  `outerConeAngle`). `intensity` is the light at 1 m, in the units of the
+  sun (3 lights a white surface fully); it weakens with the square of the
+  distance (closer than 10 cm it grows no more) and is faded out to 0 at
+  `range` by the window of Unreal Engine 4, (1 − (d / range)⁴)².
+- **Forward rendering:** every frame `LightBuffer::Upload` gathers the lights
+  into a shader storage buffer (binding 1; `ShaderLight`, four `vec4`, the
+  layout std430 gives a `vec3` anyway), in the coordinates of the camera, at
+  most 256. `Lit.frag` goes through all of them for every pixel and skips a
+  light out of range or behind the surface before any lighting: with 12
+  lights in the chapel the level took 14.1 ms of the Intel GPU without the
+  skip, 6.8 ms with it (53 → 99 FPS in the Release benchmark, 176 without
+  lights). The weapon in the hands reads the same buffer: it is lit in the
+  coordinates of the same camera.
+- A **depth pre-pass** was tried (the depth of the level first, then the lit
+  pass with `GL_LEQUAL`) and made the frame slower: `Lit.frag` has an alpha
+  test (`discard`), and the Intel driver then turns off the early depth test
+  for the whole program. A variant of the shader without the alpha test
+  would be needed; not worth it while surfaces hardly cover each other.
+- Many lights are for later: static ones will be baked into lightmaps
+  (`feat/lightmaps`), and Forward+ (lights sorted into tiles of the screen)
+  only if the moving ones grow numerous. No light has shadows yet: it shines
+  through walls (`feat/shadows`).
 
 The executable exports `NvOptimusEnablement` and
 `AmdPowerXpressRequestHighPerformance`, so laptops with hybrid graphics run
@@ -808,7 +842,19 @@ player entity                                free-fly camera entity
   the world; a wall hit throws sparks and dust and leaves a mark (the last 64
   stay); a character hit throws blood. Textures come from
   `Tools/TextureGenerator`. Tuned in the Effects window. The crosshair
-  pulses with every shot.
+  pulses with every shot. The flash also lights the world (`MuzzleLight`): a
+  `Light` at the muzzle, seen from the eyes, whose intensity falls with the
+  square of the time left (0.08 s); between shots its entity has no `Light`.
+- **Fire** (`Renderer/Fire.h`, `Gameplay/Effects/Fires`): a `Flame` is an
+  animated sprite (a flipbook: 16 frames of 32×32 in one 128×128 texture,
+  `Sprite::texCoordMinimum`/`Maximum` choose the frame) standing upright and
+  turned to the camera only around the vertical, at the bottom of the flame
+  its entity marks; torn tongues for wood and coals (`Fire.png`, 12 frames
+  per second), a calm drop for wicks (`CandleFire.png`, 8). The phase of every
+  flame shifts its frame, so flames side by side never move together. Flames
+  throw sparks and smoke at their rates. A `Flicker` makes the `Light` of a
+  fire waver: three sine waves of different speeds on its intensity, and a
+  wander of a few centimeters, strong for wood, faint for wicks.
 
 - A camera looks along its **local −Z** axis; its local +X is its right side,
   local +Y the top of the screen. Its direction in the world is its rotation
@@ -1103,6 +1149,22 @@ Test.map ─► ParseMap ─► MapData ─┬─► BuildBrushPolygons ─► B
   `monster_*` entity is kept as a `MonsterStart` (class name, place, yaw) for
   `Gameplay::SpawnMonsters`. The level also keeps its collision brushes, its
   navmesh (see section 13) and its statistics; its data is private.
+- **Lights and models of the map:** `point_light` and `spot_light` (named
+  like the lights of Unity, `MapLights`) become entities with a `Light`; a
+  spot points by its `angles` ("pitch yaw roll" as the rotate tool of
+  TrenchBroom writes them, positive pitch down). `misc_model` shows a glTF
+  model; a model of a map is turned half a turn more than a yaw of the game,
+  because TrenchBroom shows the +Z of a glTF model as its front
+  (`CalculateMapModelRotation`).
+- **Light sources** (`LightSources`): `torch`, `brazier`, `candles` and
+  `lantern` are one entity each in the editor and become a model, a
+  flickering `Light` at its fire and its flames (`LightSourceType` holds the
+  offsets printed by `Tools/Blender/MakeLightSources.py`); the spawnflag Out
+  gives the burnt-out model and no fire. Their models have the middle of
+  their box at their origin, and the box of the entity in the editor is the
+  box of the model, so the editor and the game place them alike. Torches,
+  braziers and lanterns have a box of clip turned with them (`MakeBoxBrush`),
+  added to the brushes of the world for collision and the navmesh.
 - **Clip brushes** (`Common/Clip`, `IsClipBrush`): invisible brushes that
   characters collide with but shots and sight pass through, like the player
   clip of Quake. They are not drawn (no mesh), are in

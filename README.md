@@ -206,6 +206,7 @@ movement and a shotgun, against dogs that hunt you down; when you die, any key s
 | ✍️ [Code Style](Documentation/CODE_STYLE.md)         | Naming, formatting and C++/GLSL conventions           |
 | 🌿 [Git Conventions](Documentation/GIT_CONVENTIONS.md) | Branches, commits, pull requests, versions          |
 | 🧱 [Level Editing](Documentation/LEVEL_EDITING.md)  | Setting up TrenchBroom and building maps              |
+| 📖 [Game Design](Documentation/DESIGN.md)           | Story, endings, episodes and the first level          |
 | 🎨 [Art Direction](Documentation/ART_DIRECTION.md)  | Episodes, palettes and rules for textures             |
 | 📦 [Assets](Documentation/ASSETS.md)                 | Third-party assets and their licenses                 |
 | 🧩 [Third-Party](Documentation/THIRD_PARTY.md)     | Libraries and tools with their licenses               |

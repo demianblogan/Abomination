@@ -17,7 +17,8 @@ namespace Abomination::Renderer
     }
 
     void SpriteBatch::AddQuad(const glm::vec3& center, const glm::vec3& right, const glm::vec3& up, const glm::vec4& color,
-                              TextureHandle texture, SpriteBlend blend)
+                              TextureHandle texture, SpriteBlend blend, const glm::vec2& texCoordMinimum,
+                              const glm::vec2& texCoordMaximum)
     {
         m_sprites.push_back(Sprite{
             .center = center,
@@ -25,6 +26,8 @@ namespace Abomination::Renderer
             .right = right,
             .up = up,
             .color = color,
+            .texCoordMinimum = texCoordMinimum,
+            .texCoordMaximum = texCoordMaximum,
             .texture = texture,
             .blend = blend,
         });

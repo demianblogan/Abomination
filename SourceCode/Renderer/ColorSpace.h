@@ -20,4 +20,7 @@ namespace Abomination::Renderer
     // A color given in sRGB numbers (as a designer picks it) as linear values. Alpha is not a color: it is kept as it is.
     [[nodiscard]] glm::vec3 ConvertSRGBToLinear(const glm::vec3& color);
     [[nodiscard]] glm::vec4 ConvertSRGBToLinear(const glm::vec4& color);
+
+    // Linear values as an sRGB color, to show them in a color picker or as debug lines.
+    [[nodiscard]] glm::vec3 ConvertLinearToSRGB(const glm::vec3& color);
 }

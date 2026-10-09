@@ -12,18 +12,21 @@
 #include "Gameplay/Animation/Animator.h"
 #include "Gameplay/Camera/FreeFlyCameraSystem.h"
 #include "Gameplay/Camera/ViewSystem.h"
+#include "Gameplay/Effects/Fires.h"
 #include "Gameplay/Enemies/MonsterDebug.h"
 #include "Gameplay/Enemies/Monsters.h"
 #include "Gameplay/Player/DamageReaction.h"
 #include "Gameplay/Player/Player.h"
 #include "Gameplay/Player/PlayerSystem.h"
 #include "Gameplay/Spin.h"
+#include "Gameplay/Weapons/MuzzleLight.h"
 #include "Gameplay/Weapons/Shells.h"
 #include "Gameplay/Weapons/WeaponSystem.h"
 #include "Gameplay/Weapons/WeaponViewModel.h"
 #include "Platform/SystemServices.h"
 #include "Renderer/Camera/View.h"
 #include "Renderer/ColorSpace.h"
+#include "Renderer/Debug/LightDebugLines.h"
 #include "Renderer/OpenGL/DebugOutput.h"
 #include "Renderer/OpenGL/GLDebugGroup.h"
 #include "Renderer/OpenGL/GPUProfiling.h"
@@ -336,10 +339,15 @@ namespace Abomination
         // Animated models: their poses are only for the eyes.
         Gameplay::UpdateAnimators(m_registry, m_renderAssets.models, deltaTime);
 
-        // The shells fly out of the weapon as it is seen: from the eyes between the last two ticks.
+        // The flames of the level: their flicker, sparks and smoke.
+        Gameplay::UpdateFires(m_registry, m_gameplay.effects, deltaTime);
+
+        // The shells fly out of the weapon as it is seen, and its flash lights the room from there: from the eyes between
+        // the last two ticks.
         const Core::Transform eyes =
             Gameplay::CalculateViewTransform(m_gameplay, m_registry, m_fixedTimestep.GetInterpolationFactor());
         Gameplay::UpdateShells(m_gameplay, m_registry, eyes, m_level.GetShotBrushes(), m_audio, deltaTime);
+        Gameplay::UpdateMuzzleLight(m_gameplay, m_registry, eyes, deltaTime);
         Gameplay::UpdateGibs(m_gameplay, m_registry, m_level.GetShotBrushes(), deltaTime);
         Gameplay::UpdateDamageReaction(m_gameplay, m_registry, m_audio, deltaTime);
     }
@@ -412,11 +420,14 @@ namespace Abomination
             // In the order things cover each other: the solid world, the see-through effects in it, the debug lines, the
             // weapon in the hands; then the scene goes onto the screen, and the game interface is drawn over everything.
             // Every pass is a named group of OpenGL commands, so a frame captured by RenderDoc reads as these passes.
+            // The light of the frame, in the coordinates of the camera: the world and the weapon in the hands share it,
+            // whatever space the weapon is drawn in.
+            Renderer::SceneLighting lighting = Renderer::CalculateSceneLighting(view, m_renderSettings);
+            lighting.lightCount = m_lightBuffer.Upload(m_registry, view.viewMatrix, interpolationFactor);
             {
                 Renderer::GLDebugGroup group("World");
-                m_renderStatistics =
-                    Renderer::DrawMeshes(m_registry, view, interpolationFactor, m_renderAssets, m_systemShaders, m_renderSettings,
-                                         Renderer::CalculateSceneLighting(view, m_renderSettings), m_skinningBuffer);
+                m_renderStatistics = Renderer::DrawMeshes(m_registry, view, interpolationFactor, m_renderAssets,
+                                                          m_systemShaders, m_renderSettings, lighting, m_skinningBuffer);
             }
             {
                 Renderer::GLDebugGroup group("Effects");
@@ -435,7 +446,7 @@ namespace Abomination
             }
             {
                 Renderer::GLDebugGroup group("Weapon");
-                DrawWeaponViewModel(aspectRatio, view, interpolationFactor);
+                DrawWeaponViewModel(aspectRatio, view, interpolationFactor, lighting);
             }
             {
                 Renderer::GLDebugGroup group("Present");
@@ -514,9 +525,10 @@ namespace Abomination
     {
         PROFILE_ZONE();
 
-        // The see-through things after the solid world: the marks on the walls and the particles.
+        // The see-through things after the solid world: the marks on the walls, the flames and the particles.
         m_sprites.Clear();
         Gameplay::AddDecalSprites(m_gameplay.effects, m_sprites);
+        Gameplay::AddFlameSprites(m_registry, m_gameplay.effects, view.position, m_sprites);
         m_gameplay.effects.particles.AddSprites(m_sprites);
         m_renderStatistics.drawCallCount += m_spriteRenderer.Draw(m_sprites, view.viewMatrix, view.projectionMatrix,
                                                                   m_renderAssets.textures,
@@ -538,6 +550,9 @@ namespace Abomination
         Gameplay::AddMonsterDebugLines(m_gameplay, m_registry, interpolationFactor, m_debugLines);
         Gameplay::AddNavMeshDebugLines(m_gameplay, m_level.GetNavMesh(), m_debugLines);
 
+        if (m_renderSettings.areLightsVisible)
+            Renderer::AddLightDebugLines(m_registry, m_debugLines);
+
         if (m_renderSettings.areWorldAxesVisible)
         {
             constexpr glm::vec3 Origin{0.0f};
@@ -548,7 +563,8 @@ namespace Abomination
         }
     }
 
-    void Application::DrawWeaponViewModel(float aspectRatio, const Renderer::View& view, float interpolationFactor)
+    void Application::DrawWeaponViewModel(float aspectRatio, const Renderer::View& view, float interpolationFactor,
+                                          const Renderer::SceneLighting& lighting)
     {
         PROFILE_ZONE();
 
@@ -571,9 +587,6 @@ namespace Abomination
                 Gameplay::CalculatePlayerEyeTransform(body, m_registry.get<Gameplay::LookAngles>(m_gameplay.player)));
         }
         const Renderer::View* worldView = isSeenByPlayer ? nullptr : &view;
-
-        // The same light as the world: computed from the view of the camera, whatever space the weapon is drawn in.
-        const Renderer::SceneLighting lighting = Renderer::CalculateSceneLighting(view, m_renderSettings);
 
         // The parts that move with the pump go back along the barrel: the model points along -Z, so back is +Z.
         std::vector<Renderer::ModelPartOffset> partOffsets;

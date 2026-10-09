@@ -166,24 +166,28 @@ Decisions:
 - Every effect can be switched off in the Renderer window until the options
   menu (0.8). Motion blur (camera only) and chromatic aberration (on damage)
   are options.
-- The level grows with the graphics branches (the street, the crypt, the
-  pool); every generated asset is approved before it is used.
+- The level grows with the graphics branches: level 1-1 (see `DESIGN.md`)
+  now starts outside, in a courtyard before the entrance of the chapel, so
+  the sun is seen outside and the fire inside. Every generated asset is
+  approved before it is used.
+- Only light sources of the time: torches, braziers, campfires, candles,
+  chandeliers, oil lanterns; and a flashlight as a game convention.
 
 | # | Branch                          | Status | Content                                                                 |
 |---|---------------------------------|--------|-------------------------------------------------------------------------|
 | 1 | `perf/monster-cost`             | ✅     | Tracy 0.14.1 (started by the game only, zones in the main loop, the dogs, movement, traces, animation and drawing, GPU zones); `--benchmark` (a repeatable fight with an invulnerable player) and `Tools/Profiling/Capture.ps1` (a capture turned into the cost of every zone per frame); the dogs turned out cheap in Release (their cost was a Debug cost), the frame did not: draws with the index range given (`glDrawRangeElements`: the Intel driver read every index on the CPU), HUD properties set only when they change (RmlUi rebuilt the geometry), the boxes of the characters gathered without allocating; 190 → about 410 FPS in the Release benchmark; V-Sync off and the debug overlay hidden by default |
 | 2 | `feat/linear-hdr`               | ✅     | Named passes of the frame for RenderDoc (`GLDebugGroup`) and a first frame studied in it; shader hot reload in Debug builds (a file watcher that waits until a file stops changing, the old program kept on a compile error); the benchmark saves a screenshot halfway; the scene drawn into an HDR framebuffer (`RGBA16F`) in linear values: sRGB textures for the world, colors of the code converted, a Present pass over the screen with exposure and the ACES tone mapping curve back into sRGB, the game interface in sRGB on top; tone mapping and exposure in the Renderer window; about 1.3 ms per frame on the Intel GPU |
 | 3 | `feat/materials`                | ✅     | Tangents for normal maps (exact ones from the texture axes of brushes, MikkTSpace for models); a PBR material per texture and model part (base color, normal, roughness and metalness, emissive, height), the maps of a brush texture found by file name, every map of the glTF files now read, a material of every part in the Entities window; the `Lit` shader: Cook-Torrance (GGX, Smith, Fresnel) under a made-up sun until real lights; the maps of the 16 Episode 1 textures made from their colors by `Tools/MaterialMaps` (with a preview page); parallax occlusion mapping of walls and floors (a fixed number of steps), specular anti-aliasing and smooth data maps against flickering; debug views of the material in the Renderer window; 176 FPS in the Release benchmark |
-| 4 | `feat/dynamic-lights`           | ⏳     | A `light` entity in TrenchBroom (point and spot); flickering fire; the muzzle flash lights the walls; the lights of a frame in a buffer; compare tone mapping curves on bright light (ACES by Stephen Hill, AgX) next to the current one |
-| 5 | `feat/sky-and-fog`              | ⏳     | A cubemap sky behind sky brushes and the sun from it; distance and height fog; the street outside the chapel |
+| 4 | `feat/dynamic-lights`           | ✅     | The design document (story, endings, episodes, level 1-1); `point_light` and `spot_light` in TrenchBroom (named like in Unity; a spot turned by the rotate tool and shown as a cone), the lights of a frame in a storage buffer and lit by the same Cook-Torrance as the sun, lights out of reach skipped per pixel (12 lights: 53 → 99 FPS in the Release benchmark); torches, braziers, candles and lanterns as one entity each: a model made in Blender (lit and burnt out), a flickering light at its fire, flames as flipbooks (torn for wood, calm for wicks) with sparks and smoke, a box of clip; models of the map face their angle as in the editor; the muzzle flash lights the world; tone mapping curves compared (ACES by Hill, AgX), ACES stays. A depth pre-pass was tried and dropped; the flashlight moves to `feat/shadows` |
+| 5 | `feat/sky-and-fog`              | ⏳     | A cubemap sky behind sky brushes and the sun from it; distance and height fog; the courtyard and the entrance of the chapel, where the player now starts |
 | 6 | `feat/lightmaps`                | ⏳     | Our own baker: a lightmap UV atlas of the faces, direct light with soft shadows, bounced light, baked ambient occlusion, a cache file; a grid of light probes that lights the dogs and the weapon. The biggest branch |
-| 7 | `feat/shadows`                  | ⏳     | Shadow maps: cascades for the sun, cube maps for a few near lights, soft edges (PCF/PCSS); SSAO; volumetric light rays through the stained glass; the crypt |
+| 7 | `feat/shadows`                  | ⏳     | The flashlight: a spot held beside the eyes that follows the view with a delay, with its own shadow map; shadow maps: spot lights, cascades for the sun, cube maps for a few near lights, soft edges (PCF/PCSS); SSAO; volumetric light rays through the stained glass; the crypt |
 | 8 | `feat/reflections`              | ⏳     | Baked reflection probes; screen-space reflections (puddles, blood, wet floors); water: planar reflection, refraction, Fresnel, waves from normal maps, a tint by depth, distortion under water; the pool |
 | 9 | `feat/post-processing`          | ⏳     | Motion vectors, TAA, FXAA, FSR 1 with a render scale; bloom; a color grade per episode (3D LUT); vignette, film grain, chromatic aberration, camera motion blur |
-| 10 | `feat/level-expansion`         | ⏳     | Props from generated models (crates, chains, broken benches, the chapel from outside), more detail and water; fall damage |
+| 10 | `feat/level-expansion`         | ⏳     | Props from generated models (crates, chains, broken benches, lanterns, the chapel from outside) in the courtyard and the chapel, more detail and water; fall damage |
 | 11 | `refactor/review-0.5`          | ⏳     | A review of the project as in 0.4; a study plan of the whole project; docs, screenshots, release v0.5.0 |
 
-**Done when:** the chapel, the street, the crypt and the pool are lit by baked
+**Done when:** the courtyard, the chapel, the crypt and the pool are lit by baked
 light with soft shadows and bounced light; fire flickers and the shots light
 the walls; water reflects and refracts; the picture is HDR with tone mapping,
 bloom and anti-aliasing; eight dogs cost far less than today.

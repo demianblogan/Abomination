@@ -66,6 +66,11 @@ namespace Abomination::Renderer
     inline constexpr std::uint32_t SpecularAntiAliasingUniform = 13;
     inline constexpr std::uint32_t ParallaxStepCountUniform = 14;
 
+    // The lights of the frame (see LightBuffer): a shader storage buffer of ShaderLight, layout(std430, binding = 1)
+    // readonly buffer, and how many of them it holds (int).
+    inline constexpr std::uint32_t LightsStorageBinding = 1;
+    inline constexpr std::uint32_t LightCountUniform = 15;
+
     // --- Every shader that places vertices in the world (all mesh shaders and DebugLines) ---
 
     // Uniforms: layout(location = N) uniform mat4 ... . DebugLines has no model matrix: its lines are in world coordinates

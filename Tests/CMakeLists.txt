@@ -37,6 +37,7 @@ set(TEST_SOURCES
     Gameplay/Enemies/DogMindTests.cpp
     Gameplay/Enemies/GroundFitTests.cpp
     Gameplay/Effects/EffectsTests.cpp
+    Gameplay/Effects/FiresTests.cpp
     Gameplay/Effects/ParticlesTests.cpp
     Gameplay/Effects/TumblingTests.cpp
     Gameplay/Player/DamageReactionTests.cpp
@@ -46,6 +47,7 @@ set(TEST_SOURCES
     Gameplay/Player/PlayerTests.cpp
     Gameplay/Weapons/AmmoTests.cpp
     Gameplay/Weapons/CrosshairTests.cpp
+    Gameplay/Weapons/MuzzleLightTests.cpp
     Gameplay/Weapons/PumpActionTests.cpp
     Gameplay/Weapons/WeaponTests.cpp
     Gameplay/Weapons/WeaponViewModelMotionTests.cpp
@@ -71,7 +73,9 @@ set(TEST_SOURCES
     Renderer/Assets/ModelPartSplitTests.cpp
     Renderer/Camera/ViewTests.cpp
     Renderer/ColorSpaceTests.cpp
+    Renderer/LightBufferTests.cpp
     Renderer/Debug/DebugLinesTests.cpp
+    Renderer/Debug/LightDebugLinesTests.cpp
     Renderer/OpenGL/GLTextureTests.cpp
 
     ThirdParty/EnTTTests.cpp
@@ -84,7 +88,9 @@ set(TEST_SOURCES
     World/CollisionDebugTests.cpp
     World/CollisionTraceTests.cpp
     World/LevelMeshTests.cpp
+    World/LightSourcesTests.cpp
     World/MapFilesTests.cpp
+    World/MapLightsTests.cpp
     World/MapCoordinatesTests.cpp
     World/MapParserTests.cpp
     World/PlayerStartTests.cpp
@@ -110,5 +116,8 @@ source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${TEST_SOURCES})
 # --- CTest integration -------------------------------------------------------
 # Registers every TEST(...) as a separate CTest test. PRE_TEST lists the tests
 # when CTest runs instead of after every build, so building never runs test code.
+# Listing the tests starts the executable once; a Debug build on a CI machine
+# may take longer than the default 5 seconds to start, which fails the run
+# before any test, so it gets a minute.
 include(GoogleTest)
-gtest_discover_tests(AbominationTests DISCOVERY_MODE PRE_TEST)
+gtest_discover_tests(AbominationTests DISCOVERY_MODE PRE_TEST DISCOVERY_TIMEOUT 60)

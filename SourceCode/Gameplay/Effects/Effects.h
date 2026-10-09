@@ -23,6 +23,10 @@ namespace Abomination::Gameplay
         Renderer::TextureHandle dust;
         Renderer::TextureHandle pelletMark;
         Renderer::TextureHandle blood;
+
+        // The flipbooks of the flames (see Fires.h).
+        Renderer::TextureHandle fire;
+        Renderer::TextureHandle candleFire;
     };
 
     [[nodiscard]] EffectTextures LoadEffectTextures(Renderer::TextureStore& textures);
@@ -57,6 +61,13 @@ namespace Abomination::Gameplay
         float smokeLifetime = 0.9f;
         float smokeHalfSize = 0.12f;
 
+        // The light of the flash (see MuzzleLight.h): the light at 1 m, how far it reaches (meters), its color (sRGB, as
+        // picked) and how long it takes to fade out (seconds; a little longer than the flash sprite, light lingers).
+        float flashLightIntensity = 40.0f;
+        float flashLightRange = 9.0f;
+        glm::vec3 flashLightColor{1.0f, 0.75f, 0.45f};
+        float flashLightDuration = 0.08f;
+
         // The marks of pellets on walls: their half size, and how many stay before the oldest disappear.
         float markHalfSize = 0.065f;
         int maximumMarkCount = 64;
@@ -81,6 +92,9 @@ namespace Abomination::Gameplay
         std::vector<Decal> decals;
 
         Core::Random random;
+
+        // Seconds since the game started, for the flames and their flicker.
+        float time = 0.0f;
     };
 
     // A pellet hit a wall at point, whose surface faces normal (a unit vector): sparks, dust and a mark.

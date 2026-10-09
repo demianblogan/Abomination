@@ -82,8 +82,9 @@ direction of its angle. A player start placed on the floor puts the player on
 the floor; one placed higher lets the player fall at the start (like in
 Quake). F2 switches to the free-fly camera to look at the map from anywhere.
 
-- Faces are drawn with their materials, lit by a made-up sun until the map
-  has lights. A texture that is missing shows as a magenta and black
+- Faces are drawn with their materials, lit by the lights of the map and a
+  made-up sun (set *Sun* to 0 in the Renderer window to see only the lights).
+  A texture that is missing shows as a magenta and black
   checkerboard, with a warning in the log.
 - **Material maps** lie next to a texture with suffixes
   (`Wall_MossyBrick_Normal.png`, `_MetalRough`, `_Emissive`, `_Height`) and
@@ -107,3 +108,39 @@ Quake). F2 switches to the free-fly camera to look at the map from anywhere.
   one line) is skipped.
 - Avoid faces of different objects lying in one plane (a box standing flush
   with the top of a step shows flickering stripes there, *z-fighting*).
+
+## Lights and light sources
+
+Light comes from these entities of the entity browser. There were no electric
+lights in the world of the game: fire and the sky (see `DESIGN.md`).
+
+| Entity | What it is | Properties |
+|--------|------------|------------|
+| `torch` | A wall torch: the model, its fire and its light in one entity | `angle` away from the wall, Out, `intensity`, `range`, `_color` |
+| `brazier` | An iron bowl of coals on three legs | the same |
+| `candles` | Four candles in a puddle of wax | the same |
+| `lantern` | An oil lantern with horn panes | the same |
+| `point_light` | A bare light shining everywhere, without a model | `intensity`, `range` (units), `_color` |
+| `spot_light` | A bare light shining in a cone | the same, and `angles`, `cone`, `inner_cone` |
+
+- **Place a light source by its box:** the box in the editor is the box of
+  its model, so a torch whose box touches the wall hangs on the wall, and a
+  brazier whose box stands on the floor stands on it. Turn it with `angle`:
+  the front of the model (the flame of a torch) faces that way.
+- **Out** (in *Spawnflags*: select the entity, check *Show default
+  properties* under the property table, click `spawnflags`) puts the fire
+  out: the burnt-out model, no flames, no light.
+- **Intensity** is the light at 1 m: 3 lights a white surface fully. Each
+  light source has its own default (a torch 8, a brazier 15, candles 3, a
+  lantern 5); light weakens with the square of the distance and ends at
+  `range`.
+- **A spot** shows as a cone in the editor: turn it with the rotate tool,
+  which writes its `angles`. Its default intensity is 30, since it lights a
+  patch far from itself.
+- Torches, braziers and lanterns are solid for the player and the dogs (shots
+  pass through them); candles are lower than a step.
+- **Lights have no shadows yet** (feat/shadows): a light behind a wall
+  lights the room on the other side too. *Lights* in the Renderer window
+  shows every light with its range (or cone), to check how far they reach.
+- Every light costs: each pixel goes through all lights that reach it. A dozen
+  in a room is fine.

@@ -4,9 +4,13 @@
 #include "Core/Scene/Name.h"
 #include "Core/Scene/Transform.h"
 #include "Renderer/Assets/MaterialFiles.h"
+#include "Renderer/Fire.h"
+#include "Renderer/Light.h"
 #include "Renderer/MeshRenderer.h"
 #include "Renderer/ModelRenderer.h"
+#include "World/LightSources.h"
 #include "World/MapCoordinates.h"
+#include "World/MapLights.h"
 #include "World/NavMeshGeometry.h"
 
 #include <glm/gtc/quaternion.hpp>
@@ -83,33 +87,28 @@ namespace Abomination::World
             return ReadCharacterStart(*entity);
         }
 
-        // A model standing in the level (misc_model): its file ("model"), origin and angle.
-        entt::entity CreateModelEntity(entt::registry& registry, Renderer::RenderAssets& assets, const MapEntity& mapEntity,
+        // A model standing in the level, in the Level lifetime group like the textures and meshes.
+        entt::entity CreateModelEntity(entt::registry& registry, Renderer::RenderAssets& assets, const std::string& name,
+                                       const std::string& modelPath, const Core::Transform& transform,
                                        Renderer::ShaderHandle shaderProgram)
         {
-            const std::string* modelPath = FindProperty(mapEntity, "model");
-            if (modelPath == nullptr)
-            {
-                Core::Log::Write(LogCategory::World, LogLevel::Warning, "A misc_model has no model property, skipped");
-
-                return entt::null;
-            }
-
-            Core::Transform transform;
-            if (const std::string* origin = FindProperty(mapEntity, "origin"); origin != nullptr)
-                if (const std::optional<glm::dvec3> position = ParseVectorProperty(*origin); position.has_value())
-                    transform.position = ConvertMapPosition(*position);
-
-            // The angle turns the model around the vertical axis (+Y in the game).
-            transform.rotation = glm::angleAxis(ReadEntityYaw(mapEntity), glm::vec3(0.0f, 1.0f, 0.0f));
-
             const entt::entity entity = registry.create();
-            registry.emplace<Core::Name>(entity, "Model: " + *modelPath);
+            registry.emplace<Core::Name>(entity, name);
             registry.emplace<Core::Transform>(entity, transform);
             registry.emplace<Renderer::ModelRenderer>(entity, Renderer::ModelRenderer{
-                .model = assets.LoadModel(*modelPath, Core::AssetLifetime::Level),
+                .model = assets.LoadModel(modelPath, Core::AssetLifetime::Level),
                 .shaderProgram = shaderProgram,
             });
+
+            return entity;
+        }
+
+        entt::entity CreateLightEntity(entt::registry& registry, const std::string& name, const MapLight& mapLight)
+        {
+            const entt::entity entity = registry.create();
+            registry.emplace<Core::Name>(entity, name);
+            registry.emplace<Core::Transform>(entity, mapLight.transform);
+            registry.emplace<Renderer::Light>(entity, mapLight.light);
 
             return entity;
         }
@@ -141,13 +140,22 @@ namespace Abomination::World
         };
         LevelMesh levelMesh = BuildLevelMesh(*world, getTextureSize);
         level.m_statistics = levelMesh.statistics;
-        level.m_collisionBrushes = BuildCollisionBrushes(*world, BrushSelection::All);
-        level.m_shotBrushes = BuildCollisionBrushes(*world, BrushSelection::WithoutClip);
 
-        // The navmesh: where the dogs can walk and how they find their way (see Navigation::NavMesh).
+        // What characters bump into: the brushes of the world and the boxes of the light sources (torches, braziers),
+        // which are clip: shots pass through them.
+        MapEntity solidWorld = *world;
+        for (const MapEntity& mapEntity : map.entities)
+            if (const std::optional<MapLightSource> source = ReadMapLightSource(mapEntity); source.has_value())
+                if (source->collisionBrush.has_value())
+                    solidWorld.brushes.push_back(*source->collisionBrush);
+        level.m_collisionBrushes = BuildCollisionBrushes(solidWorld, BrushSelection::All);
+        level.m_shotBrushes = BuildCollisionBrushes(solidWorld, BrushSelection::WithoutClip);
+
+        // The navmesh: where the dogs can walk and how they find their way (see Navigation::NavMesh). The dogs walk around
+        // the light sources too.
         const auto navMeshStart = std::chrono::steady_clock::now();
         std::expected<Navigation::NavMesh, std::string> navMesh =
-            Navigation::NavMesh::Build(BuildNavMeshGeometry(*world), Navigation::NavMeshSettings{});
+            Navigation::NavMesh::Build(BuildNavMeshGeometry(solidWorld), Navigation::NavMeshSettings{});
         const std::chrono::duration<double, std::milli> navMeshTime = std::chrono::steady_clock::now() - navMeshStart;
         if (navMesh.has_value())
         {
@@ -178,18 +186,52 @@ namespace Abomination::World
             level.m_entities.push_back(entity);
         }
 
-        // Models standing in the level. Like the textures and meshes, they belong to the Level lifetime group.
+        // Models standing in the level (like the textures and meshes, they belong to the Level lifetime group), lights,
+        // and the places of the monsters.
+        int lightCount = 0;
         for (const MapEntity& mapEntity : map.entities)
         {
             const std::string* className = FindProperty(mapEntity, "classname");
             if (className == nullptr)
                 continue;
 
-            if (*className == "misc_model")
+            if (const std::optional<MapLight> mapLight = ReadMapLight(mapEntity); mapLight.has_value())
             {
-                const entt::entity entity = CreateModelEntity(registry, assets, mapEntity, shaderProgram);
-                if (entity != entt::null)
-                    level.m_entities.push_back(entity);
+                const bool isSpot = mapLight->light.type == Renderer::LightType::Spot;
+                level.m_entities.push_back(CreateLightEntity(registry, isSpot ? "Spot light" : "Light", *mapLight));
+                ++lightCount;
+            }
+            else if (const std::optional<MapLightSource> source = ReadMapLightSource(mapEntity); source.has_value())
+            {
+                // A torch, a brazier...: its model, and its light where its fire is, unless the fire is out.
+                level.m_entities.push_back(
+                    CreateModelEntity(registry, assets, source->name, source->modelPath, source->transform, shaderProgram));
+                if (source->light.has_value())
+                {
+                    const entt::entity light = CreateLightEntity(registry, source->name + " light", *source->light);
+                    registry.emplace<Renderer::Flicker>(light, source->flicker);
+                    level.m_entities.push_back(light);
+                    ++lightCount;
+                }
+                for (const MapLightSource::PlacedFlame& placed : source->flames)
+                {
+                    const entt::entity flame = registry.create();
+                    registry.emplace<Core::Name>(flame, source->name + " flame");
+                    registry.emplace<Core::Transform>(flame, Core::Transform{.position = placed.position});
+                    registry.emplace<Renderer::Flame>(flame, placed.flame);
+                    level.m_entities.push_back(flame);
+                }
+            }
+            else if (*className == "misc_model")
+            {
+                const std::string* modelPath = FindProperty(mapEntity, "model");
+                if (modelPath == nullptr)
+                {
+                    Core::Log::Write(LogCategory::World, LogLevel::Warning, "A misc_model has no model property, skipped");
+                    continue;
+                }
+                level.m_entities.push_back(CreateModelEntity(registry, assets, "Model: " + *modelPath, *modelPath,
+                                                             ReadMapModelTransform(mapEntity), shaderProgram));
             }
             else if (className->starts_with("monster_"))
             {
@@ -203,9 +245,10 @@ namespace Abomination::World
         }
 
         Core::Log::Write(LogCategory::World, LogLevel::Info,
-                         "Level {} loaded: {} brushes, {} faces, {} triangles, {} textures, {} collision brushes", mapPath,
-                         level.m_statistics.brushCount, level.m_statistics.faceCount,
-                         level.m_statistics.triangleCount, levelMesh.parts.size(), level.m_collisionBrushes.size());
+                         "Level {} loaded: {} brushes, {} faces, {} triangles, {} textures, {} collision brushes, {} lights",
+                         mapPath, level.m_statistics.brushCount, level.m_statistics.faceCount,
+                         level.m_statistics.triangleCount, levelMesh.parts.size(), level.m_collisionBrushes.size(),
+                         lightCount);
 
         return level;
     }

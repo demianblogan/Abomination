@@ -8,6 +8,7 @@
 #include "Gameplay/Enemies/DogMind.h"
 #include "Gameplay/Player/PlayerController.h"
 #include "Gameplay/Player/PlayerDeath.h"
+#include "Gameplay/Weapons/MuzzleLight.h"
 #include "Gameplay/Weapons/Shells.h"
 #include "Physics/CharacterMovement.h"
 #include "World/CollisionBrush.h"
@@ -133,6 +134,9 @@ namespace Abomination::Gameplay
 
         // The visual effects of shots (see Effects.h).
         Effects effects;
+
+        // The light of the shots (see MuzzleLight.h).
+        MuzzleLight muzzleLight;
 
         // The spent shells thrown out by the pump (see Shells.h).
         Shells shells;

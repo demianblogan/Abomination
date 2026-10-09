@@ -50,6 +50,8 @@ namespace Abomination::Gameplay
             .dust = load("Dust"),
             .pelletMark = load("PelletMark"),
             .blood = load("Blood"),
+            .fire = load("Fire"),
+            .candleFire = load("CandleFire"),
         };
     }
 

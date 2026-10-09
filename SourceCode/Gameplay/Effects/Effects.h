@@ -23,6 +23,10 @@ namespace Abomination::Gameplay
         Renderer::TextureHandle dust;
         Renderer::TextureHandle pelletMark;
         Renderer::TextureHandle blood;
+
+        // The flipbooks of the flames (see Fires.h).
+        Renderer::TextureHandle fire;
+        Renderer::TextureHandle candleFire;
     };
 
     [[nodiscard]] EffectTextures LoadEffectTextures(Renderer::TextureStore& textures);
@@ -81,6 +85,9 @@ namespace Abomination::Gameplay
         std::vector<Decal> decals;
 
         Core::Random random;
+
+        // Seconds since the game started, for the flames and their flicker.
+        float time = 0.0f;
     };
 
     // A pellet hit a wall at point, whose surface faces normal (a unit vector): sparks, dust and a mark.

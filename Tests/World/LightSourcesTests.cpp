@@ -60,6 +60,31 @@ namespace Abomination::World
         EXPECT_FLOAT_EQ(source->light->light.range, 2.0f);
     }
 
+    TEST(LightSources, FlamesBurnOnlyWhereTheyAreSeen)
+    {
+        // A flame for every wick of the candles, none for the lantern (behind its panes), none when the fire is out.
+        const auto countFlames = [](std::unordered_map<std::string, std::string> properties)
+        {
+            const std::optional<MapLightSource> source = ReadMapLightSource(MakeEntity(std::move(properties)));
+            return source.has_value() ? source->flames.size() : 99u;
+        };
+
+        EXPECT_EQ(countFlames({{"classname", "candles"}}), 4u);
+        EXPECT_EQ(countFlames({{"classname", "lantern"}}), 0u);
+        EXPECT_EQ(countFlames({{"classname", "torch"}, {"spawnflags", "1"}}), 0u);
+    }
+
+    TEST(LightSources, FlickerStartsFromTheLightOfTheEntity)
+    {
+        const std::optional<MapLightSource> source =
+            ReadMapLightSource(MakeEntity({{"classname", "torch"}, {"intensity", "12"}}));
+        ASSERT_TRUE(source.has_value());
+        ASSERT_TRUE(source->light.has_value());
+
+        EXPECT_FLOAT_EQ(source->flicker.baseIntensity, 12.0f);
+        EXPECT_EQ(source->flicker.basePosition, source->light->transform.position);
+    }
+
     TEST(LightSources, ClassNamesAreUnique)
     {
         const std::span<const LightSourceType> types = GetLightSourceTypes();

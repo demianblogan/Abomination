@@ -18,4 +18,6 @@ Add-Type -Path (Join-Path $PSScriptRoot "TextureGenerator.cs") -ReferencedAssemb
                        (Join-Path $repositoryRoot "Build\TexturePreviews\ShotgunShell.png"))
 [TextureGen]::RunBoltOpening((Join-Path $repositoryRoot "Assets\Textures\Weapons"),
                              (Join-Path $repositoryRoot "Build\TexturePreviews\ShotgunOpening.png"))
+[TextureGen]::RunFire((Join-Path $repositoryRoot "Assets\Textures\Effects"),
+                      (Join-Path $repositoryRoot "Build\TexturePreviews"))
 Write-Host "Textures written to Assets\Textures, HUD icons and effects to Assets\UI, previews to Build\TexturePreviews"

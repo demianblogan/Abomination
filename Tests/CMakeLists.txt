@@ -37,6 +37,7 @@ set(TEST_SOURCES
     Gameplay/Enemies/DogMindTests.cpp
     Gameplay/Enemies/GroundFitTests.cpp
     Gameplay/Effects/EffectsTests.cpp
+    Gameplay/Effects/FiresTests.cpp
     Gameplay/Effects/ParticlesTests.cpp
     Gameplay/Effects/TumblingTests.cpp
     Gameplay/Player/DamageReactionTests.cpp

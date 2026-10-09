@@ -102,6 +102,8 @@ set(LIBRARY_SOURCES
     Gameplay/Characters/Health.h
     Gameplay/Effects/Effects.h
     Gameplay/Effects/Effects.cpp
+    Gameplay/Effects/Fires.h
+    Gameplay/Effects/Fires.cpp
     Gameplay/Effects/Gibs.h
     Gameplay/Effects/Gibs.cpp
     Gameplay/Effects/Particles.h
@@ -185,6 +187,7 @@ set(LIBRARY_SOURCES
     Renderer/ColorSpace.cpp
     Renderer/ImGuiRendererBackend.cpp
     Renderer/DrawOffset.h
+    Renderer/Fire.h
     Renderer/Light.h
     Renderer/LightBuffer.h
     Renderer/LightBuffer.cpp

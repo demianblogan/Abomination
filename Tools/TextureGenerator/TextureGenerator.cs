@@ -1176,4 +1176,120 @@ public static class TextureGen
             sheet.Save(previewPath, ImageFormat.Png);
         }
     }
+
+    // ---------- fire ----------
+    // The flame of torches, braziers, candles and lanterns: a flipbook, 16 frames of 32 x 32 in a 4 x 4 sheet (left to
+    // right, top to bottom), played in a loop by the game. Drawn with additive blending: black adds nothing.
+    const int FireFrameSize = 32;
+    const int FireColumns = 4;
+    const int FireFrameCount = 16;
+
+    // One frame of the flame. The shape is a tongue, wide at the bottom and thin at the top; noise rising through it tears
+    // its edges and makes tongues break off. The noise is tileable over 64 units of height and rises 4 units per frame:
+    // after 16 frames it is back where it started, so the loop has no jump.
+    static Bitmap FireFrame(int frame, int seed)
+    {
+        int size = FireFrameSize;
+        Bitmap bmp = new Bitmap(size, size, PixelFormat.Format32bppArgb);
+        double[] white = Hex("#FFF4D0"), yellow = Hex("#FFC83A"), orange = Hex("#F07A1E"), red = Hex("#A8300C");
+        double rise = frame * 64.0 / FireFrameCount;
+        for (int y = 0; y < size; y++)
+            for (int x = 0; x < size; x++)
+            {
+                double u = (x + 0.5) / size - 0.5;   // -0.5 left .. 0.5 right
+                double v = 1.0 - (y + 0.5) / size;   // 0 bottom .. 1 top
+
+                // The noise moves down the image while the flame stays: the fire seems to rise. Its sway grows with
+                // the height, like a flame that is calm at the wick and flickers at the tip.
+                double turbulence = Fbm(x * 2, y * 2 + rise, 8, 4, 3, seed);
+                double sway = (Fbm(x * 2 + 32, y * 2 + rise, 2, 2, 2, seed + 7) - 0.5) * 0.4 * v;
+                double width = 0.28 * Math.Pow(Math.Max(0.0, 1.0 - v), 0.8) + 0.02;
+                double density = 1.0 - Math.Abs(u - sway) / width - v * 0.8 + (turbulence - 0.5) * 1.4;
+
+                // A round bottom (the flame sits on the wick or the coals) and a tip that fades out before the top edge.
+                density -= Math.Max(0.0, 0.15 - v) * 6.0 + Math.Max(0.0, v - 0.75) * 3.0;
+                if (density <= 0.0) { bmp.SetPixel(x, y, Color.FromArgb(0, 0, 0, 0)); continue; }
+
+                // Hotter low in the middle: white, yellow, orange, and dark red at the torn edges.
+                double heat = Math.Min(1.0, density * (1.15 - v * 0.6));
+                double[] c = heat > 0.75 ? Mix(yellow, white, (heat - 0.75) / 0.25)
+                           : heat > 0.4 ? Mix(orange, yellow, (heat - 0.4) / 0.35)
+                           : Mix(red, orange, heat / 0.4);
+                bmp.SetPixel(x, y, ToColorAlpha(c, Math.Min(1.0, density * 2.5)));
+            }
+        return bmp;
+    }
+
+    // One frame of the flame of a candle (and of the wick of a lantern): calm, a smooth drop of light that only sways a
+    // little at its tip and breathes in height. Both movements are whole waves over the 16 frames, so the loop has no jump.
+    static Bitmap CandleFrame(int frame)
+    {
+        int size = FireFrameSize;
+        Bitmap bmp = new Bitmap(size, size, PixelFormat.Format32bppArgb);
+        double[] white = Hex("#FFF8E0"), yellow = Hex("#FFD660"), orange = Hex("#F08C2A");
+        double phase = 2.0 * Math.PI * frame / FireFrameCount;
+        double lean = 0.05 * Math.Sin(phase);
+        double height = 0.6 + 0.05 * Math.Sin(2.0 * phase + 1.0);
+        const double bottom = 0.12;
+        for (int y = 0; y < size; y++)
+            for (int x = 0; x < size; x++)
+            {
+                double u = (x + 0.5) / size - 0.5;
+                double v = 1.0 - (y + 0.5) / size;
+
+                // s goes from 0 at the bottom of the drop to 1 at its tip; the drop is widest a third of the way up.
+                double s = (v - bottom) / height;
+                if (s <= 0.0 || s >= 1.0) { bmp.SetPixel(x, y, Color.FromArgb(0, 0, 0, 0)); continue; }
+                double width = 0.13 * Math.Sin(Math.PI * Math.Pow(s, 0.6));
+                double density = 1.0 - Math.Abs(u - lean * s * s) / Math.Max(width, 1e-3);
+                if (density <= 0.0) { bmp.SetPixel(x, y, Color.FromArgb(0, 0, 0, 0)); continue; }
+
+                // A white core low in the drop, yellow around it, an orange rim.
+                double heat = density * (1.0 - s * 0.5);
+                double[] c = heat > 0.55 ? Mix(yellow, white, (heat - 0.55) / 0.3) : Mix(orange, yellow, heat / 0.55);
+                bmp.SetPixel(x, y, ToColorAlpha(c, Math.Min(1.0, density * 3.0)));
+            }
+        return bmp;
+    }
+
+    // Saves the 16 frames as one sheet at sheetPath, and the sheet enlarged 4 times on a dark background at previewPath.
+    static void SaveFlipbook(Func<int, Bitmap> drawFrame, string sheetPath, string previewPath)
+    {
+        int size = FireFrameSize, rows = FireFrameCount / FireColumns;
+        using (Bitmap sheet = new Bitmap(size * FireColumns, size * rows, PixelFormat.Format32bppArgb))
+        {
+            using (Graphics g = Graphics.FromImage(sheet))
+            {
+                g.Clear(Color.FromArgb(0, 0, 0, 0));
+                g.CompositingMode = CompositingMode.SourceCopy;
+                for (int frame = 0; frame < FireFrameCount; frame++)
+                    using (Bitmap image = drawFrame(frame))
+                        g.DrawImage(image, (frame % FireColumns) * size, (frame / FireColumns) * size, size, size);
+            }
+            sheet.Save(sheetPath, ImageFormat.Png);
+
+            const int scale = 4;
+            using (Bitmap preview = new Bitmap(sheet.Width * scale, sheet.Height * scale, PixelFormat.Format32bppArgb))
+            using (Graphics g = Graphics.FromImage(preview))
+            {
+                g.Clear(Color.FromArgb(255, 18, 16, 14));
+                g.InterpolationMode = InterpolationMode.NearestNeighbor;
+                g.PixelOffsetMode = PixelOffsetMode.Half;
+                g.DrawImage(sheet, 0, 0, preview.Width, preview.Height);
+                preview.Save(previewPath, ImageFormat.Png);
+            }
+        }
+    }
+
+    // Writes Fire.png (torches, braziers) and CandleFire.png (candles, lanterns) into effectsDirectory, and their sheets
+    // enlarged into previewDirectory, so the frames can be looked at one by one.
+    public static void RunFire(string effectsDirectory, string previewDirectory)
+    {
+        Directory.CreateDirectory(effectsDirectory);
+        Directory.CreateDirectory(previewDirectory);
+        SaveFlipbook(frame => FireFrame(frame, 601), Path.Combine(effectsDirectory, "Fire.png"),
+                     Path.Combine(previewDirectory, "FireSheet.png"));
+        SaveFlipbook(CandleFrame, Path.Combine(effectsDirectory, "CandleFire.png"),
+                     Path.Combine(previewDirectory, "CandleFireSheet.png"));
+    }
 }

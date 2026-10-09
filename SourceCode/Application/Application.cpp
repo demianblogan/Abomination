@@ -12,6 +12,7 @@
 #include "Gameplay/Animation/Animator.h"
 #include "Gameplay/Camera/FreeFlyCameraSystem.h"
 #include "Gameplay/Camera/ViewSystem.h"
+#include "Gameplay/Effects/Fires.h"
 #include "Gameplay/Enemies/MonsterDebug.h"
 #include "Gameplay/Enemies/Monsters.h"
 #include "Gameplay/Player/DamageReaction.h"
@@ -337,6 +338,9 @@ namespace Abomination
         // Animated models: their poses are only for the eyes.
         Gameplay::UpdateAnimators(m_registry, m_renderAssets.models, deltaTime);
 
+        // The flames of the level: their flicker, sparks and smoke.
+        Gameplay::UpdateFires(m_registry, m_gameplay.effects, deltaTime);
+
         // The shells fly out of the weapon as it is seen: from the eyes between the last two ticks.
         const Core::Transform eyes =
             Gameplay::CalculateViewTransform(m_gameplay, m_registry, m_fixedTimestep.GetInterpolationFactor());
@@ -518,9 +522,10 @@ namespace Abomination
     {
         PROFILE_ZONE();
 
-        // The see-through things after the solid world: the marks on the walls and the particles.
+        // The see-through things after the solid world: the marks on the walls, the flames and the particles.
         m_sprites.Clear();
         Gameplay::AddDecalSprites(m_gameplay.effects, m_sprites);
+        Gameplay::AddFlameSprites(m_registry, m_gameplay.effects, view.position, m_sprites);
         m_gameplay.effects.particles.AddSprites(m_sprites);
         m_renderStatistics.drawCallCount += m_spriteRenderer.Draw(m_sprites, view.viewMatrix, view.projectionMatrix,
                                                                   m_renderAssets.textures,

@@ -4,6 +4,7 @@
 #include "Core/Scene/Name.h"
 #include "Core/Scene/Transform.h"
 #include "Renderer/Assets/MaterialFiles.h"
+#include "Renderer/Fire.h"
 #include "Renderer/Light.h"
 #include "Renderer/MeshRenderer.h"
 #include "Renderer/ModelRenderer.h"
@@ -198,8 +199,18 @@ namespace Abomination::World
                     CreateModelEntity(registry, assets, source->name, source->modelPath, source->transform, shaderProgram));
                 if (source->light.has_value())
                 {
-                    level.m_entities.push_back(CreateLightEntity(registry, source->name + " light", *source->light));
+                    const entt::entity light = CreateLightEntity(registry, source->name + " light", *source->light);
+                    registry.emplace<Renderer::Flicker>(light, source->flicker);
+                    level.m_entities.push_back(light);
                     ++lightCount;
+                }
+                for (const MapLightSource::PlacedFlame& placed : source->flames)
+                {
+                    const entt::entity flame = registry.create();
+                    registry.emplace<Core::Name>(flame, source->name + " flame");
+                    registry.emplace<Core::Transform>(flame, Core::Transform{.position = placed.position});
+                    registry.emplace<Renderer::Flame>(flame, placed.flame);
+                    level.m_entities.push_back(flame);
                 }
             }
             else if (*className == "misc_model")

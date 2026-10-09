@@ -1,15 +1,18 @@
 #pragma once
 
 #include "Core/Scene/Transform.h"
+#include "Renderer/Fire.h"
 #include "World/MapData.h"
 #include "World/MapLights.h"
 
 #include <glm/vec3.hpp>
 
+#include <array>
 #include <optional>
 #include <span>
 #include <string>
 #include <string_view>
+#include <vector>
 
 // The light sources of a map placed as one entity each (Tools/TrenchBroom/Abomination/Abomination.fgd): a torch, a
 // brazier, candles, a lantern. The entity brings its model and its light, placed where the fire of the model burns, so a
@@ -40,6 +43,19 @@ namespace Abomination::World
         glm::vec3 color{255.0f};
         float intensity = 5.0f;
         float range = 10.0f;
+
+        // How its light wavers (see Renderer::Flicker).
+        float flickerStrength = 0.2f;
+        float flickerSpeed = 8.0f;
+
+        // Its flames: where each stands (the bottom of the flame, in the coordinates of the model like fireOffset), how
+        // tall they are, and the sparks and smoke of each. A lantern has none: its flame is behind its panes.
+        Renderer::FlameKind flameKind = Renderer::FlameKind::Wild;
+        float flameHeight = 0.25f;
+        std::array<glm::vec3, 4> flameOffsets{};
+        int flameCount = 0;
+        float sparksPerSecond = 0.0f;
+        float smokePerSecond = 0.0f;
     };
 
     // Every kind, in the order of the entity definitions.
@@ -57,8 +73,17 @@ namespace Abomination::World
         std::string modelPath;
         Core::Transform transform;
 
-        // Where its fire is and what it gives; nothing when the fire is out.
+        // Where its fire is and what it gives, and how it wavers; nothing when the fire is out.
         std::optional<MapLight> light;
+        Renderer::Flicker flicker;
+
+        // Its flames, each placed at the bottom of the flame (none when the fire is out).
+        struct PlacedFlame
+        {
+            glm::vec3 position{0.0f};
+            Renderer::Flame flame;
+        };
+        std::vector<PlacedFlame> flames;
     };
 
     // The light source of a torch, brazier, candles or lantern entity, or nothing for any other entity.

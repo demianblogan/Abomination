@@ -251,7 +251,7 @@ def to_game(vector):
     return Vector((vector.x, vector.z, -vector.y))
 
 
-def join(name, parts, fire):
+def join(name, parts, fire, flames=()):
     bpy.ops.object.select_all(action="DESELECT")
     for obj in parts:
         obj.select_set(True)
@@ -276,6 +276,11 @@ def join(name, parts, fire):
     half_size = (high - low) / 2.0 * scale * 32.0
     print(f"FIRE {name}: ({fire_in_game.x:.3f}, {fire_in_game.y:.3f}, {fire_in_game.z:.3f}) m;"
           f" half box {half_size.x:.1f} x {half_size.y:.1f} x {half_size.z:.1f} units (Blender X, Y, Z)")
+    # Where the flames of the game stand (their bottom), when the model has more than its one fire (the wicks of
+    # the candles).
+    for flame in flames:
+        point = to_game((Vector(flame) - middle) * scale)
+        print(f"FLAME {name}: ({point.x:.3f}, {point.y:.3f}, {point.z:.3f}) m")
     return obj
 
 
@@ -319,15 +324,20 @@ def make_brazier(material, name):
     return join(name, parts, (0.0, 0.0, 0.9))
 
 
+# The candles: where each stands, its radius and its height (meters).
+CANDLES = [(0.0, 0.0, 0.03, 0.24), (0.07, 0.03, 0.025, 0.16), (-0.055, 0.045, 0.022, 0.11), (0.02, -0.07, 0.027, 0.19)]
+
+
 def make_candles(material, name):
-    """Four candles of different heights in a puddle of old wax, each with a glowing wick; origin on the floor."""
+    """Four candles of different heights in a puddle of old wax, each with a glowing wick."""
+    wicks = []
     parts = [cylinder_between((0, 0, 0), (0, 0, 0.012), 0.13, 0.11, 10, WAX, material)]
-    for x, y, radius, height in [(0.0, 0.0, 0.03, 0.24), (0.07, 0.03, 0.025, 0.16), (-0.055, 0.045, 0.022, 0.11),
-                                 (0.02, -0.07, 0.027, 0.19)]:
+    for x, y, radius, height in CANDLES:
         parts.append(cylinder_between((x, y, 0.01), (x, y, height), radius, radius * 0.95, 8, WAX, material))
         parts.append(box((x, y, height + 0.008), (0.006, 0.006, 0.016), WICK, material))
+        wicks.append((x, y, height + 0.016))
     # One light for the four flames, above the middle of the group.
-    return join(name, parts, (0.01, 0.0, 0.25))
+    return join(name, parts, (0.01, 0.0, 0.25), wicks)
 
 
 def make_lantern(material, name):

@@ -87,3 +87,5 @@ the license check before a commercial release.
 | `Textures/Effects/Dust.png` | Alone Bull | `Tools/TextureGenerator` (32×32) | Own work | — | Dust of a pellet hitting a wall |
 | `Textures/Effects/PelletMark.png` | Alone Bull | `Tools/TextureGenerator` (16×16) | Own work | — | Mark a pellet leaves on a wall (decal) |
 | `Textures/Effects/Blood.png` | Alone Bull | `Tools/TextureGenerator` (16×16) | Own work | — | Drop of blood of a pellet hitting a character |
+| `Textures/Effects/Fire.png` | Alone Bull | `Tools/TextureGenerator` (16 frames of 32×32 in a 128×128 sheet) | Own work | — | The torn flame of torches and braziers, played in a loop |
+| `Textures/Effects/CandleFire.png` | Alone Bull | `Tools/TextureGenerator` (16 frames of 32×32 in a 128×128 sheet) | Own work | — | The calm flame of candles: a drop that sways and breathes |

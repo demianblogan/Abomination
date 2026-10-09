@@ -98,12 +98,15 @@ namespace Abomination::Renderer
                 up = (cameraUp * cosine - cameraRight * sine) * sprite->halfSize;
             }
 
+            // The part of the texture the sprite shows: all of it, or one frame of a flipbook.
             const glm::vec3& center = sprite->center;
             const glm::vec4& color = sprite->color;
-            const SpriteVertex bottomLeft{.position = center - right - up, .texCoord = {0.0f, 0.0f}, .color = color};
-            const SpriteVertex bottomRight{.position = center + right - up, .texCoord = {1.0f, 0.0f}, .color = color};
-            const SpriteVertex topRight{.position = center + right + up, .texCoord = {1.0f, 1.0f}, .color = color};
-            const SpriteVertex topLeft{.position = center - right + up, .texCoord = {0.0f, 1.0f}, .color = color};
+            const glm::vec2& low = sprite->texCoordMinimum;
+            const glm::vec2& high = sprite->texCoordMaximum;
+            const SpriteVertex bottomLeft{.position = center - right - up, .texCoord = low, .color = color};
+            const SpriteVertex bottomRight{.position = center + right - up, .texCoord = {high.x, low.y}, .color = color};
+            const SpriteVertex topRight{.position = center + right + up, .texCoord = high, .color = color};
+            const SpriteVertex topLeft{.position = center - right + up, .texCoord = {low.x, high.y}, .color = color};
             m_vertices.insert(m_vertices.end(), {bottomLeft, bottomRight, topRight, bottomLeft, topRight, topLeft});
         }
 

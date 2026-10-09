@@ -2,6 +2,7 @@
 
 #include "Renderer/Assets/TextureStore.h"
 
+#include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
 #include <glm/vec4.hpp>
 
@@ -40,6 +41,11 @@ namespace Abomination::Renderer
         // Multiplies the texture: tints it and sets how transparent it is.
         glm::vec4 color{1.0f};
 
+        // The part of the texture shown (texture coordinates, (0, 0) the bottom left): all of it, or one frame of a
+        // flipbook, a sheet of the frames of an animation.
+        glm::vec2 texCoordMinimum{0.0f};
+        glm::vec2 texCoordMaximum{1.0f};
+
         TextureHandle texture;
         SpriteBlend blend = SpriteBlend::Alpha;
     };
@@ -53,9 +59,10 @@ namespace Abomination::Renderer
         void AddBillboard(const glm::vec3& center, float halfSize, float rotation, const glm::vec4& color,
                           TextureHandle texture, SpriteBlend blend);
 
-        // A flat quad spanned by right and up (see Sprite).
+        // A flat quad spanned by right and up (see Sprite), showing all of its texture or a part of it.
         void AddQuad(const glm::vec3& center, const glm::vec3& right, const glm::vec3& up, const glm::vec4& color,
-                     TextureHandle texture, SpriteBlend blend);
+                     TextureHandle texture, SpriteBlend blend, const glm::vec2& texCoordMinimum = glm::vec2(0.0f),
+                     const glm::vec2& texCoordMaximum = glm::vec2(1.0f));
 
         [[nodiscard]] std::span<const Sprite> GetSprites() const noexcept;
 

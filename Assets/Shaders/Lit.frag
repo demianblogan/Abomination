@@ -349,11 +349,20 @@ void main()
     // The sun: the same light everywhere, from one direction.
     vec3 color = LightSurface(surface, uniSunDirection, uniSunColor);
 
-    // The lamps of the level, every one for every pixel (forward rendering): a lamp out of range adds 0.
+    // The lamps of the level, every one for every pixel (forward rendering). A lamp whose light does not reach the pixel
+    // (out of its range) or that is behind the surface adds nothing, so its lighting is skipped: in a room most lamps
+    // are one or the other for most pixels. Neighbouring pixels mostly skip the same lamps, so the GPU, which runs
+    // neighbouring pixels together, really saves the work.
     for (int index = 0; index < uniLightCount; ++index)
     {
+        Light lamp = uniLights[index];
+        vec3 toLamp = lamp.positionAndRange.xyz - ViewPosition;
+        float range = lamp.positionAndRange.w;
+        if (dot(toLamp, toLamp) >= range * range || dot(toLamp, normal) <= 0.0)
+            continue;
+
         vec3 towardsLight;
-        vec3 light = ReachLight(uniLights[index], ViewPosition, towardsLight);
+        vec3 light = ReachLight(lamp, ViewPosition, towardsLight);
         color += LightSurface(surface, towardsLight, light);
     }
 

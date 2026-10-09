@@ -1,6 +1,7 @@
 #include "Gameplay/Weapons/Shells.h"
 
 #include "Audio/AudioEngine.h"
+#include "Core/Scene/Name.h"
 #include "Gameplay/GameplayState.h"
 #include "Gameplay/Weapons/WeaponViewModel.h"
 #include "Physics/CharacterBody.h"
@@ -80,6 +81,7 @@ namespace Abomination::Gameplay
             if (shells.shells.size() < maximumCount)
             {
                 const entt::entity entity = registry.create();
+                registry.emplace<Core::Name>(entity, "Shell");
                 registry.emplace<Core::Transform>(entity);
                 registry.emplace<Renderer::MeshRenderer>(entity, shells.mesh, shells.material, shells.shaderProgram);
                 return shells.shells.emplace_back(Shell{.entity = entity});

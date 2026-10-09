@@ -23,7 +23,7 @@ namespace Abomination::Renderer
             mesh.indices = {0, 1, 2, 3, 4, 5};
 
             ModelData model;
-            model.parts.push_back({.name = "Body", .mesh = mesh, .imageIndex = 0});
+            model.parts.push_back({.name = "Body", .mesh = mesh, .material = ModelMaterialData{.baseColorImage = 0}});
             return model;
         }
 
@@ -51,7 +51,8 @@ namespace Abomination::Renderer
 
         const ModelPartData& bolt = model.parts[1];
         EXPECT_EQ(bolt.name, "Bolt");
-        EXPECT_EQ(bolt.imageIndex, model.parts[0].imageIndex);
+        ASSERT_TRUE(bolt.material.has_value());
+        EXPECT_EQ(bolt.material->baseColorImage, model.parts[0].material->baseColorImage);
         ASSERT_EQ(bolt.mesh.vertices.size(), 3u);
         EXPECT_EQ(bolt.mesh.indices, (std::vector<std::uint32_t>{0, 1, 2}));
         EXPECT_FLOAT_EQ(bolt.mesh.vertices[0].position.x, 2.0f);
@@ -92,7 +93,7 @@ namespace Abomination::Renderer
         const ModelPartData& backing = model.parts[1];
         const ModelPartData& bolt = model.parts[2];
         EXPECT_EQ(backing.name, "Opening");
-        EXPECT_FALSE(backing.imageIndex.has_value());
+        EXPECT_FALSE(backing.material.has_value());
         ASSERT_EQ(backing.mesh.vertices.size(), bolt.mesh.vertices.size());
 
         // Moved against the normal (+Z): 0.01 m behind the bolt.

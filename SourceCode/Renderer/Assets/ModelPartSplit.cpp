@@ -63,7 +63,7 @@ namespace Abomination::Renderer
 
         // The new parts sit where the source does. push_back may move the parts, so the source is copied out first.
         const glm::mat4 transform = source->transform;
-        const std::optional<std::size_t> imageIndex = source->imageIndex;
+        const std::optional<ModelMaterialData> material = source->material;
         if (!split.backingPartName.empty())
         {
             model.parts.push_back(ModelPartData{
@@ -76,7 +76,7 @@ namespace Abomination::Renderer
             .name = split.partName,
             .mesh = std::move(taken),
             .transform = transform,
-            .imageIndex = imageIndex,
+            .material = material,
         });
         return true;
     }

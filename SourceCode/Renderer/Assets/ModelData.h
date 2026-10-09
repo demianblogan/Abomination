@@ -15,7 +15,23 @@
 
 namespace Abomination::Renderer
 {
-    // One part of a model: a piece with one texture that moves as a whole. The shotgun has ten: the body, the pump,
+    // The material of a part as the model file describes it (glTF metallic-roughness): the images of its maps, as indices
+    // into ModelData::images, and the numbers they are multiplied by. The defaults are those of glTF for a material
+    // that leaves them out. ModelStore turns it into a Renderer::Material.
+    struct ModelMaterialData
+    {
+        std::optional<std::size_t> baseColorImage;
+        std::optional<std::size_t> normalImage;
+        std::optional<std::size_t> metalRoughnessImage;
+        std::optional<std::size_t> emissiveImage;
+
+        glm::vec4 baseColorFactor{1.0f};
+        float roughnessFactor = 1.0f;
+        float metalnessFactor = 1.0f;
+        glm::vec3 emissiveFactor{0.0f};
+    };
+
+    // One part of a model: a piece with one material that moves as a whole. The shotgun has ten: the body, the pump,
     // the barrel, the stock, the loading gate and others. Keeping the parts apart (not merged into one mesh) lets the game move
     // one of them later, for example slide the pump back after a shot.
     struct ModelPartData
@@ -31,8 +47,8 @@ namespace Abomination::Renderer
         // whole chain from the root to the part multiplied into one matrix.
         glm::mat4 transform{1.0f};
 
-        // The index of the base color texture of the part in ModelData::images; none for an untextured part.
-        std::optional<std::size_t> imageIndex;
+        // What the part is made of; none for a part without a material in the file (it gets the default material).
+        std::optional<ModelMaterialData> material;
 
         // A part held by a joint of the skeleton (the scythe in a hand): the index of the joint in SkeletonData::joints,
         // and then transform places the part relative to that joint, so it moves with it. A skinned part (its mesh has a

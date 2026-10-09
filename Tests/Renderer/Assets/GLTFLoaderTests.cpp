@@ -116,6 +116,34 @@ namespace Abomination::Renderer
         }
     }
 
+    namespace
+    {
+        // The triangle with a material: a color, a roughness and metalness map and a normal map (images 0, 1 and 2, whose
+        // files do not exist: the images stay empty, the indices are what is checked), factors, and an emission four times
+        // brighter than its factor (KHR_materials_emissive_strength).
+        std::string MakeTriangleWithMaterialGLTF()
+        {
+            std::string text = MakeTriangleGLTF("");
+            const std::string indices = R"("indices": 3)";
+            text.replace(text.find(indices), indices.size(), R"("indices": 3, "material": 0)");
+
+            const std::string asset = R"("asset": {"version": "2.0"},)";
+            text.replace(text.find(asset), asset.size(), asset + R"(
+                "materials": [{
+                    "pbrMetallicRoughness": {
+                        "baseColorTexture": {"index": 0}, "baseColorFactor": [0.5, 0.5, 0.5, 1.0],
+                        "metallicRoughnessTexture": {"index": 1}, "metallicFactor": 0.0, "roughnessFactor": 0.3
+                    },
+                    "normalTexture": {"index": 2},
+                    "emissiveFactor": [1.0, 0.5, 0.0],
+                    "extensions": {"KHR_materials_emissive_strength": {"emissiveStrength": 4.0}}
+                }],
+                "textures": [{"source": 0}, {"source": 1}, {"source": 2}],
+                "images": [{"uri": "MissingColor.png"}, {"uri": "MissingMetalRough.png"}, {"uri": "MissingNormal.png"}],)");
+            return text;
+        }
+    }
+
     // Every test gets its own file in the temporary folder; it is removed afterwards.
     class GLTFLoaderTest : public ::testing::Test
     {
@@ -149,7 +177,7 @@ namespace Abomination::Renderer
         ASSERT_EQ(model->parts.size(), 1u);
         const ModelPartData& part = model->parts[0];
         EXPECT_EQ(part.name, "Triangle");
-        EXPECT_FALSE(part.imageIndex.has_value());
+        EXPECT_FALSE(part.material.has_value());
 
         ASSERT_EQ(part.mesh.vertices.size(), 3u);
         EXPECT_EQ(part.mesh.vertices[1].position, glm::vec3(1.0f, 0.0f, 0.0f));
@@ -161,6 +189,41 @@ namespace Abomination::Renderer
         EXPECT_FLOAT_EQ(part.mesh.vertices[2].texCoord.y, 0.75f);
 
         EXPECT_EQ(part.mesh.indices, (std::vector<std::uint32_t>{0, 1, 2}));
+    }
+
+    TEST_F(GLTFLoaderTest, ReadsMaterialMapsAndFactors)
+    {
+        WriteFile(MakeTriangleWithMaterialGLTF());
+
+        const std::expected<ModelData, std::string> model = LoadGLTFFile(m_filePath);
+
+        ASSERT_TRUE(model.has_value()) << model.error();
+        ASSERT_TRUE(model->parts[0].material.has_value());
+        const ModelMaterialData& material = *model->parts[0].material;
+        EXPECT_EQ(material.baseColorImage, std::optional<std::size_t>(0));
+        EXPECT_EQ(material.metalRoughnessImage, std::optional<std::size_t>(1));
+        EXPECT_EQ(material.normalImage, std::optional<std::size_t>(2));
+        EXPECT_FALSE(material.emissiveImage.has_value());
+        EXPECT_FLOAT_EQ(material.baseColorFactor.r, 0.5f);
+        EXPECT_FLOAT_EQ(material.roughnessFactor, 0.3f);
+        EXPECT_FLOAT_EQ(material.metalnessFactor, 0.0f);
+
+        // The strength multiplies the factor: (1, 0.5, 0) x 4.
+        EXPECT_FLOAT_EQ(material.emissiveFactor.r, 4.0f);
+        EXPECT_FLOAT_EQ(material.emissiveFactor.g, 2.0f);
+    }
+
+    TEST_F(GLTFLoaderTest, ReadsTangentsForNormalMaps)
+    {
+        WriteFile(MakeTriangleGLTF(""));
+
+        const std::expected<ModelData, std::string> model = LoadGLTFFile(m_filePath);
+
+        // u grows along +X on the triangle (texture coordinates (0,0) (1,0) ...), so the tangent points along +X.
+        ASSERT_TRUE(model.has_value()) << model.error();
+        const glm::vec4& tangent = model->parts[0].mesh.vertices[0].tangent;
+        EXPECT_NEAR(tangent.x, 1.0f, 1e-5f);
+        EXPECT_NEAR(tangent.y, 0.0f, 1e-5f);
     }
 
     TEST_F(GLTFLoaderTest, NodeTransformBecomesPartTransform)

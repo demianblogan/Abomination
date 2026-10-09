@@ -69,17 +69,18 @@ namespace Abomination::Renderer
             SkinningBuffer& skinning;
         };
 
-        // Draws one mesh with its texture, placed by modelMatrix and seen through the matrices of the pass. A skinned mesh
-        // drawn isSkinned is bent by the pose its model uploaded into the skinning buffer (drawn unbent otherwise).
+        // Draws one mesh of its material (only its color texture is bound for now), placed by modelMatrix and seen through
+        // the matrices of the pass. A skinned mesh drawn isSkinned is bent by the pose its model uploaded into the skinning
+        // buffer (drawn unbent otherwise).
         // In wireframe mode every mesh is drawn with the wireframe shader instead of its own; the texture is still
         // bound, but that shader does not read it.
-        void DrawMesh(const MeshPass& pass, ShaderHandle shader, TextureHandle textureHandle, MeshHandle meshHandle,
+        void DrawMesh(const MeshPass& pass, ShaderHandle shader, const Material& material, MeshHandle meshHandle,
                       const glm::mat4& modelMatrix, bool isSkinned = false)
         {
             // The handles are turned into objects at the moment of use (see AssetCache::Get).
             const GLShaderProgram& shaderProgram =
                 pass.assets.shaders.Get(pass.settings.isWireframeEnabled ? pass.systemShaders.wireframe : shader);
-            const GLTexture& texture = pass.assets.textures.Get(textureHandle);
+            const GLTexture& texture = pass.assets.textures.Get(material.baseColor);
             const Mesh& mesh = pass.assets.meshes.Get(meshHandle);
 
             // Every mesh binds its program and texture again, even if the previous one used the same. That is fine for a
@@ -141,7 +142,7 @@ namespace Abomination::Renderer
                     if (partOffset.partName == part.name)
                         partMatrix = glm::translate(glm::mat4(1.0f), partOffset.offset) * partMatrix;
 
-                DrawMesh(pass, shader, part.texture, part.mesh, placement * partMatrix,
+                DrawMesh(pass, shader, part.material, part.mesh, placement * partMatrix,
                          part.isSkinned && model.skeleton.has_value());
             }
         }
@@ -214,7 +215,7 @@ namespace Abomination::Renderer
             meshEntities.each([&](entt::entity entity, const Core::Transform&, const MeshRenderer& meshRenderer)
             {
                 const glm::mat4 modelMatrix = Core::CalculateModelMatrix(calculateDrawnTransform(entity));
-                DrawMesh(pass, meshRenderer.shaderProgram, meshRenderer.texture, meshRenderer.mesh, modelMatrix);
+                DrawMesh(pass, meshRenderer.shaderProgram, meshRenderer.material, meshRenderer.mesh, modelMatrix);
             });
         }
 

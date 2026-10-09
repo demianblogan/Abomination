@@ -185,6 +185,7 @@ set(LIBRARY_SOURCES
     Renderer/ColorSpace.cpp
     Renderer/ImGuiRendererBackend.cpp
     Renderer/DrawOffset.h
+    Renderer/Material.h
     Renderer/MeshRenderer.h
     Renderer/ModelPose.h
     Renderer/ModelRenderer.h
@@ -210,6 +211,8 @@ set(LIBRARY_SOURCES
     Renderer/Assets/Mesh.h
     Renderer/Assets/Mesh.cpp
     Renderer/Assets/MeshData.h
+    Renderer/Assets/MaterialFiles.h
+    Renderer/Assets/MaterialFiles.cpp
     Renderer/Assets/MeshPrimitives.h
     Renderer/Assets/MeshPrimitives.cpp
     Renderer/Assets/MeshStore.h

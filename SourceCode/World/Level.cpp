@@ -3,6 +3,7 @@
 #include "Core/Logging/Log.h"
 #include "Core/Scene/Name.h"
 #include "Core/Scene/Transform.h"
+#include "Renderer/Assets/MaterialFiles.h"
 #include "Renderer/MeshRenderer.h"
 #include "Renderer/ModelRenderer.h"
 #include "World/MapCoordinates.h"
@@ -159,8 +160,9 @@ namespace Abomination::World
             Core::Log::Write(LogCategory::World, LogLevel::Warning, "No navmesh for {}: {}", mapPath, navMesh.error());
         }
 
-        // One entity per texture: every one is one draw call with its own texture. The textures were loaded above, so
-        // Load() only returns their handles now.
+        // One entity per texture: every one is one draw call with its own material, found by the name of the texture (its
+        // maps lie next to it, see Renderer::LoadMaterialByFileNames). The colors were loaded above, so their handles are
+        // only returned now.
         const Renderer::ShaderHandle shaderProgram = assets.shaders.Load("Shaders/TexturedShaded");
         for (const LevelMeshPart& part : levelMesh.parts)
         {
@@ -169,7 +171,8 @@ namespace Abomination::World
             registry.emplace<Core::Transform>(entity);
             registry.emplace<Renderer::MeshRenderer>(entity, Renderer::MeshRenderer{
                 .mesh = assets.meshes.Add(mapPath + "#" + part.textureName, part.data, Core::AssetLifetime::Level),
-                .texture = assets.textures.Load(MakeTexturePath(part.textureName), Core::AssetLifetime::Level),
+                .material = Renderer::LoadMaterialByFileNames(assets.textures, MakeTexturePath(part.textureName),
+                                                              Core::AssetLifetime::Level),
                 .shaderProgram = shaderProgram,
             });
             level.m_entities.push_back(entity);

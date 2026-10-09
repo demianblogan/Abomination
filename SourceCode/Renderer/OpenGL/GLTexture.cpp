@@ -69,13 +69,13 @@ namespace Abomination::Renderer
         return GLTexture(textureID, image.width, image.height);
     }
 
-    std::expected<GLTexture, std::string> GLTexture::CreateFromFile(const std::filesystem::path& path)
+    std::expected<GLTexture, std::string> GLTexture::CreateFromFile(const std::filesystem::path& path, TextureEncoding encoding)
     {
         const std::expected<Core::Image, std::string> image = Core::LoadImageFile(path);
         if (!image.has_value())
             return std::unexpected(image.error());
 
-        return CreateFromImage(*image);
+        return CreateFromImage(*image, TextureFiltering::Pixelated, encoding);
     }
 
     GLTexture::GLTexture(std::uint32_t textureID, int width, int height) noexcept

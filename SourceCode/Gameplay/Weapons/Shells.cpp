@@ -4,6 +4,7 @@
 #include "Gameplay/GameplayState.h"
 #include "Gameplay/Weapons/WeaponViewModel.h"
 #include "Physics/CharacterBody.h"
+#include "Renderer/Assets/MaterialFiles.h"
 #include "Renderer/Assets/MeshPrimitives.h"
 #include "Renderer/Assets/RenderAssets.h"
 #include "Renderer/MeshRenderer.h"
@@ -80,7 +81,7 @@ namespace Abomination::Gameplay
             {
                 const entt::entity entity = registry.create();
                 registry.emplace<Core::Transform>(entity);
-                registry.emplace<Renderer::MeshRenderer>(entity, shells.mesh, shells.texture, shells.shaderProgram);
+                registry.emplace<Renderer::MeshRenderer>(entity, shells.mesh, shells.material, shells.shaderProgram);
                 return shells.shells.emplace_back(Shell{.entity = entity});
             }
 
@@ -97,7 +98,8 @@ namespace Abomination::Gameplay
         shells.mesh = renderAssets.meshes.Add("Primitives/Shell",
                                               Renderer::CreateCylinderMeshData(ShellSideCount, ShellRadius, ShellLength),
                                               Core::AssetLifetime::Global);
-        shells.texture = renderAssets.textures.Load("Textures/Weapons/ShotgunShell.png", Core::AssetLifetime::Global);
+        shells.material = Renderer::LoadMaterialByFileNames(renderAssets.textures, "Textures/Weapons/ShotgunShell.png",
+                                                            Core::AssetLifetime::Global);
         shells.shaderProgram = renderAssets.shaders.Load("Shaders/TexturedShaded");
 
         // Shells falling one after another may ring together; more than 4 at once is only noise.

@@ -346,6 +346,40 @@ namespace Abomination::Renderer
             const std::filesystem::path relativePath(reinterpret_cast<const char8_t*>(uri.c_str()));
             return Core::LoadImageFile(modelPath.parent_path() / relativePath);
         }
+
+        // The index in the file of the image a texture shows, if it shows one.
+        std::optional<std::size_t> GetImageIndex(const cgltf_data& data, const cgltf_texture* texture)
+        {
+            if (texture == nullptr || texture->image == nullptr)
+                return std::nullopt;
+
+            return static_cast<std::size_t>(texture->image - data.images);
+        }
+
+        // A material of the file: its maps and numbers, metallic-roughness (the material model of glTF 2.0). The numbers a
+        // file leaves out keep the defaults of glTF, which cgltf has filled in already.
+        ModelMaterialData ReadMaterial(const cgltf_data& data, const cgltf_material& material)
+        {
+            ModelMaterialData result;
+            if (material.has_pbr_metallic_roughness)
+            {
+                const cgltf_pbr_metallic_roughness& surface = material.pbr_metallic_roughness;
+                result.baseColorImage = GetImageIndex(data, surface.base_color_texture.texture);
+                result.metalRoughnessImage = GetImageIndex(data, surface.metallic_roughness_texture.texture);
+                result.baseColorFactor = glm::make_vec4(surface.base_color_factor);
+                result.roughnessFactor = surface.roughness_factor;
+                result.metalnessFactor = surface.metallic_factor;
+            }
+            result.normalImage = GetImageIndex(data, material.normal_texture.texture);
+            result.emissiveImage = GetImageIndex(data, material.emissive_texture.texture);
+            result.emissiveFactor = glm::make_vec3(material.emissive_factor);
+
+            // KHR_materials_emissive_strength: the emission may be brighter than 1, which the factor alone cannot say.
+            if (material.has_emissive_strength)
+                result.emissiveFactor *= material.emissive_strength.emissive_strength;
+
+            return result;
+        }
     }
 
     std::expected<ModelData, std::string> LoadGLTFFile(const std::filesystem::path& path)
@@ -376,20 +410,22 @@ namespace Abomination::Renderer
 
         ModelData model;
 
-        // The images first, so the parts can refer to them by index. Only base color images are decoded: the game draws
-        // nothing else, and a model often holds normal and roughness maps as large as its colors. Every other image is
-        // left empty in its place (the indices stay those of the file); so is a broken one, whose part then gets the
-        // fallback texture.
-        std::vector<bool> isBaseColor(data->images_count, false);
+        // The images first, so the parts can refer to them by index. Only the images a material uses as one of its maps are
+        // decoded (a file may hold more: thumbnails, maps of extensions the game does not read). Every other image is left
+        // empty in its place (the indices stay those of the file); so is a broken one, whose part then gets the fallback
+        // texture.
+        std::vector<bool> isUsed(data->images_count, false);
         for (const cgltf_material& material : std::span(data->materials, data->materials_count))
         {
-            const cgltf_texture* texture = material.pbr_metallic_roughness.base_color_texture.texture;
-            if (material.has_pbr_metallic_roughness && texture != nullptr && texture->image != nullptr)
-                isBaseColor[static_cast<std::size_t>(texture->image - data->images)] = true;
+            const ModelMaterialData maps = ReadMaterial(*data, material);
+            for (const std::optional<std::size_t> image :
+                 {maps.baseColorImage, maps.normalImage, maps.metalRoughnessImage, maps.emissiveImage})
+                if (image.has_value())
+                    isUsed[*image] = true;
         }
         for (std::size_t index = 0; index < data->images_count; ++index)
         {
-            if (!isBaseColor[index])
+            if (!isUsed[index])
             {
                 model.images.emplace_back();
                 continue;
@@ -459,14 +495,9 @@ namespace Abomination::Renderer
                 ModelPartData part{
                     .name = std::move(name), .mesh = std::move(*mesh), .transform = transform, .parentJoint = parentJoint};
 
-                // The base color texture of the material, if it has one, as an index into model.images.
-                const cgltf_material* material = primitive.material;
-                if (material != nullptr && material->has_pbr_metallic_roughness)
-                {
-                    const cgltf_texture* texture = material->pbr_metallic_roughness.base_color_texture.texture;
-                    if (texture != nullptr && texture->image != nullptr)
-                        part.imageIndex = static_cast<std::size_t>(texture->image - data->images);
-                }
+                // The material of the primitive, with its maps as indices into model.images.
+                if (primitive.material != nullptr)
+                    part.material = ReadMaterial(*data, *primitive.material);
 
                 model.parts.push_back(std::move(part));
             }

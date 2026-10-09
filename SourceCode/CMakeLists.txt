@@ -319,6 +319,8 @@ set(LIBRARY_SOURCES
     World/Level.cpp
     World/LevelMesh.h
     World/LevelMesh.cpp
+    World/LightSources.h
+    World/LightSources.cpp
     World/MapCoordinates.h
     World/MapCoordinates.cpp
     World/MapData.h

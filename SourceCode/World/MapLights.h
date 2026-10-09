@@ -32,4 +32,8 @@ namespace Abomination::World
     // The light of a point_light or spot_light entity, or nothing for any other entity. A missing or unreadable property
     // keeps its default (see Renderer::Light).
     [[nodiscard]] std::optional<MapLight> ReadMapLight(const MapEntity& entity);
+
+    // Reads intensity, range and _color of any entity that gives light (a light, a torch) into light; a property the
+    // entity does not have keeps the value light has.
+    void ReadLightProperties(const MapEntity& entity, Renderer::Light& light);
 }

@@ -86,6 +86,7 @@ set(TEST_SOURCES
     World/CollisionDebugTests.cpp
     World/CollisionTraceTests.cpp
     World/LevelMeshTests.cpp
+    World/LightSourcesTests.cpp
     World/MapFilesTests.cpp
     World/MapLightsTests.cpp
     World/MapCoordinatesTests.cpp

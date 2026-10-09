@@ -48,3 +48,42 @@
     cone(float) : "Angle from the axis to the edge of the light, in degrees" : "30"
     inner_cone(float) : "Angle up to which the light is full, in degrees; it fades out from there to the edge" : "20"
 ]
+
+// Light sources: a model and the light of its fire in one entity (see World/LightSources.h). The box is the box of the
+// model, so placed against a wall or on the floor the model touches it; the angle turns its front away from the wall.
+// Out puts the fire out: the model with ash and dark panes, and no light. The light can be changed like a point_light.
+@PointClass size(-4.8 -4.8 -9.1, 4.8 4.8 9.1) color(255 140 60) model({{ spawnflags == 1 -> { "path": "Models/Props/TorchOut.glb", "scale": 32 }, { "path": "Models/Props/Torch.glb", "scale": 32 } }}) = torch : "Wall torch"
+[
+    angle(integer) : "Direction it faces, away from the wall it hangs on" : 0
+    spawnflags(flags) = [ 1 : "Out (no fire, no light)" : 0 ]
+    intensity(float) : "The light at 1 m: 3 lights a white surface fully" : "8"
+    range(float) : "Where the light is faded out, in units (32 units are 1 m)" : "256"
+    _color(color255) : "Color of the light" : "255 140 60"
+]
+
+@PointClass size(-13.8 -13.8 -18.9, 13.8 13.8 18.9) color(255 120 40) model({{ spawnflags == 1 -> { "path": "Models/Props/BrazierOut.glb", "scale": 32 }, { "path": "Models/Props/Brazier.glb", "scale": 32 } }}) = brazier : "Brazier"
+[
+    angle(integer) : "Direction it faces" : 0
+    spawnflags(flags) = [ 1 : "Out (no fire, no light)" : 0 ]
+    intensity(float) : "The light at 1 m: 3 lights a white surface fully" : "15"
+    range(float) : "Where the light is faded out, in units (32 units are 1 m)" : "384"
+    _color(color255) : "Color of the light" : "255 120 40"
+]
+
+@PointClass size(-4.2 -4.2 -4.1, 4.2 4.2 4.1) color(255 170 90) model({{ spawnflags == 1 -> { "path": "Models/Props/CandlesOut.glb", "scale": 32 }, { "path": "Models/Props/Candles.glb", "scale": 32 } }}) = candles : "Candles"
+[
+    angle(integer) : "Direction it faces" : 0
+    spawnflags(flags) = [ 1 : "Out (no fire, no light)" : 0 ]
+    intensity(float) : "The light at 1 m: 3 lights a white surface fully" : "3"
+    range(float) : "Where the light is faded out, in units (32 units are 1 m)" : "160"
+    _color(color255) : "Color of the light" : "255 170 90"
+]
+
+@PointClass size(-3.4 -3.4 -5.9, 3.4 3.4 5.9) color(255 170 80) model({{ spawnflags == 1 -> { "path": "Models/Props/LanternOut.glb", "scale": 32 }, { "path": "Models/Props/Lantern.glb", "scale": 32 } }}) = lantern : "Oil lantern"
+[
+    angle(integer) : "Direction it faces" : 0
+    spawnflags(flags) = [ 1 : "Out (no fire, no light)" : 0 ]
+    intensity(float) : "The light at 1 m: 3 lights a white surface fully" : "5"
+    range(float) : "Where the light is faded out, in units (32 units are 1 m)" : "224"
+    _color(color255) : "Color of the light" : "255 170 80"
+]

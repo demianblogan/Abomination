@@ -8,7 +8,6 @@
 #include <glm/gtc/quaternion.hpp>
 #include <glm/trigonometric.hpp>
 
-#include <charconv>
 #include <string>
 
 namespace Abomination::World
@@ -18,19 +17,6 @@ namespace Abomination::World
         // A spot is stronger by default than a point light: it lights a patch far from itself (across a room), where the
         // light of 5 at 1 m is long gone (1/25 of it at 5 m); a point light usually stands by the wall it lights.
         constexpr float DefaultSpotIntensity = 30.0f;
-
-        // The number of a property, or fallback if the entity does not have it or it is not a number.
-        double ReadNumberProperty(const MapEntity& entity, const std::string& key, double fallback)
-        {
-            const std::string* text = FindProperty(entity, key);
-            if (text == nullptr)
-                return fallback;
-
-            double value = fallback;
-            const auto [end, error] = std::from_chars(text->data(), text->data() + text->size(), value);
-
-            return error == std::errc() ? value : fallback;
-        }
 
         // A spot points along its local forward (-Z), turned first up or down by the pitch around its right side, then
         // around the vertical by the yaw, like the camera (see Core::Transform). The angles are "pitch yaw roll" as
@@ -49,6 +35,18 @@ namespace Abomination::World
         }
     }
 
+    void ReadLightProperties(const MapEntity& entity, Renderer::Light& light)
+    {
+        light.intensity = static_cast<float>(ReadNumberProperty(entity, "intensity", light.intensity));
+        light.range = static_cast<float>(
+            Core::MapUnitsToMeters(ReadNumberProperty(entity, "range", Core::MetersToMapUnits(double{light.range}))));
+
+        // TrenchBroom writes a color as three numbers from 0 to 255, picked on the screen, so in sRGB.
+        if (const std::string* colorText = FindProperty(entity, "_color"); colorText != nullptr)
+            if (const std::optional<glm::dvec3> color = ParseVectorProperty(*colorText); color.has_value())
+                light.color = Renderer::ConvertSRGBToLinear(glm::clamp(glm::vec3(*color / 255.0), 0.0f, 1.0f));
+    }
+
     std::optional<MapLight> ReadMapLight(const MapEntity& entity)
     {
         const std::string* className = FindProperty(entity, "classname");
@@ -63,15 +61,9 @@ namespace Abomination::World
                 result.transform.position = ConvertMapPosition(*position);
 
         const bool isSpot = *className == "spot_light";
-        const float defaultIntensity = isSpot ? DefaultSpotIntensity : light.intensity;
-        light.intensity = static_cast<float>(ReadNumberProperty(entity, "intensity", defaultIntensity));
-        light.range = static_cast<float>(
-            Core::MapUnitsToMeters(ReadNumberProperty(entity, "range", Core::MetersToMapUnits(double{light.range}))));
-
-        // TrenchBroom writes a color as three numbers from 0 to 255, picked on the screen, so in sRGB.
-        if (const std::string* colorText = FindProperty(entity, "_color"); colorText != nullptr)
-            if (const std::optional<glm::dvec3> color = ParseVectorProperty(*colorText); color.has_value())
-                light.color = Renderer::ConvertSRGBToLinear(glm::clamp(glm::vec3(*color / 255.0), 0.0f, 1.0f));
+        if (isSpot)
+            light.intensity = DefaultSpotIntensity;
+        ReadLightProperties(entity, light);
 
         if (isSpot)
         {

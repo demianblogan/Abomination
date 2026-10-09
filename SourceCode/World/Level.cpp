@@ -7,6 +7,7 @@
 #include "Renderer/Light.h"
 #include "Renderer/MeshRenderer.h"
 #include "Renderer/ModelRenderer.h"
+#include "World/LightSources.h"
 #include "World/MapCoordinates.h"
 #include "World/MapLights.h"
 #include "World/NavMeshGeometry.h"
@@ -85,33 +86,28 @@ namespace Abomination::World
             return ReadCharacterStart(*entity);
         }
 
-        // A model standing in the level (misc_model): its file ("model"), origin and angle.
-        entt::entity CreateModelEntity(entt::registry& registry, Renderer::RenderAssets& assets, const MapEntity& mapEntity,
+        // A model standing in the level, in the Level lifetime group like the textures and meshes.
+        entt::entity CreateModelEntity(entt::registry& registry, Renderer::RenderAssets& assets, const std::string& name,
+                                       const std::string& modelPath, const Core::Transform& transform,
                                        Renderer::ShaderHandle shaderProgram)
         {
-            const std::string* modelPath = FindProperty(mapEntity, "model");
-            if (modelPath == nullptr)
-            {
-                Core::Log::Write(LogCategory::World, LogLevel::Warning, "A misc_model has no model property, skipped");
-
-                return entt::null;
-            }
-
-            Core::Transform transform;
-            if (const std::string* origin = FindProperty(mapEntity, "origin"); origin != nullptr)
-                if (const std::optional<glm::dvec3> position = ParseVectorProperty(*origin); position.has_value())
-                    transform.position = ConvertMapPosition(*position);
-
-            // The angle turns the model around the vertical axis (+Y in the game).
-            transform.rotation = glm::angleAxis(ReadEntityYaw(mapEntity), glm::vec3(0.0f, 1.0f, 0.0f));
-
             const entt::entity entity = registry.create();
-            registry.emplace<Core::Name>(entity, "Model: " + *modelPath);
+            registry.emplace<Core::Name>(entity, name);
             registry.emplace<Core::Transform>(entity, transform);
             registry.emplace<Renderer::ModelRenderer>(entity, Renderer::ModelRenderer{
-                .model = assets.LoadModel(*modelPath, Core::AssetLifetime::Level),
+                .model = assets.LoadModel(modelPath, Core::AssetLifetime::Level),
                 .shaderProgram = shaderProgram,
             });
+
+            return entity;
+        }
+
+        entt::entity CreateLightEntity(entt::registry& registry, const std::string& name, const MapLight& mapLight)
+        {
+            const entt::entity entity = registry.create();
+            registry.emplace<Core::Name>(entity, name);
+            registry.emplace<Core::Transform>(entity, mapLight.transform);
+            registry.emplace<Renderer::Light>(entity, mapLight.light);
 
             return entity;
         }
@@ -192,18 +188,30 @@ namespace Abomination::World
             if (const std::optional<MapLight> mapLight = ReadMapLight(mapEntity); mapLight.has_value())
             {
                 const bool isSpot = mapLight->light.type == Renderer::LightType::Spot;
-                const entt::entity entity = registry.create();
-                registry.emplace<Core::Name>(entity, isSpot ? "Spot light" : "Light");
-                registry.emplace<Core::Transform>(entity, mapLight->transform);
-                registry.emplace<Renderer::Light>(entity, mapLight->light);
-                level.m_entities.push_back(entity);
+                level.m_entities.push_back(CreateLightEntity(registry, isSpot ? "Spot light" : "Light", *mapLight));
                 ++lightCount;
+            }
+            else if (const std::optional<MapLightSource> source = ReadMapLightSource(mapEntity); source.has_value())
+            {
+                // A torch, a brazier...: its model, and its light where its fire is, unless the fire is out.
+                level.m_entities.push_back(
+                    CreateModelEntity(registry, assets, source->name, source->modelPath, source->transform, shaderProgram));
+                if (source->light.has_value())
+                {
+                    level.m_entities.push_back(CreateLightEntity(registry, source->name + " light", *source->light));
+                    ++lightCount;
+                }
             }
             else if (*className == "misc_model")
             {
-                const entt::entity entity = CreateModelEntity(registry, assets, mapEntity, shaderProgram);
-                if (entity != entt::null)
-                    level.m_entities.push_back(entity);
+                const std::string* modelPath = FindProperty(mapEntity, "model");
+                if (modelPath == nullptr)
+                {
+                    Core::Log::Write(LogCategory::World, LogLevel::Warning, "A misc_model has no model property, skipped");
+                    continue;
+                }
+                level.m_entities.push_back(CreateModelEntity(registry, assets, "Model: " + *modelPath, *modelPath,
+                                                             ReadMapModelTransform(mapEntity), shaderProgram));
             }
             else if (className->starts_with("monster_"))
             {

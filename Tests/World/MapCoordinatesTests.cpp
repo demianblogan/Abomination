@@ -54,4 +54,17 @@ namespace Abomination::World
 
         EXPECT_EQ(glm::vec3(precise), ConvertMapPosition({32.0, 64.0, 96.0}));
     }
+
+    TEST(MapCoordinates, ModelFacesItsAngleAsInTheEditor)
+    {
+        // TrenchBroom turns the front of a glTF model (+Z) towards the angle: 0 is map +X (game +X), 90 is map +Y
+        // (game -Z).
+        const glm::vec3 front(0.0f, 0.0f, 1.0f);
+
+        const glm::vec3 alongX = CalculateMapModelRotation(0.0) * front;
+        EXPECT_NEAR(alongX.x, 1.0f, 1e-5f);
+
+        const glm::vec3 alongMapY = CalculateMapModelRotation(90.0) * front;
+        EXPECT_NEAR(alongMapY.z, -1.0f, 1e-5f);
+    }
 }

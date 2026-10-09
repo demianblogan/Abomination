@@ -1,7 +1,10 @@
 #pragma once
 
 #include "Core/Math/Plane.h"
+#include "Core/Scene/Transform.h"
+#include "World/MapData.h"
 
+#include <glm/gtc/quaternion.hpp>
 #include <glm/vec3.hpp>
 
 #include <optional>
@@ -30,6 +33,14 @@ namespace Abomination::World
     // The "angle" of a map entity (degrees counter-clockwise from map +X, seen from above) as the yaw of the game
     // (radians counter-clockwise from game -Z, see Gameplay/Camera/MouseLook.h): an angle of 90 (map +Y) is yaw 0.
     [[nodiscard]] float ConvertMapAngleToYaw(double mapAngleDegrees);
+
+    // How a model placed on a map (misc_model, a torch) is turned by its angle. TrenchBroom shows the +Z of a glTF model
+    // (its front in glTF) towards the angle, while a yaw of the game turns the -Z of an entity there (see
+    // Core::LocalForward): half a turn more, and the game shows the model the way the editor does.
+    [[nodiscard]] glm::quat CalculateMapModelRotation(double mapAngleDegrees);
+
+    // Where a model placed on a map stands: its origin, turned by its angle (see CalculateMapModelRotation).
+    [[nodiscard]] Core::Transform ReadMapModelTransform(const MapEntity& entity);
 
     // Reads a vector property like "origin" "-48 -176 88". Returns nothing if the text is not three numbers.
     [[nodiscard]] std::optional<glm::dvec3> ParseVectorProperty(std::string_view text);

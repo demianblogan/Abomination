@@ -7,7 +7,7 @@
 namespace Abomination::Core
 {
     // Notices files changed on disk while the game runs, for hot reload (the shaders of the Renderer). Files are watched in
-    // groups under a key ("Shaders/TexturedShaded" for its .vert and .frag), and a changed group is reported by its key.
+    // groups under a key ("Shaders/Lit" for its .vert and .frag), and a changed group is reported by its key.
     //
     // A change is reported only when the file has stopped changing: its new write time must be the same at two checks in
     // a row. An editor may write a file in several steps, and a file read between them is cut off; waiting one check

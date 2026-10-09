@@ -14,6 +14,24 @@ namespace Abomination::Renderer
         ACES = 1,
     };
 
+    // What the Lit shader shows: the lit picture, or one property of the surfaces, to check a material. The numbers are the
+    // ones Lit.frag compares uniShadingView with.
+    enum class ShadingView
+    {
+        Final = 0,
+
+        // The color of the material (its map times its factor), without light.
+        BaseColor = 1,
+
+        // The direction every pixel faces, after the normal map, in the coordinates of the camera: red = right,
+        // green = up, blue = towards the camera, each from -1..1 shown as 0..1.
+        Normals = 2,
+
+        // Roughness and metalness as gray: black 0, white 1.
+        Roughness = 3,
+        Metalness = 4,
+    };
+
     // How the scene is drawn. Changed from the debug overlay (Renderer in the menu bar); later also by the options menu.
     struct RenderSettings
     {
@@ -30,5 +48,14 @@ namespace Abomination::Renderer
         float exposureStops = 0.0f;
 
         ToneMapping toneMapping = ToneMapping::ACES;
+
+        ShadingView shadingView = ShadingView::Final;
+
+        // The light until the level has lights of its own (feat/dynamic-lights, feat/lightmaps): a made-up "sun" from
+        // above (the direction the old shading took), as strong as sunIntensity, and ambientIntensity of light from
+        // everywhere, so a surface facing away from the sun is not black. About pi for the sun makes a white surface
+        // facing it white: the diffuse light of a surface is its color / pi times the light.
+        float sunIntensity = 3.0f;
+        float ambientIntensity = 0.35f;
     };
 }

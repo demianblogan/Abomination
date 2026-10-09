@@ -117,7 +117,7 @@ namespace Abomination::Gameplay
             const Renderer::ModelHandle model = assets.LoadModel(DogModelPath, Core::AssetLifetime::Level);
             registry.emplace<Renderer::ModelRenderer>(entity, Renderer::ModelRenderer{
                 .model = model,
-                .shaderProgram = assets.shaders.Load("Shaders/TexturedShaded"),
+                .shaderProgram = assets.shaders.Load("Shaders/Lit"),
             });
 
             // It stands idle until its mind tells it otherwise.

@@ -163,7 +163,7 @@ namespace Abomination::World
         // One entity per texture: every one is one draw call with its own material, found by the name of the texture (its
         // maps lie next to it, see Renderer::LoadMaterialByFileNames). The colors were loaded above, so their handles are
         // only returned now.
-        const Renderer::ShaderHandle shaderProgram = assets.shaders.Load("Shaders/TexturedShaded");
+        const Renderer::ShaderHandle shaderProgram = assets.shaders.Load("Shaders/Lit");
         for (const LevelMeshPart& part : levelMesh.parts)
         {
             const entt::entity entity = registry.create();

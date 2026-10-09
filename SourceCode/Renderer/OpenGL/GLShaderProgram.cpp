@@ -183,6 +183,16 @@ namespace Abomination::Renderer
         glProgramUniform2f(m_programID, static_cast<GLint>(location), value.x, value.y);
     }
 
+    void GLShaderProgram::SetUniform(std::uint32_t location, const glm::vec3& value) const
+    {
+        glProgramUniform3f(m_programID, static_cast<GLint>(location), value.x, value.y, value.z);
+    }
+
+    void GLShaderProgram::SetUniform(std::uint32_t location, const glm::vec4& value) const
+    {
+        glProgramUniform4f(m_programID, static_cast<GLint>(location), value.x, value.y, value.z, value.w);
+    }
+
     void GLShaderProgram::SetUniform(std::uint32_t location, float value) const
     {
         glProgramUniform1f(m_programID, static_cast<GLint>(location), value);

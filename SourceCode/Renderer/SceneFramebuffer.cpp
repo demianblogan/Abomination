@@ -44,9 +44,13 @@ namespace Abomination::Renderer
 
         program.Use();
 
-        // Stops become a multiplier: +1 stop = x2, -1 stop = x0.5 (2 to the power of the stops).
-        program.SetUniform(PresentExposureUniform, std::exp2(settings.exposureStops));
-        program.SetUniform(PresentToneMappingUniform, static_cast<int>(settings.toneMapping));
+        // Stops become a multiplier: +1 stop = x2, -1 stop = x0.5 (2 to the power of the stops). A view of one property of
+        // the surfaces (a color, a roughness) is shown as it is: no exposure, no tone mapping curve, only sRGB.
+        const bool isPropertyShown = settings.shadingView != ShadingView::Final;
+        const float exposure = isPropertyShown ? 1.0f : std::exp2(settings.exposureStops);
+        const ToneMapping toneMapping = isPropertyShown ? ToneMapping::None : settings.toneMapping;
+        program.SetUniform(PresentExposureUniform, exposure);
+        program.SetUniform(PresentToneMappingUniform, static_cast<int>(toneMapping));
 
         m_framebuffer->BindColorTexture(SceneColorTextureUnit);
         m_emptyVertexArray.Bind();

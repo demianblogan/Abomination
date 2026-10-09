@@ -81,7 +81,7 @@ namespace Abomination::Gameplay
         for (std::size_t index = 0; index < gibs.models.size(); ++index)
             gibs.models[index] = renderAssets.LoadModel(std::format("Models/Enemies/Gibs/Gib{}.glb", index + 1),
                                                         Core::AssetLifetime::Global);
-        gibs.shaderProgram = renderAssets.shaders.Load("Shaders/TexturedShaded");
+        gibs.shaderProgram = renderAssets.shaders.Load("Shaders/Lit");
 
         // Two bodies bursting together are enough noise.
         gibs.burstSound = LoadGameSound(audio, "Sounds/Enemies/Gib", 1, Audio::SoundGroup::Effects, 2);

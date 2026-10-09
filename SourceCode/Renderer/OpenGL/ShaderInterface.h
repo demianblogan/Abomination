@@ -7,7 +7,7 @@
 // by name at run time. All of them are here, so a change is made in one place, together with the shaders listed.
 namespace Abomination::Renderer
 {
-    // --- Meshes: TexturedShaded, Wireframe and the fallback program of ShaderStore ---
+    // --- Meshes: Lit, Wireframe and the fallback program of ShaderStore ---
 
     // Vertex inputs: layout(location = N) in ... . They follow the layout of MeshVertex (see Mesh::Create); a shader may
     // leave out what it does not need (Wireframe reads only the position).
@@ -23,7 +23,7 @@ namespace Abomination::Renderer
     // The tangent of a vertex (vec4, see MeshVertex::tangent), for normal maps. Every mesh has it.
     inline constexpr std::uint32_t MeshTangentAttribute = 5;
 
-    // The uniform that tells TexturedShaded and Wireframe whether the mesh is skinned: layout(location = 3) uniform bool.
+    // The uniform that tells Lit and Wireframe whether the mesh is skinned: layout(location = 3) uniform bool.
     inline constexpr std::uint32_t IsSkinnedUniform = 3;
 
     // The matrices of the joints of a skinned mesh (see CalculateSkinningMatrices), read by the vertex shader from a
@@ -31,8 +31,30 @@ namespace Abomination::Renderer
     // limit, and the whole array is uploaded with one call.
     inline constexpr std::uint32_t JointMatricesStorageBinding = 0;
 
-    // The texture unit of uniAlbedoTexture: layout(binding = 0) uniform sampler2D.
+    // The texture unit of uniAlbedoTexture: layout(binding = 0) uniform sampler2D. Also the color of a Lit material.
     inline constexpr std::uint32_t AlbedoTextureUnit = 0;
+
+    // --- Lit: the maps and numbers of a material (see Renderer::Material) and the light of the scene ---
+
+    // The other maps of the material: layout(binding = N) uniform sampler2D.
+    inline constexpr std::uint32_t NormalTextureUnit = 1;
+    inline constexpr std::uint32_t MetalRoughnessTextureUnit = 2;
+    inline constexpr std::uint32_t EmissiveTextureUnit = 3;
+
+    // The factors of the material: vec4 color, float roughness, float metalness, vec3 emission.
+    inline constexpr std::uint32_t BaseColorFactorUniform = 4;
+    inline constexpr std::uint32_t RoughnessFactorUniform = 5;
+    inline constexpr std::uint32_t MetalnessFactorUniform = 6;
+    inline constexpr std::uint32_t EmissiveFactorUniform = 7;
+
+    // The light of the scene (see Renderer::SceneLighting), in the coordinates of the camera: vec3 direction towards the
+    // sun, vec3 its light, vec3 the light from everywhere.
+    inline constexpr std::uint32_t SunDirectionUniform = 8;
+    inline constexpr std::uint32_t SunColorUniform = 9;
+    inline constexpr std::uint32_t AmbientColorUniform = 10;
+
+    // What the fragment shader shows: the value of Renderer::ShadingView (int).
+    inline constexpr std::uint32_t ShadingViewUniform = 11;
 
     // --- Every shader that places vertices in the world (all mesh shaders and DebugLines) ---
 

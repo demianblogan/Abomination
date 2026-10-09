@@ -34,6 +34,21 @@ namespace Abomination::UI
             ImGui::SetItemTooltip("Arrows along X (red), Y (green, up) and Z (blue) from the origin of the world,\n"
                                   "1 m long, drawn over everything.");
 
+            // What the Lit shader shows and the made-up light it lights with until the level has lights (see
+            // Renderer::ShadingView and Renderer::SceneLighting).
+            ImGui::SeparatorText("Shading");
+            constexpr const char* ShadingViewNames[] = {"Final", "Base color", "Normals", "Roughness", "Metalness"};
+            int shadingView = static_cast<int>(settings.shadingView);
+            if (ImGui::Combo("View", &shadingView, ShadingViewNames, IM_ARRAYSIZE(ShadingViewNames)))
+                settings.shadingView = static_cast<Renderer::ShadingView>(shadingView);
+            ImGui::SetItemTooltip("Final: the lit picture. The others show one property of the surfaces, without light:\n"
+                                  "normals as colors (red right, green up, blue towards the camera), roughness and\n"
+                                  "metalness as gray (black 0, white 1).");
+            DrawSlider("Sun", settings.sunIntensity, 0.0f, 10.0f, "%.2f",
+                       "The made-up sun from above. About 3 (pi) makes a white surface facing it white.");
+            DrawSlider("Ambient", settings.ambientIntensity, 0.0f, 2.0f, "%.2f",
+                       "Light from everywhere, so the side away from the sun is not black.");
+
             // How the HDR scene is fitted into what the screen shows (see Renderer::ToneMapping and Present.frag).
             ImGui::SeparatorText("Tone mapping");
             if (ImGui::RadioButton("None", settings.toneMapping == Renderer::ToneMapping::None))
@@ -42,7 +57,7 @@ namespace Abomination::UI
             ImGui::SameLine();
             if (ImGui::RadioButton("ACES", settings.toneMapping == Renderer::ToneMapping::ACES))
                 settings.toneMapping = Renderer::ToneMapping::ACES;
-            ImGui::SetItemTooltip("The filmic curve: dark stays dark, bright is pressed together and never cut off.");
+            ImGui::SetItemTooltip("The filmic S-curve: more contrast; bright values are pressed together, never cut off.");
             DrawSlider("Exposure", settings.exposureStops, -4.0f, 4.0f, "%.1f stops",
                        "Brightness before tone mapping, like a camera: +1 doubles it, -1 halves it.");
 

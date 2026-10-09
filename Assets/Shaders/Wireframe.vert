@@ -1,6 +1,6 @@
 #version 460 core
 
-// Places the vertices like the other shaders (a skinned mesh bent by its joints, as in TexturedShaded.vert) and passes
+// Places the vertices like the other shaders (a skinned mesh bent by its joints, as in Lit.vert) and passes
 // nothing else on: the wireframe needs only positions.
 // Used for every mesh when the Renderer window of the debug overlay switches to Wireframe.
 

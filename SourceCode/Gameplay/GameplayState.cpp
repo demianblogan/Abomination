@@ -96,7 +96,7 @@ namespace Abomination::Gameplay
             const Renderer::Model& shotgunModel = renderAssets.models.Get(shotgun);
             registry.emplace<WeaponViewModel>(player, WeaponViewModel{
                 .model = shotgun,
-                .shaderProgram = renderAssets.shaders.Load("Shaders/TexturedShaded"),
+                .shaderProgram = renderAssets.shaders.Load("Shaders/Lit"),
 
                 // The model points along -Z, so its front is the end of the barrel.
                 .muzzle = shotgunModel.front,

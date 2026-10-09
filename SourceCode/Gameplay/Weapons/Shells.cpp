@@ -102,7 +102,7 @@ namespace Abomination::Gameplay
                                               Core::AssetLifetime::Global);
         shells.material = Renderer::LoadMaterialByFileNames(renderAssets.textures, "Textures/Weapons/ShotgunShell.png",
                                                             Core::AssetLifetime::Global);
-        shells.shaderProgram = renderAssets.shaders.Load("Shaders/TexturedShaded");
+        shells.shaderProgram = renderAssets.shaders.Load("Shaders/Lit");
 
         // Shells falling one after another may ring together; more than 4 at once is only noise.
         shells.dropSound = LoadGameSound(audio, "Sounds/Weapons/Shotgun/ShellDrop", 3, Audio::SoundGroup::Effects, 4);

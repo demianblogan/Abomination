@@ -116,5 +116,8 @@ source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${TEST_SOURCES})
 # --- CTest integration -------------------------------------------------------
 # Registers every TEST(...) as a separate CTest test. PRE_TEST lists the tests
 # when CTest runs instead of after every build, so building never runs test code.
+# Listing the tests starts the executable once; a Debug build on a CI machine
+# may take longer than the default 5 seconds to start, which fails the run
+# before any test, so it gets a minute.
 include(GoogleTest)
-gtest_discover_tests(AbominationTests DISCOVERY_MODE PRE_TEST)
+gtest_discover_tests(AbominationTests DISCOVERY_MODE PRE_TEST DISCOVERY_TIMEOUT 60)

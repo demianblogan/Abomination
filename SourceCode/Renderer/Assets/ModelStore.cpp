@@ -40,7 +40,8 @@ namespace Abomination::Renderer
 
                 // The maps a material does not have are invalid handles, which ExtendLifetime skips.
                 const Material& material = part.material;
-                for (const TextureHandle map : {material.baseColor, material.normal, material.metalRoughness, material.emissive})
+                for (const TextureHandle map :
+                     {material.baseColor, material.normal, material.metalRoughness, material.emissive, material.height})
                     textures.ExtendLifetime(map, lifetime);
             }
 
@@ -79,8 +80,9 @@ namespace Abomination::Renderer
         }
 
         // Only the images the materials use become textures, named after the model ("...Shotgun.glb#image0"), each once
-        // however many parts use it. A color is sRGB; a normal or roughness map holds data and is read as it is (Raw). An
-        // image used both ways would keep the encoding of its first use (no model of the game does that).
+        // however many parts use it. A color is sRGB and crisp; a normal or roughness map holds data and is read as it is
+        // (Raw) and smoothly (see TextureFiltering). An image used both ways would keep the encoding of its first use (no
+        // model of the game does that).
         std::vector<std::optional<TextureHandle>> imageTextures(data->images.size());
         const auto getImageTexture = [&](const std::optional<std::size_t>& index, TextureEncoding encoding)
         {
@@ -88,7 +90,8 @@ namespace Abomination::Renderer
                 return TextureHandle{};
             if (!imageTextures[*index].has_value())
                 imageTextures[*index] =
-                    textures.Add(std::format("{}#image{}", path, *index), data->images[*index], lifetime, encoding);
+                    textures.Add(std::format("{}#image{}", path, *index), data->images[*index], lifetime, encoding,
+                                 encoding == TextureEncoding::Raw ? TextureFiltering::Smooth : TextureFiltering::Pixelated);
 
             return *imageTextures[*index];
         };

@@ -14,19 +14,22 @@ namespace Abomination::Renderer
     //   Textures/Episode1/Wall_MossyBrick_Normal.png      the normal map
     //   Textures/Episode1/Wall_MossyBrick_MetalRough.png  roughness (green) and metalness (blue)
     //   Textures/Episode1/Wall_MossyBrick_Emissive.png    the light the surface gives off
+    //   Textures/Episode1/Wall_MossyBrick_Height.png      the height, for parallax (a surface with it has parallax)
     struct MaterialFilePaths
     {
         std::string baseColor;
         std::string normal;
         std::string metalRoughness;
         std::string emissive;
+        std::string height;
     };
 
     // The paths of the maps of the color texture at baseColorPath ("Textures/Episode1/Wall_MossyBrick.png"). Needs no files.
     [[nodiscard]] MaterialFilePaths GetMaterialFilePaths(const std::string& baseColorPath);
 
     // The material of the color texture at baseColorPath: the color and every map whose file exists. A material with a
-    // roughness map takes its numbers from it (factors 1); one without gets the default roughness of a material.
+    // roughness map takes its numbers from it (factors 1); one without gets the default roughness of a material. One with a
+    // height map gets the default depth of parallax.
     [[nodiscard]] Material LoadMaterialByFileNames(TextureStore& textures, const std::string& baseColorPath,
                                                    Core::AssetLifetime lifetime);
 }

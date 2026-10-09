@@ -225,6 +225,7 @@ namespace Abomination::UI
             ImGui::Text("Roughness: %s x %.2f, metalness x %.2f", FormatMapName(material.metalRoughness, assets),
                         material.roughnessFactor, material.metalnessFactor);
             ImGui::Text("Emissive:  %s", FormatMapName(material.emissive, assets));
+            ImGui::Text("Height:    %s, parallax depth %.3f", FormatMapName(material.height, assets), material.parallaxDepth);
         }
 
         void DrawMeshRenderer(const Renderer::MeshRenderer& meshRenderer, const Renderer::RenderAssets& assets)

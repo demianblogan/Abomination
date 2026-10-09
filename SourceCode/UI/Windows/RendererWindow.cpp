@@ -37,17 +37,27 @@ namespace Abomination::UI
             // What the Lit shader shows and the made-up light it lights with until the level has lights (see
             // Renderer::ShadingView and Renderer::SceneLighting).
             ImGui::SeparatorText("Shading");
-            constexpr const char* ShadingViewNames[] = {"Final", "Base color", "Normals", "Roughness", "Metalness"};
+            constexpr const char* ShadingViewNames[] = {"Final", "Base color", "Normals", "Roughness", "Metalness", "Height"};
             int shadingView = static_cast<int>(settings.shadingView);
             if (ImGui::Combo("View", &shadingView, ShadingViewNames, IM_ARRAYSIZE(ShadingViewNames)))
                 settings.shadingView = static_cast<Renderer::ShadingView>(shadingView);
             ImGui::SetItemTooltip("Final: the lit picture. The others show one property of the surfaces, without light:\n"
                                   "normals as colors (red right, green up, blue towards the camera), roughness and\n"
-                                  "metalness as gray (black 0, white 1).");
+                                  "metalness as gray (black 0, white 1), the height of parallax as gray (white high).");
             DrawSlider("Sun", settings.sunIntensity, 0.0f, 10.0f, "%.2f",
                        "The made-up sun from above. About 3 (pi) makes a white surface facing it white.");
             DrawSlider("Ambient", settings.ambientIntensity, 0.0f, 2.0f, "%.2f",
                        "Light from everywhere, so the side away from the sun is not black.");
+            ImGui::Checkbox("Parallax", &settings.isParallaxEnabled);
+            ImGui::SetItemTooltip("Parallax occlusion mapping of the materials with a height map (masonry):\n"
+                                  "stones hide the joints behind them when seen from the side.");
+            DrawSlider("Parallax depth", settings.parallaxDepthScale, 0.0f, 3.0f, "x %.2f",
+                       "Times the depth of every material with a height map.");
+            DrawIntSlider("Parallax steps", settings.parallaxStepCount, 4, 32,
+                          "Steps into the relief: more is smoother at a grazing angle and costs more.");
+            ImGui::Checkbox("Specular anti-aliasing", &settings.isSpecularAntiAliasingEnabled);
+            ImGui::SetItemTooltip("Widens highlights where the surface turns fast from pixel to pixel,\n"
+                                  "so they do not flicker when the camera moves.");
 
             // How the HDR scene is fitted into what the screen shows (see Renderer::ToneMapping and Present.frag).
             ImGui::SeparatorText("Tone mapping");

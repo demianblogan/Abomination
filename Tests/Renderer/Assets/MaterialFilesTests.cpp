@@ -12,6 +12,7 @@ namespace Abomination::Renderer
         EXPECT_EQ(paths.normal, "Textures/Episode1/Wall_MossyBrick_Normal.png");
         EXPECT_EQ(paths.metalRoughness, "Textures/Episode1/Wall_MossyBrick_MetalRough.png");
         EXPECT_EQ(paths.emissive, "Textures/Episode1/Wall_MossyBrick_Emissive.png");
+        EXPECT_EQ(paths.height, "Textures/Episode1/Wall_MossyBrick_Height.png");
     }
 
     TEST(MaterialFiles, DotInFolderIsNotTheExtension)

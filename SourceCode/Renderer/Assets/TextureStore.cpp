@@ -66,7 +66,8 @@ namespace Abomination::Renderer
         };
     }
 
-    TextureHandle TextureStore::Load(const std::string& path, Core::AssetLifetime lifetime, TextureEncoding encoding)
+    TextureHandle TextureStore::Load(const std::string& path, Core::AssetLifetime lifetime, TextureEncoding encoding,
+                                     TextureFiltering filtering)
     {
         if (const std::optional<TextureHandle> loadedHandle = m_cache.Find(path); loadedHandle.has_value())
         {
@@ -80,7 +81,7 @@ namespace Abomination::Renderer
         std::filesystem::path fullPath = m_assetsDirectory / path;
         fullPath.make_preferred();
 
-        std::expected<GLTexture, std::string> texture = GLTexture::CreateFromFile(fullPath, encoding);
+        std::expected<GLTexture, std::string> texture = GLTexture::CreateFromFile(fullPath, filtering, encoding);
         if (!texture.has_value())
         {
             Core::Log::Write(LogCategory::Renderer, LogLevel::Warning, "Texture {} replaced by the fallback: {}", path,
@@ -97,7 +98,7 @@ namespace Abomination::Renderer
     }
 
     TextureHandle TextureStore::Add(const std::string& name, const Core::Image& image, Core::AssetLifetime lifetime,
-                                    TextureEncoding encoding)
+                                    TextureEncoding encoding, TextureFiltering filtering)
     {
         if (const std::optional<TextureHandle> loadedHandle = m_cache.Find(name); loadedHandle.has_value())
         {
@@ -116,22 +117,22 @@ namespace Abomination::Renderer
 
         Core::Log::Write(LogCategory::Renderer, LogLevel::Debug, "Texture added: {} ({}x{})", name, image.width, image.height);
 
-        return m_cache.Add(name, GLTexture::CreateFromImage(image, TextureFiltering::Pixelated, encoding), lifetime);
+        return m_cache.Add(name, GLTexture::CreateFromImage(image, filtering, encoding), lifetime);
     }
 
     std::optional<TextureHandle> TextureStore::LoadIfExists(const std::string& path, Core::AssetLifetime lifetime,
-                                                            TextureEncoding encoding)
+                                                            TextureEncoding encoding, TextureFiltering filtering)
     {
         // A path loaded before is there whether its file exists or not (a fallback), and is returned like by Load().
         if (m_cache.Find(path).has_value())
-            return Load(path, lifetime, encoding);
+            return Load(path, lifetime, encoding, filtering);
 
         // The error_code overload does not throw: a path that cannot be checked counts as missing.
         std::error_code error;
         if (!std::filesystem::exists(m_assetsDirectory / path, error))
             return std::nullopt;
 
-        return Load(path, lifetime, encoding);
+        return Load(path, lifetime, encoding, filtering);
     }
 
     void TextureStore::ExtendLifetime(TextureHandle handle, Core::AssetLifetime lifetime)

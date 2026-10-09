@@ -58,13 +58,17 @@ namespace Abomination::Renderer
             layout(location = 9) uniform vec3 uniSunColor;
             layout(location = 10) uniform vec3 uniAmbientColor;
             layout(location = 11) uniform int uniShadingView;
+            layout(location = 12) uniform float uniParallaxDepth;
+            layout(location = 13) uniform bool uniIsSpecularAntiAliasingEnabled;
+            layout(location = 14) uniform int uniParallaxStepCount;
 
             layout(location = 0) out vec4 FragColor;
 
             void main()
             {
                 float sum = uniBaseColorFactor.x + uniRoughnessFactor + uniMetalnessFactor + uniEmissiveFactor.x +
-                            uniSunDirection.x + uniSunColor.x + uniAmbientColor.x + float(uniShadingView);
+                            uniSunDirection.x + uniSunColor.x + uniAmbientColor.x + float(uniShadingView) +
+                            uniParallaxDepth + float(uniIsSpecularAntiAliasingEnabled) + float(uniParallaxStepCount);
                 FragColor = vec4(1.0, 0.0, 1.0, 1.0) + vec4(step(1e30, abs(sum)));
             }
         )";
@@ -155,8 +159,8 @@ namespace Abomination::Renderer
             if (!program.has_value())
             {
                 // A typo in the middle of editing must not turn the world magenta: the old program keeps drawing.
-                Core::Log::Write(LogCategory::Renderer, LogLevel::Error, "Shader program {} not reloaded, the old one stays: {}",
-                                 name, program.error());
+                Core::Log::Write(LogCategory::Renderer, LogLevel::Error,
+                                 "Shader program {} not reloaded, the old one stays: {}", name, program.error());
                 continue;
             }
 

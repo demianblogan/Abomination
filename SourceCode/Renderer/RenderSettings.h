@@ -30,6 +30,9 @@ namespace Abomination::Renderer
         // Roughness and metalness as gray: black 0, white 1.
         Roughness = 3,
         Metalness = 4,
+
+        // The height of parallax occlusion mapping as gray: white high, black low (flat white without a height map).
+        Height = 5,
     };
 
     // How the scene is drawn. Changed from the debug overlay (Renderer in the menu bar); later also by the options menu.
@@ -57,5 +60,17 @@ namespace Abomination::Renderer
         // facing it white: the diffuse light of a surface is its color / pi times the light.
         float sunIntensity = 3.0f;
         float ambientIntensity = 0.35f;
+
+        // Parallax occlusion mapping of the materials that have a height map (see Renderer::Material::height), and a
+        // factor for their depth, to see how deep looks right.
+        bool isParallaxEnabled = true;
+        float parallaxDepthScale = 1.0f;
+
+        // How many steps parallax takes into the relief: more is smoother at a grazing angle and costs more.
+        int parallaxStepCount = 16;
+
+        // Highlights widened where the normal changes fast between pixels, so they do not flicker when the camera moves
+        // (see Lit.frag).
+        bool isSpecularAntiAliasingEnabled = true;
     };
 }

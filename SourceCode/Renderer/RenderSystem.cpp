@@ -80,6 +80,7 @@ namespace Abomination::Renderer
             textures.Get(material.normal, BuiltInTexture::FlatNormal).Bind(NormalTextureUnit);
             textures.Get(material.metalRoughness, BuiltInTexture::White).Bind(MetalRoughnessTextureUnit);
             textures.Get(material.emissive, BuiltInTexture::Black).Bind(EmissiveTextureUnit);
+            textures.Get(material.height, BuiltInTexture::White).Bind(HeightTextureUnit);
 
             program.SetUniform(BaseColorFactorUniform, material.baseColorFactor);
             program.SetUniform(RoughnessFactorUniform, material.roughnessFactor);
@@ -90,6 +91,12 @@ namespace Abomination::Renderer
             program.SetUniform(SunColorUniform, pass.lighting.sunColor);
             program.SetUniform(AmbientColorUniform, pass.lighting.ambientColor);
             program.SetUniform(ShadingViewUniform, static_cast<int>(pass.settings.shadingView));
+
+            // Without a height map the depth is 0, and the shader skips parallax.
+            const float parallaxScale = pass.settings.isParallaxEnabled ? pass.settings.parallaxDepthScale : 0.0f;
+            program.SetUniform(ParallaxDepthUniform, material.parallaxDepth * parallaxScale);
+            program.SetUniform(ParallaxStepCountUniform, pass.settings.parallaxStepCount);
+            program.SetUniform(SpecularAntiAliasingUniform, pass.settings.isSpecularAntiAliasingEnabled);
         }
 
         // Draws one mesh of its material, placed by modelMatrix and seen through the matrices of the pass. A skinned mesh

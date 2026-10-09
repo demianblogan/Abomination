@@ -10,6 +10,10 @@ namespace Abomination::Renderer
     // A material by default: what a surface without maps of its own is. Rough, not metal: plaster, stone, wood.
     inline constexpr float DefaultRoughness = 0.8f;
 
+    // How deep the relief of parallax occlusion mapping goes, in texture coordinates (the texture once across is 1): 0.05 is
+    // 3 texels of a texture 64 texels wide, about the depth of the mortar between bricks.
+    inline constexpr float DefaultParallaxDepth = 0.05f;
+
     // What a surface is made of (see Documentation/ARCHITECTURE.md, section 6, materials): the maps the lighting shader reads
     // and the numbers they are multiplied by. The convention of glTF (metallic-roughness), so the material of a model file is
     // taken over as it is.
@@ -37,5 +41,11 @@ namespace Abomination::Renderer
         // Light the surface gives off itself (sRGB), times emissiveFactor, which may be above 1 (HDR). Without it nothing.
         TextureHandle emissive;
         glm::vec3 emissiveFactor{0.0f};
+
+        // The height of the surface at every texel (white high, black low; Raw), for parallax occlusion mapping: the
+        // lighting shader follows the eye into the relief, so stones hide the joints behind them when looked at from the
+        // side. parallaxDepth is how deep black lies below white, in texture coordinates; 0 (and no map) is a flat surface.
+        TextureHandle height;
+        float parallaxDepth = 0.0f;
     };
 }

@@ -7,7 +7,7 @@ using System.IO;
 // Makes the maps of a material from its color texture (see Renderer::LoadMaterialByFileNames for the names):
 //   <Name>_Normal.png      which way every texel faces, from the slopes of a height made of the brightness
 //   <Name>_MetalRough.png  roughness (green) and metalness (blue), from the settings of the texture below
-//   <Name>_Height.png      the height itself (white high, black low), for parallax occlusion mapping
+//   <Name>_Height.png      the height itself (white high, black low), for parallax occlusion mapping (masonry only)
 //
 // The height is a guess from the color: in these textures what is dark (mortar, cracks, the gaps between planks) lies
 // deeper than what is light (the faces of stones and boards). Every texture has its own strength of relief and its own
@@ -34,6 +34,16 @@ public static class MaterialMaps
         // Metal: 0 none; for IronBand the dull, less saturated texels are iron (metal) and the bright brown and orange
         // ones rust.
         public bool IsIronMetal = false;
+
+        // Parallax occlusion mapping: the height map is written only then, and a material with it gets parallax in the game
+        // (see Renderer::LoadMaterialByFileNames). Only masonry: stones whose joints should hide behind them; parallax
+        // reads the height many times per pixel.
+        public bool HasParallax = false;
+
+        // How deep the relief of parallax is, 0..1 of the depth the game gives every material: the height map is written
+        // in the upper part of its range only (0.5: from white down to middle gray), so the deepest point lies higher. A floor
+        // seen at a grazing angle looks bumpy with the full depth.
+        public double ParallaxStrength = 1.0;
     }
 
     // The settings of every texture of Episode 1, by the name of its file.
@@ -42,19 +52,29 @@ public static class MaterialMaps
         var settings = new Dictionary<string, Settings>();
         settings["Crate_Rotten"] = new Settings { Relief = 2.0, Roughness = 0.9 };
         settings["Door_Chapel"] = new Settings { Relief = 2.0, Roughness = 0.85 };
-        settings["Floor_MossyFlagstone"] = new Settings { Relief = 2.5, Roughness = 0.85 };
+        settings["Floor_MossyFlagstone"] =
+            new Settings { Relief = 2.5, Roughness = 0.85, HasParallax = true, ParallaxStrength = 0.5 };
         settings["Floor_Mud"] = new Settings { Relief = 1.5, Roughness = 0.55, RoughnessFromDarkness = -0.2 };
         settings["Floor_RottenPlanks"] = new Settings { Relief = 2.0, Roughness = 0.9 };
-        settings["Floor_WetFlagstone"] = new Settings { Relief = 2.5, Roughness = 0.35, RoughnessFromDarkness = -0.2 };
-        settings["Trim_Arches"] = new Settings { Relief = 3.0, Roughness = 0.85 };
+        settings["Floor_WetFlagstone"] =
+            new Settings { Relief = 2.5, Roughness = 0.35, RoughnessFromDarkness = -0.2, HasParallax = true,
+                           ParallaxStrength = 0.5 };
+        settings["Trim_Arches"] = new Settings { Relief = 3.0, Roughness = 0.85, HasParallax = true };
         settings["Trim_IronBand"] =
             new Settings { Relief = 2.5, Roughness = 0.55, RoughnessFromDarkness = 0.0, IsIronMetal = true };
         settings["Wall_CrackedPlaster"] = new Settings { Relief = 1.5, Roughness = 0.95, RoughnessFromDarkness = 0.0 };
-        settings["Wall_GothicNiches"] = new Settings { Relief = 3.5, Roughness = 0.85 };
-        settings["Wall_MossyBlocks"] = new Settings { Relief = 3.0, Roughness = 0.85 };
-        settings["Wall_MossyBrick"] = new Settings { Relief = 3.0, Roughness = 0.85 };
+        settings["Wall_GothicNiches"] = new Settings { Relief = 3.5, Roughness = 0.85, HasParallax = true };
+        settings["Wall_MossyBlocks"] = new Settings { Relief = 3.0, Roughness = 0.85, HasParallax = true };
+        settings["Wall_MossyBrick"] = new Settings { Relief = 3.0, Roughness = 0.85, HasParallax = true };
         settings["Wall_RottenPlanks"] = new Settings { Relief = 2.0, Roughness = 0.9 };
         settings["Window_Chapel"] = new Settings { Relief = 1.0, Roughness = 0.4, RoughnessFromDarkness = 0.3 };
+
+        // The pillars and their bases: the same pictures as the blocks of the walls and the wet flagstones, without
+        // parallax. Parallax fakes depth inside one flat face; on the narrow faces of an octagonal pillar every face shows
+        // its own relief, cut off at its edges like a picture behind glass. (A variant of the material without a copy of the
+        // picture comes with material files, 0.6.)
+        settings["Pillar_MossyBlocks"] = new Settings { Relief = 3.0, Roughness = 0.85 };
+        settings["Pillar_WetFlagstone"] = new Settings { Relief = 2.5, Roughness = 0.35, RoughnessFromDarkness = -0.2 };
         return settings;
     }
 
@@ -157,7 +177,8 @@ public static class MaterialMaps
                 if (!isOpaque[i]) { nx = 0; ny = 0; nz = 1; }
                 normals[i] = Pack(255, ToByte(nx * 0.5 + 0.5), ToByte(ny * 0.5 + 0.5), ToByte(nz * 0.5 + 0.5));
 
-                int level = ToByte(heightMap[i]);
+                // White stays the surface; black rises to 1 - strength.
+                int level = ToByte(1.0 - settings.ParallaxStrength * (1.0 - heightMap[i]));
                 heights[i] = Pack(255, level, level, level);
 
                 // 4. Roughness from the settings, rougher or smoother where it is dark; metalness only for iron.
@@ -185,7 +206,8 @@ public static class MaterialMaps
         Directory.CreateDirectory(outputDirectory);
         SavePixels(normals, width, height, Path.Combine(outputDirectory, name + "_Normal.png"));
         SavePixels(metalRough, width, height, Path.Combine(outputDirectory, name + "_MetalRough.png"));
-        SavePixels(heights, width, height, Path.Combine(outputDirectory, name + "_Height.png"));
+        if (settings.HasParallax)
+            SavePixels(heights, width, height, Path.Combine(outputDirectory, name + "_Height.png"));
     }
 
     // Makes the maps of every texture of a folder that has settings.

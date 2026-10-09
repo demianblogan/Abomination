@@ -40,6 +40,7 @@ namespace Abomination::Renderer
     inline constexpr std::uint32_t NormalTextureUnit = 1;
     inline constexpr std::uint32_t MetalRoughnessTextureUnit = 2;
     inline constexpr std::uint32_t EmissiveTextureUnit = 3;
+    inline constexpr std::uint32_t HeightTextureUnit = 4;
 
     // The factors of the material: vec4 color, float roughness, float metalness, vec3 emission.
     inline constexpr std::uint32_t BaseColorFactorUniform = 4;
@@ -55,6 +56,15 @@ namespace Abomination::Renderer
 
     // What the fragment shader shows: the value of Renderer::ShadingView (int).
     inline constexpr std::uint32_t ShadingViewUniform = 11;
+
+    // How deep the relief of parallax occlusion mapping goes (float, texture coordinates; 0 none): the depth of the
+    // material times the scale of the Renderer window.
+    inline constexpr std::uint32_t ParallaxDepthUniform = 12;
+
+    // Whether highlights are widened where the normal changes fast from pixel to pixel (bool, see Lit.frag), and how many
+    // steps parallax takes into the relief (int).
+    inline constexpr std::uint32_t SpecularAntiAliasingUniform = 13;
+    inline constexpr std::uint32_t ParallaxStepCountUniform = 14;
 
     // --- Every shader that places vertices in the world (all mesh shaders and DebugLines) ---
 

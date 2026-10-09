@@ -19,7 +19,9 @@ namespace Abomination::Renderer
         // Crisp square texels close up, the retro look of the level and the models (see CreateFromImage).
         Pixelated,
 
-        // Texels blended smoothly at every size: text and interface icons, whose edges must stay soft, not stepped.
+        // Texels blended smoothly at every size: text and interface icons, whose edges must stay soft, not stepped; and the
+        // maps that light a surface (normals, roughness, heights), while its color stays crisp: a normal jumping from texel
+        // to texel makes the highlights flicker when the camera moves.
         Smooth,
     };
 
@@ -49,9 +51,10 @@ namespace Abomination::Renderer
                                                        TextureFiltering filtering = TextureFiltering::Pixelated,
                                                        TextureEncoding encoding = TextureEncoding::SRGB);
 
-        // Loads an image file and calls CreateFromImage() (pixelated). Returns an error if the file cannot be loaded.
+        // Loads an image file and calls CreateFromImage(). Returns an error if the file cannot be loaded.
         [[nodiscard]] static std::expected<GLTexture, std::string> CreateFromFile(
-            const std::filesystem::path& path, TextureEncoding encoding = TextureEncoding::SRGB);
+            const std::filesystem::path& path, TextureFiltering filtering = TextureFiltering::Pixelated,
+            TextureEncoding encoding = TextureEncoding::SRGB);
 
         GLTexture(const GLTexture&) = delete;
         GLTexture& operator=(const GLTexture&) = delete;

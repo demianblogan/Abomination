@@ -47,21 +47,25 @@ namespace Abomination::Renderer
         // Returns the texture loaded from path, loading it on the first call. path is relative to the assets directory
         // and uses forward slashes: "Textures/Episode1/Crate_Rotten.png". The same path always gives the same handle.
         // The texture stays loaded for the lifetime (the longer one if it is asked for again with another lifetime).
-        // encoding: SRGB for colors, Raw for maps that hold data (see TextureEncoding). A path is loaded with one encoding:
-        // the first one it is asked for.
+        // encoding: SRGB for colors, Raw for maps that hold data (see TextureEncoding); filtering: Pixelated for the crisp
+        // texels of colors, Smooth for maps that light the surface (see TextureFiltering). A path is loaded once, with the
+        // encoding and filtering it is first asked for.
         [[nodiscard]] TextureHandle Load(const std::string& path, Core::AssetLifetime lifetime,
-                                         TextureEncoding encoding = TextureEncoding::SRGB);
+                                         TextureEncoding encoding = TextureEncoding::SRGB,
+                                         TextureFiltering filtering = TextureFiltering::Pixelated);
 
         // Like Load, but only if the file exists: nothing (and no warning) for a map a material does not have. A file that
         // exists but is broken still gives the checkerboard.
         [[nodiscard]] std::optional<TextureHandle> LoadIfExists(const std::string& path, Core::AssetLifetime lifetime,
-                                                                TextureEncoding encoding);
+                                                                TextureEncoding encoding,
+                                                                TextureFiltering filtering = TextureFiltering::Pixelated);
 
         // Stores a texture made of an image already in memory (a texture inside a model file) under name, named like a
         // path: "Models/Weapons/Shotgun.glb#image0". If a texture with this name is loaded, it is returned as it is. An
         // empty image (one that could not be decoded) gives the checkerboard, like a missing file.
         [[nodiscard]] TextureHandle Add(const std::string& name, const Core::Image& image, Core::AssetLifetime lifetime,
-                                        TextureEncoding encoding = TextureEncoding::SRGB);
+                                        TextureEncoding encoding = TextureEncoding::SRGB,
+                                        TextureFiltering filtering = TextureFiltering::Pixelated);
 
         // Moves the texture to the longer of its lifetime and the given one (see AssetCache::ExtendLifetime).
         void ExtendLifetime(TextureHandle handle, Core::AssetLifetime lifetime);

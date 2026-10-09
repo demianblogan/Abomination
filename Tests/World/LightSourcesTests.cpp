@@ -85,6 +85,22 @@ namespace Abomination::World
         EXPECT_EQ(source->flicker.basePosition, source->light->transform.position);
     }
 
+    TEST(LightSources, TorchesAndBraziersAreInTheWayCandlesAreNot)
+    {
+        const std::optional<MapLightSource> torch =
+            ReadMapLightSource(MakeEntity({{"classname", "torch"}, {"spawnflags", "1"}}));
+        ASSERT_TRUE(torch.has_value());
+        ASSERT_TRUE(torch->collisionBrush.has_value());
+
+        // A box of clip: characters bump into it, shots pass through. Even burnt out, the torch is still there.
+        EXPECT_EQ(torch->collisionBrush->faces.size(), 6u);
+        EXPECT_TRUE(IsClipBrush(*torch->collisionBrush));
+
+        const std::optional<MapLightSource> candles = ReadMapLightSource(MakeEntity({{"classname", "candles"}}));
+        ASSERT_TRUE(candles.has_value());
+        EXPECT_FALSE(candles->collisionBrush.has_value());
+    }
+
     TEST(LightSources, ClassNamesAreUnique)
     {
         const std::span<const LightSourceType> types = GetLightSourceTypes();

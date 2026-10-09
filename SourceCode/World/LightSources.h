@@ -56,6 +56,11 @@ namespace Abomination::World
         int flameCount = 0;
         float sparksPerSecond = 0.0f;
         float smokePerSecond = 0.0f;
+
+        // Half the size of the box characters bump into, in map units: along the front of the model, across it and up
+        // (the box of the model, as MakeLightSources.py prints it). Zero: characters walk through it (candles are lower
+        // than a step).
+        glm::dvec3 collisionHalfSize{0.0};
     };
 
     // Every kind, in the order of the entity definitions.
@@ -84,6 +89,10 @@ namespace Abomination::World
             Renderer::Flame flame;
         };
         std::vector<PlacedFlame> flames;
+
+        // The box characters bump into, turned with the model, as a clip brush (see IsClipBrush): characters collide
+        // with it, shots and sight pass through. Nothing if the type has none.
+        std::optional<MapBrush> collisionBrush;
     };
 
     // The light source of a torch, brazier, candles or lantern entity, or nothing for any other entity.

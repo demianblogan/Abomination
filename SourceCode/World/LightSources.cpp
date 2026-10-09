@@ -1,10 +1,12 @@
 #include "World/LightSources.h"
 
 #include "Renderer/ColorSpace.h"
+#include "World/BrushGeometry.h"
 #include "World/MapCoordinates.h"
 
 #include <glm/ext/scalar_constants.hpp>
 #include <glm/geometric.hpp>
+#include <glm/trigonometric.hpp>
 
 #include <algorithm>
 #include <array>
@@ -36,7 +38,8 @@ namespace Abomination::World
                             .flameOffsets = {glm::vec3(0.0f, 0.27f, 0.115f)},
                             .flameCount = 1,
                             .sparksPerSecond = 3.0f,
-                            .smokePerSecond = 2.0f},
+                            .smokePerSecond = 2.0f,
+                            .collisionHalfSize = {4.8, 1.3, 9.1}},
             LightSourceType{.className = "brazier",
                             .name = "Brazier",
                             .modelPath = "Models/Props/Brazier.glb",
@@ -53,7 +56,8 @@ namespace Abomination::World
                                              glm::vec3(-0.11f, 0.57f, -0.07f)},
                             .flameCount = 3,
                             .sparksPerSecond = 4.0f,
-                            .smokePerSecond = 1.5f},
+                            .smokePerSecond = 1.5f,
+                            .collisionHalfSize = {13.4, 13.8, 18.9}},
             LightSourceType{.className = "candles",
                             .name = "Candles",
                             .modelPath = "Models/Props/Candles.glb",
@@ -78,7 +82,8 @@ namespace Abomination::World
                             .intensity = 5.0f,
                             .range = 7.0f,
                             .flickerStrength = 0.08f,
-                            .flickerSpeed = 5.0f},
+                            .flickerSpeed = 5.0f,
+                            .collisionHalfSize = {3.4, 3.0, 5.9}},
         };
 
         // A phase (radians) that every place gives differently but always the same: two torches never flicker together,
@@ -115,6 +120,21 @@ namespace Abomination::World
             .modelPath = std::string(isOut ? type->outModelPath : type->modelPath),
             .transform = ReadMapModelTransform(entity),
         };
+
+        // The box characters bump into, in map units around the origin of the entity (the middle of the model), turned
+        // by its angle: its front is the direction of the angle, across it is a quarter turn more, up is up. A burnt-out
+        // torch is still in the way.
+        if (type->collisionHalfSize != glm::dvec3(0.0))
+        {
+            glm::dvec3 origin(0.0);
+            if (const std::string* text = FindProperty(entity, "origin"); text != nullptr)
+                origin = ParseVectorProperty(*text).value_or(origin);
+            const double angle = glm::radians(ReadNumberProperty(entity, "angle", 0.0));
+            const std::array<glm::dvec3, 3> axes = {glm::dvec3(std::cos(angle), std::sin(angle), 0.0),
+                                                    glm::dvec3(-std::sin(angle), std::cos(angle), 0.0),
+                                                    glm::dvec3(0.0, 0.0, 1.0)};
+            source.collisionBrush = MakeBoxBrush(origin, axes, type->collisionHalfSize, std::string(ClipTextureName));
+        }
 
         if (isOut)
             return source;

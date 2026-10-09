@@ -140,13 +140,22 @@ namespace Abomination::World
         };
         LevelMesh levelMesh = BuildLevelMesh(*world, getTextureSize);
         level.m_statistics = levelMesh.statistics;
-        level.m_collisionBrushes = BuildCollisionBrushes(*world, BrushSelection::All);
-        level.m_shotBrushes = BuildCollisionBrushes(*world, BrushSelection::WithoutClip);
 
-        // The navmesh: where the dogs can walk and how they find their way (see Navigation::NavMesh).
+        // What characters bump into: the brushes of the world and the boxes of the light sources (torches, braziers),
+        // which are clip: shots pass through them.
+        MapEntity solidWorld = *world;
+        for (const MapEntity& mapEntity : map.entities)
+            if (const std::optional<MapLightSource> source = ReadMapLightSource(mapEntity); source.has_value())
+                if (source->collisionBrush.has_value())
+                    solidWorld.brushes.push_back(*source->collisionBrush);
+        level.m_collisionBrushes = BuildCollisionBrushes(solidWorld, BrushSelection::All);
+        level.m_shotBrushes = BuildCollisionBrushes(solidWorld, BrushSelection::WithoutClip);
+
+        // The navmesh: where the dogs can walk and how they find their way (see Navigation::NavMesh). The dogs walk around
+        // the light sources too.
         const auto navMeshStart = std::chrono::steady_clock::now();
         std::expected<Navigation::NavMesh, std::string> navMesh =
-            Navigation::NavMesh::Build(BuildNavMeshGeometry(*world), Navigation::NavMeshSettings{});
+            Navigation::NavMesh::Build(BuildNavMeshGeometry(solidWorld), Navigation::NavMeshSettings{});
         const std::chrono::duration<double, std::milli> navMeshTime = std::chrono::steady_clock::now() - navMeshStart;
         if (navMesh.has_value())
         {

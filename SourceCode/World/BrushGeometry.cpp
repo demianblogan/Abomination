@@ -69,4 +69,32 @@ namespace Abomination::World
 
         return polygons;
     }
+
+    MapBrush MakeBoxBrush(const glm::dvec3& middle, const std::array<glm::dvec3, 3>& axes, const glm::dvec3& halfSize,
+                          const std::string& textureName)
+    {
+        // Two faces per axis, facing along it and against it. The plane of a face goes through its three points, and its
+        // outside is where cross(p0 - p1, p2 - p1) points (see MapFace): with p1 in the middle of the face, p0 one step
+        // along u and p2 one step along v, that is cross(u, v). The axes go round (x cross y = z, y cross z = x, z cross
+        // x = y), so the next two axes give the outward normal, and the same two swapped give the opposite one.
+        constexpr double Step = 16.0;
+        MapBrush brush;
+        for (int axis = 0; axis < 3; ++axis)
+        {
+            const glm::dvec3& next = axes[(axis + 1) % 3];
+            const glm::dvec3& afterNext = axes[(axis + 2) % 3];
+            for (const double side : {1.0, -1.0})
+            {
+                const glm::dvec3 middleOfFace = middle + axes[axis] * (side * halfSize[axis]);
+                const glm::dvec3& u = side > 0.0 ? next : afterNext;
+                const glm::dvec3& v = side > 0.0 ? afterNext : next;
+                brush.faces.push_back(MapFace{
+                    .points = {middleOfFace + u * Step, middleOfFace, middleOfFace + v * Step},
+                    .textureName = textureName,
+                });
+            }
+        }
+
+        return brush;
+    }
 }

@@ -70,7 +70,17 @@ namespace Abomination::UI
             ImGui::SameLine();
             if (ImGui::RadioButton("ACES", settings.toneMapping == Renderer::ToneMapping::ACES))
                 settings.toneMapping = Renderer::ToneMapping::ACES;
-            ImGui::SetItemTooltip("The filmic S-curve: more contrast; bright values are pressed together, never cut off.");
+            ImGui::SetItemTooltip("The filmic S-curve (Narkowicz): more contrast; bright values are pressed together,\n"
+                                  "never cut off; colors more saturated.");
+            ImGui::SameLine();
+            if (ImGui::RadioButton("ACES (Hill)", settings.toneMapping == Renderer::ToneMapping::HillACES))
+                settings.toneMapping = Renderer::ToneMapping::HillACES;
+            ImGui::SetItemTooltip("ACES fitted closer to the real one: bright colors keep their hue, a little darker.");
+            ImGui::SameLine();
+            if (ImGui::RadioButton("AgX", settings.toneMapping == Renderer::ToneMapping::AgX))
+                settings.toneMapping = Renderer::ToneMapping::AgX;
+            ImGui::SetItemTooltip("Blender 4: very bright colors go to white, like a photograph of a flame;\n"
+                                  "softer contrast.");
             DrawSlider("Exposure", settings.exposureStops, -4.0f, 4.0f, "%.1f stops",
                        "Brightness before tone mapping, like a camera: +1 doubles it, -1 halves it.");
 

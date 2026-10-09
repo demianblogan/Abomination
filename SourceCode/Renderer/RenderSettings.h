@@ -12,6 +12,13 @@ namespace Abomination::Renderer
         // The ACES filmic curve (as approximated by Krzysztof Narkowicz): dark values almost unchanged, bright ones
         // pressed together more and more, never cut off. Used by films and many games.
         ACES = 1,
+
+        // ACES as fitted by Stephen Hill: closer to the real one; bright colors keep their hue, a little darker overall.
+        HillACES = 2,
+
+        // AgX (the default of Blender 4): very bright colors go to white instead of staying saturated, like a photograph
+        // of a flame.
+        AgX = 3,
     };
 
     // What the Lit shader shows: the lit picture, or one property of the surfaces, to check a material. The numbers are the

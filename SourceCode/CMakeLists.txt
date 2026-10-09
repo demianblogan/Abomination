@@ -135,6 +135,8 @@ set(LIBRARY_SOURCES
     Gameplay/Weapons/Ammo.h
     Gameplay/Weapons/Crosshair.h
     Gameplay/Weapons/Crosshair.cpp
+    Gameplay/Weapons/MuzzleLight.h
+    Gameplay/Weapons/MuzzleLight.cpp
     Gameplay/Weapons/PumpAction.h
     Gameplay/Weapons/PumpAction.cpp
     Gameplay/Weapons/Shells.h

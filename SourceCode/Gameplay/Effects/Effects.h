@@ -61,6 +61,13 @@ namespace Abomination::Gameplay
         float smokeLifetime = 0.9f;
         float smokeHalfSize = 0.12f;
 
+        // The light of the flash (see MuzzleLight.h): the light at 1 m, how far it reaches (meters), its color (sRGB, as
+        // picked) and how long it takes to fade out (seconds; a little longer than the flash sprite, light lingers).
+        float flashLightIntensity = 40.0f;
+        float flashLightRange = 9.0f;
+        glm::vec3 flashLightColor{1.0f, 0.75f, 0.45f};
+        float flashLightDuration = 0.08f;
+
         // The marks of pellets on walls: their half size, and how many stay before the oldest disappear.
         float markHalfSize = 0.065f;
         int maximumMarkCount = 64;

@@ -19,6 +19,7 @@
 #include "Gameplay/Player/Player.h"
 #include "Gameplay/Player/PlayerSystem.h"
 #include "Gameplay/Spin.h"
+#include "Gameplay/Weapons/MuzzleLight.h"
 #include "Gameplay/Weapons/Shells.h"
 #include "Gameplay/Weapons/WeaponSystem.h"
 #include "Gameplay/Weapons/WeaponViewModel.h"
@@ -341,10 +342,12 @@ namespace Abomination
         // The flames of the level: their flicker, sparks and smoke.
         Gameplay::UpdateFires(m_registry, m_gameplay.effects, deltaTime);
 
-        // The shells fly out of the weapon as it is seen: from the eyes between the last two ticks.
+        // The shells fly out of the weapon as it is seen, and its flash lights the room from there: from the eyes between
+        // the last two ticks.
         const Core::Transform eyes =
             Gameplay::CalculateViewTransform(m_gameplay, m_registry, m_fixedTimestep.GetInterpolationFactor());
         Gameplay::UpdateShells(m_gameplay, m_registry, eyes, m_level.GetShotBrushes(), m_audio, deltaTime);
+        Gameplay::UpdateMuzzleLight(m_gameplay, m_registry, eyes, deltaTime);
         Gameplay::UpdateGibs(m_gameplay, m_registry, m_level.GetShotBrushes(), deltaTime);
         Gameplay::UpdateDamageReaction(m_gameplay, m_registry, m_audio, deltaTime);
     }

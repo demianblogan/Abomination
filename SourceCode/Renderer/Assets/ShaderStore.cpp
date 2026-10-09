@@ -45,13 +45,31 @@ namespace Abomination::Renderer
             }
         )";
 
+        // The uniforms of a material and of the light (Lit.frag) are declared and used too: a uniform a program does not
+        // use is removed by the compiler, and setting it is then an OpenGL error. They are used in a way the compiler
+        // cannot remove but that changes nothing: only an absurd sum (above 1e30) would add anything to the magenta.
         constexpr std::string_view FallbackFragmentShaderSource = R"(
             #version 460 core
+            layout(location = 4) uniform vec4 uniBaseColorFactor;
+            layout(location = 5) uniform float uniRoughnessFactor;
+            layout(location = 6) uniform float uniMetalnessFactor;
+            layout(location = 7) uniform vec3 uniEmissiveFactor;
+            layout(location = 8) uniform vec3 uniSunDirection;
+            layout(location = 9) uniform vec3 uniSunColor;
+            layout(location = 10) uniform vec3 uniAmbientColor;
+            layout(location = 11) uniform int uniShadingView;
+            layout(location = 12) uniform float uniParallaxDepth;
+            layout(location = 13) uniform bool uniIsSpecularAntiAliasingEnabled;
+            layout(location = 14) uniform int uniParallaxStepCount;
+
             layout(location = 0) out vec4 FragColor;
 
             void main()
             {
-                FragColor = vec4(1.0, 0.0, 1.0, 1.0);
+                float sum = uniBaseColorFactor.x + uniRoughnessFactor + uniMetalnessFactor + uniEmissiveFactor.x +
+                            uniSunDirection.x + uniSunColor.x + uniAmbientColor.x + float(uniShadingView) +
+                            uniParallaxDepth + float(uniIsSpecularAntiAliasingEnabled) + float(uniParallaxStepCount);
+                FragColor = vec4(1.0, 0.0, 1.0, 1.0) + vec4(step(1e30, abs(sum)));
             }
         )";
 
@@ -67,7 +85,7 @@ namespace Abomination::Renderer
             std::filesystem::path fragmentShader;
         };
 
-        // "Shaders/TexturedShaded" -> ".../Assets/Shaders/TexturedShaded.vert" and ".../Assets/Shaders/TexturedShaded.frag".
+        // "Shaders/Lit" -> ".../Assets/Shaders/Lit.vert" and ".../Assets/Shaders/Lit.frag".
         // += appends text to the last part of a path (unlike /, which adds a new part). make_preferred() turns the forward
         // slashes of the name into the backslashes of Windows, so paths in log messages do not mix both.
         ShaderFilePaths GetShaderFilePaths(const std::filesystem::path& assetsDirectory, const std::string& name)
@@ -141,8 +159,8 @@ namespace Abomination::Renderer
             if (!program.has_value())
             {
                 // A typo in the middle of editing must not turn the world magenta: the old program keeps drawing.
-                Core::Log::Write(LogCategory::Renderer, LogLevel::Error, "Shader program {} not reloaded, the old one stays: {}",
-                                 name, program.error());
+                Core::Log::Write(LogCategory::Renderer, LogLevel::Error,
+                                 "Shader program {} not reloaded, the old one stays: {}", name, program.error());
                 continue;
             }
 

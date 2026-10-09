@@ -7,7 +7,7 @@
 #include "Gameplay/Effects/Tumbling.h"
 #include "Renderer/Assets/MeshStore.h"
 #include "Renderer/Assets/ShaderStore.h"
-#include "Renderer/Assets/TextureStore.h"
+#include "Renderer/Material.h"
 #include "World/CollisionBrush.h"
 
 #include <entt/entt.hpp>
@@ -109,7 +109,7 @@ namespace Abomination::Gameplay
         std::size_t nextReplaced = 0;
 
         Renderer::MeshHandle mesh;
-        Renderer::TextureHandle texture;
+        Renderer::Material material;
         Renderer::ShaderHandle shaderProgram;
         Audio::SoundEventHandle dropSound;
 
@@ -120,7 +120,7 @@ namespace Abomination::Gameplay
     inline constexpr float ShellRadius = 0.0105f;
     inline constexpr float ShellLength = 0.07f;
 
-    // Makes the shell mesh, loads its texture and the sound of its fall, for the whole game.
+    // Makes the shell mesh, loads its material and the sound of its fall, for the whole game.
     [[nodiscard]] Shells LoadShells(Renderer::RenderAssets& renderAssets, Audio::AudioEngine& audio);
 
     // Throws a shell out of the window of the weapon in the hands. eyes: where the player's eyes are and how they are

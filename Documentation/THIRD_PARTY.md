@@ -21,6 +21,7 @@ line there.
 | GLAD    | 2.0.8   | (WTFPL OR CC0-1.0) AND Apache-2.0 | OpenGL 4.6 Core loader, generated into `ThirdParty/GLAD` | https://gen.glad.sh |
 | glm     | 1.0.3   | MIT     | Math: vectors, matrices (header-only)    | https://github.com/g-truc/glm    |
 | miniaudio | 0.11.25 | Unlicense OR MIT-0 | Sound: decoding OGG/WAV/MP3/FLAC, mixing in its own thread, 3D sound (`Audio`, header-only) | https://miniaud.io |
+| MikkTSpace | 2020-03-25 (the last commit) | Zlib-like (in its header) | Tangents of the models for normal maps (`Renderer/Assets/MeshTangents`): the standard most programs bake normal maps with | https://github.com/mmikk/MikkTSpace |
 | Recast & Detour | 1.6.0 | Zlib | Navigation: Recast builds the navmesh of a level from its brushes, Detour finds paths on it (`Navigation`) | https://github.com/recastnavigation/recastnavigation |
 | RmlUi   | 6.3     | MIT     | Game interface: documents in RML/RCSS (HTML/CSS-like), layout, controls, font effects (`UI/GameUI`, backends in `Platform` and `Renderer`) | https://github.com/mikke89/RmlUi |
 | FreeType | 2.14.3 | FreeType License (FTL) | Drawing the letters of fonts for RmlUi. The FTL asks for a credit in the documentation of the game: "Portions of this software are copyright © The FreeType Project (www.freetype.org). All rights reserved." It goes into the Credits screen | https://freetype.org |

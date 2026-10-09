@@ -2,6 +2,8 @@
 
 #include <glm/mat4x4.hpp>
 #include <glm/vec2.hpp>
+#include <glm/vec3.hpp>
+#include <glm/vec4.hpp>
 
 #include <cstdint>
 #include <expected>
@@ -41,6 +43,8 @@ namespace Abomination::Renderer
         // float or a bool). location must match layout(location = N) of the uniform in the shader.
         void SetUniform(std::uint32_t location, const glm::mat4& value) const;
         void SetUniform(std::uint32_t location, const glm::vec2& value) const;
+        void SetUniform(std::uint32_t location, const glm::vec3& value) const;
+        void SetUniform(std::uint32_t location, const glm::vec4& value) const;
         void SetUniform(std::uint32_t location, float value) const;
         void SetUniform(std::uint32_t location, bool value) const;
         void SetUniform(std::uint32_t location, int value) const;

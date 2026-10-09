@@ -9,9 +9,9 @@
 
 namespace Abomination::Renderer
 {
-    // One vertex as it lies in the vertex buffer: position, texture coordinates and normal.
-    //   bytes:  0              12         20             32
-    //           | x | y | z | u | v | nx | ny | nz |
+    // One vertex as it lies in the vertex buffer: position, texture coordinates, normal and tangent.
+    //   bytes:  0              12         20             32                  48
+    //           | x | y | z | u | v | nx | ny | nz | tx | ty | tz | tw |
     struct MeshVertex
     {
         glm::vec3 position{0.0f};
@@ -20,6 +20,12 @@ namespace Abomination::Renderer
         // The direction the surface faces at this vertex (length 1). Shaders use it to shade surfaces by how they are
         // turned: the level has no lighting yet (0.5), and without shading its walls and floor would look the same.
         glm::vec3 normal{0.0f, 1.0f, 0.0f};
+
+        // The axes of the texture on the surface, for normal maps (see Documentation/ARCHITECTURE.md, section 6, materials):
+        // xyz is the tangent, the direction in which the U texture coordinate grows (length 1, along the surface); w is +1
+        // or -1, and cross(normal, tangent.xyz) * w is the bitangent, the direction in which V grows. The convention of
+        // glTF. w is -1 where the texture is mirrored.
+        glm::vec4 tangent{1.0f, 0.0f, 0.0f, 1.0f};
     };
 
     // How one vertex of a skinned mesh follows the bones of its skeleton: up to four joints (indices into

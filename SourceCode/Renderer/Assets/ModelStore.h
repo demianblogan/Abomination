@@ -6,6 +6,7 @@
 #include "Renderer/Assets/MeshStore.h"
 #include "Renderer/Assets/ModelPartSplit.h"
 #include "Renderer/Assets/TextureStore.h"
+#include "Renderer/Material.h"
 
 #include <glm/mat4x4.hpp>
 
@@ -19,12 +20,13 @@
 
 namespace Abomination::Renderer
 {
-    // One part of a loaded model (see ModelPartData): its mesh and texture in the stores, and where it is in the model.
+    // One part of a loaded model (see ModelPartData): its mesh in the store, its material (the maps in the texture store),
+    // and where it is in the model.
     struct ModelPart
     {
         std::string name;
         MeshHandle mesh;
-        TextureHandle texture;
+        Material material;
         glm::mat4 transform{1.0f};
 
         // The box around the part in the model (meters, in the coordinates of the centered model, see Model::size): its

@@ -16,6 +16,7 @@
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/geometric.hpp>
 #include <glm/gtc/quaternion.hpp>
+#include <glm/vec4.hpp>
 
 #include <algorithm>
 #include <span>
@@ -55,9 +56,9 @@ namespace Abomination::Renderer
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         }
 
-        // What every mesh of one drawing pass shares: where the assets are, how to draw, where the scene is seen from, where
-        // the work is counted and where skinned meshes put their joints. Passed to DrawMesh as one value instead of seven
-        // parameters repeated for every mesh.
+        // What every mesh of one drawing pass shares: where the assets are, how to draw, where the scene is seen from, its
+        // light, where the work is counted and where skinned meshes put their joints. Passed to DrawMesh as one value
+        // instead of eight parameters repeated for every mesh.
         struct MeshPass
         {
             const RenderAssets& assets;
@@ -65,24 +66,51 @@ namespace Abomination::Renderer
             const RenderSettings& settings;
             glm::mat4 viewMatrix{1.0f};
             glm::mat4 projectionMatrix{1.0f};
+            const SceneLighting& lighting;
             RenderStatistics& statistics;
             SkinningBuffer& skinning;
         };
 
-        // Draws one mesh with its texture, placed by modelMatrix and seen through the matrices of the pass. A skinned mesh
+        // Gives the program the maps and numbers of the material and the light of the scene (see Lit.frag). A map the
+        // material does not have is read as a built-in texture of one texel: flat, white (the factor alone) or black.
+        void SetMaterial(const MeshPass& pass, const GLShaderProgram& program, const Material& material)
+        {
+            const TextureStore& textures = pass.assets.textures;
+            textures.Get(material.baseColor).Bind(AlbedoTextureUnit);
+            textures.Get(material.normal, BuiltInTexture::FlatNormal).Bind(NormalTextureUnit);
+            textures.Get(material.metalRoughness, BuiltInTexture::White).Bind(MetalRoughnessTextureUnit);
+            textures.Get(material.emissive, BuiltInTexture::Black).Bind(EmissiveTextureUnit);
+            textures.Get(material.height, BuiltInTexture::White).Bind(HeightTextureUnit);
+
+            program.SetUniform(BaseColorFactorUniform, material.baseColorFactor);
+            program.SetUniform(RoughnessFactorUniform, material.roughnessFactor);
+            program.SetUniform(MetalnessFactorUniform, material.metalnessFactor);
+            program.SetUniform(EmissiveFactorUniform, material.emissiveFactor);
+
+            program.SetUniform(SunDirectionUniform, pass.lighting.sunDirection);
+            program.SetUniform(SunColorUniform, pass.lighting.sunColor);
+            program.SetUniform(AmbientColorUniform, pass.lighting.ambientColor);
+            program.SetUniform(ShadingViewUniform, static_cast<int>(pass.settings.shadingView));
+
+            // Without a height map the depth is 0, and the shader skips parallax.
+            const float parallaxScale = pass.settings.isParallaxEnabled ? pass.settings.parallaxDepthScale : 0.0f;
+            program.SetUniform(ParallaxDepthUniform, material.parallaxDepth * parallaxScale);
+            program.SetUniform(ParallaxStepCountUniform, pass.settings.parallaxStepCount);
+            program.SetUniform(SpecularAntiAliasingUniform, pass.settings.isSpecularAntiAliasingEnabled);
+        }
+
+        // Draws one mesh of its material, placed by modelMatrix and seen through the matrices of the pass. A skinned mesh
         // drawn isSkinned is bent by the pose its model uploaded into the skinning buffer (drawn unbent otherwise).
-        // In wireframe mode every mesh is drawn with the wireframe shader instead of its own; the texture is still
-        // bound, but that shader does not read it.
-        void DrawMesh(const MeshPass& pass, ShaderHandle shader, TextureHandle textureHandle, MeshHandle meshHandle,
+        // In wireframe mode every mesh is drawn with the wireframe shader instead of its own, which reads no material.
+        void DrawMesh(const MeshPass& pass, ShaderHandle shader, const Material& material, MeshHandle meshHandle,
                       const glm::mat4& modelMatrix, bool isSkinned = false)
         {
             // The handles are turned into objects at the moment of use (see AssetCache::Get).
-            const GLShaderProgram& shaderProgram =
-                pass.assets.shaders.Get(pass.settings.isWireframeEnabled ? pass.systemShaders.wireframe : shader);
-            const GLTexture& texture = pass.assets.textures.Get(textureHandle);
+            const bool isWireframe = pass.settings.isWireframeEnabled;
+            const GLShaderProgram& shaderProgram = pass.assets.shaders.Get(isWireframe ? pass.systemShaders.wireframe : shader);
             const Mesh& mesh = pass.assets.meshes.Get(meshHandle);
 
-            // Every mesh binds its program and texture again, even if the previous one used the same. That is fine for a
+            // Every mesh binds its program and textures again, even if the previous one used the same. That is fine for a
             // few dozen objects; sorting draws by program and texture (batching) comes when there are hundreds.
             shaderProgram.Use();
             shaderProgram.SetUniform(ModelUniform, modelMatrix);
@@ -92,7 +120,10 @@ namespace Abomination::Renderer
             // The uniform stays set in the program until it is set again, so it is set for every mesh, skinned or not.
             shaderProgram.SetUniform(IsSkinnedUniform, isSkinned && mesh.IsSkinned());
 
-            texture.Bind(AlbedoTextureUnit);
+            // The wireframe program has no uniforms of a material: setting one it does not have is an OpenGL error.
+            if (!isWireframe)
+                SetMaterial(pass, shaderProgram, material);
+
             mesh.Draw();
 
             ++pass.statistics.drawCallCount;
@@ -141,7 +172,7 @@ namespace Abomination::Renderer
                     if (partOffset.partName == part.name)
                         partMatrix = glm::translate(glm::mat4(1.0f), partOffset.offset) * partMatrix;
 
-                DrawMesh(pass, shader, part.texture, part.mesh, placement * partMatrix,
+                DrawMesh(pass, shader, part.material, part.mesh, placement * partMatrix,
                          part.isSkinned && model.skeleton.has_value());
             }
         }
@@ -158,6 +189,23 @@ namespace Abomination::Renderer
         };
     }
 
+    SceneLighting CalculateSceneLighting(const View& view, const RenderSettings& settings)
+    {
+        // The direction the shading of 0.2-0.4 took its light from: above, a little from the right and the front, so walls
+        // facing different ways stay apart as before.
+        const glm::vec3 towardsSunInWorld = glm::normalize(glm::vec3(0.4f, 1.0f, 0.6f));
+
+        // A direction is turned by the view matrix like a position, without the move: w = 0 drops the translation, so
+        // only the rotation of the camera is applied (the view matrix has no scale).
+        const glm::vec3 towardsSunInView = glm::vec3(view.viewMatrix * glm::vec4(towardsSunInWorld, 0.0f));
+
+        return SceneLighting{
+            .sunDirection = glm::normalize(towardsSunInView),
+            .sunColor = glm::vec3(settings.sunIntensity),
+            .ambientColor = glm::vec3(settings.ambientIntensity),
+        };
+    }
+
     glm::mat4 CalculateWeaponViewModelProjection(float verticalFOV, float aspectRatio)
     {
         return glm::perspective(verticalFOV, aspectRatio, WeaponViewModelNearPlane, WeaponViewModelFarPlane);
@@ -165,7 +213,7 @@ namespace Abomination::Renderer
 
     RenderStatistics DrawMeshes(const entt::registry& registry, const View& view, float interpolationFactor,
                                 const RenderAssets& assets, const SystemShaders& systemShaders,
-                                const RenderSettings& settings, SkinningBuffer& skinning)
+                                const RenderSettings& settings, const SceneLighting& lighting, SkinningBuffer& skinning)
     {
         PROFILE_ZONE();
         PROFILE_GPU_ZONE("World and models");
@@ -198,6 +246,7 @@ namespace Abomination::Renderer
             .settings = settings,
             .viewMatrix = view.viewMatrix,
             .projectionMatrix = view.projectionMatrix,
+            .lighting = lighting,
             .statistics = statistics,
             .skinning = skinning,
         };
@@ -214,7 +263,7 @@ namespace Abomination::Renderer
             meshEntities.each([&](entt::entity entity, const Core::Transform&, const MeshRenderer& meshRenderer)
             {
                 const glm::mat4 modelMatrix = Core::CalculateModelMatrix(calculateDrawnTransform(entity));
-                DrawMesh(pass, meshRenderer.shaderProgram, meshRenderer.texture, meshRenderer.mesh, modelMatrix);
+                DrawMesh(pass, meshRenderer.shaderProgram, meshRenderer.material, meshRenderer.mesh, modelMatrix);
             });
         }
 
@@ -240,7 +289,8 @@ namespace Abomination::Renderer
     RenderStatistics DrawWeaponViewModel(ModelHandle model, const glm::mat4& eyeSpaceMatrix, float verticalFOV,
                                          float aspectRatio, const RenderAssets& assets, ShaderHandle shader,
                                          const SystemShaders& systemShaders, const RenderSettings& settings,
-                                         SkinningBuffer& skinning, std::span<const ModelPartOffset> partOffsets,
+                                         const SceneLighting& lighting, SkinningBuffer& skinning,
+                                         std::span<const ModelPartOffset> partOffsets,
                                          const ModelPose* pose, bool clearsDepth, const View* worldView)
     {
         PROFILE_ZONE();
@@ -264,6 +314,7 @@ namespace Abomination::Renderer
             .viewMatrix = worldView != nullptr ? worldView->viewMatrix : glm::mat4(1.0f),
             .projectionMatrix = worldView != nullptr ? worldView->projectionMatrix
                                                      : CalculateWeaponViewModelProjection(verticalFOV, aspectRatio),
+            .lighting = lighting,
             .statistics = statistics,
             .skinning = skinning,
         };

@@ -7,6 +7,7 @@
 #include "Renderer/RenderSettings.h"
 #include "Renderer/SkinningBuffer.h"
 
+#include <glm/vec3.hpp>
 #include <entt/entt.hpp>
 
 namespace Abomination::Renderer
@@ -27,6 +28,19 @@ namespace Abomination::Renderer
             return *this;
         }
     };
+
+    // The light of a frame, ready for the Lit shader: in the coordinates of the camera the scene is seen from, because
+    // the shader lights there (the weapon in the hands is drawn in those coordinates directly, without the world).
+    struct SceneLighting
+    {
+        // Towards the sun (length 1), its light, and the light from everywhere (see RenderSettings::sunIntensity).
+        glm::vec3 sunDirection{0.0f, 1.0f, 0.0f};
+        glm::vec3 sunColor{0.0f};
+        glm::vec3 ambientColor{0.0f};
+    };
+
+    // The light of a frame seen through view: the made-up sun of settings turned into the coordinates of the camera.
+    [[nodiscard]] SceneLighting CalculateSceneLighting(const View& view, const RenderSettings& settings);
 
     // Shaders the render system draws with on its own, whatever shader an entity has chosen.
     struct SystemShaders
@@ -57,11 +71,11 @@ namespace Abomination::Renderer
     // settings choose how to draw: filled, with the shader of every entity, or as a wireframe, with the wireframe shader
     // of systemShaders for every entity. A model with a skeleton is drawn in the pose of its Renderer::ModelPose, or at
     // rest without one; skinning holds the joint matrices of the skinned mesh being drawn. Only reads the registry:
-    // drawing never changes the game.
+    // drawing never changes the game. lighting is the light of the frame (see CalculateSceneLighting).
     // Returns how much was drawn.
     RenderStatistics DrawMeshes(const entt::registry& registry, const View& view, float interpolationFactor,
                                 const RenderAssets& assets, const SystemShaders& systemShaders,
-                                const RenderSettings& settings, SkinningBuffer& skinning);
+                                const RenderSettings& settings, const SceneLighting& lighting, SkinningBuffer& skinning);
 
     // The projection the weapon in the hands is drawn with (see DrawWeaponViewModel): its own vertical field of view (radians)
     // and near and far planes close to the eyes. Sprites drawn with the weapon (its muzzle flash) use it too.
@@ -86,7 +100,7 @@ namespace Abomination::Renderer
     RenderStatistics DrawWeaponViewModel(ModelHandle model, const glm::mat4& eyeSpaceMatrix, float verticalFOV,
                                          float aspectRatio, const RenderAssets& assets, ShaderHandle shader,
                                          const SystemShaders& systemShaders, const RenderSettings& settings,
-                                         SkinningBuffer& skinning,
+                                         const SceneLighting& lighting, SkinningBuffer& skinning,
                                          std::span<const ModelPartOffset> partOffsets = {}, const ModelPose* pose = nullptr,
                                          bool clearsDepth = true, const View* worldView = nullptr);
 }

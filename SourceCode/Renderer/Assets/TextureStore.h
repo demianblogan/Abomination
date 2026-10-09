@@ -6,14 +6,30 @@
 #include "Core/Files/Image.h"
 #include "Renderer/OpenGL/GLTexture.h"
 
+#include <array>
 #include <cstddef>
 #include <filesystem>
+#include <optional>
 #include <string>
 #include <unordered_set>
 
 namespace Abomination::Renderer
 {
     using TextureHandle = Core::AssetHandle<GLTexture>;
+
+    // Textures of one texel every store has, for the maps a material does not have (see Renderer::Material): the shader
+    // reads every map the same way, and a missing map changes nothing.
+    enum class BuiltInTexture
+    {
+        // 1.0 in every channel: a factor times white is the factor (roughness and metalness without a map).
+        White,
+
+        // 0.0: no light given off (emission without a map).
+        Black,
+
+        // (0.5, 0.5, 1.0): the normal (0, 0, 1) of a flat surface, straight out of it (a normal map without bumps).
+        FlatNormal,
+    };
 
     // Loads textures from image files and keeps every texture exactly once, however many objects use it.
     //
@@ -31,12 +47,25 @@ namespace Abomination::Renderer
         // Returns the texture loaded from path, loading it on the first call. path is relative to the assets directory
         // and uses forward slashes: "Textures/Episode1/Crate_Rotten.png". The same path always gives the same handle.
         // The texture stays loaded for the lifetime (the longer one if it is asked for again with another lifetime).
-        [[nodiscard]] TextureHandle Load(const std::string& path, Core::AssetLifetime lifetime);
+        // encoding: SRGB for colors, Raw for maps that hold data (see TextureEncoding); filtering: Pixelated for the crisp
+        // texels of colors, Smooth for maps that light the surface (see TextureFiltering). A path is loaded once, with the
+        // encoding and filtering it is first asked for.
+        [[nodiscard]] TextureHandle Load(const std::string& path, Core::AssetLifetime lifetime,
+                                         TextureEncoding encoding = TextureEncoding::SRGB,
+                                         TextureFiltering filtering = TextureFiltering::Pixelated);
+
+        // Like Load, but only if the file exists: nothing (and no warning) for a map a material does not have. A file that
+        // exists but is broken still gives the checkerboard.
+        [[nodiscard]] std::optional<TextureHandle> LoadIfExists(const std::string& path, Core::AssetLifetime lifetime,
+                                                                TextureEncoding encoding,
+                                                                TextureFiltering filtering = TextureFiltering::Pixelated);
 
         // Stores a texture made of an image already in memory (a texture inside a model file) under name, named like a
         // path: "Models/Weapons/Shotgun.glb#image0". If a texture with this name is loaded, it is returned as it is. An
         // empty image (one that could not be decoded) gives the checkerboard, like a missing file.
-        [[nodiscard]] TextureHandle Add(const std::string& name, const Core::Image& image, Core::AssetLifetime lifetime);
+        [[nodiscard]] TextureHandle Add(const std::string& name, const Core::Image& image, Core::AssetLifetime lifetime,
+                                        TextureEncoding encoding = TextureEncoding::SRGB,
+                                        TextureFiltering filtering = TextureFiltering::Pixelated);
 
         // Moves the texture to the longer of its lifetime and the given one (see AssetCache::ExtendLifetime).
         void ExtendLifetime(TextureHandle handle, Core::AssetLifetime lifetime);
@@ -47,6 +76,9 @@ namespace Abomination::Renderer
         // The texture of the handle. An invalid handle (default-constructed or of a removed texture) gives the
         // checkerboard, so drawing code never has to check for nullptr.
         [[nodiscard]] const GLTexture& Get(TextureHandle handle) const;
+
+        // The texture of the handle, or the built-in texture for an invalid handle (a map the material does not have).
+        [[nodiscard]] const GLTexture& Get(TextureHandle handle, BuiltInTexture missing) const;
 
         // Calls visitor(path, texture, isFallback, lifetime) for every loaded texture; isFallback is true for a missing or
         // broken file replaced by the checkerboard. For the Assets window of the debug overlay.
@@ -67,6 +99,10 @@ namespace Abomination::Renderer
 
         // Returned by Get() for invalid handles.
         GLTexture m_fallbackTexture;
+
+        // The built-in textures, in the order of BuiltInTexture. Also in the cache ("Built-in/White", ...), so the Assets
+        // window lists them; kept here as well, so Get() needs no lookup.
+        std::array<TextureHandle, 3> m_builtInTextures;
     };
 
     template <typename Visitor>

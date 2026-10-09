@@ -36,7 +36,7 @@ Abomination/
 ├── Documentation/      Project documentation
 ├── SourceCode/         Game source code, one folder per module
 ├── Tests/              GoogleTest unit tests, mirrors SourceCode/
-├── Tools/              Helper tools: TrenchBroom game configuration, texture generator, Blender scripts, profiling script (level compiler later)
+├── Tools/              Helper tools: TrenchBroom game configuration, texture generator, material maps, Blender scripts, profiling script
 ├── ThirdParty/         Third-party code not available in vcpkg or newer than there (GLAD, EnTT, Tracy)
 ├── CMakeLists.txt
 ├── CMakePresets.json
@@ -402,18 +402,21 @@ Inside the renderer:
   `std::uint32_t` so headers do not need GLAD:
   - `GLShaderProgram` — compiles and links a vertex and a fragment shader
     (from source or files), returns the compiler log on failure, labels the
-    program for debuggers (`glObjectLabel`), sets `mat4`, `vec2`, `float`, `bool` and `int` uniforms;
+    program for debuggers (`glObjectLabel`), sets `mat4`, `vec4`, `vec3`, `vec2`, `float`, `bool` and `int` uniforms;
   - `GLBuffer` — immutable storage (`glNamedBufferStorage`): static (uploaded
     once) or dynamic (fixed size, contents replaced with `Update`);
   - `GLVertexArray` — vertex buffer bindings, float attributes, index buffer
     (separate attribute format: attributes are connected to buffers through
     binding slots);
-  - `GLTexture` — immutable storage with all mipmap levels, pixel-crisp
-    filtering (`GL_NEAREST` / `GL_NEAREST_MIPMAP_LINEAR`), repeat wrapping,
+  - `GLTexture` — immutable storage with all mipmap levels, repeat wrapping,
     bound to texture units; knows its size and video memory. `TextureEncoding`:
     `SRGB` (`GL_SRGB8_ALPHA8`, the GPU converts the colors into linear values
-    when a shader reads them; the world, models, effects) or `Raw`
-    (`GL_RGBA8`, as stored; the game interface);
+    when a shader reads them; colors of the world, models, effects) or `Raw`
+    (`GL_RGBA8`, as stored; the game interface and the data maps of materials).
+    `TextureFiltering`: `Pixelated` (`GL_NEAREST` / `GL_NEAREST_MIPMAP_LINEAR`,
+    crisp texels like Quake; colors) or `Smooth` (`GL_LINEAR` /
+    `GL_LINEAR_MIPMAP_LINEAR`; normal, roughness and height maps, whose
+    texel edges would make light flicker);
   - `GLFramebuffer` — a picture to draw into instead of the screen: an HDR
     color texture (`GL_RGBA16F`) and a depth texture (`GL_DEPTH_COMPONENT32F`),
     labeled for RenderDoc;
@@ -424,16 +427,19 @@ Inside the renderer:
   array) that draws itself; `MeshData` is the same geometry in ordinary memory
   (`MeshPrimitives` builds a cube, `World` builds the level). Vertex layout:
   position at location 0, texture coordinates at location 1, normal at
-  location 2, for every mesh shader. A mesh is drawn with
+  location 2, joints and weights at 3 and 4, the tangent at 5 (xyz along +U of
+  the texture, w ±1 tells which way +V goes: the glTF convention), for every
+  mesh shader. Brushes get exact tangents from their Valve 220 texture axes
+  (`World::CalculateTangent`); models and primitives get them from
+  MikkTSpace (`GenerateTangents`, the standard the bakers of normal maps use,
+  so the maps of a file are read the way they were made; the tangents of a
+  file are ignored, because V is flipped when it is loaded). A mesh is drawn with
   `glDrawRangeElements`, which tells the driver that every index is below
   the vertex count (checked by an assertion when the mesh is created): with
   plain `glDrawElements` the Intel driver read the whole index buffer on the
   CPU at every draw, 0.3 ms for a dog (section 17).
-- Shaders (`Assets/Shaders/`): `TexturedShaded` (the level and models: the
-  texture, lighter or darker by the direction the surface faces — half-Lambert
-  shading with a fixed made-up light direction, not real lighting, so walls
-  facing different ways stay apart until lightmaps in 0.5; alpha-tested),
-  `Wireframe` (one line color), `DebugLines` and `Sprite` (particles, marks,
+- Shaders (`Assets/Shaders/`): `Lit` (the level and models with their
+  materials, see *Materials* below; alpha-tested), `Wireframe` (one line color), `DebugLines` and `Sprite` (particles, marks,
   the muzzle flash), `Present` (the scene onto the screen, see below). Colors
   written in the code are sRGB, the way they were picked; the shaders that
   take them convert them into linear values (`ConvertSRGBToLinear`, the same
@@ -479,14 +485,15 @@ Inside the renderer:
   roots down, and the result is the component `ModelPose` of the entity. To
   draw, `SkinningBuffer::UploadPose` turns the joint matrices into skinning
   matrices (joint matrix × inverse bind matrix) and puts them in a shader
-  storage buffer once per model; `TexturedShaded.vert` bends every skinned
+  storage buffer once per model; `Lit.vert` bends every skinned
   vertex by up to four joints and their weights (`IsSkinnedUniform`). A part
   held by a joint (a weapon in a hand) is moved by that joint. The posing and
   the uploads reuse their memory, so animating allocates nothing per frame.
   What plays which clip is `Gameplay::Animator` (see section 13).
 - **Renderer window** of the debug overlay (Renderer in the menu bar): Solid /
   Wireframe, world axes (arrows along X, Y, Z from the origin, over
-  everything), tone mapping (None / ACES) and exposure, draw calls and
+  everything), shading (the view, the made-up sun and ambient, parallax,
+  specular anti-aliasing), tone mapping (None / ACES) and exposure, draw calls and
   triangles of the last frame, brushes, faces and
   triangles of the level, and *Reload*, which loads the map again (a Debug
   build reads it straight from `Assets/` of the repository, so a map saved
@@ -529,6 +536,60 @@ Debug overlay             ImGui, on the screen
   frame (Present 0.55 ms, writing 8 bytes per pixel instead of 4 the rest).
   `GL_R11F_G11F_B10F` (4 bytes, HDR without alpha) is the option to measure
   if it matters.
+
+**Materials** (`Renderer/Material.h`, glTF metallic-roughness):
+
+```
+Material   baseColor × baseColorFactor        sRGB, crisp     what color the surface is
+           normal                             Raw, smooth     which way every texel faces
+           metalRoughness  (G rough, B metal) Raw, smooth     × roughnessFactor, metalnessFactor
+           emissive × emissiveFactor          sRGB            light of its own (a window, embers)
+           height × parallaxDepth             Raw, smooth     parallax occlusion mapping (masonry)
+```
+
+- A `Material` is a value in `MeshRenderer`: texture handles and factors, no
+  store of its own. A map it does not have is an invalid handle, and the render
+  system binds a built-in 1×1 texture instead (`BuiltInTexture`: White, Black,
+  FlatNormal), so one shader draws every material.
+- **Where materials come from.** A model: its glTF materials (with
+  `KHR_materials_emissive_strength`); every image is uploaded once, with the
+  encoding and filtering of its role. A brush texture: maps found by file
+  name next to the color (`LoadMaterialByFileNames`): `Wall_MossyBrick.png`
+  + `_Normal`, `_MetalRough`, `_Emissive`, `_Height`; a missing file is no
+  error. The maps of Episode 1 are made from the colors by
+  `Tools/MaterialMaps` (`Generate.ps1`: a height guessed from the
+  brightness — dark mortar lies deep — turned into normals; roughness and
+  metal set per texture; a preview page with a light to move, before
+  `-Install` puts the maps next to the colors).
+- **`Lit.frag`** lights in view space (the camera at the origin):
+  Cook-Torrance — the GGX distribution of tiny facets, Smith-Schlick
+  shadowing between them, Schlick Fresnel (every surface reflects more at a
+  grazing angle; a dielectric reflects 4% straight on, a metal its own
+  color). The light now is a made-up sun (direction (0.4, 1, 0.6),
+  intensity 3) and an even ambient light, `SceneLighting` from
+  `CalculateSceneLighting`, until the lights of the next branches.
+- **Parallax occlusion mapping**: on a face seen from the side, the texture
+  coordinates are moved along the view by a fixed number of steps into the
+  height (16 by default, `ParallaxStepCount`) until the ray is below the
+  relief, and the last two steps are interpolated, so stones hide the joints
+  behind them. A fixed count, not one by angle: a count that changed from
+  pixel to pixel made stripes. Every map is read with `textureGrad` and the
+  derivatives of the original coordinates, because the moved ones jump at
+  the edges of stones and would pick the smallest mipmap there. Only flat
+  masonry (walls, floors) has a height map: on the narrow faces of the
+  octagonal pillars the relief looked like a picture behind glass, so they
+  use copies of the textures without one (`Pillar_MossyBlocks`,
+  `Pillar_WetFlagstone`; variants of one material in 0.6).
+- **Specular anti-aliasing** (Kaplanyan; the variant of Filament): where the
+  normal turns fast from pixel to pixel, a highlight is smaller than a pixel
+  and flickers when the camera moves; there the squared roughness grows by
+  the change of the normal (screen derivatives, at most by 0.18).
+- **Debug views** (`ShadingView`, the Renderer window): base color, normals,
+  roughness, metalness, height, without light; Present then shows them with
+  exposure 1 and without tone mapping, so the numbers are seen as they are.
+- **Cost:** with parallax at 16 steps the level takes about 3.3 ms of the
+  Intel GPU; the Release benchmark went from about 280 to 176 FPS, and the
+  frame now waits for the GPU.
 
 The executable exports `NvOptimusEnablement` and
 `AmdPowerXpressRequestHighPerformance`, so laptops with hybrid graphics run
@@ -797,7 +858,7 @@ either (`Config`). How textures look and where they come from:
   copy if the repository is not there. The path is chosen once in `Main.cpp`
   and passed down.
 - Asset paths are relative to `Assets/` and use forward slashes:
-  `"Textures/Episode1/Crate_Rotten.png"`, `"Shaders/TexturedShaded"` (a shader program is the
+  `"Textures/Episode1/Crate_Rotten.png"`, `"Shaders/Lit"` (a shader program is the
   `.vert` + `.frag` pair with that name).
 - The application knows the folders; every module knows the names of its own
   files (`TextureStore` gets the assets folder, `DebugOverlay` gets the assets
@@ -840,15 +901,15 @@ Renderer::RenderAssets                     all graphics stores, owned by Applica
   `Renderer::TextureStore`, `Renderer::ShaderStore`, `Renderer::MeshStore`
   (meshes built by code now, named like paths: the level meshes as
   `"Maps/Test.map#Episode1/Wall_MossyBrick"`, one per texture),
-  `Renderer::ModelStore`, `Audio::SoundStore`; later a material store.
+  `Renderer::ModelStore`, `Audio::SoundStore`. Materials have no store: a
+  material is a value that holds texture handles (see section 6).
 - **Models** are glTF 2.0 files (`.glb`), read with cgltf (`LoadGLTFFile`,
   CPU data in `ModelData`, testable without OpenGL). A model keeps its parts
   apart (the pump of the shotgun can move later): every part is a mesh and a
   texture in their stores, named after the file
   (`"Models/Weapons/Shotgun.glb#Pump_low_Shotgun_0"`, `"...#image0"`), with
-  the transform of its node chain. Only the base color texture is used: only
-  the images materials take as base color are decoded and uploaded (the
-  normal and roughness maps of a file are skipped until materials, 0.5). The
+  the transform of its node chain and its material (see section 6): only the
+  images materials use are decoded and uploaded, each once. The
   `doubleSided` flag of a material is ignored for now: every face is culled
   from behind, so a model must not rely on thin one-sided surfaces. A skin
   and its animations are read into the skeleton and clips of the model (see
@@ -909,7 +970,8 @@ Renderer::RenderAssets                     all graphics stores, owned by Applica
 
 **Planned:**
 
-- Materials (normal and metalness maps, with lighting in 0.5); music is streamed, not loaded
+- Material files (0.6): variants of one material (the pillar stones without
+  parallax) instead of copies of textures; music is streamed, not loaded
   whole (0.8); sound occlusion by walls and reverb zones (later).
 - Hot reload of textures and maps (the same `FileWatcher`), packed archives
   with a virtual file system (near 1.0).
@@ -1031,7 +1093,8 @@ Test.map ─► ParseMap ─► MapData ─┬─► BuildBrushPolygons ─► B
   `Level::Create`, which loads the textures of the level and stores one mesh
   per texture, both in the **Level** lifetime group, and creates one entity
   per texture, *World geometry: Episode1/Wall_MossyBrick* (`Name`,
-  `Transform`, `MeshRenderer` with the `TexturedShaded` program); together
+  `Transform`, `MeshRenderer` with the `Lit` program and the material of the
+  texture, see section 6); together
   they play the part of entity 0, the world, in Quake. The level costs one
   draw call per texture. `info_player_start` does not become an entity: its
   origin (+4 units: the center of the player box, which reaches from 24 units

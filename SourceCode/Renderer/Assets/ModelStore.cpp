@@ -37,7 +37,12 @@ namespace Abomination::Renderer
             for (const ModelPart& part : Get(*loadedHandle).parts)
             {
                 meshes.ExtendLifetime(part.mesh, lifetime);
-                textures.ExtendLifetime(part.texture, lifetime);
+
+                // The maps a material does not have are invalid handles, which ExtendLifetime skips.
+                const Material& material = part.material;
+                for (const TextureHandle map :
+                     {material.baseColor, material.normal, material.metalRoughness, material.emissive, material.height})
+                    textures.ExtendLifetime(map, lifetime);
             }
 
             return *loadedHandle;
@@ -74,15 +79,44 @@ namespace Abomination::Renderer
                 backingTextures[split.backingPartName] = textures.Load(split.backingTexturePath, lifetime);
         }
 
-        // Only the images the parts use become textures, named after the model. A model file often holds more (normal and
-        // metalness maps, which the game does not use yet), and each of them would take video memory for nothing.
+        // Only the images the materials use become textures, named after the model ("...Shotgun.glb#image0"), each once
+        // however many parts use it. A color is sRGB and crisp; a normal or roughness map holds data and is read as it is
+        // (Raw) and smoothly (see TextureFiltering). An image used both ways would keep the encoding of its first use (no
+        // model of the game does that).
         std::vector<std::optional<TextureHandle>> imageTextures(data->images.size());
-        const auto getImageTexture = [&](std::size_t index)
+        const auto getImageTexture = [&](const std::optional<std::size_t>& index, TextureEncoding encoding)
         {
-            if (!imageTextures[index].has_value())
-                imageTextures[index] = textures.Add(std::format("{}#image{}", path, index), data->images[index], lifetime);
+            if (!index.has_value())
+                return TextureHandle{};
+            if (!imageTextures[*index].has_value())
+                imageTextures[*index] =
+                    textures.Add(std::format("{}#image{}", path, *index), data->images[*index], lifetime, encoding,
+                                 encoding == TextureEncoding::Raw ? TextureFiltering::Smooth : TextureFiltering::Pixelated);
 
-            return *imageTextures[index];
+            return *imageTextures[*index];
+        };
+
+        // The material of a part as the file describes it. A part without one gets the default material, with the texture
+        // of a backing part if it is one (see ModelPartSplit).
+        const auto createMaterial = [&](const ModelPartData& partData)
+        {
+            if (!partData.material.has_value())
+            {
+                const auto backing = backingTextures.find(partData.name);
+                return Material{.baseColor = backing != backingTextures.end() ? backing->second : TextureHandle{}};
+            }
+
+            const ModelMaterialData& file = *partData.material;
+            return Material{
+                .baseColor = getImageTexture(file.baseColorImage, TextureEncoding::SRGB),
+                .baseColorFactor = file.baseColorFactor,
+                .normal = getImageTexture(file.normalImage, TextureEncoding::Raw),
+                .metalRoughness = getImageTexture(file.metalRoughnessImage, TextureEncoding::Raw),
+                .roughnessFactor = file.roughnessFactor,
+                .metalnessFactor = file.metalnessFactor,
+                .emissive = getImageTexture(file.emissiveImage, TextureEncoding::SRGB),
+                .emissiveFactor = file.emissiveFactor,
+            };
         };
 
         Model model;
@@ -91,9 +125,7 @@ namespace Abomination::Renderer
             model.parts.push_back(ModelPart{
                 .name = partData.name,
                 .mesh = meshes.Add(std::format("{}#{}", path, partData.name), partData.mesh, lifetime),
-                .texture = partData.imageIndex.has_value()         ? getImageTexture(*partData.imageIndex)
-                           : backingTextures.contains(partData.name) ? backingTextures.at(partData.name)
-                                                                     : TextureHandle{},
+                .material = createMaterial(partData),
                 .transform = partData.transform,
                 .parentJoint = partData.parentJoint,
                 .isSkinned = !partData.mesh.skin.empty(),

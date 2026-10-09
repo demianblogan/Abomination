@@ -65,7 +65,9 @@ set(TEST_SOURCES
     Renderer/Animation/AnimationSamplingTests.cpp
     Renderer/Animation/SkeletonPoseTests.cpp
     Renderer/Assets/GLTFLoaderTests.cpp
+    Renderer/Assets/MaterialFilesTests.cpp
     Renderer/Assets/MeshPrimitivesTests.cpp
+    Renderer/Assets/MeshTangentsTests.cpp
     Renderer/Assets/ModelPartSplitTests.cpp
     Renderer/Camera/ViewTests.cpp
     Renderer/ColorSpaceTests.cpp

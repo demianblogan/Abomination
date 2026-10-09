@@ -414,8 +414,9 @@ namespace Abomination
             // Every pass is a named group of OpenGL commands, so a frame captured by RenderDoc reads as these passes.
             {
                 Renderer::GLDebugGroup group("World");
-                m_renderStatistics = Renderer::DrawMeshes(m_registry, view, interpolationFactor, m_renderAssets,
-                                                          m_systemShaders, m_renderSettings, m_skinningBuffer);
+                m_renderStatistics =
+                    Renderer::DrawMeshes(m_registry, view, interpolationFactor, m_renderAssets, m_systemShaders, m_renderSettings,
+                                         Renderer::CalculateSceneLighting(view, m_renderSettings), m_skinningBuffer);
             }
             {
                 Renderer::GLDebugGroup group("Effects");
@@ -571,6 +572,9 @@ namespace Abomination
         }
         const Renderer::View* worldView = isSeenByPlayer ? nullptr : &view;
 
+        // The same light as the world: computed from the view of the camera, whatever space the weapon is drawn in.
+        const Renderer::SceneLighting lighting = Renderer::CalculateSceneLighting(view, m_renderSettings);
+
         // The parts that move with the pump go back along the barrel: the model points along -Z, so back is +Z.
         std::vector<Renderer::ModelPartOffset> partOffsets;
         for (const std::string& partName : weaponViewModel->pump.partNames)
@@ -579,7 +583,7 @@ namespace Abomination
         m_renderStatistics += Renderer::DrawWeaponViewModel(
             weaponViewModel->model, eyesInWorld * Gameplay::CalculateWeaponViewModelMatrix(*weaponViewModel),
             weaponViewModel->verticalFOV, aspectRatio, m_renderAssets, weaponViewModel->shaderProgram, m_systemShaders,
-            m_renderSettings, m_skinningBuffer, partOffsets, nullptr, isSeenByPlayer, worldView);
+            m_renderSettings, lighting, m_skinningBuffer, partOffsets, nullptr, isSeenByPlayer, worldView);
 
         // The hands, posed for the weapon as it is now and drawn with it (its depth kept, so they hold it, not cover it).
         if (weaponViewModel->hands.isVisible)
@@ -590,7 +594,7 @@ namespace Abomination
                 weaponViewModel->hands.model,
                 eyesInWorld * Gameplay::CalculateWeaponHandsMatrix(*weaponViewModel, handsModel),
                 weaponViewModel->verticalFOV, aspectRatio, m_renderAssets, weaponViewModel->shaderProgram, m_systemShaders,
-                m_renderSettings, m_skinningBuffer, {}, &weaponViewModel->hands.pose, false, worldView);
+                m_renderSettings, lighting, m_skinningBuffer, {}, &weaponViewModel->hands.pose, false, worldView);
         }
 
         if (!isSeenByPlayer || weaponViewModel->flashTimeLeft <= 0.0f)

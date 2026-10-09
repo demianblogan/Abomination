@@ -1,5 +1,5 @@
 # Turns a picture drawn on flat magenta (#FF00FF) into a cutout texture: the magenta becomes transparent, and the
-# picture is shrunk to the given size. The level shader throws transparent texels away (TexturedShaded.frag), so the
+# picture is shrunk to the given size. The level shader throws transparent texels away (Lit.frag), so the
 # wall behind the brush shows there: an arched door or window on a rectangular brush.
 #
 # Shrinking averages the colors of the opaque pixels only (weighted by how opaque they are), so no magenta bleeds into

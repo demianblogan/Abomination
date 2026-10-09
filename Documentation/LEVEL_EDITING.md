@@ -82,10 +82,16 @@ direction of its angle. A player start placed on the floor puts the player on
 the floor; one placed higher lets the player fall at the start (like in
 Quake). F2 switches to the free-fly camera to look at the map from anywhere.
 
-- Faces are drawn with their textures, lighter or darker by the direction
-  they face, so walls, floor and ceiling stay apart until real lighting (0.5).
-  A texture that is missing shows as a magenta and black checkerboard, with a
-  warning in the log.
+- Faces are drawn with their materials, lit by a made-up sun until the map
+  has lights. A texture that is missing shows as a magenta and black
+  checkerboard, with a warning in the log.
+- **Material maps** lie next to a texture with suffixes
+  (`Wall_MossyBrick_Normal.png`, `_MetalRough`, `_Emissive`, `_Height`) and
+  are found by the game; the material browser hides them. A texture with a
+  `_Height` map gets parallax: good on flat walls and floors, but on narrow
+  faces (the octagonal pillars) it looks like a picture behind glass. Use
+  the copies without it there: `Pillar_MossyBlocks` and
+  `Pillar_WetFlagstone`.
 - *Renderer* in the menu bar in the debug overlay (<kbd>F1</kbd>) switches to
   *Wireframe* to show how faces are split into triangles, and shows how many
   brushes, faces and triangles the level has.

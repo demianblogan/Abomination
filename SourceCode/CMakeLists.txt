@@ -1,6 +1,7 @@
 # --- Dependencies ------------------------------------------------------------
 find_package(glm CONFIG REQUIRED)
 find_package(imgui CONFIG REQUIRED)
+find_package(mikktspace CONFIG REQUIRED)
 find_package(recastnavigation CONFIG REQUIRED)
 find_package(RmlUi CONFIG REQUIRED)
 find_package(SDL3 CONFIG REQUIRED)
@@ -184,6 +185,7 @@ set(LIBRARY_SOURCES
     Renderer/ColorSpace.cpp
     Renderer/ImGuiRendererBackend.cpp
     Renderer/DrawOffset.h
+    Renderer/Material.h
     Renderer/MeshRenderer.h
     Renderer/ModelPose.h
     Renderer/ModelRenderer.h
@@ -209,10 +211,14 @@ set(LIBRARY_SOURCES
     Renderer/Assets/Mesh.h
     Renderer/Assets/Mesh.cpp
     Renderer/Assets/MeshData.h
+    Renderer/Assets/MaterialFiles.h
+    Renderer/Assets/MaterialFiles.cpp
     Renderer/Assets/MeshPrimitives.h
     Renderer/Assets/MeshPrimitives.cpp
     Renderer/Assets/MeshStore.h
     Renderer/Assets/MeshStore.cpp
+    Renderer/Assets/MeshTangents.h
+    Renderer/Assets/MeshTangents.cpp
     Renderer/Assets/ModelData.h
     Renderer/Assets/ModelPartSplit.h
     Renderer/Assets/ModelPartSplit.cpp
@@ -337,6 +343,7 @@ target_link_libraries(AbominationCore
     PRIVATE
         GLAD                  # Only Renderer/*.cpp include GLAD, no header does
         imgui::imgui          # Only .cpp files include ImGui, no header does
+        mikktspace::mikktspace  # Only Renderer/Assets/MeshTangents.cpp includes MikkTSpace
         RecastNavigation::Recast  # Only Navigation/*.cpp include Recast (it builds the navmesh) and Detour (it
         RecastNavigation::Detour  # finds paths on it); no header does
         RmlUi::RmlUi          # Only the RmlUi backends (Platform, Renderer) and the game interface (UI) include RmlUi

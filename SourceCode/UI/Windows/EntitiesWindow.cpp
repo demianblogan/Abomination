@@ -210,12 +210,30 @@ namespace Abomination::UI
             ImGui::TextUnformatted("Drawn between the last two ticks (interpolated).");
         }
 
+        // The name of a map of a material, or "none" for a map it does not have (an invalid handle: a built-in texture is
+        // read instead, see Renderer::Material).
+        const char* FormatMapName(Renderer::TextureHandle map, const Renderer::RenderAssets& assets)
+        {
+            const std::string* path = assets.textures.GetPath(map);
+            return path != nullptr ? path->c_str() : "none";
+        }
+
+        void DrawMaterial(const Renderer::Material& material, const Renderer::RenderAssets& assets)
+        {
+            ImGui::Text("Color:     %s", FormatAssetName(assets.textures.GetPath(material.baseColor)));
+            ImGui::Text("Normal:    %s", FormatMapName(material.normal, assets));
+            ImGui::Text("Roughness: %s x %.2f, metalness x %.2f", FormatMapName(material.metalRoughness, assets),
+                        material.roughnessFactor, material.metalnessFactor);
+            ImGui::Text("Emissive:  %s", FormatMapName(material.emissive, assets));
+            ImGui::Text("Height:    %s, parallax depth %.3f", FormatMapName(material.height, assets), material.parallaxDepth);
+        }
+
         void DrawMeshRenderer(const Renderer::MeshRenderer& meshRenderer, const Renderer::RenderAssets& assets)
         {
             // The component holds only handles; the stores know which asset each of them is.
             ImGui::Text("Mesh:    %s", FormatAssetName(assets.meshes.GetName(meshRenderer.mesh)));
-            ImGui::Text("Texture: %s", FormatAssetName(assets.textures.GetPath(meshRenderer.texture)));
             ImGui::Text("Program: %s", FormatAssetName(assets.shaders.GetName(meshRenderer.shaderProgram)));
+            DrawMaterial(meshRenderer.material, assets);
         }
 
         void DrawModelRenderer(const Renderer::ModelRenderer& modelRenderer, const Renderer::RenderAssets& assets)
@@ -224,8 +242,16 @@ namespace Abomination::UI
             ImGui::Text("Model:   %s", FormatAssetName(assets.models.GetPath(modelRenderer.model)));
             ImGui::Text("Program: %s", FormatAssetName(assets.shaders.GetName(modelRenderer.shaderProgram)));
             ImGui::Text("Parts:   %zu", model.parts.size());
+
+            // Every part folds open to its material, so the list stays short for a model of many parts.
             for (const Renderer::ModelPart& part : model.parts)
-                ImGui::BulletText("%s", part.name.c_str());
+            {
+                if (ImGui::TreeNode(part.name.c_str()))
+                {
+                    DrawMaterial(part.material, assets);
+                    ImGui::TreePop();
+                }
+            }
         }
 
         void DrawSpin(Gameplay::Spin& spin)

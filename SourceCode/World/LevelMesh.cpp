@@ -50,6 +50,8 @@ namespace Abomination::World
                 if (!mapPlane.has_value())
                     continue;
                 const glm::vec3 normal(ConvertMapPlane(*mapPlane).normal);
+                // The axes of the texture on the face, for normal maps: exact, from the texture axes the map stores.
+                const glm::vec4 tangent = CalculateTangent(face, normal);
 
                 ++counts.faceCount;
 
@@ -69,6 +71,7 @@ namespace Abomination::World
                         .position = ConvertMapPosition(polygonVertex),
                         .texCoord = CalculateTextureCoordinates(face, polygonVertex, textureSize),
                         .normal = normal,
+                        .tangent = tangent,
                     });
 
                 // A convex polygon is cut into triangles like a fan: vertex 0 with every pair of neighbours after it,
